@@ -1,0 +1,2 @@
+Failed to pull image "ghcr.io/acme/app:missing": manifest unknown
+Back-off pulling image "ghcr.io/acme/app:missing"
