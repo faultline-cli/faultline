@@ -1,0 +1,42 @@
+id: pipeline-timeout
+title: CI job or pipeline exceeded time limit
+category: ci
+severity: high
+base_score: 1.0
+tags: [timeout, ci, hung, pipeline]
+stage_hints: [build, test, deploy]
+
+match:
+  any:
+    - "Job's timeout exceeded"
+    - "execution timeout"
+    - "exceeded the maximum execution time"
+    - "build timed out"
+    - "pipeline timed out"
+    - "timed out after"
+    - "job timed out"
+    - "canceled because a build timeout"
+    - "Timeout: Timeout reached"
+    - "ERROR: Job failed (system failure): job execution failed on runner"
+    - "has been running for more than"
+
+explain: >
+  The CI job ran past its configured time limit and was killed by the CI system.
+  This is a hard stop — no further steps ran.
+
+why: >
+  Common causes: a test is stuck waiting on a network call or socket, a build
+  step hangs on user input, a dependency download stalls, or the workload genuinely
+  takes longer than the limit allows.
+
+fix:
+  - Check which step was active when the timeout fired — look for the last log line.
+  - If a test is hanging, add an explicit timeout to the test itself.
+  - "Remove any interactive prompts (`--yes`, `--non-interactive`) from install or setup commands."
+  - If the job legitimately takes longer, increase the timeout in your CI config.
+  - Break the job into smaller parallel jobs to reduce per-job wall time.
+
+prevent:
+  - Set per-step timeouts in addition to a job-level timeout.
+  - Add explicit `--timeout` flags to any test runner invocation.
+  - Monitor average job duration and alert when it grows beyond a baseline.

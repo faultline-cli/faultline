@@ -1,0 +1,51 @@
+id: ssh-key-auth
+title: SSH key authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [ssh, key, git, auth, deploy-key]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - "Permission denied (publickey)"
+    - "Host key verification failed"
+    - "no such identity"
+    - "Could not read from remote repository"
+    - "Authentication failed"
+    - "ssh: handshake failed"
+    - "ssh: connect to host"
+    - "fatal: Could not read from remote repository"
+    - "git@github.com: Permission denied"
+    - "Warning: Permanently added"
+  none:
+    - password
+
+explain: >
+  An SSH operation (git clone, deploy, rsync) failed because the SSH key was
+  not found, not loaded into the agent, or the remote host does not accept it.
+
+why: >
+  CI jobs that need SSH access must either load the private key into `ssh-agent`
+  or write it to `~/.ssh/id_rsa` with correct permissions (`chmod 600`). A
+  missing known-hosts entry also causes `Host key verification failed` even
+  when the key is correct.
+
+fix:
+  - "Add the private key to CI secrets and load it: `ssh-add <(echo \"$SSH_PRIVATE_KEY\")`."
+  - "Fix key permissions: `chmod 600 ~/.ssh/id_rsa`."
+  - "Add the host to known hosts: `ssh-keyscan github.com >> ~/.ssh/known_hosts`."
+  - Verify the corresponding public key is added as a deploy key on the repository.
+  - "Use `ssh -vT git@github.com` to debug the handshake."
+
+prevent:
+  - Use a dedicated deploy key per repository with read-only access where possible.
+  - Rotate deploy keys on a schedule and update CI secrets immediately.
+  - Use HTTPS with tokens instead of SSH where the provider supports it.
+
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - ssh -vT git@github.com

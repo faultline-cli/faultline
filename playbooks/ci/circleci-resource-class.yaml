@@ -1,0 +1,45 @@
+id: circleci-resource-class
+title: CircleCI resource class limit exceeded
+category: ci
+severity: high
+base_score: 0.9
+tags: [circleci, resource, memory, oom, ci]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "Received signal 9"
+    - "OOM killed"
+    - "exceeded memory limit"
+    - "resource_class"
+    - "Your job completed with exit code 137"
+    - "Process killed with signal 9"
+    - "The build agent was unable to allocate"
+    - "CircleCI resource class"
+
+explain: >
+  The CircleCI executor ran out of memory or another resource within the
+  configured resource class, causing the process to be killed with signal 9.
+
+why: >
+  Each CircleCI resource class has a fixed CPU and memory budget. Large test
+  suites, parallel workers, or memory-hungry build steps can exceed the default
+  `medium` class when run together.
+
+fix:
+  - "Upgrade the resource class in `.circleci/config.yml`:"
+  - |
+    jobs:
+      build:
+        resource_class: large
+  - "Reduce parallelism to lower peak memory: `parallelism: 2` instead of 4."
+  - Split the job into smaller jobs that run with lower memory demands.
+
+prevent:
+  - Profile peak memory usage and set the resource class one tier above the peak.
+  - "Use `large` resource class for Docker layer builds and `medium` for lint and test."
+  - Add a memory usage step at the end of each job to track growth over time.
+
+workflow:
+  likely_files:
+    - .circleci/config.yml

@@ -1,0 +1,52 @@
+id: ecs-deployment-failed
+title: AWS ECS service deployment failure
+category: deploy
+severity: high
+base_score: 1.0
+tags: [ecs, aws, fargate, container, deploy]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "ECS service deployment failed"
+    - "service deployment failed"
+    - "task stopped due to"
+    - "Essential container in task exited"
+    - "CannotPullContainerError"
+    - "ResourceNotFoundException"
+    - "service could not stabilize"
+    - "deployment circuit breaker"
+    - "unhealthy"
+    - "ECS"
+
+explain: >
+  An ECS service deployment failed to reach a stable state. The deployment
+  circuit breaker rolled back the task definition to the previous version.
+
+why: >
+  ECS deployments fail when new task containers exit immediately (bad entrypoint,
+  missing env var, out of memory), when the container image cannot be pulled,
+  when the task's IAM execution role lacks required permissions, or when the
+  health check grace period is too short.
+
+fix:
+  - "Check stopped task logs: `aws ecs describe-tasks --cluster <cluster> --tasks <task-arn>`."
+  - "View CloudWatch Logs for the container to find the application error."
+  - "For `CannotPullContainerError`: verify the task execution role has ECR pull permissions."
+  - "For immediate exit: run the container locally with the same env vars to reproduce."
+  - Extend the health check grace period if the application takes time to start.
+
+prevent:
+  - Enable the ECS deployment circuit breaker with automatic rollback.
+  - Add application-level health check endpoints that return 200 only when fully ready.
+  - Test the Docker image locally with current environment variables before deploying.
+
+workflow:
+  likely_files:
+    - task-definition.json
+    - "ecs/**"
+    - .github/workflows/*.yml
+  local_repro:
+    - docker run --env-file .env <image>
+  verify:
+    - aws ecs describe-services --cluster <cluster> --services <service>

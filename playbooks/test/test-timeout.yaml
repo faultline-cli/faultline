@@ -1,0 +1,44 @@
+id: test-timeout
+title: Test suite or individual test timed out
+category: test
+severity: high
+base_score: 1.0
+tags: [test, timeout, hang, slow]
+stage_hints: [test]
+
+match:
+  any:
+    - "Test timed out"
+    - "exceeded timeout"
+    - "Timeout - Async callback was not invoked within"
+    - "test timeout of"
+    - "TIMEOUT"
+    - "jest timeout"
+    - "go test -timeout"
+    - "context deadline exceeded"
+    - "test exceeded"
+    - "after 30000ms"
+    - "after 60000ms"
+    - "async test timed out"
+    - "waiting for assertion"
+
+explain: >
+  A test (or the entire test suite) did not complete within the configured
+  timeout period. The test runner killed the pending test and marked it as failed.
+
+why: >
+  Test timeouts occur when a test blocks waiting for an async operation that never
+  resolves, a database or network call that hangs, a mock that is never triggered,
+  or simply a test that is genuinely slow and needs a higher timeout.
+
+fix:
+  - Identify the test name in the timeout message and run it in isolation.
+  - "Check for missing `await`, unresolved promises, or callbacks that are never called."
+  - Verify that any external services or mocks the test uses are available and responding.
+  - "Increase the timeout as a diagnostic step: if it then passes, the operation is just slow."
+  - Replace real network or DB calls in unit tests with mocks to remove external dependencies.
+
+prevent:
+  - Set explicit per-test and per-suite timeouts rather than relying on defaults.
+  - Mock all external I/O in unit tests so they cannot block on network.
+  - Monitor test execution time trend and alert when slow tests emerge.

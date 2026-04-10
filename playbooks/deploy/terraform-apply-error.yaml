@@ -1,0 +1,53 @@
+id: terraform-apply-error
+title: Terraform apply error
+category: deploy
+severity: high
+base_score: 1.0
+tags: [terraform, iac, apply, infrastructure]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "Error: Error applying plan"
+    - "Error: error creating"
+    - "Error: error updating"
+    - "Error: error deleting"
+    - "terraform apply"
+    - "Error: Invalid resource type"
+    - "Error: Unsupported attribute"
+    - "Error: Reference to undeclared resource"
+    - "Error: Cycle"
+  none:
+    - "terraform state lock"
+    - "Error acquiring the state lock"
+
+explain: >
+  `terraform apply` encountered an error during resource creation, modification,
+  or deletion. Terraform partially applies changes and may leave infrastructure
+  in an inconsistent state.
+
+why: >
+  Apply errors can arise from: provider API errors (quota exceeded, permission
+  denied), a resource that already exists outside Terraform, invalid configuration
+  values, or a dependency cycle in the resource graph.
+
+fix:
+  - "Read the `Error:` block carefully — Terraform reports the resource type and field."
+  - "For `already exists`: import the resource with `terraform import <resource> <id>`."
+  - "For permission errors: grant the Terraform service account the required IAM permissions."
+  - "For quota errors: request a limit increase or delete unused resources."
+  - "Run `terraform plan` to check the intended diff before applying again."
+
+prevent:
+  - Always run `terraform plan` in CI and require approval before `terraform apply`.
+  - Use Sentinel or OPA policies to enforce guardrails on destructive changes.
+  - Store state in a remote backend with locking enabled.
+
+workflow:
+  likely_files:
+    - "*.tf"
+    - "*.tfvars"
+    - "terraform/**"
+  local_repro:
+    - terraform plan
+    - terraform apply

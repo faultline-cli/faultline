@@ -1,0 +1,56 @@
+id: eslint-failure
+title: ESLint or linter check failure
+category: build
+severity: medium
+base_score: 0.9
+tags: [eslint, lint, javascript, typescript, code-quality]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "ESLint"
+    - "eslint"
+    - "Lint errors found"
+    - "lint failed"
+    - "error  Parsing error"
+    - "warning  "
+    - "problems (0 errors"
+    - " error "
+    - "tslint"
+    - "prettier --check"
+    - "Formatting check failed"
+    - "Code style violations"
+    - "@typescript-eslint"
+    - "no-unused-vars"
+  none:
+    - "SyntaxError:"
+
+explain: >
+  A linting or formatting check step (`eslint`, `tslint`, `prettier`) found
+  violations in the source code and exited with a non-zero code, failing the
+  CI step.
+
+why: >
+  Lint failures happen when code is committed without running the linter locally,
+  when a new ESLint rule is enabled in the shared config, or when a dependency
+  update changes rule behaviour. Formatting failures occur when code is not
+  formatted before commit.
+
+fix:
+  - "Run `npx eslint . --fix` locally to auto-fix fixable violations."
+  - "Run `npx prettier --write .` for formatting violations."
+  - "For rule violations that cannot be auto-fixed, address each `error` line manually."
+  - "If a new rule was enabled unintentionally, review `.eslintrc` changes."
+
+prevent:
+  - Add a pre-commit hook with `lint-staged` to run ESLint on changed files before commit.
+  - Configure your editor to show ESLint and Prettier errors inline.
+  - "Use `eslint --max-warnings 0` in CI to fail on warnings as well as errors."
+
+workflow:
+  likely_files:
+    - .eslintrc.js
+    - .eslintrc.json
+    - .eslintrc.yml
+    - .prettierrc
+    - package.json

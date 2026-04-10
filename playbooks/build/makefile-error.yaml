@@ -1,0 +1,54 @@
+id: makefile-error
+title: Makefile / make build error
+category: build
+severity: high
+base_score: 1.0
+tags: [make, makefile, c, cpp, build, compile]
+stage_hints: [build]
+
+match:
+  any:
+    - "make: ***"
+    - "make[1]: ***"
+    - "Makefile:"
+    - "No rule to make target"
+    - "make: command not found"
+    - "undefined reference to"
+    - "error: implicit declaration of function"
+    - "linker command failed"
+    - "ld: symbol(s) not found"
+    - "fatal error:"
+    - ".c: No such file"
+    - "cmake"
+    - "CMake Error"
+
+explain: >
+  A `make` build step failed. The `***` marker in Make output identifies the
+  failing target and the error that prevented it from completing.
+
+why: >
+  Make failures commonly stem from: a missing file or dependency that make
+  cannot locate, a linker error due to a missing library, a compiler error
+  in C/C++ source, or a rule that references a tool not installed on the
+  CI runner.
+
+fix:
+  - "Find the first `***` line — that is the direct failure target."
+  - "For `No rule to make target`: the file or target does not exist; check the Makefile."
+  - "For `undefined reference`: a library is missing from the linker flags or not installed."
+  - "For `CMake Error`: run `cmake -B build` locally to reproduce the configuration error."
+  - "Install missing build tools: `apt-get install build-essential cmake`."
+
+prevent:
+  - Cache build artifacts (object files) between CI runs to speed builds.
+  - Document required system dependencies in the README and CI setup script.
+  - Use `configure` scripts or CMake presets to encapsulate platform differences.
+
+workflow:
+  likely_files:
+    - Makefile
+    - CMakeLists.txt
+    - configure
+  local_repro:
+    - make
+    - cmake --build build

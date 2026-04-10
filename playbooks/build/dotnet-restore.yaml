@@ -1,0 +1,51 @@
+id: dotnet-restore
+title: .NET NuGet package restore failure
+category: build
+severity: high
+base_score: 1.0
+tags: [dotnet, nuget, restore, csharp, build]
+stage_hints: [build]
+
+match:
+  any:
+    - "error NU"
+    - "Unable to resolve"
+    - "Package restore failed"
+    - "NuGet restore"
+    - "could not be resolved"
+    - "unable to find package"
+    - "dotnet restore"
+    - "MSBuild error"
+    - "ProjectReference"
+    - "The given key was not present in the dictionary"
+    - "Could not resolve SDK"
+
+explain: >
+  `dotnet restore` (or a build that implicitly runs restore) could not download
+  or resolve one or more NuGet packages. The build cannot proceed until all
+  dependencies are available.
+
+why: >
+  Common causes: a private NuGet feed is not configured, the package version
+  pinned in the project file does not exist, or network access to nuget.org
+  is blocked in the CI environment.
+
+fix:
+  - "Add feed credentials to `NuGet.Config` or as CI secrets for private feeds."
+  - "Run `dotnet restore --verbosity detailed` to identify which package is failing."
+  - "Update the package version to one that exists: `dotnet list package --outdated`."
+  - "If offline, restore from a packages cache: `dotnet restore --packages .nuget/packages`."
+
+prevent:
+  - Commit `NuGet.Config` with feed URLs (but not credentials) to the repository.
+  - Cache the NuGet packages directory between CI runs.
+  - Pin package versions in `*.csproj` and update them deliberately.
+
+workflow:
+  likely_files:
+    - "*.csproj"
+    - "*.sln"
+    - NuGet.Config
+    - global.json
+  local_repro:
+    - dotnet restore

@@ -15,10 +15,11 @@ func main() {
 	for _, pat := range []string{
 		"playbooks/auth/*.yaml",
 		"playbooks/build/*.yaml",
-		"playbooks/test/*.yaml",
+		"playbooks/ci/*.yaml",
+		"playbooks/deploy/*.yaml",
 		"playbooks/network/*.yaml",
 		"playbooks/runtime/*.yaml",
-		"playbooks/deploy/*.yaml",
+		"playbooks/test/*.yaml",
 	} {
 		matches, _ := filepath.Glob(pat)
 		files = append(files, matches...)

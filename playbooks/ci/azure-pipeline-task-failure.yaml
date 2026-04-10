@@ -1,0 +1,45 @@
+id: azure-pipeline-task-failure
+title: Azure Pipelines task failure
+category: ci
+severity: high
+base_score: 1.0
+tags: [azure-pipelines, task, devops, ci]
+stage_hints: [build, deploy, test]
+
+match:
+  any:
+    - "##[error]"
+    - "Task failed."
+    - "VSTS task"
+    - "AzureCLI task"
+    - "##vso[task.logissue"
+    - "azure-pipelines"
+    - "AzureDevOps"
+    - "No hosted parallelism has been purchased"
+    - "##[warning]Agent"
+    - "System.Exception: Input required: "
+
+explain: >
+  An Azure Pipelines task or step failed. The `##[error]` prefix marks lines
+  reported directly by the Azure DevOps agent or a task's internal validation.
+
+why: >
+  Common causes include a missing pipeline variable or secret, an incorrect task
+  input, a service connection with expired credentials, or no free Microsoft-hosted
+  parallel jobs on the account.
+
+fix:
+  - Search the log for `##[error]` to locate the exact failure message.
+  - "For `No hosted parallelism`: request a free grant or purchase parallel jobs in billing settings."
+  - "For `Input required`: add the missing pipeline variable or secret to the pipeline definition."
+  - "For service connection errors: re-authorize the service connection in Project Settings."
+
+prevent:
+  - Validate all required pipeline variables are set before running the pipeline.
+  - Use variable groups to centralise secrets and reduce per-pipeline configuration.
+  - Test service connection health from the Azure DevOps connection settings page.
+
+workflow:
+  likely_files:
+    - azure-pipelines.yml
+    - .azure/pipelines/*.yml

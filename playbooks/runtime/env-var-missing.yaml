@@ -1,0 +1,56 @@
+id: env-var-missing
+title: Required environment variable missing or empty
+category: runtime
+severity: high
+base_score: 1.0
+tags: [env, environment-variable, config, missing]
+stage_hints: [build, deploy, test]
+
+match:
+  any:
+    - "environment variable"
+    - "env var"
+    - "is not set"
+    - "is not defined"
+    - "must be set"
+    - "required env"
+    - "missing required"
+    - "unset variable"
+    - "KeyError:"
+    - "undefined variable"
+    - "process.env."
+    - "os.environ"
+    - "getenv"
+    - "configuration error"
+  none:
+    - "PATH"
+    - "HOME"
+
+explain: >
+  A required environment variable was not set or was empty when the process
+  tried to read it. The application, build script, or test suite could not
+  continue without it.
+
+why: >
+  This typically happens when a new configuration variable is added to the
+  application but was not added to the CI secrets or job environment. It also
+  occurs when `.env` files are not committed to version control or when a
+  secret is deleted or renamed.
+
+fix:
+  - Identify the variable name from the error and add it as a CI secret or environment variable.
+  - "Check if the variable is defined in a `.env.example` file and copy the appropriate value."
+  - "For GitHub Actions: add the secret under Settings > Secrets and reference it with `${{ secrets.VAR_NAME }}`."
+  - "For GitLab CI: add it under Settings > CI/CD > Variables."
+
+prevent:
+  - Maintain a `.env.example` that lists every required variable with a description.
+  - Add a startup validation step that checks all required variables before the process begins.
+  - Document required secrets in the repository README.
+
+workflow:
+  likely_files:
+    - .env.example
+    - .env.template
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml

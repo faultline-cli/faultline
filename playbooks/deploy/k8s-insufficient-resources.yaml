@@ -1,0 +1,52 @@
+id: k8s-insufficient-resources
+title: Kubernetes pod stuck pending — insufficient resources
+category: deploy
+severity: high
+base_score: 1.0
+tags: [kubernetes, k8s, pending, resources, scheduling]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "Insufficient cpu"
+    - "Insufficient memory"
+    - "0/1 nodes are available"
+    - "pod didn't trigger scale-up"
+    - "No nodes are available that match all of the following predicates"
+    - "Unschedulable"
+    - "FailedScheduling"
+    - "nodes available"
+    - "Pending"
+    - "couldn't match node selector"
+    - "node(s) had taint"
+
+explain: >
+  Kubernetes could not schedule a pod because no node has enough CPU, memory,
+  or other resources available to meet the pod's resource requests.
+
+why: >
+  Pod scheduling fails when resource requests exceed available node capacity,
+  when the pod uses a node selector or affinity rule that matches no node, or
+  when the cluster's auto-scaler has not yet added capacity.
+
+fix:
+  - "Run `kubectl describe pod <pod-name>` and look at the `Events:` section."
+  - "Lower the pod's resource requests if the current values are over-provisioned."
+  - "Check node capacity: `kubectl describe nodes | grep -A5 Allocatable`."
+  - "Remove or relax node selectors and taints if scheduling is overly constrained."
+  - Wait for the cluster auto-scaler to add a node, or manually scale the node group.
+
+prevent:
+  - Set resource requests based on profiled usage, not conservative guesses.
+  - Configure the cluster auto-scaler with a buffer to reduce scheduling delays.
+  - Use namespace resource quotas to prevent runaway resource consumption.
+
+workflow:
+  likely_files:
+    - "k8s/**"
+    - "kubernetes/**"
+    - "helm/**"
+  local_repro:
+    - kubectl describe pod <pod-name>
+  verify:
+    - kubectl get pods -o wide

@@ -1,0 +1,48 @@
+id: proxy-misconfiguration
+title: HTTP proxy misconfiguration
+category: network
+severity: medium
+base_score: 0.9
+tags: [proxy, http, network, corporate, firewall]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - "CONNECT tunnel failed"
+    - "407 Proxy Authentication Required"
+    - "proxyconnect tcp"
+    - "could not connect to proxy"
+    - "Proxy CONNECT"
+    - "invalid proxy address"
+    - "HTTP_PROXY"
+    - "HTTPS_PROXY"
+    - "proxy tunnel"
+    - "tunneling socket could not be established"
+
+explain: >
+  A network request failed because the configured HTTP proxy rejected the
+  connection or was unreachable. In corporate CI environments, all outbound
+  traffic may be routed through a mandatory proxy.
+
+why: >
+  Proxy misconfiguration occurs when `HTTP_PROXY` / `HTTPS_PROXY` environment
+  variables point to a proxy that requires authentication, is offline, or does
+  not allow the target URL. Some tools also require `NO_PROXY` to be set to
+  bypass the proxy for internal services.
+
+fix:
+  - "Set correct proxy env vars: `HTTP_PROXY=http://proxy:port HTTPS_PROXY=http://proxy:port`."
+  - "For `407 Proxy Authentication Required`: include credentials: `http://user:password@proxy:port`."
+  - "Bypass internal hosts: `NO_PROXY=localhost,127.0.0.1,.internal.corp`."
+  - Verify the proxy is reachable from the CI runner network segment.
+
+prevent:
+  - Document and centralise proxy configuration in a shared CI environment block.
+  - Use a transparent proxy or allow-list that does not require per-tool configuration.
+  - Test connectivity with `curl -v https://registry.npmjs.org` from the runner.
+
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - Dockerfile

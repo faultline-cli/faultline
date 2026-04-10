@@ -1,0 +1,43 @@
+id: segfault
+title: Segmentation fault or core dump
+category: runtime
+severity: critical
+base_score: 1.0
+tags: [segfault, crash, coredump, signal, sigsegv]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "Segmentation fault"
+    - "segfault"
+    - "SIGSEGV"
+    - "signal 11"
+    - "core dumped"
+    - "Aborted (core dumped)"
+    - "SIGABRT"
+    - "signal: segmentation fault"
+    - "fault_address"
+    - "Bus error"
+    - "SIGBUS"
+
+explain: >
+  The process was terminated by a segmentation fault (signal 11, SIGSEGV) or
+  other fatal signal, meaning it attempted an illegal memory access. No further
+  output is produced after the crash.
+
+why: >
+  Segfaults in CI usually come from: a native extension or CGo code with a
+  pointer bug, a C/C++ dependency built with incorrect optimization flags,
+  or an OOM condition that corrupts memory before the OOM killer fires.
+
+fix:
+  - "Enable a core dump and run: `gdb <binary> core` to get a stack trace."
+  - "Build with sanitizers: `CFLAGS=-fsanitize=address,undefined` to detect the violation."
+  - "For CGo: run with `GOTRACEBACK=crash go test ./...` for a full stack dump."
+  - Check if a recent dependency bump introduced the regression.
+  - Reproduce locally with `valgrind` to identify the exact access violation.
+
+prevent:
+  - Run AddressSanitizer (ASAN) in CI on a sanitizer-enabled build target.
+  - Pin native dependency versions and test upgrades in isolation.
+  - Add a crash reporter that captures core dumps and uploads them as CI artifacts.

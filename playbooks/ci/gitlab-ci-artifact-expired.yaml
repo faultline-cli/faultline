@@ -1,0 +1,44 @@
+id: gitlab-ci-artifact-expired
+title: GitLab CI artifact missing or expired
+category: ci
+severity: medium
+base_score: 0.9
+tags: [gitlab, artifact, expired, dependency, ci]
+stage_hints: [build, deploy, test]
+
+match:
+  any:
+    - "artifact not found"
+    - "No such artifact"
+    - "artifacts have expired"
+    - "expired artifact"
+    - "Could not retrieve artifact"
+    - "needs: artifact"
+    - "no artifacts to download"
+    - "artifact download failed"
+
+explain: >
+  A downstream GitLab CI job could not retrieve an artifact produced by an
+  earlier job. Either the artifact expired, the upstream job never ran, or
+  the artifact path is misconfigured.
+
+why: >
+  GitLab artifacts have a default expiry (30 days or as configured per job).
+  Manual pipeline reruns triggered after expiry will fail artifact retrieval.
+  Misconfigured `needs:` references or missing `artifacts: paths` declarations
+  in the producing job cause the same symptom.
+
+fix:
+  - Rerun the full pipeline from the beginning instead of retrying a single failed job.
+  - "Increase the artifact lifetime: `artifacts: expire_in: 7 days`."
+  - Verify the producing job declares the correct artifact paths.
+  - "Check the `needs:` block in the failing job points to the correct job name."
+
+prevent:
+  - Set artifact expiry relative to branch retention policy (never for main/release).
+  - Use GitLab's `dependencies:` or `needs:` to make the data flow explicit.
+  - Store build artifacts in a registry or object store for long-term access.
+
+workflow:
+  likely_files:
+    - .gitlab-ci.yml
