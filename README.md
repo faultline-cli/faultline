@@ -6,6 +6,10 @@ It reads a raw CI log from a file or stdin, matches it against a library of
 YAML playbooks, and returns a ranked list of likely failures with evidence and
 concrete fix steps.
 
+The playbook layer is reviewed separately from runtime matching: bundled
+playbooks are validated, then conflict-reported so overlapping patterns and
+`match.none` exclusions stay deterministic as the catalog grows.
+
 ## Installation
 
 For private distribution, download the latest release tarball from GitHub
@@ -76,6 +80,29 @@ faultline explain docker-auth
 | `list` | List all built-in playbooks |
 | `list --category <cat>` | Filter by category |
 | `explain <id>` | Full detail for a single playbook |
+
+## Validation And Review
+
+Use the test suite to validate the CLI and the playbook loader:
+
+```bash
+make test
+```
+
+Use the playbook review target to inspect exact overlapping patterns and
+explicit exclusions before changing bundled rules:
+
+```bash
+make review
+```
+
+Review guidance:
+
+- Prefer tightening `match.any` or `match.all` before adding new exclusions.
+- Add `match.none` only for high-confidence false positives that are shared
+  with another rule.
+- Re-run `make review` after editing bundled playbooks to confirm the overlap
+  report still makes sense.
 
 ### Flags
 

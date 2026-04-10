@@ -314,3 +314,50 @@ func TestAdditionalBundledPlaybookFixtures(t *testing.T) {
 		})
 	}
 }
+
+func TestBundledPlaybookNoneExclusions(t *testing.T) {
+	pbs, err := playbooks.LoadDir(repoPlaybookDir(t))
+	if err != nil {
+		t.Fatalf("load playbooks: %v", err)
+	}
+
+	t.Run("network timeout excludes test timeout phrases", func(t *testing.T) {
+		lines, err := readLines(strings.NewReader(
+			"go test -timeout 30s\nTest timed out after 30000ms\ncontext deadline exceeded\n",
+		))
+		if err != nil {
+			t.Fatalf("read lines: %v", err)
+		}
+		ctx := ExtractContext(lines)
+		results := matcher.Rank(pbs, lines, ctx)
+		if len(results) == 0 {
+			t.Fatal("expected at least one result")
+		}
+		if got := results[0].Playbook.ID; got != "test-timeout" {
+			t.Fatalf("expected test-timeout first, got %s", got)
+		}
+		if containsPlaybook(results, "network-timeout") {
+			t.Fatal("expected network-timeout to be excluded by match.none")
+		}
+	})
+
+	t.Run("oom killed excludes container crash phrases", func(t *testing.T) {
+		lines, err := readLines(strings.NewReader(
+			"CrashLoopBackOff\nexit code 137\nOut of memory\nBack-off restarting failed container\n",
+		))
+		if err != nil {
+			t.Fatalf("read lines: %v", err)
+		}
+		ctx := ExtractContext(lines)
+		results := matcher.Rank(pbs, lines, ctx)
+		if len(results) == 0 {
+			t.Fatal("expected at least one result")
+		}
+		if got := results[0].Playbook.ID; got != "container-crash" {
+			t.Fatalf("expected container-crash first, got %s", got)
+		}
+		if containsPlaybook(results, "oom-killed") {
+			t.Fatal("expected oom-killed to be excluded by match.none")
+		}
+	})
+}

@@ -17,6 +17,11 @@ match:
     - "configmap not found"
     - invalid configuration
     - "cannot find key"
+  none:
+    - "KeyError:"
+    - os.environ
+    - process.env.
+    - getenv
 
 explain: >
   The deployment failed because a required configuration value, environment

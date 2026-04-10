@@ -16,6 +16,12 @@ match:
     - concurrent
     - "too many connections"
     - database locked
+  none:
+    - port conflict
+    - failed to bind to port
+    - cannot start service
+    - CrashLoopBackOff
+    - host port
 
 explain: >
   Parallel test execution caused a resource conflict: two tests tried to bind

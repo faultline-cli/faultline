@@ -23,6 +23,11 @@ match:
     - "beforeAll"
     - "setup failed"
     - "testdata"
+  none:
+    - chdir
+    - working directory not found
+    - failed to change directory
+    - not a git repository
 
 explain: >
   A test failed because it could not load a required fixture file, seed record,

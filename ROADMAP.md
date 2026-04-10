@@ -36,6 +36,7 @@
 
 - add fixture-driven tests for all bundled playbooks
 - verify stable ranking and deterministic output
+- keep a deterministic overlap review for shared patterns and `match.none` exclusions
 - add container smoke tests
 
 ## Not On The Roadmap

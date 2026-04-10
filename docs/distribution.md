@@ -82,9 +82,10 @@ Tagged releases are built by [release.yml](/home/jake/workspace/faultline/.githu
 The workflow:
 
 1. runs `make test`
-2. builds release tarballs with `make release-snapshot VERSION=<tag>`
-3. uploads the archives as workflow artifacts
-4. publishes them to the GitHub Release for tag pushes
+2. reviews bundled playbook conflicts with `make review`
+3. builds release tarballs with `make release-snapshot VERSION=<tag>`
+4. uploads the archives as workflow artifacts
+5. publishes them to the GitHub Release for tag pushes
 
 To build the same artifacts locally:
 

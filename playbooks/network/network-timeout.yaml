@@ -25,6 +25,9 @@ match:
     - "dial tcp: lookup"
     - could not resolve host
     - nodename nor servname provided
+    - "go test -timeout"
+    - "Test timed out"
+    - "async test timed out"
 
 explain: >
   A network request exceeded its timeout limit. The remote host did not respond

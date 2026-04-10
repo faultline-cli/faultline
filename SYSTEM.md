@@ -21,7 +21,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 1. Read log input from a file path or stdin.
 2. Normalize the raw log into stable lines for matching.
 3. Load bundled YAML playbooks.
-4. Validate playbook structure before matching.
+4. Validate playbook structure and review overlap conflicts before matching.
 5. Match deterministic patterns against the normalized log.
 6. Score and rank matches using explicit, stable rules.
 7. Optionally enrich the likely diagnosis with recent local git repository context.
@@ -47,6 +47,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `internal/output` owns text formatting and JSON serialization.
 - `internal/workflow` owns deterministic next-step planning for local and agentic workflows.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
+- `internal/playbooks` also owns playbook overlap reporting for deterministic review of shared patterns and exclusions.
 - `playbooks/` owns bundled failure definitions and should contain only deterministic rule data.
 
 ## Core Entities
@@ -90,6 +91,7 @@ type Result struct {
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.
 - Workflow output should stay deterministic and derived only from analysis results plus local repo context.
+- Playbook review output should be deterministic and should highlight exact shared patterns and exclusions.
 - Docker execution should not require runtime dependencies beyond the container image.
 
 ## Non-Goals

@@ -202,7 +202,60 @@ func validate(r raw, path string) error {
 			path,
 		)
 	}
+	if err := validatePatterns(r.Match.Any, "match.any", path); err != nil {
+		return err
+	}
+	if err := validatePatterns(r.Match.All, "match.all", path); err != nil {
+		return err
+	}
+	if err := validatePatterns(r.Match.None, "match.none", path); err != nil {
+		return err
+	}
+	if err := validateExclusions(r.Match.Any, r.Match.All, r.Match.None, path); err != nil {
+		return err
+	}
 	return nil
+}
+
+func validatePatterns(patterns []string, section, path string) error {
+	for i, pattern := range patterns {
+		norm := normalizePattern(pattern)
+		if norm == "" {
+			return fmt.Errorf("playbook %s: %s[%d] must not be empty", path, section, i)
+		}
+	}
+	return nil
+}
+
+func validateExclusions(any, all, none []string, path string) error {
+	positive := make(map[string]string, len(any)+len(all))
+	for i, pattern := range any {
+		positive[normalizePattern(pattern)] = fmt.Sprintf("match.any[%d]", i)
+	}
+	for i, pattern := range all {
+		norm := normalizePattern(pattern)
+		if prev, ok := positive[norm]; ok {
+			return fmt.Errorf(
+				"playbook %s: match.all[%d] %q overlaps with %s",
+				path, i, pattern, prev,
+			)
+		}
+		positive[norm] = fmt.Sprintf("match.all[%d]", i)
+	}
+	for i, pattern := range none {
+		norm := normalizePattern(pattern)
+		if prev, ok := positive[norm]; ok {
+			return fmt.Errorf(
+				"playbook %s: match.none[%d] %q overlaps with %s",
+				path, i, pattern, prev,
+			)
+		}
+	}
+	return nil
+}
+
+func normalizePattern(pattern string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(pattern)), " "))
 }
 
 func validateDir(dir string) (string, error) {

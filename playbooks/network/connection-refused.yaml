@@ -18,6 +18,14 @@ match:
     - "is the server running"
     - "ConnectionRefusedError"
     - "connection was refused"
+  none:
+    - BUILD FAILED
+    - "FAILURE: Build failed with an exception"
+    - "What went wrong:"
+    - operation timed out
+    - read timeout
+    - dial timeout
+    - "ETIMEDOUT"
 
 explain: >
   A TCP connection attempt was actively refused by the target host. The service

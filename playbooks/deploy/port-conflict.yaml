@@ -15,6 +15,11 @@ match:
     - "listen tcp"
     - port conflict
     - "cannot start service"
+  none:
+    - race detected
+    - concurrent
+    - test is not parallelizable
+    - database locked
 
 explain: >
   A container or service failed to start because the port it needs to bind to

@@ -14,6 +14,9 @@ match:
     - listen tcp
     - cannot assign requested address
     - "EADDRINUSE"
+  none:
+    - port conflict
+    - cannot start service
 
 explain: >
   A process attempted to bind to a TCP or UDP port that is already occupied by

@@ -15,6 +15,11 @@ match:
     - permission denied (publickey)
     - "remote: invalid username or password"
     - "fatal: credential helper"
+  none:
+    - Host key verification failed
+    - "ssh: handshake failed"
+    - no such identity
+    - "ssh: connect to host"
 
 explain: >
   The CI runner could not authenticate with the remote Git repository. This

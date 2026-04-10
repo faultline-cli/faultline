@@ -7,13 +7,14 @@ LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
 
-.PHONY: help build run test docker-build docker-analyze release-snapshot clean-dist
+.PHONY: help build run test review docker-build docker-analyze release-snapshot clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
 		"  build           Build the faultline CLI into $(BINARY)" \
 		"  run             Run the CLI locally: make run LOG=build.log" \
 		"  test            Run all Go tests" \
+		"  review          Print bundled playbook pattern conflicts" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
 		"  clean-dist      Remove generated release artifacts" \
 		"  docker-build    Build the Docker image tagged $(IMAGE)" \
@@ -29,6 +30,9 @@ run:
 
 test:
 	$(GO) test ./...
+
+review:
+	$(GO) run ./cmd/playbook-review
 
 release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh

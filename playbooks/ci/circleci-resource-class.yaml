@@ -16,6 +16,11 @@ match:
     - "Process killed with signal 9"
     - "The build agent was unable to allocate"
     - "CircleCI resource class"
+  none:
+    - CrashLoopBackOff
+    - container exited with
+    - "Back-off restarting failed container"
+    - "exit code 1"
 
 explain: >
   The CircleCI executor ran out of memory or another resource within the

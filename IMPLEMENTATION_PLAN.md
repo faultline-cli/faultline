@@ -22,6 +22,7 @@ The repository currently satisfies the V1 migration goal when these remain true:
 
 - `faultline analyze`, `faultline list`, and `faultline explain` work end to end
 - playbooks load deterministically from disk
+- playbook overlap conflicts can be reviewed deterministically before rule changes
 - matching, ranking, and output remain deterministic across repeated runs
 - JSON output stays stable for automation
 - Docker packaging includes the binary and bundled playbooks

@@ -18,6 +18,13 @@ match:
     - "token is empty"
     - "api key is empty"
     - "secret is empty"
+  none:
+    - "KeyError:"
+    - os.environ
+    - process.env.
+    - getenv
+    - undefined variable
+    - configuration error
 
 explain: >
   A required environment variable was not set in the CI environment. The job

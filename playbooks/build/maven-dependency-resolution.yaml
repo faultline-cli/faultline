@@ -16,6 +16,16 @@ match:
     - could not resolve all files for configuration
     - pluginresolutionexception
     - transfer failed for
+  none:
+    - conflicting requirements
+    - version conflict
+    - incompatible versions
+    - requires a different version
+    - "FAILURE: Build failed with an exception"
+    - "What went wrong:"
+    - Gradle build daemon
+    - Gradle version
+    - compileSdkVersion
 
 explain: >
   The Java build could not resolve one or more dependencies or plugins from the

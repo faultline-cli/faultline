@@ -15,6 +15,11 @@ match:
     - "error: no such file"
     - working directory not found
     - failed to change directory
+  none:
+    - fixture
+    - factory
+    - testdata
+    - seed
 
 explain: >
   A command ran in an unexpected working directory. Relative paths expected a

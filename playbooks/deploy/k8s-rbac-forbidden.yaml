@@ -1,0 +1,61 @@
+id: k8s-rbac-forbidden
+title: Kubernetes RBAC permission denied
+category: deploy
+severity: high
+base_score: 1.0
+tags: [kubernetes, k8s, rbac, forbidden, permissions, serviceaccount]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "is forbidden"
+    - "error from server (Forbidden)"
+    - "User cannot"
+    - "RBAC: access denied"
+    - "does not have get access"
+    - "does not have list access"
+    - "does not have create access"
+    - "does not have delete access"
+    - "does not have patch access"
+    - "does not have watch access"
+    - "clusterrole"
+    - "rolebinding"
+  none:
+    - unauthorized
+    - "error: you must be logged in"
+    - no configuration has been provided
+    - unable to connect to the server
+
+explain: >
+  The CI service account or user is authenticated but does not have the required
+  Kubernetes RBAC permissions to perform the requested operation. The API server
+  returned a 403 Forbidden response.
+
+why: >
+  CI pipelines that deploy to Kubernetes need a service account with roles bound
+  to the namespaces and resources they manage. Missing ClusterRole, Role, or
+  RoleBinding definitions prevent any create, update, or delete operations, even
+  if the kubeconfig credentials are valid.
+
+fix:
+  - "Identify the missing permission from the error: it lists the verb, resource, and namespace."
+  - "Create or update a Role/ClusterRole with the required verbs and bind it to the CI service account."
+  - "Example: kubectl create clusterrolebinding ci-deploy --clusterrole=edit --serviceaccount=<namespace>:<sa-name>."
+  - "Use kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa> to test permissions."
+
+prevent:
+  - Define the CI service account Role and RoleBinding in source control alongside the deployment manifests.
+  - Grant only the verbs and resources the CI job actually needs; avoid cluster-admin for deploy pipelines.
+  - Test RBAC setup in a staging namespace before applying to production namespaces.
+
+workflow:
+  likely_files:
+    - "k8s/**"
+    - "kubernetes/**"
+    - "helm/**"
+    - .github/workflows/*.yml
+  local_repro:
+    - "kubectl auth can-i <verb> <resource> --as=system:serviceaccount:<ns>:<sa>"
+  verify:
+    - "kubectl describe clusterrolebinding <name>"
+    - "kubectl get rolebinding -n <namespace>"

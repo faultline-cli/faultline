@@ -16,8 +16,13 @@ match:
     - "ResourceNotFoundException"
     - "service could not stabilize"
     - "deployment circuit breaker"
-    - "unhealthy"
     - "ECS"
+  none:
+    - liveness probe failed
+    - readiness probe failed
+    - Insufficient cpu
+    - Insufficient memory
+    - FailedScheduling
 
 explain: >
   An ECS service deployment failed to reach a stable state. The deployment

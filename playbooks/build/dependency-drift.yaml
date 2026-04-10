@@ -16,6 +16,12 @@ match:
     - "error: there is a conflict"
     - failed to resolve dependencies
     - dependency resolution failed
+  none:
+    - could not find artifact
+    - could not resolve all files for configuration
+    - transfer failed for
+    - pluginresolutionexception
+    - could not resolve dependencies for project
 
 explain: >
   Two or more packages require incompatible versions of a shared dependency.

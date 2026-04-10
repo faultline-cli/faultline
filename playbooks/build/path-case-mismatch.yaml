@@ -15,6 +15,11 @@ match:
     - path is not a file
     - capitalization
     - wrong case
+  none:
+    - error ts
+    - "tsc:"
+    - found 1 error
+    - type 'string' is not assignable
 
 explain: >
   A file or module import path uses a different capitalisation from the actual

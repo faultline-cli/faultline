@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+
+	"faultline/internal/playbooks"
 )
 
 func main() {
@@ -40,5 +42,16 @@ func main() {
 	}
 	if ok {
 		fmt.Printf("All %d playbooks parsed OK\n", len(files))
+	}
+
+	pbs, err := playbooks.LoadDir("playbooks")
+	if err != nil {
+		fmt.Printf("OVERLAP CHECK ERROR: %v\n", err)
+		return
+	}
+	conflicts := playbooks.FindPatternConflicts(pbs)
+	fmt.Printf("Found %d pattern conflicts\n", len(conflicts))
+	if len(conflicts) > 0 {
+		fmt.Print(playbooks.FormatPatternConflicts(conflicts))
 	}
 }

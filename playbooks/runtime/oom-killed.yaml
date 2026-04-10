@@ -15,6 +15,12 @@ match:
     - "signal: killed"
     - container killed
     - memory limit exceeded
+  none:
+    - CrashLoopBackOff
+    - container exited with
+    - "Back-off restarting failed container"
+    - resource_class
+    - CircleCI resource class
 
 explain: >
   The process was terminated by the operating system's out-of-memory (OOM)

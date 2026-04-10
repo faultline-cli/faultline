@@ -1,0 +1,65 @@
+id: python-lint
+title: Python linting or formatting check failure
+category: build
+severity: medium
+base_score: 0.9
+tags: [python, lint, flake8, black, isort, mypy, ruff, code-quality]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "flake8"
+    - "pylint"
+    - "black"
+    - "isort"
+    - "mypy"
+    - "ruff"
+    - would reformat
+    - "Imports are incorrectly sorted"
+    - "error: cannot import"
+    - "1 file would be reformatted"
+    - "files would be reformatted"
+    - "Your code has been rated"
+    - "Incompatible types in assignment"
+    - "Argument 1 to"
+    - "error: Revealed type"
+  none:
+    - pytest
+    - "FAILED"
+    - Traceback
+    - ModuleNotFoundError
+    - "ImportError"
+
+explain: >
+  A Python code quality step (flake8, pylint, black, isort, mypy, or ruff)
+  found style violations, type errors, or formatting differences and exited
+  with a non-zero status.
+
+why: >
+  Lint failures occur when code is committed without running the linter locally,
+  when a new linting rule is introduced, or when a dependency upgrade tightens
+  existing rules. Black or isort formatting failures occur when files are edited
+  without the formatter being applied first.
+
+fix:
+  - "Run the linter locally to see every violation: `flake8 .`, `pylint <module>`, or `ruff check .`."
+  - "Auto-format with black: `black .` and isort: `isort .`, then commit the result."
+  - "For mypy type errors: add or correct type annotations to match the inferred types."
+  - "If a new rule was enabled unintentionally, check recent changes to `pyproject.toml`, `setup.cfg`, or `.flake8`."
+
+prevent:
+  - Add a pre-commit hook (`pre-commit`) to run black, isort, and flake8/ruff on every commit.
+  - Configure your editor to format Python files on save using the same settings.
+  - Pin the linter version in `requirements-dev.txt` to avoid surprise rule changes on upgrade.
+
+workflow:
+  likely_files:
+    - pyproject.toml
+    - setup.cfg
+    - .flake8
+    - .pre-commit-config.yaml
+  local_repro:
+    - flake8 .
+    - black --check .
+    - isort --check .
+    - mypy .

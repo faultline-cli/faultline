@@ -30,6 +30,9 @@ jobs:
       - name: Run tests
         run: make test
 
+      - name: Review bundled playbook conflicts
+        run: make review
+
       - name: Build release archives
         run: make release-snapshot VERSION="$VERSION"
 

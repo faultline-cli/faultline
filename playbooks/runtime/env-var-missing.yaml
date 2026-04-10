@@ -25,6 +25,11 @@ match:
   none:
     - "PATH"
     - "HOME"
+    - token is empty
+    - api key is empty
+    - secret is empty
+    - configmap not found
+    - secret not found
 
 explain: >
   A required environment variable was not set or was empty when the process

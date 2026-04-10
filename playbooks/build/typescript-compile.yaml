@@ -16,6 +16,10 @@ match:
     - cannot find module
     - compilation complete. watching for file changes
     - found 1 error
+  none:
+    - case-insensitive
+    - capitalization
+    - wrong case
 
 explain: >
   The TypeScript compiler rejected the code because a type, symbol, or module

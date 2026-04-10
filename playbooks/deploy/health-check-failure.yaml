@@ -14,7 +14,14 @@ match:
     - unhealthy
     - service is not ready
     - waiting for deployment to be ready
-    - "0/1 nodes are available"
+  none:
+    - ECS
+    - CannotPullContainerError
+    - deployment circuit breaker
+    - service could not stabilize
+    - Insufficient cpu
+    - Insufficient memory
+    - FailedScheduling
 
 explain: >
   The deployed service did not pass its health check within the configured

@@ -16,6 +16,10 @@ match:
     - "OOMKilled"
     - container is restarting
     - "Back-off restarting failed container"
+  none:
+    - resource_class
+    - CircleCI resource class
+    - The build agent was unable to allocate
 
 explain: >
   The container started but then exited with a non-zero status code. If it
