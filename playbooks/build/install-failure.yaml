@@ -1,0 +1,40 @@
+id: install-failure
+title: Package installation failure
+category: build
+severity: high
+base_score: 0.5
+tags: [install, dependencies, npm, pip, apt]
+stage_hints: [build]
+
+match:
+  any:
+    - npm ERR! code E404
+    - "npm ERR! 404 Not Found"
+    - "ERROR: Could not find a version that satisfies"
+    - "ERROR: No matching distribution found"
+    - could not find package
+    - package not found
+    - apt-get install failed
+    - "dpkg: error"
+    - "E: Unable to locate package"
+    - "failed to fetch"
+
+explain: >
+  The package installation step failed because a package or specific version
+  could not be found in the configured registry or package index.
+
+why: >
+  The package may have been removed from the registry, unpublished, or the
+  version constraint is too narrow. Private packages require authentication that
+  may not be configured.
+
+fix:
+  - Check that the package name and version are correct.
+  - Verify the registry or package index is reachable from the CI runner.
+  - "For private registries, ensure the authentication token is configured (e.g., `.npmrc` or `pip.conf`)."
+  - If a package was removed, find an alternative or pin to the last published version.
+
+prevent:
+  - Use a lockfile to pin exact versions so removals only affect lockfile regeneration jobs.
+  - Mirror critical packages in a private registry you control.
+  - Monitor package deprecation notices and act before removal.

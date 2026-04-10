@@ -1,0 +1,35 @@
+id: port-in-use
+title: Port already in use
+category: runtime
+severity: medium
+base_score: 1.0
+tags: [port, network, bind, socket]
+stage_hints: [build, test, deploy]
+
+match:
+  any:
+    - address already in use
+    - port is already allocated
+    - "bind: address already in use"
+    - listen tcp
+    - cannot assign requested address
+    - "EADDRINUSE"
+
+explain: >
+  A process attempted to bind to a TCP or UDP port that is already occupied by
+  another process on the same CI runner.
+
+why: >
+  Shared or persistent CI runners retain processes from previous jobs. When a
+  new job tries to bind the same port (e.g., 8080, 3000) that a lingering
+  process is still listening on, the bind call fails immediately.
+
+fix:
+  - "Kill the process occupying the port: `fuser -k <port>/tcp` or `lsof -ti :<port> | xargs kill`."
+  - Change the port your service binds to using an environment variable.
+  - Use ephemeral ports (0) where possible and let the OS assign a free one.
+
+prevent:
+  - Use ephemeral ports in tests rather than fixed well-known ports.
+  - Add a cleanup step at the end of each CI job to stop background services.
+  - Use isolated container-per-job CI runners to avoid cross-job process leakage.

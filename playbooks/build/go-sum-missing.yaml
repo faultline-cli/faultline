@@ -1,0 +1,43 @@
+id: go-sum-missing
+title: Missing go.sum entry
+category: build
+severity: medium
+base_score: 1.0
+tags: [go, modules, dependencies]
+stage_hints: [build]
+
+match:
+  any:
+    - missing go.sum entry for module providing package
+    - go.sum file is not up to date
+    - verifying module
+    - no required module provides
+
+explain: >
+  The go.sum file is missing a checksum entry for a dependency that the build
+  requires. Go refuses to proceed without a verified checksum.
+
+why: >
+  go.sum acts as a lock file for module checksums. If a new dependency was
+  added with `go get` but `go mod tidy` was not run, or if the go.sum was not
+  committed, the CI build will fail.
+
+fix:
+  - "Run `go mod tidy` locally."
+  - "Commit the updated `go.sum` file."
+  - "If using a private module proxy, ensure `GONOSUMCHECK` or `GONOSUMDB` is configured correctly."
+
+prevent:
+  - "Add `go mod tidy` to your pre-commit hook or CI lint step."
+  - "Fail the CI job if `go mod tidy` produces any changes: `git diff --exit-code go.sum`."
+
+workflow:
+  likely_files:
+    - go.mod
+    - go.sum
+  local_repro:
+    - go mod tidy
+    - go test ./...
+  verify:
+    - git diff --exit-code go.mod go.sum
+    - go test ./...

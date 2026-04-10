@@ -1,0 +1,37 @@
+id: dns-resolution
+title: DNS resolution failure
+category: network
+severity: medium
+base_score: 1.0
+tags: [dns, network, host, resolution]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - no such host
+    - temporary failure in name resolution
+    - name or service not known
+    - getaddrinfo enotfound
+    - "dial tcp: lookup"
+    - could not resolve host
+    - nodename nor servname provided
+
+explain: >
+  The runner could not resolve a hostname to an IP address, so the network call
+  failed before it could connect.
+
+why: >
+  DNS failures can come from typos in hostnames, transient resolver outages,
+  missing private DNS configuration, or network policies that block access to
+  the resolver.
+
+fix:
+  - Verify the hostname in the failing command or configuration for typos.
+  - Check whether the hostname is internal-only and requires VPN, VPC DNS, or private resolver access.
+  - Retry the job to rule out a transient resolver outage.
+  - Resolve the host manually from the same environment using `nslookup`, `dig`, or `getent hosts`.
+
+prevent:
+  - Keep service endpoints centralized in configuration rather than duplicated across workflows.
+  - Add environment-specific connectivity checks for critical internal hosts.
+  - Monitor resolver health on persistent runners or clusters.

@@ -1,0 +1,40 @@
+id: missing-env
+title: Missing required environment variable
+category: auth
+severity: high
+base_score: 0.5
+tags: [env, config, secrets]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - environment variable not set
+    - required env var
+    - is not set
+    - must be set
+    - missing required variable
+    - unbound variable
+    - please set the
+    - "token is empty"
+    - "api key is empty"
+    - "secret is empty"
+
+explain: >
+  A required environment variable was not set in the CI environment. The job
+  cannot continue without the expected configuration or secret value.
+
+why: >
+  Environment variables that hold secrets (tokens, API keys, passwords) must be
+  configured explicitly in CI settings. They are not inherited from the local
+  developer environment and are not committed to the repository.
+
+fix:
+  - Add the missing variable as a CI secret or environment variable in your CI provider settings.
+  - Reference the variable in your workflow file with the correct name (names are case-sensitive).
+  - For GitHub Actions, add the secret under Settings › Secrets and variables › Actions.
+  - Check that repository forks or non-default branches also have access to the required secrets.
+
+prevent:
+  - Document all required environment variables in a .env.example file.
+  - Add a validation step at the start of each CI job that checks for required variables.
+  - Use a secrets manager or vault integration to avoid manual secret management.

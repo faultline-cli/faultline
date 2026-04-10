@@ -1,0 +1,36 @@
+id: ruby-bundler
+title: Bundler dependency mismatch
+category: build
+severity: medium
+base_score: 1.0
+tags: [ruby, bundler, gems, dependencies]
+stage_hints: [build]
+
+match:
+  any:
+    - "bundler: command not found"
+    - "could not find gem"
+    - "your ruby version is"
+    - "you need to install the following gems"
+    - "bundler: failed to load command"
+    - gemfile.lock not found
+
+explain: >
+  Bundler could not resolve or install the required gems. This typically means
+  the Gemfile.lock is missing, out of sync, or incompatible with the Ruby
+  version on the runner.
+
+why: >
+  Bundler uses Gemfile.lock to guarantee reproducible installs. If the lockfile
+  is absent or was generated on a different Ruby version, Bundler cannot satisfy
+  all dependency constraints.
+
+fix:
+  - "Run `bundle install` locally and commit the updated `Gemfile.lock`."
+  - "Ensure the `.ruby-version` or `Gemfile` Ruby version requirement matches the CI runner."
+  - "Add `bundle exec` as a prefix to gem-based commands in your CI scripts."
+
+prevent:
+  - "Commit `Gemfile.lock` to source control."
+  - "Pin the Ruby version explicitly in the Gemfile: `ruby '3.x.y'`."
+  - Cache the bundler directory in CI to speed up installs and detect drift early.

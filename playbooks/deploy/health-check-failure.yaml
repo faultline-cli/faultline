@@ -1,0 +1,39 @@
+id: health-check-failure
+title: Service health check failure
+category: deploy
+severity: high
+base_score: 1.0
+tags: [health-check, kubernetes, docker, deployment]
+stage_hints: [deploy]
+
+match:
+  any:
+    - health check failed
+    - liveness probe failed
+    - readiness probe failed
+    - unhealthy
+    - service is not ready
+    - waiting for deployment to be ready
+    - "0/1 nodes are available"
+
+explain: >
+  The deployed service did not pass its health check within the configured
+  timeout. Kubernetes, Docker, or the load balancer rolled back or refused to
+  route traffic to the new instance.
+
+why: >
+  Health check failures indicate the application did not start correctly.
+  Common causes include: missing configuration (environment variables), a failed
+  database migration, a port misconfiguration, or an application crash at
+  startup.
+
+fix:
+  - "Check the application logs for startup errors: `kubectl logs <pod> --previous`."
+  - Verify the health check endpoint path and port match what the application actually serves.
+  - Ensure all required environment variables and secrets are present in the deployment.
+  - Check that dependent services (databases, caches) are reachable from the new pod.
+
+prevent:
+  - Test the health check endpoint locally with the same configuration used in production.
+  - Use a staged rollout (canary or blue/green) so health check failures only affect a small percentage of traffic.
+  - Add a smoke test step that verifies the service is ready before marking the deployment successful.

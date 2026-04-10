@@ -1,0 +1,37 @@
+id: git-auth
+title: Git authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [git, github, ssh, auth]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - terminal prompts disabled
+    - could not read username
+    - authentication failed for
+    - repository not found
+    - permission denied (publickey)
+    - "remote: invalid username or password"
+    - "fatal: credential helper"
+
+explain: >
+  The CI runner could not authenticate with the remote Git repository. This
+  prevents cloning, fetching, or pushing code.
+
+why: >
+  CI environments disable interactive terminal prompts, so Git cannot prompt
+  for a username and password. Without a pre-configured credential or SSH key,
+  the operation fails immediately.
+
+fix:
+  - "Add a GITHUB_TOKEN or equivalent secret and configure git with `git config --global url.https://$TOKEN@github.com/.insteadOf https://github.com/`."
+  - For SSH-based workflows, add the deploy key or SSH key as a CI secret and load it with ssh-agent.
+  - "Verify the token has the `repo` scope or the deploy key has read access to the repository."
+  - Check that the repository URL uses the correct scheme (HTTPS vs SSH) for the credentials you have.
+
+prevent:
+  - Use a dedicated CI service account with the minimum repository permissions needed.
+  - Prefer short-lived tokens (GitHub Actions GITHUB_TOKEN) over persistent PATs.
+  - Document the required secret names in your repository README.

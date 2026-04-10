@@ -1,0 +1,39 @@
+id: dependency-drift
+title: Dependency version drift
+category: build
+severity: medium
+base_score: 0.5
+tags: [dependencies, lockfile, version]
+stage_hints: [build]
+
+match:
+  any:
+    - conflicting requirements
+    - dependency conflict
+    - version conflict
+    - incompatible versions
+    - requires a different version
+    - "error: there is a conflict"
+    - failed to resolve dependencies
+    - dependency resolution failed
+
+explain: >
+  Two or more packages require incompatible versions of a shared dependency.
+  The package manager cannot produce an install plan that satisfies all
+  constraints simultaneously.
+
+why: >
+  Dependency drift occurs when direct dependencies are updated independently
+  without re-checking transitive dependency constraints, or when lockfiles are
+  regenerated on different platforms with different available package versions.
+
+fix:
+  - "Run the dependency resolver fresh: `pip install --upgrade pip && pip install -r requirements.txt`, or the equivalent for your tool."
+  - "Use `pip-compile`, `poetry lock`, or `bundle update` to regenerate the lockfile."
+  - Identify the conflicting pair and pin one of them to a compatible version.
+  - Search the issue trackers for the conflicting packages for known compatibility notes.
+
+prevent:
+  - Use a lockfile for all projects and regenerate it on every dependency update.
+  - Enable a dependency update bot (Renovate, Dependabot) to catch conflicts early.
+  - Test dependency upgrades in an isolated branch before merging.

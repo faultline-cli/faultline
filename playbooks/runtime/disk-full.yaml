@@ -1,0 +1,37 @@
+id: disk-full
+title: Disk space exhausted
+category: runtime
+severity: critical
+base_score: 1.0
+tags: [disk, storage, no space]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - no space left on device
+    - disk full
+    - file system is full
+    - no space remaining
+    - "ENOSPC"
+    - not enough space
+
+explain: >
+  The CI runner ran out of disk space. Writes to the filesystem fail
+  immediately when the disk is full, typically causing builds, artifact
+  generation, or log writes to abort.
+
+why: >
+  Large Docker images, build artifacts, or log files can fill a runner's disk
+  before the job completes. Caches that are never invalidated also accumulate
+  over time on persistent runners.
+
+fix:
+  - "Free space by removing unnecessary Docker images: `docker image prune -a`."
+  - "Remove large intermediate build artifacts: `make clean` or the equivalent."
+  - Add a disk space check at the start of the job and fail fast if it is below a safe threshold.
+  - Increase the disk size of the runner.
+
+prevent:
+  - Add a pre-build step that prunes old Docker images and containers.
+  - Configure log rotation and limit artifact retention periods.
+  - Monitor disk usage on persistent runners and alert before it reaches capacity.

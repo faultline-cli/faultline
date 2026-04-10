@@ -1,0 +1,38 @@
+id: syntax-error
+title: Syntax error in source code
+category: build
+severity: critical
+base_score: 1.0
+tags: [syntax, parse, compile]
+stage_hints: [build]
+
+match:
+  any:
+    - "SyntaxError:"
+    - unexpected token
+    - parse error
+    - syntax error near
+    - unterminated string literal
+    - expected ';' before
+    - "error: expected expression"
+    - invalid syntax
+
+explain: >
+  The compiler or interpreter encountered a syntax error in the source code and
+  could not continue. This is a hard failure that requires a code fix before
+  the build can pass.
+
+why: >
+  Syntax errors are introduced when code is edited and the change is not
+  verified locally before pushing, or when a merge conflict marker is left in
+  the file.
+
+fix:
+  - Look at the file and line number in the error message.
+  - Run the compiler or linter locally to reproduce the error.
+  - "Check for unclosed brackets, missing semicolons, or merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)."
+
+prevent:
+  - Run a linter or type-checker as a pre-commit hook.
+  - Enable editor integration that highlights syntax errors in real time.
+  - Require all CI jobs to pass before merging.

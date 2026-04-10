@@ -1,0 +1,37 @@
+id: path-case-mismatch
+title: File path case mismatch
+category: build
+severity: medium
+base_score: 0.5
+tags: [case-sensitive, filesystem, import, path]
+stage_hints: [build]
+
+match:
+  any:
+    - cannot find module
+    - module not found
+    - "file not found:"
+    - case-insensitive
+    - path is not a file
+    - capitalization
+    - wrong case
+
+explain: >
+  A file or module import path uses a different capitalisation from the actual
+  filename on disk. On case-sensitive filesystems (Linux CI runners), this
+  causes an immediate build failure.
+
+why: >
+  macOS and Windows use case-insensitive filesystems by default. Code written on
+  those platforms may use inconsistent capitalisation that goes undetected
+  locally but breaks when the CI runner uses a case-sensitive Linux filesystem.
+
+fix:
+  - "Identify the mismatched import: compare the exact filename on disk against the import path."
+  - Rename the file or fix the import to use consistent casing.
+  - "Search the codebase with `git ls-files | grep -i <filename>` to surface other occurrences."
+
+prevent:
+  - Enforce consistent file naming conventions with a linter.
+  - "Run `git config core.ignorecase false` to make Git's case-sensitive logic consistent with Linux."
+  - "Add a CI check for case collisions: `git ls-files | sort -f | uniq -Di`."

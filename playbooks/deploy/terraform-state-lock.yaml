@@ -1,0 +1,36 @@
+id: terraform-state-lock
+title: Terraform state lock conflict
+category: deploy
+severity: high
+base_score: 1.0
+tags: [terraform, state, lock, infra]
+stage_hints: [deploy]
+
+match:
+  any:
+    - error locking state
+    - state lock
+    - lock id
+    - another terraform process
+    - terraform state is locked
+    - error acquiring the state lock
+
+explain: >
+  Terraform could not acquire the state lock because another Terraform process
+  is currently holding it. Only one Terraform operation can modify state at
+  a time.
+
+why: >
+  State locking prevents concurrent modifications to the same infrastructure.
+  The lock is usually held by a parallel CI job, a manual run, or a crashed
+  previous job that did not release the lock.
+
+fix:
+  - Wait for the other Terraform operation to complete.
+  - "If the lock is stale (from a crashed job), force-unlock it: `terraform force-unlock <LOCK_ID>`."
+  - Check your CI configuration for parallel jobs that target the same Terraform workspace.
+
+prevent:
+  - Serialize Terraform deployments for the same environment using concurrency or environment locks in your CI provider.
+  - Use Terraform workspaces or separate state files for parallel environments.
+  - Add monitoring for long-running state locks and alert if they exceed a timeout.

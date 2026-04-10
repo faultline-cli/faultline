@@ -1,0 +1,42 @@
+id: database-lock
+title: Database migration lock or conflict
+category: deploy
+severity: high
+base_score: 1.0
+tags: [database, migration, lock, postgres, mysql, deploy]
+stage_hints: [deploy]
+
+match:
+  any:
+    - database migration failed
+    - migration lock
+    - "could not obtain lock"
+    - "lock wait timeout"
+    - "deadlock detected"
+    - "relation already exists"
+    - "column already exists"
+    - "table already exists"
+    - failed to acquire advisory lock
+
+explain: >
+  The deployment's database migration step failed because another process holds
+  a lock, a previous incomplete migration left the schema in a partial state,
+  or a migration was re-applied that the database already has.
+
+why: >
+  Migration locks protect against concurrent runs, but a crashed migration
+  process can leave the lock file or advisory lock in place permanently. Re-run
+  protection errors (e.g., "column already exists") indicate the migration was
+  partially applied before a previous rollback.
+
+fix:
+  - "Check for stale locks: `SELECT * FROM schema_migrations WHERE locked = true;` (or tool-specific equivalent)."
+  - "For Flyway/Liquibase: run the repair command to clear failed migration metadata."
+  - "For golang-migrate: delete the dirty flag row in the schema_migrations table."
+  - "For a deadlock: wait for competing transactions to finish, then retry."
+  - "For \"already exists\" errors: mark the migration as applied without running it (use `--fake` or equivalent)."
+
+prevent:
+  - Run migrations in a separate init container or pre-deploy hook before the main container starts.
+  - "Use a migration tool with built-in retry and idempotency (e.g., Flyway with `validateOnMigrate`)."
+  - Never allow multiple deployment replicas to run migrations concurrently — use a leader-election or serialized pipeline step.

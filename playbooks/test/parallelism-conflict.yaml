@@ -1,0 +1,38 @@
+id: parallelism-conflict
+title: Test parallelism conflict
+category: test
+severity: medium
+base_score: 0.5
+tags: [test, parallel, concurrency, port, database]
+stage_hints: [test]
+
+match:
+  any:
+    - address already in use
+    - port already in use
+    - resource is busy
+    - test is not parallelizable
+    - race detected
+    - concurrent
+    - "too many connections"
+    - database locked
+
+explain: >
+  Parallel test execution caused a resource conflict: two tests tried to bind
+  the same port, access the same fixture, or write to the same temporary file
+  simultaneously.
+
+why: >
+  Tests that were written to run sequentially are now running in parallel due to
+  an increased `-parallel` value or a new CI matrix. Without resource isolation,
+  they interfere with each other.
+
+fix:
+  - "Reduce test parallelism with `-parallel 1` to confirm the conflict is parallelism-related."
+  - Allocate a unique port, database, or temp directory per test rather than sharing a fixed resource.
+  - Use test-specific prefixes or random ports in each test's setup.
+
+prevent:
+  - Design each test to be fully isolated and self-contained.
+  - Avoid hardcoded ports or global singletons in test setup.
+  - Run the full test suite in parallel locally before enabling parallel CI.

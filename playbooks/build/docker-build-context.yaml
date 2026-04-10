@@ -1,0 +1,47 @@
+id: docker-build-context
+title: Docker build context or Dockerfile path issue
+category: build
+severity: medium
+base_score: 0.8
+tags: [docker, build, context, dockerfile]
+stage_hints: [build]
+
+match:
+  any:
+    - failed to solve with frontend dockerfile.v0
+    - failed to read dockerfile
+    - "dockerfile: no such file or directory"
+    - failed to compute cache key
+    - file not found in build context or excluded by .dockerignore
+    - forbidden path outside the build context
+    - unable to prepare context
+
+explain: >
+  Docker could not read the Dockerfile or a required file from the selected
+  build context, so the image build stopped before executing the full build.
+
+why: >
+  The command may be running from the wrong directory, using the wrong `-f`
+  path, or excluding required files via `.dockerignore`.
+
+fix:
+  - Verify the exact `docker build` command and confirm the final argument points at the intended build context.
+  - Check that the Dockerfile path exists relative to the working directory or the `-f` flag.
+  - Inspect `.dockerignore` for patterns that exclude required files such as lockfiles or source directories.
+  - Re-run the same command locally from a clean checkout to confirm the context contents.
+
+prevent:
+  - Keep Docker build commands explicit in CI, including both `-f` and context path.
+  - Add a lightweight image build smoke test to pull requests that touch Docker-related files.
+  - Avoid broad `.dockerignore` globs that can silently exclude required inputs.
+
+workflow:
+  likely_files:
+    - Dockerfile
+    - .dockerignore
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - docker build -f Dockerfile .
+  verify:
+    - docker build -f Dockerfile .

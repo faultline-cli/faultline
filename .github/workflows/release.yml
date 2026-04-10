@@ -1,0 +1,46 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to stamp into binaries"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.event.inputs.version || github.ref_name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run tests
+        run: make test
+
+      - name: Build release archives
+        run: make release-snapshot VERSION="$VERSION"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: faultline-${{ env.VERSION }}
+          path: dist/releases/${{ env.VERSION }}/*.tar.gz
+
+      - name: Publish GitHub release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/releases/${{ env.VERSION }}/*.tar.gz

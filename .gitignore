@@ -1,0 +1,14 @@
+# Go
+bin/
+dist/
+*.test
+coverage.out
+
+# Environment
+.env
+.env.*
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo

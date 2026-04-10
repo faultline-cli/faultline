@@ -1,0 +1,54 @@
+id: docker-auth
+title: Docker registry authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [docker, registry, auth]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - pull access denied
+    - authentication required
+    - requested access to the resource is denied
+    - "unauthorized: authentication required"
+    - no basic auth credentials
+    - "denied: requested access to the resource is denied"
+  none:
+    - failed to pull image
+    - imagepullbackoff
+    - errimagepull
+    - back-off pulling image
+    - manifest unknown
+
+explain: >
+  The CI job could not authenticate with the container registry before pulling
+  or pushing an image. Docker requires valid credentials to access private
+  registries.
+
+why: >
+  This usually means the registry login step was skipped, the token has expired,
+  or the stored credential does not have the correct scope for the image being
+  accessed.
+
+fix:
+  - Verify the registry username, token, or password configured in CI secrets.
+  - Ensure the registry login step runs before any docker pull or docker push command.
+  - Confirm the token has the correct repository scope (read, write, delete) for the image.
+  - "Run `docker login <registry>` locally with the same credentials to validate them."
+
+prevent:
+  - Rotate registry tokens on a fixed schedule and update the CI secret immediately.
+  - Use short-lived OIDC tokens (e.g. GitHub Actions id-token) instead of long-lived passwords.
+  - Add a smoke test to your pipeline that validates registry credentials on each commit.
+
+workflow:
+  likely_files:
+    - Dockerfile
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - docker-compose*.yml
+  local_repro:
+    - docker login <registry>
+  verify:
+    - docker login <registry>

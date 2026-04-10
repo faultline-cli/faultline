@@ -1,0 +1,49 @@
+id: typescript-compile
+title: TypeScript compile or type-check failure
+category: build
+severity: high
+base_score: 1.0
+tags: [typescript, tsc, javascript, typecheck]
+stage_hints: [build, test]
+
+match:
+  any:
+    - error ts
+    - "tsc:"
+    - type 'string' is not assignable to type
+    - property does not exist on type
+    - cannot find name
+    - cannot find module
+    - compilation complete. watching for file changes
+    - found 1 error
+
+explain: >
+  The TypeScript compiler rejected the code because a type, symbol, or module
+  import does not match the project's declared types.
+
+why: >
+  Type errors often appear after API changes, dependency upgrades, or partial
+  refactors where code and type definitions drift out of sync.
+
+fix:
+  - Run `tsc --noEmit` locally to reproduce the failing diagnostic with the same config.
+  - Inspect the first TypeScript error in the log and update the code or type definitions to match.
+  - If a generated type file changed, regenerate it before committing.
+  - Confirm path aliases in `tsconfig.json` match the repository layout used in CI.
+
+prevent:
+  - Run a dedicated type-check step on every pull request.
+  - Keep generated client or schema types in sync with the source of truth.
+  - Avoid broad `any` escapes that hide drift until a later refactor.
+
+workflow:
+  likely_files:
+    - tsconfig.json
+    - package.json
+    - src/**/*.ts
+    - src/**/*.tsx
+  local_repro:
+    - npm run build
+    - tsc --noEmit
+  verify:
+    - tsc --noEmit

@@ -1,0 +1,38 @@
+id: order-dependency
+title: Test order dependency
+category: test
+severity: medium
+base_score: 0.5
+tags: [test, order, state, isolation]
+stage_hints: [test]
+
+match:
+  any:
+    - depends on previous test
+    - test order
+    - test assumes
+    - leaked state
+    - global state
+    - "left over from previous"
+    - "already exists"
+    - setup failed
+
+explain: >
+  A test failed because it depends on side effects or state created by a
+  different test that ran earlier. When test order changes, the assumed
+  preconditions are absent.
+
+why: >
+  Tests that rely on database rows, files, or configuration left by prior tests
+  are brittle. Test frameworks may run tests in any order or in parallel, and
+  CI runners may run on clean environments that lack the expected state.
+
+fix:
+  - Add proper setup and teardown to the failing test so it creates its own required state.
+  - Remove shared mutable fixtures between tests.
+  - "Run tests in random order with a tool like `gotestsum` or `pytest-randomly` to surface order dependencies."
+
+prevent:
+  - Treat each test as an independent unit; avoid any shared mutable state.
+  - "Write cleanup code in `defer` (Go), `afterEach` (JS), or `teardown` (Python)."
+  - Enable random test ordering in CI to catch ordering assumptions early.

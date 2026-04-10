@@ -1,0 +1,39 @@
+id: runtime-mismatch
+title: Runtime version mismatch
+category: build
+severity: high
+base_score: 1.0
+tags: [node, python, ruby, go, java, version]
+stage_hints: [build, test]
+
+match:
+  any:
+    - requires node version
+    - node version not supported
+    - invalid engine node
+    - engines.node incompatible
+    - python version
+    - requires python
+    - requires ruby version
+    - go version
+    - java version mismatch
+    - "engine: unsatisfied"
+
+explain: >
+  The installed runtime version does not satisfy the version constraint declared
+  by the project. Dependencies or build tools require a different version.
+
+why: >
+  Runtime version requirements drift over time. When the CI runner's default
+  runtime is updated—or when the project pins to a newer version—existing
+  workflow files that do not specify an explicit runtime version start failing.
+
+fix:
+  - "Specify the exact runtime version in your workflow file using a version manager (e.g., `actions/setup-node`, `setup-python`)."
+  - "Match the version in `.node-version`, `.nvmrc`, `.python-version`, or `.tool-versions`."
+  - Run the build locally with the same version to confirm it passes.
+
+prevent:
+  - Pin all runtimes explicitly in CI workflow files rather than relying on runner defaults.
+  - "Use a version file committed to the repo (`.nvmrc`, `.python-version`) as the single source of truth."
+  - Test against the minimum supported version in addition to the latest.

@@ -1,0 +1,39 @@
+id: ssl-cert-error
+title: SSL/TLS certificate error
+category: network
+severity: high
+base_score: 1.0
+tags: [ssl, tls, certificate, https]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - certificate verify failed
+    - ssl certificate problem
+    - certificate has expired
+    - tls handshake failed
+    - unable to verify the first certificate
+    - "x509:"
+    - ssl_error
+    - certificate signed by unknown authority
+
+explain: >
+  A TLS/SSL certificate error prevented a secure connection. The certificate
+  was expired, self-signed, or signed by an untrusted certificate authority.
+
+why: >
+  Certificate errors commonly occur when: a service's certificate has expired,
+  a self-signed certificate is not trusted by the system CA bundle, a corporate
+  proxy intercepts TLS traffic with its own certificate, or the system clock on
+  the CI runner is wrong.
+
+fix:
+  - "Check if the certificate has expired: `openssl s_client -connect <host>:443 | openssl x509 -noout -dates`."
+  - If connecting to an internal service, add the CA certificate to the system trust store.
+  - Verify the system clock on the CI runner is correct.
+  - Contact the service owner if their certificate has actually expired.
+
+prevent:
+  - Set up automated certificate renewal (e.g., Let's Encrypt with cert-manager or certbot).
+  - Monitor certificate expiry dates and alert 30 days before expiry.
+  - Test certificate validity in a scheduled CI job.

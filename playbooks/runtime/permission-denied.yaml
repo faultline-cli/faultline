@@ -1,0 +1,36 @@
+id: permission-denied
+title: Permission denied
+category: runtime
+severity: high
+base_score: 1.0
+tags: [permissions, file, chmod, sudo]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - permission denied
+    - operation not permitted
+    - "EACCES"
+    - "EPERM"
+    - access denied
+    - insufficient permissions
+
+explain: >
+  The process tried to read, write, execute, or connect to a resource it does
+  not have permission to access.
+
+why: >
+  CI runners run as a non-root user by default (as they should). Scripts or
+  tools that assume root or rely on specific file ownership break in this
+  environment. Files checked out from Git sometimes lose their executable bit.
+
+fix:
+  - "Run `ls -la` on the target file or directory to inspect the current permissions."
+  - "Add `chmod +x` for scripts that need to be executable."
+  - "Do not rely on `sudo` in CI; redesign the step to work without elevated privileges."
+  - For file system paths, ensure the CI user owns or has the correct group access.
+
+prevent:
+  - "Store file permissions in Git for executable scripts: `git update-index --chmod=+x script.sh`."
+  - Design CI jobs to run with the minimum required permissions.
+  - Audit steps that modify the file system and verify they account for non-root users.

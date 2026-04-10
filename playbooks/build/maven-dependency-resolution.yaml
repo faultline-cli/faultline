@@ -1,0 +1,38 @@
+id: maven-dependency-resolution
+title: Maven or Gradle dependency resolution failure
+category: build
+severity: high
+base_score: 1.0
+tags: [java, maven, gradle, dependencies, repository]
+stage_hints: [build]
+
+match:
+  any:
+    - could not resolve dependencies for project
+    - could not find artifact
+    - failed to read artifact descriptor
+    - dependency resolution failed
+    - execution failed for task
+    - could not resolve all files for configuration
+    - pluginresolutionexception
+    - transfer failed for
+
+explain: >
+  The Java build could not resolve one or more dependencies or plugins from the
+  configured artifact repositories.
+
+why: >
+  Repository credentials may be missing, the artifact version may not exist, or
+  a mirrored repository may be unavailable. Maven and Gradle both fail early
+  when a required artifact descriptor cannot be downloaded.
+
+fix:
+  - Verify the artifact coordinates and version in `pom.xml`, `build.gradle`, or version catalogs.
+  - Check repository credentials in Maven settings or Gradle properties if the dependency is private.
+  - Re-run the build with dependency refresh enabled, for example `mvn -U package` or `./gradlew --refresh-dependencies build`.
+  - Confirm the repository URL is reachable from the CI runner.
+
+prevent:
+  - Pin repository configuration in source control rather than relying on runner-local defaults.
+  - Mirror critical private artifacts in a repository you control.
+  - Add a dependency resolution smoke test to catch repository drift before release jobs run.

@@ -1,0 +1,34 @@
+id: python-module-missing
+title: Python module not found
+category: build
+severity: medium
+base_score: 1.0
+tags: [python, pip, modules, dependencies]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "ModuleNotFoundError: No module named"
+    - "ImportError: No module named"
+    - no module named
+    - cannot import name
+    - pip install required
+
+explain: >
+  Python could not import a required module because it is not installed in the
+  current virtual environment or the global Python installation used by CI.
+
+why: >
+  The dependency is declared in requirements.txt, pyproject.toml, or setup.py
+  but the install step was skipped, ran in a different environment, or the
+  package name has changed.
+
+fix:
+  - "Ensure `pip install -r requirements.txt` (or the equivalent) runs before the failing step."
+  - Verify the package name in requirements.txt matches the importable module name.
+  - Check that the CI job uses the correct Python version and virtual environment.
+
+prevent:
+  - Pin all dependencies with exact versions in requirements.txt or lock files.
+  - "Use `pip check` after installation to detect broken or conflicting packages."
+  - "Test the install from a clean environment regularly (e.g., `pip install --no-cache-dir`)."

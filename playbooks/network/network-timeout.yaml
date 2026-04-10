@@ -1,0 +1,47 @@
+id: network-timeout
+title: Network request timeout
+category: network
+severity: medium
+base_score: 1.0
+tags: [network, timeout, http, connection]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - connection timed out
+    - read timeout
+    - dial timeout
+    - context deadline exceeded
+    - operation timed out
+    - request timeout
+    - "ETIMEDOUT"
+    - "ECONNRESET"
+    - failed to connect
+  none:
+    - no such host
+    - temporary failure in name resolution
+    - name or service not known
+    - getaddrinfo enotfound
+    - "dial tcp: lookup"
+    - could not resolve host
+    - nodename nor servname provided
+
+explain: >
+  A network request exceeded its timeout limit. The remote host did not respond
+  within the expected window, causing the CI step to fail.
+
+why: >
+  CI runners may have restricted outbound network access, or the remote service
+  (package registry, API endpoint, artifact store) is temporarily unavailable
+  or slow. Transient network congestion also causes timeouts.
+
+fix:
+  - Retry the failed job to check if the failure is transient.
+  - Check the status page of the service being contacted (e.g., registry.npmjs.org, PyPI).
+  - Verify that the CI runner has outbound access to the required host.
+  - Increase timeout settings if the operation is genuinely slow (e.g., large artifact download).
+
+prevent:
+  - Mirror critical resources in a registry you control to reduce external dependency.
+  - Add retry logic with exponential back-off to network operations where possible.
+  - Monitor external dependency availability in your alerting system.

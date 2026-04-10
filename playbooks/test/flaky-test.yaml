@@ -1,0 +1,40 @@
+id: flaky-test
+title: Flaky test failure
+category: test
+severity: low
+base_score: 0.5
+tags: [test, flaky, intermittent, timing]
+stage_hints: [test]
+
+match:
+  any:
+    - failed on attempt
+    - intermittent failure
+    - test is flaky
+    - flaky test
+    - timeout waiting for
+    - race condition detected
+    - "retry attempt"
+    - test passed on retry
+    - sporadically fails
+
+explain: >
+  A test failed but the failure is not consistently reproducible. Flaky tests
+  indicate timing dependencies, global state, or resource contention that
+  produce different outcomes on each run.
+
+why: >
+  Flaky tests are most commonly caused by: shared global state between tests,
+  async operations without explicit waits, time-dependent assertions, or
+  reliance on external services that are sometimes unavailable.
+
+fix:
+  - Retry the failing test job to confirm the failure is intermittent.
+  - "Isolate the test: run it alone repeatedly (`go test -run TestName -count=10`)."
+  - Add deterministic waits or polling instead of fixed sleep() delays.
+  - Avoid shared global state between tests; use explicit setup and teardown.
+
+prevent:
+  - Use a flakiness detection service that re-runs failing tests automatically.
+  - Track flaky test rates and quarantine tests that fail more than a threshold percentage.
+  - Write tests that are order-independent and self-contained.

@@ -1,0 +1,37 @@
+id: oom-killed
+title: Process killed by OOM killer
+category: runtime
+severity: critical
+base_score: 1.0
+tags: [oom, memory, kill, exit-137]
+stage_hints: [build, test]
+
+match:
+  any:
+    - exit code 137
+    - killed
+    - out of memory
+    - oom killer
+    - "signal: killed"
+    - container killed
+    - memory limit exceeded
+
+explain: >
+  The process was terminated by the operating system's out-of-memory (OOM)
+  killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
+
+why: >
+  The process consumed more memory than the CI runner's available physical RAM
+  or the container's memory limit allowed. Large builds, test suites that load
+  big fixtures, or memory leaks commonly trigger this.
+
+fix:
+  - Increase the memory limit for the container or CI runner.
+  - "Profile memory usage with `go tool pprof`, `valgrind`, or your language's profiler."
+  - "Reduce parallelism to lower peak memory use: fewer parallel test workers or build threads."
+  - Check for memory leaks or accidental unbounded data accumulation.
+
+prevent:
+  - Set an explicit memory limit that is slightly above normal usage to catch regressions early.
+  - Add a step that reports peak memory usage after each CI run.
+  - Define memory budgets in project benchmarks and track them over time.

@@ -1,0 +1,37 @@
+id: kubectl-auth
+title: Kubernetes cluster authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [kubernetes, kubectl, auth, kubeconfig]
+stage_hints: [deploy]
+
+match:
+  any:
+    - the server doesn't have a resource type
+    - "error: you must be logged in"
+    - unable to connect to the server
+    - unauthorized
+    - no configuration has been provided
+    - error loading config file
+    - context not found
+
+explain: >
+  The kubectl command could not authenticate with the Kubernetes API server.
+  This prevents any cluster operations such as apply, rollout, or get.
+
+why: >
+  The kubeconfig file is missing, points to an expired credential, or the
+  service account token attached to the CI job does not have permission to
+  perform the requested operation.
+
+fix:
+  - "Decode and export the kubeconfig from the CI secret: `echo \"$KUBECONFIG_B64\" | base64 -d > ~/.kube/config`."
+  - "Verify the cluster context is correct: `kubectl config current-context`."
+  - Ensure the service account has an appropriate ClusterRole or Role binding for the namespace.
+  - Check that the API server URL is reachable from the CI runner network.
+
+prevent:
+  - Rotate kubeconfig credentials on a fixed schedule.
+  - Use OIDC or short-lived token authentication rather than long-lived kubeconfig certificates.
+  - Test cluster connectivity in a dedicated pre-flight step before running deployment jobs.

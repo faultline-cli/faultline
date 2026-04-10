@@ -1,0 +1,36 @@
+id: npm-ci-lockfile
+title: npm ci lockfile mismatch
+category: build
+severity: medium
+base_score: 1.0
+tags: [npm, node, lockfile, dependencies]
+stage_hints: [build]
+
+match:
+  any:
+    - npm ci can only install packages when your package.json and package-lock.json
+    - missing package-lock.json
+    - npm ERR! cipm can only install packages
+    - package-lock.json does not exist
+    - run `npm install` to generate a lockfile
+
+explain: >
+  `npm ci` requires a package-lock.json that exactly matches the dependencies
+  declared in package.json. The command failed because the lockfile is missing
+  or out of sync.
+
+why: >
+  `npm ci` is designed for reproducible CI installs. It reads only from the
+  lockfile and aborts if the lockfile and package.json are inconsistent. Running
+  `npm install` locally without committing the resulting lockfile is the most
+  common cause.
+
+fix:
+  - "Run `npm install` locally to regenerate the lockfile."
+  - "Commit the updated `package-lock.json`."
+  - "Ensure `package-lock.json` is not listed in `.gitignore`."
+
+prevent:
+  - "Commit `package-lock.json` to source control."
+  - "Add a CI check that fails if `package-lock.json` is modified by `npm install`."
+  - "Use `npm ci` in CI and `npm install` only for local development."
