@@ -14,6 +14,9 @@ match:
     - no space remaining
     - "ENOSPC"
     - not enough space
+  none:
+    - disk quota exceeded
+    - "Write failed: No space left"
 
 explain: >
   The CI runner ran out of disk space. Writes to the filesystem fail

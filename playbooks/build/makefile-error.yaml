@@ -21,6 +21,11 @@ match:
     - ".c: No such file"
     - "cmake"
     - "CMake Error"
+  none:
+    - "No CMAKE_CXX_COMPILER could be found"
+    - "No CMAKE_C_COMPILER could be found"
+    - "Could not find a package configuration file"
+    - "By not providing"
 
 explain: >
   A `make` build step failed. The `***` marker in Make output identifies the

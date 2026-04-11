@@ -13,10 +13,16 @@ import (
 // Rank matches every playbook against lines and returns results sorted by
 // score descending, then confidence descending, then playbook ID ascending.
 // Only playbooks with at least one matching pattern are included.
+//
+// match.any patterns are weighted by inverse document frequency: a pattern
+// shared by N playbooks contributes 1/N to the score, so generic terms that
+// appear across many playbooks are automatically less decisive than patterns
+// unique to a single playbook. match.all and match.none semantics are unchanged.
 func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []model.Result {
+	weights := computeAnyWeights(playbooks)
 	results := make([]model.Result, 0, len(playbooks))
 	for _, pb := range playbooks {
-		r := matchPlaybook(pb, lines, ctx)
+		r := matchPlaybook(pb, lines, ctx, weights)
 		if r.Score == 0 {
 			continue
 		}
@@ -40,15 +46,15 @@ func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []m
 // matchPlaybook scores a single playbook against lines using the following
 // rules:
 //
-//   - Each matched any-pattern  → +1.0
-//   - Each matched all-pattern  → +1.5
+//   - Each matched any-pattern  → +weight (1/N where N = playbooks sharing that pattern)
+//   - Each matched all-pattern  → +1.5 (flat; AND semantics already discriminate)
 //   - All all-patterns matched  → +2.0 bonus
 //   - Stage hint matches ctx    → +0.75
 //   - Playbook base_score       → added unconditionally when patterns match
 //
-// Confidence reflects pattern coverage only (stage bonus excluded) and is
-// rounded to two decimal places.
-func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context) model.Result {
+// Confidence reflects weighted pattern coverage only (stage bonus excluded)
+// and is rounded to two decimal places.
+func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, weights map[string]float64) model.Result {
 	evidence := make([]string, 0)
 	seenEvidence := make(map[string]struct{})
 
@@ -59,16 +65,22 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context) mod
 		}
 	}
 
-	// Score any-patterns (OR semantics).
-	anyHits := 0
+	// Score any-patterns (OR semantics, IDF-weighted).
+	anyScore := 0.0
+	anyMaxScore := 0.0
 	for _, pat := range pb.Match.Any {
 		norm := normalize(pat)
 		if norm == "" {
 			continue
 		}
+		w := weights[norm]
+		if w == 0 {
+			w = 1.0
+		}
+		anyMaxScore += w
 		for _, line := range lines {
 			if strings.Contains(line.Normalized, norm) {
-				anyHits++
+				anyScore += w
 				addEvidence(line.Original)
 				break
 			}
@@ -109,13 +121,11 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context) mod
 		}
 	}
 
-	if anyHits == 0 && allHits == 0 {
+	if anyScore == 0 && allHits == 0 {
 		return model.Result{} // no match
 	}
 
-	score := pb.BaseScore +
-		float64(anyHits)*1.0 +
-		float64(allHits)*1.5
+	score := pb.BaseScore + anyScore + float64(allHits)*1.5
 	if allComplete {
 		score += 2.0
 	}
@@ -130,20 +140,16 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context) mod
 		}
 	}
 
-	// Confidence: normalised pattern coverage, capped at 1.0.
+	// Confidence: weighted pattern coverage, capped at 1.0.
 	// Computed without the situational stage bonus.
-	maxScore := pb.BaseScore +
-		float64(len(pb.Match.Any))*1.0 +
-		float64(len(pb.Match.All))*1.5
+	maxScore := pb.BaseScore + anyMaxScore + float64(len(pb.Match.All))*1.5
 	if len(pb.Match.All) > 0 {
 		maxScore += 2.0
 	}
 	if maxScore < 1.0 {
 		maxScore = 1.0
 	}
-	patternScore := pb.BaseScore +
-		float64(anyHits)*1.0 +
-		float64(allHits)*1.5
+	patternScore := pb.BaseScore + anyScore + float64(allHits)*1.5
 	if allComplete {
 		patternScore += 2.0
 	}
@@ -155,6 +161,33 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context) mod
 		Confidence: confidence,
 		Evidence:   evidence,
 	}
+}
+
+// computeAnyWeights returns a map from normalized pattern string to its IDF
+// weight: 1.0 / count, where count is the number of distinct playbooks that
+// list that pattern in match.any. Patterns unique to one playbook keep
+// weight 1.0; patterns shared by N playbooks each contribute 1/N.
+func computeAnyWeights(playbooks []model.Playbook) map[string]float64 {
+	counts := make(map[string]int, len(playbooks)*8)
+	for _, pb := range playbooks {
+		seen := make(map[string]struct{}, len(pb.Match.Any))
+		for _, p := range pb.Match.Any {
+			n := normalize(p)
+			if n == "" {
+				continue
+			}
+			if _, ok := seen[n]; ok {
+				continue
+			}
+			seen[n] = struct{}{}
+			counts[n]++
+		}
+	}
+	weights := make(map[string]float64, len(counts))
+	for p, c := range counts {
+		weights[p] = 1.0 / float64(c)
+	}
+	return weights
 }
 
 // normalize lower-cases s and collapses internal whitespace.

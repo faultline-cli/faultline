@@ -17,6 +17,9 @@ match:
     - "errno 28"
     - "out of disk space"
     - "Disk is full"
+  none:
+    - "file system is full"
+    - "no space remaining"
 
 explain: >
   The CI runner has run out of available disk space. The build, test, or

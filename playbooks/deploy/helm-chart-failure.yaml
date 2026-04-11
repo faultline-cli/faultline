@@ -19,6 +19,10 @@ match:
     - "unable to recognize"
     - "UPGRADE FAILED: another operation"
     - "Error: context deadline exceeded"
+  none:
+    - "has been rolled back"
+    - "rollback was triggered following"
+    - "release.*failed.*reverted"
 
 explain: >
   A Helm chart installation or upgrade failed. Helm wraps Kubernetes API errors

@@ -16,6 +16,10 @@ match:
     - "needs: artifact"
     - "no artifacts to download"
     - "artifact download failed"
+  none:
+    - "artifact upload failed"
+    - "failed to upload artifact"
+    - "Error uploading"
 
 explain: >
   A downstream GitLab CI job could not retrieve an artifact produced by an

@@ -33,8 +33,10 @@ func TestRankAnyPatternScoring(t *testing.T) {
 	if results[0].Playbook.ID != "alpha" {
 		t.Fatalf("expected alpha to rank first via confidence tie-break, got %s", results[0].Playbook.ID)
 	}
-	if results[0].Score != 2.0 {
-		t.Fatalf("expected score 2.0, got %v", results[0].Score)
+	// foo and bar are each shared by both playbooks → IDF weight 0.5 each.
+	// alpha hits both → score = 0 + 0.5 + 0.5 = 1.0.
+	if results[0].Score != 1.0 {
+		t.Fatalf("expected score 1.0, got %v", results[0].Score)
 	}
 	if len(results[0].Evidence) != 2 {
 		t.Fatalf("expected 2 evidence lines, got %d", len(results[0].Evidence))

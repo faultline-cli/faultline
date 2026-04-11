@@ -12,7 +12,6 @@ match:
     - could not find artifact
     - failed to read artifact descriptor
     - dependency resolution failed
-    - execution failed for task
     - could not resolve all files for configuration
     - pluginresolutionexception
     - transfer failed for
@@ -26,6 +25,7 @@ match:
     - Gradle build daemon
     - Gradle version
     - compileSdkVersion
+    - "Execution failed for task"
 
 explain: >
   The Java build could not resolve one or more dependencies or plugins from the
