@@ -84,13 +84,16 @@ The workflow:
 1. runs `make test`
 2. reviews bundled playbook conflicts with `make review`
 3. builds release tarballs with `make release-snapshot VERSION=<tag>`
-4. uploads the archives as workflow artifacts
-5. publishes them to the GitHub Release for tag pushes
+4. smoke tests the built tarball with `make smoke-release VERSION=<tag>`
+5. smoke tests the Docker image with `make docker-smoke IMAGE=faultline-release-smoke`
+6. uploads the archives as workflow artifacts
+7. publishes them to the GitHub Release for tag pushes
 
 To build the same artifacts locally:
 
 ```bash
 make release-snapshot VERSION=v0.1.0
+make smoke-release VERSION=v0.1.0
 ```
 
 Archives are written to `dist/releases/<version>/`.

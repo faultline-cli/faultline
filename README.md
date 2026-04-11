@@ -89,11 +89,30 @@ Use the test suite to validate the CLI and the playbook loader:
 make test
 ```
 
+Track bundled playbook load and analysis cost as the catalog grows:
+
+```bash
+make bench
+```
+
+Smoke test the packaged release archive before publishing it:
+
+```bash
+make release-snapshot VERSION=v0.1.0
+make smoke-release VERSION=v0.1.0
+```
+
 Use the playbook review target to inspect exact overlapping patterns and
 explicit exclusions before changing bundled rules:
 
 ```bash
 make review
+```
+
+Smoke test the Docker delivery path when Docker is available:
+
+```bash
+make docker-smoke IMAGE=faultline-smoke
 ```
 
 Review guidance:

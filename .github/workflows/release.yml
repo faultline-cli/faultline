@@ -36,6 +36,12 @@ jobs:
       - name: Build release archives
         run: make release-snapshot VERSION="$VERSION"
 
+      - name: Smoke test release archive
+        run: make smoke-release VERSION="$VERSION"
+
+      - name: Smoke test Docker image
+        run: make docker-smoke IMAGE=faultline-release-smoke
+
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -13,6 +13,7 @@
 - keep `analyze`, `list`, and `explain` stable as the public interface
 - preserve deterministic file and stdin behavior
 - keep startup and analysis latency low as playbook coverage grows
+- track bundled playbook load and representative-corpus analysis cost with benchmarks
 
 ### 2. Playbook Coverage
 

@@ -139,6 +139,6 @@ func TestAnalyzeReaderSnapshotMismatch(t *testing.T) {
 	}
 }
 
-func repoPlaybookDir(_ *testing.T) string {
+func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks"
 }
