@@ -43,7 +43,7 @@ fix:
 prevent:
   - Include ConfigMap and Secret provisioning in the same pipeline step or Helm release as the Deployment that consumes them.
   - Use Helm or Kustomize to manage all related resources as a single atomic release so ordering is always correct.
-  - Add a pre-deploy validation step: `kubectl get configmap <name> -n <namespace> || exit 1`.
+  - "Add a pre-deploy validation step: `kubectl get configmap <name> -n <namespace> || exit 1`."
   - Use `external-secrets` or Vault Agent Sidecar to source secrets from a secrets manager rather than pre-creating them manually.
 
 workflow:

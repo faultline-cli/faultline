@@ -43,7 +43,7 @@ fix:
 prevent:
   - Add `glab ci lint` or the GitLab API lint endpoint as a pre-commit hook or merge request pipeline step.
   - Use the GitLab Web IDE which provides live `.gitlab-ci.yml` validation in the editor.
-  - Use YAML anchors (`&anchor`, `*alias`, `<<: *merge`) carefully — GitLab supports them but errors can be subtle.
+  - "Use YAML anchors and aliases carefully — GitLab supports them but errors can be subtle."
   - Validate included external files with their own lint job to catch cross-file dependency errors.
 
 workflow:

@@ -15,7 +15,6 @@ match:
     - "insufficient disk space"
     - "ENOSPC"
     - "errno 28"
-    - "no space left"
     - "out of disk space"
     - "Disk is full"
 

@@ -41,7 +41,7 @@ fix:
 prevent:
   - Use a deterministic cache key based on a lockfile hash (e.g., `hashFiles('**/package-lock.json')`) rather than on branch name or date.
   - Add a fallback cache key that matches a broader set of entries so branches with no exact match still get a partial cache hit.
-  - Verify the cache save step runs even when earlier steps fail by placing it in a `always:` or `if: always()` block.
+  - "Verify the cache save step runs even when earlier steps fail by placing it in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block."
   - Monitor cache hit rates over time; a sudden drop indicates a lockfile change or key regression.
 
 workflow:

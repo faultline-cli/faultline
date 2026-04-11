@@ -2,7 +2,7 @@ id: file-descriptor-limit
 title: Too many open files — file descriptor limit exceeded
 category: runtime
 severity: high
-base_score: 1.0
+base_score: 0.4
 tags: [ulimit, file-descriptor, fd, open-files, linux, syscall]
 stage_hints: [build, test]
 

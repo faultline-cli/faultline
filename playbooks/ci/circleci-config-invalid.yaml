@@ -42,7 +42,7 @@ fix:
 
 prevent:
   - Add `circleci config validate` to your pre-push hook or a lightweight CI job triggered on every push.
-  - Pin orb versions explicitly (`orb-name: circleci/orb@x.y.z`) rather than using `@volatile` or `@latest`.
+  - "Pin orb versions explicitly (e.g., `circleci/node@5.1.0`) rather than using `@volatile` or `@latest`."
   - Use the CircleCI VS Code extension which validates config syntax in the editor.
   - Test new config changes in a feature branch before merging to avoid breaking the main pipeline.
 

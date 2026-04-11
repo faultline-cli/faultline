@@ -41,7 +41,7 @@ fix:
   - Increase the artifact retention period if downstream jobs run long after the producing job.
 
 prevent:
-  - Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail.
+  - "Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail."
   - Use explicit, stable artifact names rather than glob patterns to prevent accidental mismatches.
   - Monitor artifact storage usage to avoid hitting quota limits.
   - For large artifacts, consider uploading to an external store (S3, GCS, Azure Blob) and passing the URL downstream rather than using the CI platform's artifact storage.

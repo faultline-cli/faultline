@@ -31,7 +31,7 @@ why: >
 
 fix:
   - "Increase the Node.js heap limit: set `NODE_OPTIONS=--max-old-space-size=4096` (or higher) before the build command."
-  - "For npm scripts, add it directly: `\"build\": \"NODE_OPTIONS=--max-old-space-size=4096 next build\""`."
+  - 'For npm scripts, add it inline in package.json scripts: `"build": "NODE_OPTIONS=--max-old-space-size=4096 next build"`.'
   - "For Jest OOM: pass `--maxWorkers=2` or `--runInBand` to serialize test execution and lower peak memory."
   - Upgrade the CI runner to a higher-memory tier — heap expansion is not free; more RAM is the most reliable fix.
   - "Identify the heap consumer: add `--inspect` or run `node --max-old-space-size=2048 --trace-gc` and profile with Chrome DevTools."
