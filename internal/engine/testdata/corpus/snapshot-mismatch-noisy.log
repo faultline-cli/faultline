@@ -1,0 +1,11 @@
+$ npm test -- --runInBand
+FAIL src/__tests__/formatter.test.ts
+  formatter
+    ✕ renders release summary (18 ms)
+
+  ● formatter › renders release summary
+
+    Received value does not match stored snapshot "formatter renders release summary 1".
+
+    Snapshot name: `formatter renders release summary 1`
+    Run with -u to update snapshots.

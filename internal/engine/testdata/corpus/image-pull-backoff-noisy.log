@@ -1,0 +1,7 @@
+$ kubectl rollout status deployment/payments -n prod --timeout=120s
+Waiting for deployment "payments" rollout to finish: 0 of 3 updated replicas are available...
+Warning  Failed     32s (x4 over 71s)  kubelet  Failed to pull image "ghcr.io/acme/payments:2026-04-12.4": rpc error: code = Unknown desc = Error response from daemon: manifest unknown
+Warning  Failed     32s (x4 over 71s)  kubelet  Error: ErrImagePull
+Normal   BackOff    18s (x6 over 70s)  kubelet  Back-off pulling image "ghcr.io/acme/payments:2026-04-12.4"
+Warning  Failed     18s (x6 over 70s)  kubelet  Failed to pull image "ghcr.io/acme/payments:2026-04-12.4"
+deployment "payments" exceeded its progress deadline

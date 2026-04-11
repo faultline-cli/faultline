@@ -89,10 +89,28 @@ Use the test suite to validate the CLI and the playbook loader:
 make test
 ```
 
+`make test` also exercises a noisy corpus of full-length CI logs in addition to
+the synthetic bundled playbook fixtures, so release readiness is checked
+against overlap-heavy real-world shapes rather than isolated pattern strings.
+
 Track bundled playbook load and analysis cost as the catalog grows:
 
 ```bash
 make bench
+```
+
+Run the full publish-grade validation path with one command:
+
+```bash
+make release-check VERSION=v0.1.0
+```
+
+This runs `make test`, `make review`, builds a release snapshot, and smoke tests
+the packaged archive. Include Docker delivery validation when Docker is
+available:
+
+```bash
+make release-check VERSION=v0.1.0 WITH_DOCKER=1 IMAGE=faultline-smoke
 ```
 
 Smoke test the packaged release archive before publishing it:

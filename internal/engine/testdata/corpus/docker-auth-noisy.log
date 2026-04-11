@@ -1,0 +1,10 @@
+Run docker/build-push-action@v6
+#7 [linux/amd64 builder 5/5] RUN go test ./...
+#7 DONE 12.4s
+#11 exporting to image
+#11 pushing layers 0.4s done
+#11 pushing manifest for ghcr.io/acme/payments:sha-7d9f1b2
+error: denied: requested access to the resource is denied
+Error response from daemon: Head "https://ghcr.io/v2/acme/payments/manifests/sha-7d9f1b2": unauthorized: authentication required
+no basic auth credentials
+Error: buildx failed with: ERROR: failed to solve: failed to push ghcr.io/acme/payments:sha-7d9f1b2

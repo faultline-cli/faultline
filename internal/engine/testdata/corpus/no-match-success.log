@@ -1,0 +1,6 @@
+$ go test ./...
+ok  	github.com/acme/payments/internal/api	0.221s
+ok  	github.com/acme/payments/internal/store	0.437s
+PASS
+Build completed successfully.
+All checks passed.

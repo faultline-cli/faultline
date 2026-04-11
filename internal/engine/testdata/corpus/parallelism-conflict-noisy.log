@@ -1,0 +1,9 @@
+$ go test ./... -parallel 8 -count=1
+=== RUN   TestWebhookServer
+=== RUN   TestWebhookServer_ReloadsConfig
+2026/04/12 09:17:44 starting test HTTP server on 127.0.0.1:8080
+listen tcp 127.0.0.1:8080: bind: address already in use
+sqlite3: database is locked
+warning: shared test data writer still running concurrently from sibling test
+race detected during execution of test
+FAIL	github.com/acme/payments/internal/server	0.482s

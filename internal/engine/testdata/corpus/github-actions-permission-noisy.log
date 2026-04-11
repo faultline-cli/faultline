@@ -1,0 +1,8 @@
+Run softprops/action-gh-release@v2
+Preparing release for refs/tags/v1.8.0
+Error: HttpError: Resource not accessible by integration
+HttpError: Resource not accessible by integration
+403 Forbidden
+This request requires the 'contents: write' permission.
+GITHUB_TOKEN permissions for this job: contents=read, packages=read
+Error: Process completed with exit code 1.

@@ -1,0 +1,7 @@
+$ kubectl apply -f deploy/payments.yaml
+deployment.apps/payments configured
+2026/04/12 09:41:01 starting payments API on :8080
+listen tcp :8080: bind: address already in use
+EADDRINUSE
+cannot assign requested address
+container exited with status 1

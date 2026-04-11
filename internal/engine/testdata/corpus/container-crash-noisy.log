@@ -1,0 +1,9 @@
+$ kubectl rollout status deployment/payments -n prod --timeout=90s
+Waiting for deployment "payments" rollout to finish: 1 old replicas are pending termination...
+Warning  BackOff  41s (x5 over 2m10s)  kubelet  Back-off restarting failed container payments in pod payments-6d9c9dd6f8-b2n4r
+Last State:     Terminated
+Reason:         Error
+Exit Code:      137
+State:          Waiting
+Reason:         CrashLoopBackOff
+panic: failed to load runtime configuration

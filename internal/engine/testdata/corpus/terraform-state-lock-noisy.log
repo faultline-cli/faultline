@@ -1,0 +1,13 @@
+$ terraform apply -auto-approve tfplan
+Acquiring state lock. This may take a few moments...
+Error: Error acquiring the state lock
+
+Error message: ConditionalCheckFailedException: The conditional request failed
+Lock Info:
+  ID:        4a7d0be3-844d-4f02-8a80-cff7d7fb40d0
+  Path:      prod/network/terraform.tfstate
+  Operation: OperationTypeApply
+  Who:       ci@runner-17
+  Version:   1.8.1
+
+Terraform acquires a state lock to protect the state from being written by multiple users at the same time.

@@ -6,8 +6,9 @@ IMAGE ?= faultline
 LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
+WITH_DOCKER ?= 0
 
-.PHONY: help build run test bench review smoke-release docker-build docker-analyze docker-smoke release-snapshot clean-dist
+.PHONY: help build run test bench review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -16,12 +17,14 @@ help:
 		"  test            Run all Go tests" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
+		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
 		"  clean-dist      Remove generated release artifacts" \
 		"  docker-build    Build the Docker image tagged $(IMAGE)" \
 		"  docker-analyze  Analyze a mounted log in Docker: make docker-analyze LOG=build.log" \
-		"  docker-smoke    Build the Docker image and verify an auth fixture end to end"
+		"  docker-smoke    Build the Docker image and verify an auth fixture end to end" \
+		"  WITH_DOCKER=1   Include docker-smoke when running release-check"
 
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"
@@ -45,6 +48,13 @@ smoke-release:
 
 release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
+
+release-check: test review release-snapshot smoke-release
+	@if [ "$(WITH_DOCKER)" = "1" ]; then \
+		$(MAKE) docker-smoke IMAGE=$(IMAGE); \
+	else \
+		printf "%s\n" "skipping docker-smoke (set WITH_DOCKER=1 to include it)"; \
+	fi
 
 clean-dist:
 	rm -rf dist

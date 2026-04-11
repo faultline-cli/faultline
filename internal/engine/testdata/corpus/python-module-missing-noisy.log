@@ -1,0 +1,11 @@
+$ pytest -q
+============================= test session starts =============================
+platform linux -- Python 3.12.2, pytest-8.2.1
+collected 0 items / 1 error
+
+ImportError while importing test module '/workspace/tests/test_api.py'.
+Traceback (most recent call last):
+  File "/workspace/tests/test_api.py", line 4, in <module>
+    from requests import Session
+ModuleNotFoundError: No module named 'requests'
+hint: pip install required dependency 'requests'
