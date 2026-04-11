@@ -42,7 +42,8 @@ This repository is built for deterministic, iterative agentic development. Treat
 A task is not done until:
 
 - The code is implemented.
-- The repo still builds or the build gap is explicitly documented.
+- `make test` passes, or any build gap is explicitly documented.
+- `make review` is run after any playbook addition or pattern change.
 - The behavior has been checked for completeness.
 - Any new architecture or convention is reflected in docs.
 - Any new package boundaries are represented in the repo structure.

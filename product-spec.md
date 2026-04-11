@@ -1,6 +1,8 @@
 # Faultline Product Spec
 
-> If this document conflicts with [`SYSTEM.md`](./SYSTEM.md), `SYSTEM.md` wins for implementation decisions.
+> **AGENTS: Do not derive architecture, module boundaries, or data models from this document.**
+> For implementation decisions, [`SYSTEM.md`](./SYSTEM.md) is the single authoritative source.
+> This document describes product positioning and user-facing behavior only.
 
 ## Positioning
 

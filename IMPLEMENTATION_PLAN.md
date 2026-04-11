@@ -5,7 +5,7 @@ Faultline V1 is now implemented as a CLI-only product.
 ## Shipped Scope
 
 - CLI entrypoint in [`cmd/`](./cmd)
-- deterministic analyzer modules in [`internal/engine/`](./internal/engine), [`internal/loader/`](./internal/loader), [`internal/matcher/`](./internal/matcher), and [`internal/output/`](./internal/output)
+- deterministic analyzer modules in [`internal/engine/`](./internal/engine), [`internal/playbooks/`](./internal/playbooks), [`internal/matcher/`](./internal/matcher), and [`internal/output/`](./internal/output)
 - bundled YAML playbooks in [`playbooks/`](./playbooks)
 - CLI-first build and container workflow in [`Makefile`](./Makefile) and [`Dockerfile`](./Dockerfile)
 - tests covering command behavior, loading, ranking, and formatting
