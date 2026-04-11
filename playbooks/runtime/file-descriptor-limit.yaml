@@ -1,0 +1,49 @@
+id: file-descriptor-limit
+title: Too many open files — file descriptor limit exceeded
+category: runtime
+severity: high
+base_score: 1.0
+tags: [ulimit, file-descriptor, fd, open-files, linux, syscall]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "too many open files"
+    - "EMFILE"
+    - "ENFILE"
+    - "ulimit.*n"
+    - "open: too many open files"
+    - "OSError: [Errno 24]"
+    - "socket: too many open files"
+    - "Cannot assign requested address"
+    - "file descriptor limit"
+
+explain: >
+  The process exceeded the operating system's limit on the number of open file
+  descriptors. The OS refused to open more files, sockets, or pipes.
+
+why: >
+  The default file descriptor limit (`ulimit -n`) is often 1024 in CI
+  containers. Processes that open many files, network connections, or pipes
+  simultaneously (large test suites, parallelized file watchers, or servers
+  handling many concurrent connections) can exhaust this limit quickly.
+
+fix:
+  - "Increase the process limit for the current session: `ulimit -n 65536`."
+  - "In Docker: add `--ulimit nofile=65536:65536` to the `docker run` command or the Compose `ulimits` block."
+  - "In Kubernetes: set the limit in the pod security context or via an init container that raises the limit before the main container starts."
+  - "Identify which process is leaking: `ls /proc/<pid>/fd | wc -l` or `lsof -p <pid> | wc -l`."
+  - Close file handles explicitly in application code rather than relying on garbage collection.
+  - Reduce parallelism in the failing test suite or server to lower peak concurrent open files.
+
+prevent:
+  - "Set `ulimit -n 65536` in the CI job's entrypoint or shell profile before running tests that open many connections."
+  - "Add `lsof | wc -l` as a periodic diagnostic log line in long-running test runs to surface leaks early."
+  - Use connection pool libraries and explicit resource cleanup patterns to prevent file descriptor leaks.
+
+workflow:
+  likely_files:
+    - Dockerfile
+  local_repro:
+    - "ulimit -n"
+    - "ls -la /proc/$$/fd | wc -l"

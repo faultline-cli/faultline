@@ -1,0 +1,45 @@
+id: webhook-delivery-failure
+title: Webhook delivery or signature validation failed
+category: network
+severity: medium
+base_score: 1.0
+tags: [webhook, signature, hmac, event, callback, http]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "webhook.*signature.*invalid"
+    - "signature verification failed"
+    - "hmac.*mismatch"
+    - "invalid webhook signature"
+    - "webhook secret"
+    - "Failed to deliver webhook"
+    - "webhook delivery failed"
+    - "payload signature"
+    - "X-Hub-Signature"
+    - "signature does not match"
+
+explain: >
+  A webhook delivery failed because the receiving endpoint rejected the request,
+  the signature validation did not pass, or the endpoint was unreachable.
+
+why: >
+  Webhook signature failures occur when: the shared secret on the sending side
+  and receiving side are out of sync (e.g., after a secret rotation), the
+  signature algorithm differs between the producer and consumer, or the
+  receiving endpoint is inaccessible from the network.
+
+fix:
+  - "Compare the webhook secret stored in the sending service with the secret on the receiving endpoint."
+  - "Redeliver the webhook manually from the provider's webhook delivery log (e.g., GitHub Settings > Webhooks > Recent Deliveries)."
+  - "Verify the receiving endpoint is publicly reachable: `curl -I <webhook-url>`."
+  - "Check that the signature algorithm matches — GitHub uses HMAC-SHA256 for `X-Hub-Signature-256`."
+
+prevent:
+  - Use a secret rotation procedure that updates both sides atomically.
+  - Monitor webhook delivery success rates and alert on delivery failures.
+  - Test webhook endpoints in staging before applying credential changes in production.
+
+workflow:
+  likely_files:
+    - .github/workflows/

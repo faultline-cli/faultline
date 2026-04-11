@@ -1,0 +1,58 @@
+id: http-auth-failure
+title: HTTP 401 or 403 from upstream service
+category: network
+severity: high
+base_score: 1.0
+tags: [http, auth, 401, 403, api, token, credentials]
+stage_hints: [build, deploy, test]
+
+match:
+  any:
+    - "401 Unauthorized"
+    - "403 Forbidden"
+    - "HTTP 401"
+    - "HTTP 403"
+    - "status 401"
+    - "status 403"
+    - "authentication required"
+    - "Unauthorized: 401"
+    - "Forbidden: 403"
+    - "401 status code"
+    - "403 status code"
+    - "access token.*expired"
+    - "invalid_token"
+    - "token is expired"
+  none:
+    - "Resource not accessible by integration"
+    - "Permission denied to github-actions"
+    - "GITHUB_TOKEN"
+
+explain: >
+  An HTTP request to an upstream service failed with a 401 (Unauthorized) or
+  403 (Forbidden) response. The CI job does not have valid credentials to access
+  the resource.
+
+why: >
+  Authentication failures happen when: an API token has expired, a secret was
+  rotated without updating CI, a token lacks the required scope for the
+  operation, or the credentials are for the wrong environment (staging vs.
+  production).
+
+fix:
+  - "Identify the failing URL and service from the log — the 401/403 body often contains a specific error code."
+  - "Regenerate or refresh the token/key for the relevant service and update the CI secret or environment variable."
+  - "For 401: verify the credential is being sent correctly (header name, format: Bearer vs Basic vs token)."
+  - "For 403: confirm the token has the required permission scope in addition to being valid."
+  - "For JWT tokens: check expiry by decoding the payload: `echo <token> | cut -d. -f2 | base64 -d | python3 -m json.tool | grep exp`."
+  - "For service accounts: confirm the account is not suspended or its key has not been revoked."
+
+prevent:
+  - Use short-lived, scoped tokens (OIDC workload identity, cloud service accounts) instead of long-lived API keys.
+  - Store token expiry dates alongside credentials in your secrets manager and alert before expiry.
+  - Rotate credentials on a schedule and test the rotation procedure in a non-production environment first.
+  - Implement CI health checks that validate credentials are valid (not just present) at the start of sensitive jobs.
+
+workflow:
+  likely_files:
+    - .env
+    - .github/workflows/

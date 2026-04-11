@@ -1,0 +1,54 @@
+id: protobuf-compile
+title: Protocol Buffer compilation failure
+category: build
+severity: high
+base_score: 1.0
+tags: [protobuf, grpc, proto, codegen, rpc]
+stage_hints: [build]
+
+match:
+  any:
+    - "protoc: command not found"
+    - "protoc-gen-go: program not found"
+    - "protoc-gen-grpc: not found"
+    - "Import.*was not found"
+    - "No such file or directory.*proto"
+    - "google/protobuf.*not found"
+    - "Failed to parse protobuf"
+    - "--go_out: protoc-gen-go:"
+    - "is not defined"
+    - "proto: file does not exist"
+    - ".proto: File not found"
+
+explain: >
+  The Protocol Buffer compiler (`protoc`) or one of its plugins failed.
+  Generated code cannot be produced, blocking the build.
+
+why: >
+  Proto compilation fails when: `protoc` is not installed or not in `PATH`,
+  a `protoc` plugin (e.g., `protoc-gen-go`, `protoc-gen-grpc-gateway`) is
+  missing, a `.proto` file imports another `.proto` that is not on the import
+  path, or `protoc` version is incompatible with a plugin version.
+
+fix:
+  - "Install `protoc`: `apt-get install -y protobuf-compiler` (Debian/Ubuntu) or download from the protobuf GitHub releases."
+  - "Install Go plugin: `go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest`."
+  - "Add plugin binaries to `PATH`: `export PATH=$PATH:$(go env GOPATH)/bin`."
+  - "Pass correct include paths: `protoc -I=. -I=vendor/github.com/googleapis/googleapis --go_out=. *.proto`."
+  - "For buf users: run `buf dep update` to sync dependencies, then `buf generate`."
+  - "Verify plugin version compatibility: the `protoc-gen-go` version must be compatible with the `protoc` version in use."
+
+prevent:
+  - Pin all `protoc` and plugin versions in CI (e.g., via a setup script or Dockerfile) and document them in `README.md`.
+  - Use `buf` with a checked-in `buf.gen.yaml` and lock file (`buf.lock`) to manage proto tooling versions declaratively.
+  - Run `buf lint` and `buf breaking --against .git#branch=main` in CI to catch schema regressions before they reach production.
+
+workflow:
+  likely_files:
+    - "*.proto"
+    - buf.gen.yaml
+    - buf.work.yaml
+    - Makefile
+  local_repro:
+    - which protoc && protoc --version
+    - "buf generate"

@@ -1,0 +1,56 @@
+id: k8s-configmap-missing
+title: Kubernetes ConfigMap or Secret not found
+category: deploy
+severity: high
+base_score: 1.0
+tags: [kubernetes, configmap, secret, pod, deploy]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "configmaps.*not found"
+    - "secrets.*not found"
+    - "couldn't find key.*in ConfigMap"
+    - "couldn't find key.*in Secret"
+    - "Error from server (NotFound): configmaps"
+    - "Error from server (NotFound): secrets"
+    - "secret.*does not exist"
+    - "configmap.*does not exist"
+    - "failed to sync secret"
+    - "references non-existent secret"
+    - "optional: false.*configmap"
+
+explain: >
+  A Pod or Deployment references a ConfigMap or Secret that does not exist in
+  the target namespace. The pod cannot start until the referenced resource
+  is available.
+
+why: >
+  ConfigMaps and Secrets must be created before the Deployment that references
+  them. If a deployment is applied to a new environment, a namespace migrated,
+  or a pipeline skips a provisioning step, the required configuration resource
+  may be absent.
+
+fix:
+  - "List what exists: `kubectl get configmaps,secrets -n <namespace>`."
+  - "Read the pod's event log to identify the missing resource: `kubectl describe pod <pod-name> -n <namespace>`."
+  - "Create the missing ConfigMap: `kubectl create configmap <name> --from-file=config.yaml -n <namespace>`."
+  - "Create the missing Secret: `kubectl create secret generic <name> --from-literal=key=value -n <namespace>`."
+  - "For Helm: ensure `values.yaml` has the expected key names and the chart template references match."
+  - "For Kustomize: check that a `secretGenerator` or `configMapGenerator` entry exists for the referenced resource."
+  - "For GitOps (ArgoCD/Flux): confirm the ConfigMap/Secret manifest is tracked in the app's source path."
+
+prevent:
+  - Include ConfigMap and Secret provisioning in the same pipeline step or Helm release as the Deployment that consumes them.
+  - Use Helm or Kustomize to manage all related resources as a single atomic release so ordering is always correct.
+  - Add a pre-deploy validation step: `kubectl get configmap <name> -n <namespace> || exit 1`.
+  - Use `external-secrets` or Vault Agent Sidecar to source secrets from a secrets manager rather than pre-creating them manually.
+
+workflow:
+  likely_files:
+    - "*.yaml"
+    - helm/
+    - kustomize/
+  local_repro:
+    - kubectl get configmaps,secrets -n <namespace>
+    - kubectl describe pod -n <namespace>

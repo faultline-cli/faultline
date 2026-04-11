@@ -1,0 +1,52 @@
+id: cache-restore-miss
+title: CI cache restore missed or corrupted
+category: ci
+severity: low
+base_score: 0.5
+tags: [cache, ci, restore, build, performance, gradle, maven, npm, pip]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "Cache not found"
+    - "cache miss"
+    - "No cache found"
+    - "cache restore failed"
+    - "Warning: Cache not restored"
+    - "cache hit: false"
+    - "Restoring cache"
+    - "Unable to locate executable file: cache"
+    - "Error restoring cache"
+    - "failed to restore cache"
+
+explain: >
+  The CI pipeline attempted to restore a dependency or build cache but found
+  no matching entry. The job will proceed without the cache, resulting in a
+  slower build or test run.
+
+why: >
+  Cache misses occur when: the cache key does not match any stored entry
+  (e.g., a lockfile was updated), the cache expired, the cache was never
+  populated on the branch being built (first run), or the cache key
+  expression has a bug that produces a key with no stored entry.
+
+fix:
+  - Confirm the cache run completed successfully on the branch's last passing build.
+  - "Review the cache key expression — it should use stable inputs like lockfiles, not timestamps or build IDs."
+  - "For GitHub Actions: check the Actions cache list under Settings > Actions > Caches."
+  - "For GitLab CI: review the cache key and `paths` configuration in `.gitlab-ci.yml`."
+  - "For CircleCI: confirm the `save_cache` step completed without error in a recent previous run."
+  - Allow the build to proceed without cache on the first run of a new branch — this is expected behavior.
+
+prevent:
+  - Use a deterministic cache key based on a lockfile hash (e.g., `hashFiles('**/package-lock.json')`) rather than on branch name or date.
+  - Add a fallback cache key that matches a broader set of entries so branches with no exact match still get a partial cache hit.
+  - Verify the cache save step runs even when earlier steps fail by placing it in a `always:` or `if: always()` block.
+  - Monitor cache hit rates over time; a sudden drop indicates a lockfile change or key regression.
+
+workflow:
+  likely_files:
+    - .github/workflows/
+    - .gitlab-ci.yml
+    - .circleci/config.yml
+    - Makefile

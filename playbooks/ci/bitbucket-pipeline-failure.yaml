@@ -1,0 +1,51 @@
+id: bitbucket-pipeline-failure
+title: Bitbucket Pipelines step failure
+category: ci
+severity: high
+base_score: 1.0
+tags: [bitbucket, pipelines, ci, step, deployment, atlassian]
+stage_hints: [build, deploy, test]
+
+match:
+  any:
+    - "bitbucket-pipelines.yml"
+    - "pipelines.yml"
+    - "Bitbucket Pipelines"
+    - "Build image failed"
+    - "Step failed"
+    - "deployment environment"
+    - "BITBUCKET_"
+    - "error: pipelines"
+    - "Max concurrency"
+    - "Pipeline failed to start"
+    - "Invalid pipeline definition"
+    - "Step.*is not valid"
+
+explain: >
+  A Bitbucket Pipelines step failed or the `bitbucket-pipelines.yml`
+  configuration is invalid. The pipeline did not complete successfully.
+
+why: >
+  Bitbucket Pipelines failures occur when: the YAML configuration violates
+  the Bitbucket schema, a step's Docker image fails to pull, a deployment
+  environment is referenced that has not been created in the repository
+  settings, a pipeline variable is missing, or the parallel step concurrency
+  limit is exceeded.
+
+fix:
+  - "Validate the pipeline YAML via the Bitbucket API: `curl -X POST https://api.bitbucket.org/2.0/repositories/{workspace}/{repo}/pipelines_config/validate`."
+  - "Check the Bitbucket Pipelines YAML validator available in the repository's Pipelines settings page."
+  - "For deployment environment errors: create the environment in Repository Settings > Deployments > Environments."
+  - "For missing variables: add them under Repository Settings > Repository Variables or Deployments environments."
+  - "For image pull failures: verify the Docker image name, tag, and access credentials in the repository's Docker credentials settings."
+  - "For parallel step failures: reduce concurrency or restructure steps to stay within the plan's parallel step limit."
+
+prevent:
+  - Validate `bitbucket-pipelines.yml` using the Bitbucket API schema validator as a pre-commit hook.
+  - Use deployment environments for all production and staging steps so variable scoping is explicit.
+  - Keep Docker images pinned to immutable digests or specific version tags to avoid unintended updates.
+  - Test new pipeline steps on a feature branch before merging to ensure they work as expected.
+
+workflow:
+  likely_files:
+    - bitbucket-pipelines.yml

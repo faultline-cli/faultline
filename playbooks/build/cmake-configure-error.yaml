@@ -1,0 +1,49 @@
+id: cmake-configure-error
+title: CMake configuration failed
+category: build
+severity: high
+base_score: 1.0
+tags: [cmake, c, cpp, make, build-system]
+stage_hints: [build]
+
+match:
+  any:
+    - "CMake Error"
+    - "Could not find a package configuration file"
+    - "By not providing.*Find*.cmake"
+    - "CMake Error at CMakeLists.txt"
+    - "Could NOT find"
+    - "No CMAKE_C_COMPILER could be found"
+    - "No CMAKE_CXX_COMPILER could be found"
+    - "cmake: command not found"
+    - "Generator.*not found"
+    - "CMake Error: The source directory"
+
+explain: >
+  CMake failed to configure the build. A required package, compiler, or
+  build tool was not found on the CI runner.
+
+why: >
+  CMake configuration errors occur when a system dependency (library,
+  compiler, or generator like Ninja or Make) is absent from the CI environment.
+  This is common when moving between CI systems or when a new dependency is
+  added to `CMakeLists.txt` without updating the CI setup step.
+
+fix:
+  - "Install missing system packages before the build step (e.g., `apt-get install -y cmake build-essential libssl-dev`)."
+  - "For a missing compiler: install `gcc`/`g++`/`clang` in the CI environment."
+  - "Review the `CMake Error` line in the log for the exact missing component."
+  - "If using vcpkg or Conan, ensure the dependency manager step runs before `cmake ..`."
+  - "Pass explicit paths: `cmake -DCMAKE_PREFIX_PATH=/path/to/deps ..`"
+
+prevent:
+  - Document all system-level dependencies in `README.md` or `CONTRIBUTING.md`.
+  - Pin the CI Docker image to one that includes all required system packages.
+  - Add a `cmake --version && cc --version` sanity check at the start of the build job.
+
+workflow:
+  likely_files:
+    - CMakeLists.txt
+    - cmake/
+  local_repro:
+    - mkdir -p build && cd build && cmake ..

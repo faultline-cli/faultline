@@ -1,9 +1,9 @@
 id: azure-pipeline-task-failure
-title: Azure Pipelines task failure
+title: Azure Pipelines task failure or misconfiguration
 category: ci
 severity: high
 base_score: 1.0
-tags: [azure-pipelines, task, devops, ci]
+tags: [azure-devops, azure-pipelines, task, yaml, ci, devops, service-connection]
 stage_hints: [build, deploy, test]
 
 match:
@@ -18,28 +18,42 @@ match:
     - "No hosted parallelism has been purchased"
     - "##[warning]Agent"
     - "System.Exception: Input required: "
+    - "Task.*failed"
+    - "Error: Task is not authorized"
+    - "ServiceConnectionNotFound"
+    - "ConnectedServiceNotFound"
+    - "ResourceNotFound.*pool"
+    - "Agent pool.*not found"
+    - "Could not find a pool with name"
 
 explain: >
-  An Azure Pipelines task or step failed. The `##[error]` prefix marks lines
-  reported directly by the Azure DevOps agent or a task's internal validation.
+  An Azure Pipelines task failed, the pipeline YAML is invalid, or a
+  required service connection or agent pool is unavailable.
 
 why: >
-  Common causes include a missing pipeline variable or secret, an incorrect task
-  input, a service connection with expired credentials, or no free Microsoft-hosted
-  parallel jobs on the account.
+  Azure Pipelines task failures are caused by: invalid task version or input
+  names that changed between major task versions, a missing or unauthorized
+  service connection, the specified agent pool not existing or having no
+  available agents, missing pipeline variables, or YAML schema violations in
+  `azure-pipelines.yml`.
 
 fix:
-  - Search the log for `##[error]` to locate the exact failure message.
-  - "For `No hosted parallelism`: request a free grant or purchase parallel jobs in billing settings."
-  - "For `Input required`: add the missing pipeline variable or secret to the pipeline definition."
-  - "For service connection errors: re-authorize the service connection in Project Settings."
+  - "Search the log for `##[error]` lines to locate the precise failure message."
+  - "For a missing service connection: go to Project Settings > Service Connections and verify the connection exists and this pipeline has access."
+  - "For a missing agent pool: confirm the pool name in the YAML matches an active pool under Organization Settings > Agent Pools."
+  - "For task version issues: pin the major version (e.g., `- task: NodeTool@0`) and verify input names match the pinned version's spec."
+  - "For 'No hosted parallelism': check parallel job quota under Organization Settings > Billing, or request a free grant."
+  - "For `Input required`: add the missing variable to the pipeline definition or link the variable group that contains it."
+  - "Re-authorize expired service connections: Project Settings > Service Connections > Edit > Verify."
 
 prevent:
-  - Validate all required pipeline variables are set before running the pipeline.
-  - Use variable groups to centralise secrets and reduce per-pipeline configuration.
-  - Test service connection health from the Azure DevOps connection settings page.
+  - Install the Azure Pipelines VS Code extension for local YAML IntelliSense and schema validation.
+  - Pin task versions explicitly (`TaskName@majorVersion`) to prevent silent breakage when tasks receive major updates.
+  - Use variable groups to centralize secrets and reduce per-pipeline configuration drift.
+  - Document all required service connections and agent pools in the repository so new environments can be provisioned correctly.
 
 workflow:
   likely_files:
     - azure-pipelines.yml
-    - .azure/pipelines/*.yml
+    - .azure/pipelines/
+

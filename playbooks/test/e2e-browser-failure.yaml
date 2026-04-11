@@ -1,0 +1,57 @@
+id: e2e-browser-failure
+title: End-to-end browser test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [e2e, browser, playwright, cypress, selenium, headless, chromium]
+stage_hints: [test]
+
+match:
+  any:
+    - "browserType.launch"
+    - "Failed to launch the browser process"
+    - "Chromium.*not found"
+    - "ChromeDriver"
+    - "selenium.*WebDriverException"
+    - "cy.visit"
+    - "Cypress could not start"
+    - "Error: connect ECONNREFUSED.*4444"
+    - "waiting for net::ERR_CONNECTION_REFUSED"
+    - "Target closed"
+    - "browser has been closed"
+    - "playwright"
+    - "Execution context was destroyed"
+    - "net::ERR_CONNECTION_REFUSED"
+
+explain: >
+  An end-to-end browser test failed because the browser could not launch, the
+  target server was unreachable, or a page interaction timed out.
+
+why: >
+  E2E failures in CI are commonly caused by: the application server not being
+  started before tests run, the headless browser binary not being installed in
+  the CI runner, missing system dependencies for Chromium (sandbox, shared
+  libraries), or tests asserting on timing that is slower in CI.
+
+fix:
+  - "For Playwright: run `npx playwright install --with-deps chromium` in the CI setup step."
+  - "For Cypress: ensure `CYPRESS_baseUrl` points to the running application."
+  - "Start the application server as a background process before the test step."
+  - "Add an explicit wait or health check before running tests: `wait-on http://localhost:3000`."
+  - "Run Playwright in headed mode for local debugging: `npx playwright test --headed`."
+  - "For Chrome sandbox issues in Docker: add `--no-sandbox` flag or run with `--cap-add SYS_ADMIN`."
+
+prevent:
+  - Pin browser versions in `playwright.config.ts` or Cypress' `package.json` to avoid surprise updates.
+  - Add a dedicated E2E job that starts the application, waits for readiness, then runs tests.
+  - Use `wait-on` or `@playwright/test`'s `webServer` config to automate the server start/wait flow.
+
+workflow:
+  likely_files:
+    - playwright.config.ts
+    - playwright.config.js
+    - cypress.config.ts
+    - cypress.config.js
+  local_repro:
+    - npx playwright install --with-deps chromium
+    - npx playwright test

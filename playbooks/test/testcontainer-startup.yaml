@@ -1,0 +1,53 @@
+id: testcontainer-startup
+title: Testcontainers container failed to start
+category: test
+severity: medium
+base_score: 1.0
+tags: [testcontainers, docker, test, integration, container]
+stage_hints: [test]
+
+match:
+  any:
+    - "Could not find a valid Docker environment"
+    - "org.testcontainers"
+    - "container failed to start"
+    - "Could not pull image"
+    - "Mapped port can only be obtained after the container is started"
+    - "testcontainers"
+    - "docker.sock"
+    - "ProviderError"
+    - "Cannot connect to the Docker daemon"
+    - "connection to the Docker daemon at"
+    - "docker: Cannot connect"
+
+explain: >
+  A test using Testcontainers could not start the required Docker container.
+  This usually means Docker is not available on the CI runner, or the runner
+  does not have sufficient permissions to access the Docker socket.
+
+why: >
+  Testcontainers requires a running Docker daemon accessible via the Docker
+  socket (`/var/run/docker.sock`). Many CI runners (especially Kubernetes-based
+  ones) do not provide Docker-in-Docker (DinD) access by default, or the user
+  running the test lacks permission to use the Docker socket.
+
+fix:
+  - "In GitHub Actions: add `services: docker: image: docker:dind` or ensure the runner has Docker available."
+  - "In GitLab CI: add `services: - docker:dind` and set `DOCKER_HOST: tcp://docker:2376`."
+  - "Pass Docker socket access: `docker run -v /var/run/docker.sock:/var/run/docker.sock`."
+  - "Use `TESTCONTAINERS_HOST_OVERRIDE` if Docker runs remotely."
+  - "Pre-pull images in CI to avoid cold-start timeouts: `docker pull postgres:15` before running tests."
+
+prevent:
+  - Choose a CI runner tier that provides Docker daemon access for projects using Testcontainers.
+  - Cache pre-pulled Docker images between CI runs using a registry mirror or layer cache.
+  - "Add a CI diagnostic step before tests: `docker info` — this surfaces Docker unavailability early with a clear error."
+  - Document the Docker access requirement in the project README so future CI migrations account for it.
+
+workflow:
+  likely_files:
+    - "src/test/"
+    - docker-compose.yml
+  local_repro:
+    - docker info
+    - mvn test -Dtest=<TestClass>

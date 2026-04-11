@@ -1,0 +1,56 @@
+id: argocd-sync-failed
+title: ArgoCD application sync failed
+category: deploy
+severity: high
+base_score: 1.0
+tags: [argocd, gitops, kubernetes, sync, deploy]
+stage_hints: [deploy]
+
+match:
+  any:
+    - "ComparisonError"
+    - "SyncFailed"
+    - "FailedSync"
+    - "argocd.*sync.*failed"
+    - "OutOfSync"
+    - "error syncing application"
+    - "failed to sync app"
+    - "sync operation failed"
+    - "HealthCheckFailed"
+    - "Application.*degraded"
+    - "rpc error.*argocd"
+    - "Sync.*Error"
+
+explain: >
+  ArgoCD failed to synchronize the application to the desired state defined in
+  the Git repository. The application remains out of sync or in a degraded
+  health state.
+
+why: >
+  ArgoCD sync failures occur when: a Kubernetes manifest in Git has invalid
+  syntax, a resource hook (pre/post-sync Job) fails, a required CRD is missing,
+  RBAC prevents ArgoCD from creating or updating a resource, or the target
+  cluster's state conflicts with the desired state.
+
+fix:
+  - "View the sync error in the UI or run: `argocd app get <app-name> --refresh`."
+  - "Identify failing resources: `argocd app sync <app-name> --dry-run` and `kubectl describe <resource> -n <namespace>`."
+  - "Validate manifests before committing: `kubectl apply --dry-run=server -f manifests/` against the same cluster."
+  - "If a pre/post-sync Job hook failed: `kubectl logs -l argocd.argoproj.io/hook-type=PreSync -n <namespace>`."
+  - "If an RBAC error blocks sync: check ArgoCD's service account has the correct ClusterRole/RoleBinding."
+  - "If the app is stuck OutOfSync due to a finalizer, force sync: `argocd app sync --force <app-name>`."
+
+prevent:
+  - Run `kubectl apply --dry-run=server -f manifests/` in CI as a PR check before merging manifest changes.
+  - Validate manifests with `kubeconform` or `kube-score` in the PR pipeline to catch API version and schema issues early.
+  - Test sync hook Jobs locally with `kubectl apply` before adding them to the GitOps repository.
+  - Use ArgoCD automated sync with self-healing disabled initially, then enable it only after confirming stability.
+
+workflow:
+  likely_files:
+    - "*.yaml"
+    - argocd/
+    - manifests/
+  local_repro:
+    - argocd app get <app-name>
+    - argocd app sync <app-name> --dry-run

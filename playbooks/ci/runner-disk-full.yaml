@@ -1,0 +1,51 @@
+id: runner-disk-full
+title: CI runner disk full
+category: ci
+severity: critical
+base_score: 1.0
+tags: [disk, storage, runner, ci, space]
+stage_hints: [build, test]
+
+match:
+  any:
+    - "No space left on device"
+    - "disk quota exceeded"
+    - "Write failed: No space left"
+    - "not enough disk space"
+    - "insufficient disk space"
+    - "ENOSPC"
+    - "errno 28"
+    - "no space left"
+    - "out of disk space"
+    - "Disk is full"
+
+explain: >
+  The CI runner has run out of available disk space. The build, test, or
+  artifact step cannot write files and fails with ENOSPC.
+
+why: >
+  Disk space is consumed by: Docker image layers pulled during the build,
+  large build artifacts not cleaned up between jobs, excessive logging,
+  test fixtures, dependency caches, or container image builds that layer
+  many files.
+
+fix:
+  - "Check remaining space before diagnosing: `df -h` and `du -sh /* | sort -rh | head -20`."
+  - "Remove Docker build cache and dangling images: `docker system prune -af --volumes`."
+  - "Clear dependency caches: `rm -rf ~/.npm ~/.gradle/caches ~/.m2/repository ~/.cache/pip`."
+  - "In GitHub Actions, add the `jlumbroso/free-disk-space` action before large build steps."
+  - "In GitLab CI, add `before_script: - docker system prune -af` or reduce artifact retention."
+  - "In CircleCI, set `no_output_timeout` and clean up large workspace directories."
+  - Upgrade to a runner or agent tier with more disk, or split the job across multiple stages.
+  - Reduce `.dockerignore` exclusions to keep the build context small.
+
+prevent:
+  - "Add a disk space check at the start of long jobs: `df -h`."
+  - Prune Docker build cache between jobs in your CI runner configuration.
+  - Use remote layer caching (BuildKit registry cache or kaniko) to avoid re-downloading large layers.
+  - Set explicit artifact/cache expiry policies on your CI platform to avoid accumulation across runs.
+
+workflow:
+  likely_files:
+    - .dockerignore
+    - Dockerfile

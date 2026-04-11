@@ -1,0 +1,57 @@
+id: database-migration-test
+title: Database migration failed during test run
+category: test
+severity: high
+base_score: 1.0
+tags: [database, migration, sql, flyway, liquibase, alembic, rails, test]
+stage_hints: [test]
+
+match:
+  any:
+    - "Migration failed"
+    - "Flyway.*error"
+    - "liquibase.*error"
+    - "alembic.*error"
+    - "rake db:migrate"
+    - "relation.*does not exist"
+    - "ActiveRecord::PendingMigrationError"
+    - "ERROR: column.*does not exist"
+    - "ERROR: relation.*does not exist"
+    - "No migrations found"
+    - "Database schema is not up to date"
+    - "migrate.go"
+    - "goose.*error"
+    - "sql-migrate"
+
+explain: >
+  A database migration failed while setting up the test environment. Tests
+  cannot run because the schema is incomplete or the migration tool returned
+  an error.
+
+why: >
+  Migration failures in tests occur when: a new migration file has a syntax
+  error, a migration assumes data or a column that does not exist in the test
+  database, the test database was not cleanly reset before running, or the
+  migration tool version in CI differs from the version used locally.
+
+fix:
+  - "Review the specific SQL error line indicated in the migration output."
+  - "Reset the test database and re-run migrations: `bundle exec rake db:test:prepare` or `alembic downgrade base && alembic upgrade head`."
+  - "Check that all migration files are committed and in the correct order."
+  - "For Flyway: inspect the `flyway_schema_history` table for failed checksum entries."
+  - "Verify the database URL and credentials in the test environment configuration."
+
+prevent:
+  - Test migrations in isolation in CI using a fresh database container before running the full test suite.
+  - Use a transactional test setup that rolls back after each test, avoiding schema drift.
+  - Add a migration validation step (`flyway validate` / `alembic check`) before running tests.
+
+workflow:
+  likely_files:
+    - db/migrate/
+    - migrations/
+    - alembic/versions/
+    - flyway/
+  local_repro:
+    - bundle exec rake db:test:prepare
+    - alembic upgrade head

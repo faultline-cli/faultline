@@ -1,0 +1,53 @@
+id: node-out-of-memory
+title: Node.js JavaScript heap out of memory
+category: build
+severity: high
+base_score: 1.0
+tags: [node, javascript, webpack, nextjs, oom, heap, memory]
+stage_hints: [build]
+
+match:
+  any:
+    - "FATAL ERROR: Reached heap limit Allocation failed"
+    - "JavaScript heap out of memory"
+    - "FATAL ERROR: CALL_AND_RETRY_LAST Allocation failed"
+    - "Ineffective mark-compacts near heap limit"
+    - "<--- Last few GCs --->"
+    - "<--- JS stacktrace --->"
+    - "Allocation failed - JavaScript heap out of memory"
+    - "ERR_WORKER_OUT_OF_MEMORY"
+
+explain: >
+  The Node.js process ran out of heap memory during the build. This is common
+  in large Webpack, Next.js, or Jest builds where the default V8 heap limit is
+  too low for the amount of modules being processed.
+
+why: >
+  Node.js's V8 engine has a default heap size limit (typically 512 MB–1.5 GB
+  depending on the platform). Large bundlers and test suites that load many
+  modules simultaneously can exceed this limit. This is especially frequent
+  when running production builds or full test suites in a memory-constrained CI
+  environment.
+
+fix:
+  - "Increase the Node.js heap limit: set `NODE_OPTIONS=--max-old-space-size=4096` (or higher) before the build command."
+  - "For npm scripts, add it directly: `\"build\": \"NODE_OPTIONS=--max-old-space-size=4096 next build\""`."
+  - "For Jest OOM: pass `--maxWorkers=2` or `--runInBand` to serialize test execution and lower peak memory."
+  - Upgrade the CI runner to a higher-memory tier — heap expansion is not free; more RAM is the most reliable fix.
+  - "Identify the heap consumer: add `--inspect` or run `node --max-old-space-size=2048 --trace-gc` and profile with Chrome DevTools."
+  - Break the build into smaller increments (e.g., build packages individually in a monorepo).
+
+prevent:
+  - "Set `NODE_OPTIONS=--max-old-space-size=4096` globally in the CI environment configuration (e.g., as a CI environment variable)."
+  - Monitor bundle size with `webpack-bundle-analyzer`, `next build` output, or `source-map-explorer` to catch regressions early.
+  - Split large monorepo packages so no single process must compile the whole dependency graph at once.
+  - Add a CI step that fails if the peak RSS of the build process exceeds a defined threshold.
+
+workflow:
+  likely_files:
+    - package.json
+    - webpack.config.js
+    - next.config.js
+    - jest.config.js
+  local_repro:
+    - "NODE_OPTIONS=--max-old-space-size=4096 npm run build"

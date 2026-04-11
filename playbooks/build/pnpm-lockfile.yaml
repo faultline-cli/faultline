@@ -1,0 +1,45 @@
+id: pnpm-lockfile
+title: pnpm lockfile mismatch or frozen install failed
+category: build
+severity: medium
+base_score: 1.0
+tags: [pnpm, lockfile, node, javascript, ci]
+stage_hints: [build]
+
+match:
+  any:
+    - "ERR_PNPM_OUTDATED_LOCKFILE"
+    - "ERR_PNPM_FROZEN_LOCKFILE"
+    - "Cannot install with `frozen-lockfile`"
+    - "pnpm-lock.yaml is not up to date"
+    - "Lockfile is not up to date with"
+    - "Run `pnpm install` to update the lockfile"
+    - "pnpm install --frozen-lockfile"
+
+explain: >
+  The pnpm lockfile (`pnpm-lock.yaml`) is out of sync with `package.json`.
+  CI uses `--frozen-lockfile` to ensure reproducible installs, so any
+  discrepancy causes the install step to fail immediately.
+
+why: >
+  This happens when `package.json` dependencies are updated without running
+  `pnpm install` to regenerate the lockfile, or when the lockfile is not
+  committed after a dependency change.
+
+fix:
+  - "Run `pnpm install` locally to regenerate `pnpm-lock.yaml`."
+  - "Commit the updated `pnpm-lock.yaml` to the repository."
+  - "If using workspaces, run `pnpm install` from the workspace root."
+
+prevent:
+  - "Add a CI check: `pnpm install --frozen-lockfile && git diff --exit-code pnpm-lock.yaml`."
+  - Add a pre-commit hook that runs `pnpm install` when `package.json` changes.
+  - Use Renovate or Dependabot to keep the lockfile updated via automated PRs.
+
+workflow:
+  likely_files:
+    - pnpm-lock.yaml
+    - package.json
+  local_repro:
+    - pnpm install
+    - git diff pnpm-lock.yaml

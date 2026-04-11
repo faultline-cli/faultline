@@ -1,0 +1,52 @@
+id: oidc-token-failure
+title: OIDC token request failed or token invalid
+category: auth
+severity: high
+base_score: 1.0
+tags: [oidc, jwt, token, federated, aws, gcp, azure, github-actions]
+stage_hints: [build, deploy]
+
+match:
+  any:
+    - "OIDC token"
+    - "id_token"
+    - "Unable to get OIDC token"
+    - "JWT.*invalid"
+    - "token is expired"
+    - "aud claim"
+    - "Request claims do not match"
+    - "Error getting token from GitHub's OIDC provider"
+    - "openid-configuration"
+    - "jwks"
+    - "ACTIONS_ID_TOKEN_REQUEST_URL"
+    - "Error: credentials"
+    - "invalid_grant"
+    - "token audience mismatch"
+
+explain: >
+  An OIDC (OpenID Connect) token request failed or the issued token was
+  rejected by the cloud provider. Federated authentication to AWS, GCP, or
+  Azure cannot proceed.
+
+why: >
+  OIDC-based workload identity failures occur when: the trust relationship
+  between the CI provider and the cloud is misconfigured, the OIDC token
+  audience does not match the expected audience on the cloud side, the workflow
+  does not have the `id-token: write` permission, or the cloud IAM role's
+  condition expressions do not match the token claims.
+
+fix:
+  - "In GitHub Actions: add `permissions: id-token: write` to the job."
+  - "Verify the audience claim matches what the cloud provider expects (e.g., `sts.amazonaws.com` for AWS)."
+  - "For AWS: check the IAM role's trust policy — `StringEquals aws:FederatedProvider` and `StringLike token.actions.githubusercontent.com:sub`."
+  - "For GCP: verify the Workload Identity Pool provider attribute mapping includes the correct claim."
+  - "Decode the token to inspect claims: `echo <token> | cut -d. -f2 | base64 -d | jq .`."
+
+prevent:
+  - Document OIDC trust configuration (provider, audience, condition) alongside the workflow files.
+  - Use least-privilege IAM conditions that are specific about the repository and branch.
+  - Test OIDC auth in a separate validation job before using the credentials in deploy jobs.
+
+workflow:
+  likely_files:
+    - .github/workflows/

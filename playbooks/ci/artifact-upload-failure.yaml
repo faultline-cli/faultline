@@ -1,0 +1,54 @@
+id: artifact-upload-failure
+title: CI artifact upload or download failed
+category: ci
+severity: medium
+base_score: 1.0
+tags: [artifact, upload, download, ci, pipeline, storage]
+stage_hints: [build, test, deploy]
+
+match:
+  any:
+    - "artifact upload failed"
+    - "failed to upload artifact"
+    - "upload artifact"
+    - "Error uploading"
+    - "artifact not found"
+    - "No artifact found"
+    - "failed to download artifact"
+    - "artifact has expired"
+    - "Artifact expired"
+    - "Unable to find artifact"
+    - "download artifact"
+
+explain: >
+  A CI job failed to upload a build artifact, or a downstream job failed
+  to download an artifact produced by an earlier job. Pipeline stages that
+  depend on the artifact cannot proceed.
+
+why: >
+  Artifact failures occur when: storage quota is exceeded, the upload step
+  was skipped because an early step failed, the artifact name or path
+  pattern does not match the files produced, the artifact has expired before
+  the download attempt, or network issues interrupted the upload.
+
+fix:
+  - "Check whether the producing job actually ran and exited zero before the upload step."
+  - "Verify the artifact path glob matches the actual output location (e.g., `dist/**` vs `build/dist/**`)."
+  - "For GitHub Actions: check artifact retention settings (default 90 days) and confirm the artifact name is consistent between upload and download steps."
+  - "For GitLab CI: verify `artifacts.paths` and `artifacts.expire_in` in the producing job's config."
+  - "For CircleCI: confirm `store_artifacts` path matches the actual build output directory."
+  - "For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile."
+  - Increase the artifact retention period if downstream jobs run long after the producing job.
+
+prevent:
+  - Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail.
+  - Use explicit, stable artifact names rather than glob patterns to prevent accidental mismatches.
+  - Monitor artifact storage usage to avoid hitting quota limits.
+  - For large artifacts, consider uploading to an external store (S3, GCS, Azure Blob) and passing the URL downstream rather than using the CI platform's artifact storage.
+
+workflow:
+  likely_files:
+    - .github/workflows/
+    - .gitlab-ci.yml
+    - .circleci/config.yml
+    - Jenkinsfile
