@@ -134,13 +134,23 @@ id: extra-custom
 title: Extra Custom
 category: test
 severity: low
+summary: |
+  Custom summary.
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Custom diagnosis.
+fix_markdown: |
+  ## Fix steps
+
+  1. Custom fix.
+validation_markdown: |
+  ## Validation
+
+  - Custom validation.
 match:
   any:
     - "totally custom failure marker"
-explain: custom
-why: custom
-fix:
-  - custom
 `), 0o600); err != nil {
 		t.Fatalf("write custom pack: %v", err)
 	}
