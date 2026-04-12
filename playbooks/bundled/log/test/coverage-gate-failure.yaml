@@ -14,15 +14,29 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Review the coverage report to find the files or packages that dropped below the enforced threshold.
-  2. Add focused tests for the newly introduced or changed paths before lowering the threshold.
-  3. If generated or non-critical files are inflating the denominator, exclude them explicitly in the coverage configuration rather than adjusting the target by hand.
-  4. Re-run the same coverage command locally to confirm the failure is reproducible outside CI.
+  1. Find exactly which files or packages dropped below the threshold:
+
+     ```bash
+     # Go — sort by coverage percentage ascending:
+     go test ./... -coverprofile=coverage.out
+     go tool cover -func=coverage.out | sort -k3 -n | head -20
+
+     # JavaScript:
+     npm test -- --coverage --coverageReporters=text 2>&1 | grep -v "100 |"
+     ```
+
+  2. Add focused tests for the newly introduced or changed code paths before
+     considering any threshold reduction.
+  3. If generated or non-critical files are inflating the denominator, exclude
+     them explicitly in the coverage configuration rather than hand-tuning the
+     target percentage.
+  4. Re-run the same coverage command locally to confirm the failure is
+     reproducible outside CI before writing new tests.
 validation_markdown: |-
   ## Validation
 
-  - go test ./... -cover
-  - npm test -- --coverage
+  - `go test ./... -cover` or `npm test -- --coverage`
+  - Confirm the reported total percentage meets or exceeds the gate threshold.
 why_it_matters_markdown: |-
   ## Why it matters
 

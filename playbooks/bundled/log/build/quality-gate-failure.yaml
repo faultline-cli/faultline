@@ -14,15 +14,36 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Re-run the exact quality-check command locally so the failing files and rule names are visible.
-  2. Fix the reported violations first rather than weakening the CI gate globally.
-  3. If the failure followed a shared config update, review that change and confirm the stricter rule was intentional.
-  4. If multiple tools run under one quality step, split them locally so you can identify whether the failure is lint, formatting, or another static-analysis tool.
+  1. Re-run the exact quality-check command locally to see which files and rules
+     are failing:
+
+     ```bash
+     make lint        # or: eslint ., golangci-lint run, ruff check .
+     make check       # or a direct invocation of the tool
+     ```
+
+  2. Fix the reported violations before considering any relaxation of the gate.
+     Suppression comments (`// nolint`, `# noqa`) should be used sparingly and
+     must include a justification.
+
+  3. If the failure followed a shared config update (`.eslintrc`, `.golangci.yml`,
+     `pyproject.toml`), review that change and confirm the stricter rule was
+     intentional before fixing callers.
+
+  4. If multiple tools run under one quality step, isolate each tool locally to
+     identify whether the failure is lint, format, type-check, or another
+     static-analysis check:
+
+     ```bash
+     eslint .                  # JavaScript linting only
+     prettier --check .        # formatting only
+     tsc --noEmit              # type-check only
+     ```
 validation_markdown: |-
   ## Validation
 
-  - make lint
-  - make check
+  - `make lint` and `make check` both exit 0.
+  - Re-run CI and confirm the quality gate passes.
 why_it_matters_markdown: |-
   ## Why it matters
 

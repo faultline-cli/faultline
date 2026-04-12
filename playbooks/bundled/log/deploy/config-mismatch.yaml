@@ -14,15 +14,32 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Compare the expected configuration keys in the application against what is present in the target environment.
-  2. For Kubernetes: `kubectl get secret <name> -o yaml` and `kubectl get configmap <name> -o yaml`.
-  3. Add or update the missing keys, then re-trigger the deployment.
-  4. If a value was renamed, update both the secret store and the deployment spec atomically.
+  1. Compare expected configuration keys against what is present in the target
+     environment. For Kubernetes:
+
+     ```bash
+     kubectl get secret <name> -n <namespace> -o jsonpath="{.data}" | jq "keys"
+     kubectl get configmap <name> -n <namespace> -o yaml
+     ```
+
+  2. List all environment variables the pod sees to confirm keys are mounted:
+
+     ```bash
+     kubectl exec <pod> -- env | sort
+     ```
+
+  3. Add or update the missing keys in the secret or ConfigMap, then
+     re-trigger the deployment.
+  4. If a key was renamed, update both the secret store and the deployment spec
+     in the same commit to avoid drift.
+  5. Add a start-of-process config validation step in the application that
+     lists every missing required key at boot time rather than failing later
+     with a cryptic error.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Deployment configuration mismatch is gone.
+  - `kubectl exec <pod> -- env | grep KEY_NAME` shows the expected value.
+  - Re-run the deployment and confirm it reaches the Running / Ready state.
 match:
   any:
     - missing configuration

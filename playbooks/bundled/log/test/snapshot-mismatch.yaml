@@ -25,19 +25,32 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Inspect the diff between the current output and the stored snapshot.
-  2. If the new behavior is correct, regenerate and commit the updated snapshot.
-  3. If the diff is unstable, normalize nondeterministic fields before snapshotting.
-  4. Re-run the specific test more than once to confirm the output is stable.
+  1. Inspect the diff between the current output and the stored snapshot to
+     decide whether the change is intentional.
+  2. If the new output is correct, regenerate and commit the updated snapshot
+     using the tool-specific update flag:
+
+     ```bash
+     jest --updateSnapshot           # or: jest -u
+     go test ./... -update           # if using a -update flag convention
+     cargo test -- --force-update-snapshots   # Rust insta
+     pytest --snapshot-update        # Python syrupy
+     ```
+
+  3. If the diff is unstable, normalize nondeterministic fields — timestamps,
+     UUIDs, random IDs, map iteration order — before the value reaches the
+     snapshot assertion.
+  4. Re-run the specific test several times to confirm the output is
+     deterministic before committing the new snapshot:
+
+     ```bash
+     go test -run TestName -count=5 ./...
+     ```
 validation_markdown: |-
   ## Validation
 
-  ```bash
-  go test ./...
-  ```
-
-  - Run the affected snapshot test repeatedly.
-  - Confirm the regenerated fixture does not change between runs.
+  - Run the affected snapshot test repeatedly and confirm the output is stable.
+  - Confirm the regenerated fixture file does not change between runs.
 why_it_matters_markdown: |-
   ## Why it matters
 

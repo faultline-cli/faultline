@@ -14,16 +14,28 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Identify the exact host and command that timed out so you know whether the issue is a registry, API, artifact store, or internal service.
-  2. Retry the failed job once to separate a transient network blip from a persistent routing or service problem.
-  3. Check the service status page and test connectivity from the runner environment with the same protocol and destination the failing step uses.
-  4. Verify the CI runner can reach the required host through any proxy, firewall, or egress policy applied in that environment.
-  5. Increase client-side timeout settings only when the endpoint is healthy and the operation is legitimately large or slow.
+  1. Identify the exact host and command that timed out — registry, API,
+     artifact store, or internal service — so you know where to look.
+  2. Test connectivity directly from the runner with a short timeout:
+
+     ```bash
+     curl -v --max-time 10 <URL>
+     nc -zv <host> <port>
+     ```
+
+  3. Retry the failed job once to separate a transient blip from a persistent
+     routing or service problem.
+  4. Check the service status page and confirm the endpoint is healthy before
+     adjusting timeout settings.
+  5. Verify the CI runner can reach the required host through any proxy,
+     firewall, or egress policy applied in that environment.
+  6. Increase client-side timeout settings only when the endpoint is confirmed
+     healthy and the operation is legitimately large or slow.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Network request timeout is gone.
+  - `curl -v --max-time 10 <URL>` completes within 10 seconds from the runner.
+  - Re-run the failing step and confirm it completes without a timeout error.
 match:
   any:
     - connection timed out

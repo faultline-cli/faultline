@@ -14,16 +14,36 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Identify the test name in the timeout message and run it in isolation.
-  2. Check for missing `await`, unresolved promises, or callbacks that are never called.
-  3. Verify that any external services or mocks the test uses are available and responding.
-  4. Increase the timeout as a diagnostic step: if it then passes, the operation is just slow.
-  5. Replace real network or DB calls in unit tests with mocks to remove external dependencies.
+  1. Identify the test name in the timeout message and run it in isolation with
+     verbose output to see where it stalled.
+  2. Check for missing `await`, unresolved promises, or callbacks that are never
+     called — these prevent async runners from completing the test.
+  3. For Go: get a goroutine dump to see which goroutine is blocked:
+
+     ```bash
+     GOTRACEBACK=all go test -timeout 60s -run TestName ./...
+     # or send SIGQUIT to the running test process: kill -QUIT <pid>
+     ```
+
+  4. For Jest/Node: run with `--detectOpenHandles` to find resource leaks that
+     prevent clean exit:
+
+     ```bash
+     jest --testNamePattern="failing test" --detectOpenHandles
+     ```
+
+  5. Verify that any external services or mocks the test uses are available and
+     responding. Add a health-check before the test rather than letting it hang.
+  6. Increase the timeout as a diagnostic step only — if it then passes, the
+     operation is genuinely slow and needs optimisation or mocking.
+  7. Replace real network or DB calls in unit tests with mocks to ensure the
+     test cannot hang on external I/O.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Test suite or individual test timed out is gone.
+  - Run the specific test in isolation and confirm it completes within the normal
+    time limit.
+  - Re-run the full suite and confirm no timeout errors remain.
 match:
   any:
     - "Test timed out"

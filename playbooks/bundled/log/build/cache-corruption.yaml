@@ -14,15 +14,40 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Delete the CI cache and allow it to rebuild from scratch.
-  2. Invalidate the cache by changing the cache key (e.g., append a version suffix).
-  3. For GitHub Actions, clear the cache via Settings › Actions › Caches.
-  4. If the cache stores platform-specific artifacts, verify the key includes OS, architecture, and toolchain version before restoring it again.
+  1. Delete the CI cache entirely and let it rebuild from scratch. A corrupted
+     cache will keep causing failures until it is cleared.
+
+  2. Invalidate the cache by incrementing the cache key version:
+
+     ```yaml
+     key: v2-deps-${{ hashFiles(...) }}
+     ```
+
+  3. For GitHub Actions: clear the cache via Settings › Actions › Caches, or
+     use the CLI:
+
+     ```bash
+     gh cache delete --all
+     ```
+
+  4. Clear the local package manager cache as well if artifacts may have been
+     cached with bad checksums:
+
+     ```bash
+     npm cache clean --force          # npm
+     pip cache purge                  # pip
+     ./gradlew --stop && rm -rf ~/.gradle/caches   # Gradle
+     ```
+
+  5. If the cache stores platform-specific compiled artifacts (e.g., native
+     modules), verify the cache key includes OS, architecture, and toolchain
+     version so a Linux cache is never restored on macOS or ARM.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Corrupted or stale dependency cache is gone.
+  - Re-run the job without a cache restore and confirm it builds and tests
+    clean.
+  - On the second run, confirm the cache is populated and the job is faster.
 match:
   any:
     - cache is corrupted

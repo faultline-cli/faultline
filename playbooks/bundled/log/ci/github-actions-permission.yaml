@@ -14,14 +14,33 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Add the required permission block to your workflow job or at the top level:
-  2. permissions:\n    contents: write\n    packages: write\n    pull-requests: write
-  3. Avoid using `permissions: write-all` — grant only the minimum required scopes.
-  4. Check the step that failed and look up which permission scope it needs in the GitHub docs.
+  1. Add an explicit `permissions` block to the workflow job (or at the top
+     level for all jobs). Grant only the scopes the job actually needs:
+
+     ```yaml
+     permissions:
+       contents: write      # push commits / create releases
+       packages: write      # push to GitHub Container Registry
+       pull-requests: write # comment on or update PRs
+       id-token: write      # OIDC token for cloud provider auth
+     ```
+
+  2. Use `permissions: {}` (all read) as the default and add only what each
+     job requires — avoid `permissions: write-all`.
+
+  3. Check the exact step that failed and look up the required permission scope
+     in the GitHub Actions documentation or the action's README.
+
+  4. For organisation-owned repositories, also confirm that the repository's
+     workflow permission setting (Settings › Actions › General) allows the
+     required scope — a org-level restriction can override job-level grants.
 validation_markdown: |-
   ## Validation
 
-  - Check under Settings > Actions > General > Workflow permissions
+  - Settings › Actions › General › Workflow permissions — confirm the
+    repository allows the required scope.
+  - Re-run the job and confirm the `403` or `insufficient permission` error
+    is gone.
 why_it_matters_markdown: |-
   ## Why it matters
 

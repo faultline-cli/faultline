@@ -14,16 +14,41 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Check the last progressing step in the logs and determine whether the job was still doing work or had stopped producing output entirely.
-  2. If a test or script is hanging, add an explicit per-command timeout and capture stack traces or debug output when the timeout fires.
-  3. Remove interactive prompts and TTY-only behaviour from setup commands (`--yes`, `--non-interactive`, `CI=true`).
-  4. Cache dependency downloads and split long-running build, test, or deploy stages into smaller jobs before increasing the global timeout.
-  5. Increase the CI timeout only after you have identified a bounded slow path that legitimately needs more time.
+  1. Check the last progressing log line before the timeout killed the job —
+     this tells you whether something was still working or had silently hung.
+
+  2. Wrap suspect commands with an explicit timeout so the failure is fast and
+     obvious rather than silent:
+
+     ```bash
+     timeout 120 <command>          # exits non-zero if it exceeds 120 s
+     ```
+
+  3. Remove interactive prompts and TTY-only behaviour from setup commands:
+     `--yes`, `--non-interactive`, `CI=true`, `DEBIAN_FRONTEND=noninteractive`.
+
+  4. For Go test hangs: send SIGQUIT to get a goroutine dump showing exactly
+     which goroutine is blocked:
+
+     ```bash
+     kill -QUIT $(pgrep 'test.timeout')
+     # or set GOTRACEBACK=all before the test run
+     ```
+
+     For Node/Jest hangs: use `--detectOpenHandles` to find resource leaks.
+
+  5. Cache dependency downloads and split long-running stages into smaller
+     jobs before increasing the global timeout limit.
+
+  6. Increase the CI timeout only after identifying a bounded slow path that
+     legitimately needs more time — raising it blindly hides regressions.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for CI job or pipeline exceeded time limit is gone.
+  - Re-run the failing step with `timeout <N>` wrapper and confirm it
+    completes within the expected window.
+  - Confirm no goroutine dump, `--detectOpenHandles`, or hang indicator
+    appears in the output.
 match:
   any:
     - "Job's timeout exceeded"

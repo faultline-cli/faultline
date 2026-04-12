@@ -14,16 +14,32 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Retry the failing test job once to confirm the failure is intermittent and not a permanent regression.
-  2. Isolate the test and run it repeatedly with the same command CI uses (`go test -run TestName -count=20`, `pytest -k test_name -n 0`, or equivalent).
-  3. Replace fixed sleeps with deterministic waits on observable conditions, event completion, or polling with a bounded timeout.
-  4. Remove shared global state, reused temp directories, fixed ports, and cross-test data dependencies by using explicit setup and teardown.
-  5. If the test depends on time, randomness, or external services, freeze the clock, record the random seed, or stub the dependency.
+  1. Retry the failing test job once to confirm the failure is intermittent.
+  2. Reproduce reliably by running the test in a tight loop:
+
+     ```bash
+     # Go — rerun with gotestsum for better output:
+     gotestsum --rerun-fails=3 -- -run TestName -count=20 ./...
+
+     # Python:
+     pytest -k test_name --count=20  # requires pytest-repeat
+
+     # Jest:
+     jest --testNamePattern="failing test" --forceExit
+     ```
+
+  3. Replace fixed sleeps with deterministic waits on observable conditions,
+     event completion, or polling with a bounded timeout.
+  4. Remove shared global state, reused temp directories, fixed ports, and
+     cross-test data dependencies by using explicit setup and teardown.
+  5. If the test depends on time, randomness, or external services, freeze the
+     clock, record and log the random seed, or stub the dependency so the
+     test produces the same result on every run.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Flaky test failure is gone.
+  - Run the isolated test in a loop (at least 20 runs) and confirm zero failures.
+  - Re-run the full suite in CI and confirm no retry or flaky-flag annotations.
 match:
   any:
     - failed on attempt

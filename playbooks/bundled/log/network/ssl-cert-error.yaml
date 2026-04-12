@@ -14,16 +14,34 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Check if the certificate has expired: `openssl s_client -connect <host>:443 | openssl x509 -noout -dates`.
-  2. If connecting to an internal service, add the CA certificate to the system trust store.
-  3. Verify the system clock on the CI runner is correct.
-  4. Contact the service owner if their certificate has actually expired.
-  5. If the failure only appears in corporate CI, confirm whether a TLS-intercepting proxy requires its root CA to be installed on the runner image.
+  1. Check whether the certificate has expired and inspect its subject and
+     issuer:
+
+     ```bash
+     openssl s_client -connect <host>:443 </dev/null 2>/dev/null        | openssl x509 -noout -dates -subject -issuer
+     ```
+
+  2. Verify the system clock on the CI runner is accurate — even a few minutes
+     of drift can cause certificate validation to fail:
+
+     ```bash
+     date -u
+     ```
+
+  3. If connecting to an internal service, add the CA certificate to the
+     system trust store (`update-ca-certificates` on Debian/Ubuntu,
+     `update-ca-trust` on RHEL/CentOS).
+  4. If the failure only appears in corporate CI, a TLS-intercepting proxy may
+     be presenting its own certificate. Install the proxy's root CA on the
+     runner image.
+  5. Contact the service owner if their certificate has genuinely expired.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for SSL/TLS certificate error is gone.
+  - `openssl s_client -connect <host>:443 </dev/null 2>/dev/null | openssl x509 -noout -dates`
+    shows a `notAfter` date in the future.
+  - `date -u` confirms the system clock is accurate.
+  - Re-run the failing step and confirm the TLS handshake succeeds.
 match:
   any:
     - certificate verify failed

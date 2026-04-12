@@ -14,15 +14,34 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Add the missing variable as a CI secret or environment variable in your CI provider settings.
-  2. Reference the variable in your workflow file with the correct name (names are case-sensitive).
-  3. For GitHub Actions, add the secret under Settings › Secrets and variables › Actions.
-  4. Check that repository forks or non-default branches also have access to the required secrets.
+  1. Identify the missing variable name from the error and add it to your CI
+     provider:
+     - **GitHub Actions**: Settings › Secrets and variables › Actions.
+     - **GitLab CI**: Settings › CI/CD › Variables (check the Protected flag).
+     - **CircleCI**: Project Settings › Environment Variables or the context.
+     - **Bitbucket Pipelines**: Repository settings › Repository variables.
+
+  2. Reference the variable in the workflow file with the correct name — names
+     are case-sensitive.
+
+  3. For GitHub Actions: secrets are withheld from fork PRs by default. If the
+     job runs against a fork, move secret-consuming steps to a post-merge job
+     or use `pull_request_target` with caution.
+
+  4. Verify the variable is actually exported at runtime (use a non-sensitive
+     variable to test wiring):
+
+     ```bash
+     echo "VAR set: $(test -n "$VAR_NAME" && echo yes || echo NO)"
+     ```
+
+  5. Check that repository forks and non-default branches have access to the
+     required secrets and are not blocked by protection rules.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Missing required environment variable is gone.
+  - Add a diagnostic step confirming availability without revealing the value.
+  - Re-run the failing step and confirm the empty-variable error is gone.
 match:
   any:
     - environment variable not set

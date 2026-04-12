@@ -14,15 +14,43 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Free space by removing unnecessary Docker images: `docker image prune -a`.
-  2. Remove large intermediate build artifacts: `make clean` or the equivalent.
-  3. Add a disk space check at the start of the job and fail fast if it is below a safe threshold.
-  4. Increase the disk size of the runner.
+  1. Check how much space remains and which paths are largest:
+
+     ```bash
+     df -h
+     du -sh /* 2>/dev/null | sort -rh | head -20
+     ```
+
+  2. Prune Docker images, containers, and build cache in one pass:
+
+     ```bash
+     docker system prune -af --volumes
+     docker system df  # confirm how much was recovered
+     ```
+
+  3. Remove large intermediate build artifacts: `make clean`, `gradle clean`,
+     `cargo clean`, or the project equivalent.
+  4. Clear accumulated language-specific caches:
+
+     ```bash
+     rm -rf ~/.npm ~/.gradle/caches ~/.m2/repository ~/.cache/pip
+     ```
+
+  5. Add a disk space guard at the start of large jobs so failures are explicit
+     rather than silent mid-step:
+
+     ```bash
+     AVAIL_KB=$(df --output=avail / | tail -1)
+     [ "$AVAIL_KB" -lt 2097152 ] && echo "ERROR: less than 2 GB free" && exit 1
+     ```
+
+  6. If cleanup is not enough, increase the runner disk size or split build and
+     test stages into separate smaller jobs with lighter footprints.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Disk space exhausted is gone.
+  - `df -h` — confirm at least 1–2 GB is available before re-running.
+  - Re-run the failing step and confirm it completes without an ENOSPC error.
 match:
   any:
     - disk full

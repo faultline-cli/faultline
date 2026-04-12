@@ -14,15 +14,43 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Add a GITHUB_TOKEN or equivalent secret and configure git with `git config --global url.https://$TOKEN@github.com/.insteadOf https://github.com/`.
-  2. For SSH-based workflows, add the deploy key or SSH key as a CI secret and load it with ssh-agent.
-  3. Verify the token has the `repo` scope or the deploy key has read access to the repository.
-  4. Check that the repository URL uses the correct scheme (HTTPS vs SSH) for the credentials you have.
+  1. For HTTPS: configure Git to inject the token automatically:
+
+     ```bash
+     git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
+     ```
+
+     Or use the `actions/checkout` step with `token: ${{ secrets.GITHUB_TOKEN }}`
+     which handles credential injection automatically.
+
+  2. For SSH: add the deploy key or SSH key as a CI secret, then load it:
+
+     ```bash
+     eval "$(ssh-agent -s)"
+     echo "$SSH_KEY" | ssh-add -
+     ```
+
+  3. Verify the token has the required scope:
+     - GitHub PAT: needs `repo` (private repos) or `read:packages`.
+     - Deploy key: needs read (or read+write for push) on the specific repo.
+
+  4. Confirm the remote URL scheme matches the credentials you have:
+
+     ```bash
+     git remote -v
+     ```
+
+  5. Test the credential before the full workflow step:
+
+     ```bash
+     git ls-remote origin HEAD
+     ```
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Git authentication failure is gone.
+  - `git ls-remote origin HEAD` exits 0 and prints the current HEAD SHA.
+  - Re-run the failing clone, fetch, or push step and confirm no authentication
+    error appears.
 match:
   any:
     - terminal prompts disabled

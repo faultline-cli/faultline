@@ -15,15 +15,30 @@ fix_markdown: |-
   ## Fix steps
 
   1. Verify the hostname in the failing command or configuration for typos.
-  2. Check whether the hostname is internal-only and requires VPN, VPC DNS, or private resolver access.
-  3. Retry the job to rule out a transient resolver outage.
-  4. Resolve the host manually from the same environment using `nslookup`, `dig`, or `getent hosts`.
-  5. If the hostname comes from configuration, trace the resolved value in CI logs to confirm the job is not using the wrong environment or secret.
+  2. Manually resolve the host from inside the CI environment to confirm it is
+     reachable:
+
+     ```bash
+     nslookup <hostname>
+     dig +short <hostname>
+     getent hosts <hostname>
+     ```
+
+     If DNS resolution works from the runner but the job still fails, the
+     hostname may be coming from a misconfigured secret or environment variable.
+
+  3. Check whether the hostname is internal-only and requires VPN, VPC DNS, or
+     a private resolver. CI runners on cloud providers may not have access to
+     private DNS zones by default.
+  4. Retry the job once to rule out a transient resolver outage.
+  5. If the hostname comes from configuration, trace the resolved value in CI
+     logs to confirm the job is not using the wrong environment or secret.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for DNS resolution failure is gone.
+  - `dig +short <hostname>` or `nslookup <hostname>` — confirm successful
+    resolution from the runner before re-running the job.
+  - Re-run the failing step and confirm the DNS lookup no longer fails.
 match:
   any:
     - no such host

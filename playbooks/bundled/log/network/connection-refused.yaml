@@ -14,15 +14,38 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Add a readiness probe before the step that connects: `wait-for-it.sh <host>:<port>`.
-  2. Verify the service container started successfully by checking its logs or status.
-  3. Confirm the host and port match what the service is actually bound to.
-  4. For Docker services: use the service name as the hostname, not `localhost`.
+  1. Add a readiness probe before the connecting step:
+
+     ```bash
+     wait-for-it.sh <host>:<port> -t 30
+     # or with curl retry:
+     curl --retry 10 --retry-delay 3 --retry-connrefused http://<host>:<port>/health
+     ```
+
+  2. Check whether the service container actually started successfully:
+
+     ```bash
+     docker compose logs <service>      # Docker Compose
+     kubectl logs <pod>                 # Kubernetes
+     ```
+
+  3. Confirm the port the service is listening on:
+
+     ```bash
+     ss -tlnp | grep <port>
+     ```
+
+  4. For Docker Compose services: use the service name as the hostname (e.g.,
+     `postgres`, `redis`), not `localhost` — containers on a shared network
+     resolve each other by service name.
+  5. Check for race conditions: the client may be starting before the server is
+     ready. Add an explicit health-check dependency in the CI service definition.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Service or dependency connection refused is gone.
+  - `curl -sf http://<host>:<port>/health` or `nc -zv <host> <port>` — confirm
+    the service responds before re-running.
+  - Re-run the failing step and confirm no `ECONNREFUSED` error.
 match:
   any:
     - "connection refused"

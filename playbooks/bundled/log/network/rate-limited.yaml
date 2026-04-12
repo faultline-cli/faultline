@@ -1,0 +1,93 @@
+id: rate-limited
+title: Request rate-limited by external service
+category: network
+severity: medium
+base_score: 0.8
+tags: [network, rate-limit, 429, npm, docker, github, api]
+stage_hints: [build, deploy, test]
+summary: |-
+  A request to an external service was rejected with HTTP 429 Too Many Requests
+  or an equivalent rate-limit error. Package registries, container registries,
+  and APIs all enforce rate limits that CI can exceed.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The CI job made too many requests to an external service in a short window.
+  Common sources:
+
+  - npm or yarn pulling many packages in parallel without caching
+  - Docker Hub pull limits (anonymous: 100 pulls/6 h, authenticated: 200
+    pulls/6 h)
+  - GitHub API calls from Actions steps or third-party actions
+  - PyPI or other package indexes under heavy concurrent load
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify which service is rate-limiting from the error message — the
+     response usually includes a `Retry-After` or `X-RateLimit-Reset` header.
+
+  2. Add or restore a dependency cache so packages are not re-downloaded on
+     every run:
+
+     ```yaml
+     # GitHub Actions example
+     - uses: actions/cache@v4
+       with:
+         path: ~/.npm
+         key: npm-${{ hashFiles('package-lock.json') }}
+     ```
+
+  3. For Docker Hub: authenticate in CI to raise the pull limit from 100 to
+     200 requests per 6 hours:
+
+     ```bash
+     docker login -u "$DOCKERHUB_USER" --password-stdin <<< "$DOCKERHUB_TOKEN"
+     ```
+
+     Better: use a registry mirror (GitHub Container Registry, AWS ECR Public)
+     to avoid Docker Hub limits entirely.
+
+  4. For GitHub API: check that third-party actions are not making excessive
+     API calls. Pass `GITHUB_TOKEN` explicitly so requests are authenticated
+     and share the per-installation rate limit.
+
+  5. Retry transient rate-limit failures with exponential back-off rather than
+     failing the job immediately — most registries recover within minutes.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the job after adding caching; confirm the download step skips
+    previously cached packages.
+  - Confirm no HTTP 429 response appears in the job output.
+match:
+  any:
+    - "429 Too Many Requests"
+    - rate limit exceeded
+    - rate-limited
+    - "You have reached your pull rate limit"
+    - "toomanyrequests:"
+    - "Request rate limit exceeded"
+    - "API rate limit exceeded"
+    - "npm ERR! 429"
+    - "npm warn registry Replying with an error"
+  none:
+    - authentication required
+    - unauthorized
+    - access denied
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Rate limits are enforced per IP address or per account. CI runners on shared
+  infrastructure often share the same egress IP, causing the combined request
+  volume to exceed limits. Adding authentication and caching reduces request
+  volume dramatically and avoids sharing anonymous quota with other users.
+
+  ## Prevention
+
+  - Cache dependency downloads so each package is fetched at most once per
+    lockfile change.
+  - Authenticate with package registries and container registries in CI so
+    requests count against a larger authenticated quota.
+  - Use a private registry mirror or proxy for high-volume Docker pulls.
+  - Spread heavy API usage across multiple tokens or reduce call frequency
+    with batching.

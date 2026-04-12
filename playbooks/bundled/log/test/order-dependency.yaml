@@ -14,14 +14,34 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Add proper setup and teardown to the failing test so it creates its own required state.
-  2. Remove shared mutable fixtures between tests.
-  3. Run tests in random order with a tool like `gotestsum` or `pytest-randomly` to surface order dependencies.
+  1. Add proper setup and teardown to the failing test so it creates its own
+     required state independently.
+  2. Remove shared mutable fixtures between tests; every test should own and
+     clean up its own data.
+  3. Run tests in random order to surface all hidden ordering assumptions:
+
+     ```bash
+     go test -shuffle=on ./...                  # Go 1.20+
+     pytest --randomly-seed=<N>                 # Python, requires pytest-randomly
+     jest --randomize                           # Jest 29+
+     ```
+
+     Record and re-use the seed from a failing run to reproduce the exact
+     order:
+
+     ```bash
+     go test -shuffle=on -v ./... 2>&1 | grep -E "^-test.shuffle"
+     pytest --randomly-seed=<seed from the failing run>
+     ```
+
+  4. Add cleanup in `defer` (Go), `afterEach`/`afterAll` (Jest), or `teardown`
+     (Python) to guarantee state is reset regardless of test outcome.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Test order dependency is gone.
+  - Run the full suite with shuffle enabled several times and confirm zero
+    failures across different orderings.
+  - Re-run the originally failing test in isolation and confirm it passes.
 match:
   any:
     - depends on previous test

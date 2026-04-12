@@ -14,14 +14,33 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Kill the process occupying the port: `fuser -k <port>/tcp` or `lsof -ti :<port> | xargs kill`.
-  2. Change the port your service binds to using an environment variable.
-  3. Use ephemeral ports (0) where possible and let the OS assign a free one.
+  1. Identify what is holding the port:
+
+     ```bash
+     lsof -i :<port>
+     ss -tlnp | grep :<port>
+     ```
+
+  2. Kill the occupying process:
+
+     ```bash
+     fuser -k <port>/tcp
+     # or:
+     lsof -ti :<port> | xargs kill -9
+     ```
+
+  3. On shared or persistent CI runners, previous jobs may leave lingering
+     processes. Add a cleanup step at the start of the job to free known ports
+     before starting services.
+  4. Parameterise the port with an environment variable so parallel CI jobs
+     can bind to different ports without conflict.
+  5. Prefer ephemeral port 0 where supported: let the OS assign a free port
+     and retrieve the assigned value from the listening socket handle.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Port already in use is gone.
+  - `lsof -i :<port>` — confirm the port is free before starting the service.
+  - Re-run the failing step and confirm it binds without `EADDRINUSE`.
 match:
   any:
     - address already in use

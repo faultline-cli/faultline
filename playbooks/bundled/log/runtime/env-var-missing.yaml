@@ -14,15 +14,43 @@ diagnosis_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Identify the variable name from the error and add it as a CI secret or environment variable.
-  2. Check if the variable is defined in a `.env.example` file and copy the appropriate value.
-  3. For GitHub Actions: add the secret under Settings > Secrets and reference it with `${{ secrets.VAR_NAME }}`.
-  4. For GitLab CI: add it under Settings > CI/CD > Variables.
+  1. Identify the exact variable name from the error message.
+  2. Verify the variable is available in the current shell context (use a
+     non-secret var to test wiring without exposing values):
+
+     ```bash
+     printenv | grep -i VAR_NAME
+     ```
+
+  3. Add the variable in your CI provider:
+
+     - **GitHub Actions**: Settings › Secrets and variables › Actions, then
+       reference with `${{ secrets.VAR_NAME }}` or `${{ vars.VAR_NAME }}`.
+       Secrets are withheld from fork PRs — move secret-consuming steps to
+       post-merge jobs if this pipeline runs on a fork.
+     - **GitLab CI**: Settings › CI/CD › Variables. Ensure the variable is not
+       marked protected if the pipeline runs on an unprotected branch.
+     - **CircleCI**: Project Settings › Environment Variables, or add it to the
+       context that the job references.
+     - **Bitbucket Pipelines**: Repository settings › Repository variables.
+
+  4. Check if the variable is documented in `.env.example` and provision the
+     appropriate value in all required environments.
+  5. Add a start-of-job validation step that fails early with a clear message:
+
+     ```bash
+     : "${VAR_NAME:?VAR_NAME must be set before this job runs}"
+     ```
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Required environment variable missing or empty is gone.
+  - Add a diagnostic step that confirms presence without echoing the value:
+
+    ```bash
+    echo "VAR_NAME set: $(test -n "$VAR_NAME" && echo yes || echo NO)"
+    ```
+
+  - Re-run the failing step and confirm the missing-variable error is gone.
 match:
   any:
     - "environment variable"

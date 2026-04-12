@@ -38,20 +38,40 @@ why_it_matters_markdown: |-
 fix_markdown: |-
   ## Fix steps
 
-  1. Verify the registry username, token, or password configured in CI secrets.
-  2. Ensure the registry login step runs before any `docker pull` or `docker push` command.
-  3. Confirm the token has the correct repository scope for the image being accessed.
-  4. Validate the same credential locally:
+  1. Verify the registry credential configured in CI secrets has not expired or
+     been rotated without updating the secret:
+     - Docker Hub: Settings › Security › Access Tokens.
+     - GitHub Container Registry (ghcr.io): Personal access tokens, scope
+       `read:packages` / `write:packages`.
+     - AWS ECR: token validity is 12 hours — use `aws ecr get-login-password`
+       in a `before_script` step, not a static secret.
+
+  2. Ensure the registry login step runs before any `docker pull` or `docker
+     push` command:
+
+     ```bash
+     docker login <registry> -u "$REGISTRY_USER" --password-stdin <<< "$REGISTRY_TOKEN"
+     ```
+
+  3. Confirm the token has the correct repository scope for the image path
+     being accessed (tokens scoped to one namespace cannot access another).
+
+  4. Validate the credential locally:
 
      ```bash
      docker login <registry>
+     docker pull <image>:<tag>
      ```
+
+  5. After rotating a credential, update the CI secret and confirm the secret
+     name in the workflow file matches exactly.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the registry login step.
+  - Re-run the registry login step and confirm it exits 0.
   - Confirm the pull or push completes without `authentication required`.
-  - If you changed secret wiring, run one full CI job after rotating the credential.
+  - Run one full CI job end-to-end after rotating the credential to verify
+    the new secret wiring is correct.
 workflow:
   likely_files:
     - Dockerfile
