@@ -32,8 +32,10 @@ fix:
   - Delete the CI cache and allow it to rebuild from scratch.
   - Invalidate the cache by changing the cache key (e.g., append a version suffix).
   - For GitHub Actions, clear the cache via Settings › Actions › Caches.
+  - If the cache stores platform-specific artifacts, verify the key includes OS, architecture, and toolchain version before restoring it again.
 
 prevent:
   - Include the tool version in the cache key so upgrades automatically invalidate the old cache.
   - "Validate the cache after restoration with a fast integrity check (e.g., `npm ci --prefer-offline`)."
   - Set a short cache TTL to prevent caches from becoming permanently stale.
+  - Avoid caching mutable build outputs that can be partially written when jobs are canceled or retried.

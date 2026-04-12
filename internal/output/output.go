@@ -90,6 +90,9 @@ func writeQuick(b *strings.Builder, r model.Result, rank, total int) {
 		}
 		b.WriteString("\n")
 	}
+	if pack := displayPackName(pb); pack != "" {
+		fmt.Fprintf(b, "Pack: %s\n", pack)
+	}
 
 	// Fix steps
 	if len(pb.Fix) > 0 {
@@ -129,6 +132,9 @@ func writeDetailed(b *strings.Builder, a *model.Analysis, r model.Result, rank, 
 	fmt.Fprintf(b, "  Category:    %s\n", pb.Category)
 	if r.Detector != "" {
 		fmt.Fprintf(b, "  Detector:    %s\n", r.Detector)
+	}
+	if pack := displayPackName(pb); pack != "" {
+		fmt.Fprintf(b, "  Pack:        %s\n", pack)
 	}
 	if pb.Severity != "" {
 		fmt.Fprintf(b, "  Severity:    %s\n", pb.Severity)
@@ -334,6 +340,7 @@ type resultJSON struct {
 	FailureID    string                  `json:"failure_id"`
 	Title        string                  `json:"title"`
 	Category     string                  `json:"category"`
+	Pack         string                  `json:"pack,omitempty"`
 	Severity     string                  `json:"severity,omitempty"`
 	Detector     string                  `json:"detector,omitempty"`
 	Score        float64                 `json:"score"`
@@ -403,6 +410,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 				FailureID:    r.Playbook.ID,
 				Title:        r.Playbook.Title,
 				Category:     r.Playbook.Category,
+				Pack:         displayPackName(r.Playbook),
 				Severity:     r.Playbook.Severity,
 				Detector:     r.Detector,
 				Score:        r.Score,
@@ -481,14 +489,14 @@ func FormatCIAnnotations(a *model.Analysis, top int) string {
 func FormatPlaybookList(playbooks []model.Playbook, category string) string {
 	var b strings.Builder
 	w := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tCATEGORY\tSEVERITY\tTITLE")
+	fmt.Fprintln(w, "ID\tCATEGORY\tSEVERITY\tPACK\tTITLE")
 	filter := strings.ToLower(strings.TrimSpace(category))
 	for _, pb := range playbooks {
 		if filter != "" && strings.ToLower(pb.Category) != filter {
 			continue
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
-			pb.ID, pb.Category, pb.Severity, pb.Title)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+			pb.ID, pb.Category, pb.Severity, fallback(displayPackName(pb), "-"), pb.Title)
 	}
 	_ = w.Flush()
 	return b.String()
@@ -504,6 +512,9 @@ func FormatPlaybookDetails(pb model.Playbook) string {
 	fmt.Fprintf(&b, "  %s — %s\n", pb.ID, pb.Title)
 	fmt.Fprintln(&b, sep)
 	fmt.Fprintf(&b, "  Category:  %s\n", pb.Category)
+	if pack := displayPackName(pb); pack != "" {
+		fmt.Fprintf(&b, "  Pack:      %s\n", pack)
+	}
 	if pb.Severity != "" {
 		fmt.Fprintf(&b, "  Severity:  %s\n", pb.Severity)
 	}
@@ -544,6 +555,14 @@ func FormatPlaybookDetails(pb model.Playbook) string {
 
 	fmt.Fprintln(&b, sep)
 	return b.String()
+}
+
+func displayPackName(pb model.Playbook) string {
+	name := strings.TrimSpace(pb.Metadata.PackName)
+	if name == "" || name == "starter" || name == "custom" {
+		return ""
+	}
+	return name
 }
 
 // ── Workflow output ──────────────────────────────────────────────────────────

@@ -49,3 +49,4 @@ prevent:
   - Include fixture setup in a shared test setup script that runs automatically.
   - Add a CI lint step that validates all referenced fixture files exist.
   - When migrating, update all fixtures and factories in the same PR.
+  - Keep seed data, factories, and schema changes versioned together so test setup does not drift behind the application model.

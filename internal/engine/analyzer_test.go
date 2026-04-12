@@ -159,6 +159,9 @@ fix:
 	if a.Results[0].Playbook.ID != "extra-custom" {
 		t.Fatalf("expected extra-custom, got %s", a.Results[0].Playbook.ID)
 	}
+	if a.Results[0].Playbook.Metadata.PackName != filepath.Base(extra) {
+		t.Fatalf("expected pack metadata %q, got %#v", filepath.Base(extra), a.Results[0].Playbook.Metadata)
+	}
 }
 
 func repoPlaybookDir(_ testing.TB) string {

@@ -39,6 +39,7 @@ prevent:
   - Declare permissions explicitly on every workflow instead of relying on defaults.
   - Review new third-party actions for required permission scopes before adding them.
   - "Use `permissions: {}` as the default and add only what each job needs."
+  - Keep release, package publish, and repository-write operations isolated in dedicated jobs so elevated permissions are scoped narrowly.
 
 workflow:
   likely_files:

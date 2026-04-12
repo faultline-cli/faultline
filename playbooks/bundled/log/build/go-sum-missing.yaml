@@ -23,13 +23,16 @@ why: >
   committed, the CI build will fail.
 
 fix:
-  - "Run `go mod tidy` locally."
-  - "Commit the updated `go.sum` file."
-  - "If using a private module proxy, ensure `GONOSUMCHECK` or `GONOSUMDB` is configured correctly."
+  - "Run `go mod tidy` with the same Go version used in CI so the module graph is recalculated consistently."
+  - "If the error says no required module provides a package, add or correct the dependency first with `go get <module>` before re-running `go mod tidy`."
+  - "Commit both `go.mod` and `go.sum` if either file changed; checksum and version updates often move together."
+  - "If the dependency is private, set `GOPRIVATE` and `GONOSUMDB` for the module path and verify CI can authenticate to the source repository."
+  - "If a stale module cache is involved, clear it with `go clean -modcache` and rerun the build once."
 
 prevent:
-  - "Add `go mod tidy` to your pre-commit hook or CI lint step."
-  - "Fail the CI job if `go mod tidy` produces any changes: `git diff --exit-code go.sum`."
+  - "Run `go mod tidy` in CI and fail the job when it changes `go.mod` or `go.sum`: `git diff --exit-code go.mod go.sum`."
+  - Keep the local and CI Go toolchain versions aligned so module resolution stays stable across environments.
+  - Document private module settings (`GOPRIVATE`, `GONOSUMDB`, credentials) in the shared CI template instead of relying on per-runner setup.
 
 workflow:
   likely_files:

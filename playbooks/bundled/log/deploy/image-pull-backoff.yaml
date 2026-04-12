@@ -34,6 +34,7 @@ prevent:
   - Promote immutable image digests rather than mutable tags between build and deploy stages.
   - Add a release gate that verifies the target image exists before rollout.
   - Keep registry authentication and image naming conventions standardized across environments.
+  - Publish the image before creating or approving the deploy job so rollout never races the registry push.
 
 workflow:
   likely_files:

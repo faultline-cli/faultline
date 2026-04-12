@@ -30,13 +30,14 @@ why: >
   takes longer than the limit allows.
 
 fix:
-  - Check which step was active when the timeout fired — look for the last log line.
-  - If a test is hanging, add an explicit timeout to the test itself.
-  - "Remove any interactive prompts (`--yes`, `--non-interactive`) from install or setup commands."
-  - If the job legitimately takes longer, increase the timeout in your CI config.
-  - Break the job into smaller parallel jobs to reduce per-job wall time.
+  - Check the last progressing step in the logs and determine whether the job was still doing work or had stopped producing output entirely.
+  - If a test or script is hanging, add an explicit per-command timeout and capture stack traces or debug output when the timeout fires.
+  - "Remove interactive prompts and TTY-only behaviour from setup commands (`--yes`, `--non-interactive`, `CI=true`)."
+  - Cache dependency downloads and split long-running build, test, or deploy stages into smaller jobs before increasing the global timeout.
+  - Increase the CI timeout only after you have identified a bounded slow path that legitimately needs more time.
 
 prevent:
-  - Set per-step timeouts in addition to a job-level timeout.
-  - Add explicit `--timeout` flags to any test runner invocation.
-  - Monitor average job duration and alert when it grows beyond a baseline.
+  - Set per-step timeouts in addition to the job-level timeout so the failing command is obvious.
+  - Add explicit timeout or watchdog settings to test runners, network-heavy scripts, and deploy commands.
+  - Emit periodic progress logs or heartbeats for long-running steps so silent hangs are easy to distinguish from slow but healthy work.
+  - Track median and p95 job duration by pipeline so regressions are visible before they start hitting the hard limit.

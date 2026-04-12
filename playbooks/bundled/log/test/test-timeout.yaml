@@ -42,3 +42,4 @@ prevent:
   - Set explicit per-test and per-suite timeouts rather than relying on defaults.
   - Mock all external I/O in unit tests so they cannot block on network.
   - Monitor test execution time trend and alert when slow tests emerge.
+  - Capture stack traces, goroutine dumps, or runner diagnostics on timeout so recurring hangs are debuggable after the fact.

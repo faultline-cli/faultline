@@ -64,6 +64,9 @@ curl -L <release-tarball-url> -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd faultline_<version>_<os>_<arch>
 ./faultline analyze build.log
+
+# Optional: verify that the premium pack is visible to Faultline.
+./faultline list --playbook-pack ./packs/premium
 ```
 
 ## Manual access checklist
@@ -73,7 +76,8 @@ For the first sales, keep the process manual:
 1. Confirm payment in Gumroad.
 2. Add the buyer to the private GitHub repository.
 3. Confirm they can see Releases.
-4. Send the onboarding snippet above.
+4. Ask them to run `faultline list --playbook-pack <premium-pack-dir>` and confirm the expected premium pack name appears in the `PACK` column.
+5. Send the onboarding snippet above.
 
 This keeps the system deterministic and avoids premature infrastructure work.
 

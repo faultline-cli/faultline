@@ -32,8 +32,10 @@ fix:
   - "Specify the exact runtime version in your workflow file using a version manager (e.g., `actions/setup-node`, `setup-python`)."
   - "Match the version in `.node-version`, `.nvmrc`, `.python-version`, or `.tool-versions`."
   - Run the build locally with the same version to confirm it passes.
+  - If the failure comes from a dependency engine check, confirm the package's documented minimum version before relaxing project constraints.
 
 prevent:
   - Pin all runtimes explicitly in CI workflow files rather than relying on runner defaults.
   - "Use a version file committed to the repo (`.nvmrc`, `.python-version`) as the single source of truth."
   - Test against the minimum supported version in addition to the latest.
+  - Keep base images and setup actions versioned in the same pull request when runtime requirements change.

@@ -33,12 +33,14 @@ func LoadPacks(packs []Pack) ([]model.Playbook, error) {
 			return nil, fmt.Errorf("load playbook pack %q: %w", pack.Name, err)
 		}
 		for _, pb := range pbs {
+			pb.Metadata.PackName = pack.Name
+			pb.Metadata.PackRoot = pack.Root
 			if prev, ok := seen[pb.ID]; ok {
 				return nil, fmt.Errorf("duplicate playbook id %q across packs %q and %q", pb.ID, prev, pack.Name)
 			}
 			seen[pb.ID] = pack.Name
+			merged = append(merged, pb)
 		}
-		merged = append(merged, pbs...)
 	}
 	return merged, nil
 }

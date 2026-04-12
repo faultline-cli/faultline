@@ -39,12 +39,14 @@ why: >
   or slow. Transient network congestion also causes timeouts.
 
 fix:
-  - Retry the failed job to check if the failure is transient.
-  - Check the status page of the service being contacted (e.g., registry.npmjs.org, PyPI).
-  - Verify that the CI runner has outbound access to the required host.
-  - Increase timeout settings if the operation is genuinely slow (e.g., large artifact download).
+  - Identify the exact host and command that timed out so you know whether the issue is a registry, API, artifact store, or internal service.
+  - Retry the failed job once to separate a transient network blip from a persistent routing or service problem.
+  - Check the service status page and test connectivity from the runner environment with the same protocol and destination the failing step uses.
+  - Verify the CI runner can reach the required host through any proxy, firewall, or egress policy applied in that environment.
+  - Increase client-side timeout settings only when the endpoint is healthy and the operation is legitimately large or slow.
 
 prevent:
-  - Mirror critical resources in a registry you control to reduce external dependency.
-  - Add retry logic with exponential back-off to network operations where possible.
-  - Monitor external dependency availability in your alerting system.
+  - Mirror critical packages, container images, and build artifacts in infrastructure you control to reduce dependency on public services.
+  - Add explicit retry and exponential back-off behaviour to network operations that are safe to repeat.
+  - Keep runner egress, DNS, and proxy settings under test with a lightweight connectivity check in CI.
+  - Separate optional external calls from the critical path so transient upstream slowness does not fail the whole pipeline unnecessarily.

@@ -34,3 +34,4 @@ prevent:
   - "Store file permissions in Git for executable scripts: `git update-index --chmod=+x script.sh`."
   - Design CI jobs to run with the minimum required permissions.
   - Audit steps that modify the file system and verify they account for non-root users.
+  - Prefer images and scripts that assume non-root execution from the start so permission problems surface during local development too.

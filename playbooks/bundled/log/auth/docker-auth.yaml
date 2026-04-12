@@ -41,6 +41,7 @@ prevent:
   - Rotate registry tokens on a fixed schedule and update the CI secret immediately.
   - Use short-lived OIDC tokens (e.g. GitHub Actions id-token) instead of long-lived passwords.
   - Add a smoke test to your pipeline that validates registry credentials on each commit.
+  - Keep registry login in a shared reusable workflow or deploy template so every pipeline authenticates the same way.
 
 workflow:
   likely_files:

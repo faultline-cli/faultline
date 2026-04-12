@@ -9,7 +9,6 @@ stage_hints: [build, test, deploy]
 match:
   any:
     - address already in use
-    - port is already allocated
     - "bind: address already in use"
     - listen tcp
     - cannot assign requested address
@@ -17,6 +16,10 @@ match:
   none:
     - port conflict
     - cannot start service
+    - port is already allocated
+    - race detected
+    - database locked
+    - test is not parallelizable
 
 explain: >
   A process attempted to bind to a TCP or UDP port that is already occupied by

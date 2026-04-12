@@ -27,8 +27,10 @@ fix:
   - "Run `yarn install` locally."
   - "Commit the updated `yarn.lock`."
   - "Ensure `yarn.lock` is not in `.gitignore`."
+  - If the repository uses Yarn workspaces, regenerate the lockfile from the workspace root with the same Yarn version used in CI.
 
 prevent:
   - "Commit `yarn.lock` to source control."
   - "Use `yarn install --frozen-lockfile` in CI to catch drift early."
   - Add a Renovate or Dependabot configuration to keep dependencies up to date automatically.
+  - Pin the Yarn version through Corepack or the base image so lockfile behavior stays consistent across environments.

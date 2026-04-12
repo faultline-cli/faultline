@@ -8,8 +8,6 @@ stage_hints: [deploy]
 
 match:
   any:
-    - environment variable not set
-    - "required env"
     - missing configuration
     - config not found
     - "no such secret"
@@ -22,6 +20,8 @@ match:
     - os.environ
     - process.env.
     - getenv
+    - environment variable not set
+    - required env
 
 explain: >
   The deployment failed because a required configuration value, environment

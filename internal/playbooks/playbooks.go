@@ -286,6 +286,7 @@ func loadFile(path string) (model.Playbook, error) {
 		},
 		Metadata: model.PlaybookMeta{
 			SchemaVersion: r.Metadata.SchemaVersion,
+			SourceFile:    path,
 		},
 		Scoring: model.ScoringConfig{
 			BaseTriggerWeight:          r.Scoring.BaseTriggerWeight,

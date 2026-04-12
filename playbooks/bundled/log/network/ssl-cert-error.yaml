@@ -32,8 +32,10 @@ fix:
   - If connecting to an internal service, add the CA certificate to the system trust store.
   - Verify the system clock on the CI runner is correct.
   - Contact the service owner if their certificate has actually expired.
+  - If the failure only appears in corporate CI, confirm whether a TLS-intercepting proxy requires its root CA to be installed on the runner image.
 
 prevent:
   - Set up automated certificate renewal (e.g., Let's Encrypt with cert-manager or certbot).
   - Monitor certificate expiry dates and alert 30 days before expiry.
   - Test certificate validity in a scheduled CI job.
+  - Bake required internal CA certificates into the base runner image instead of configuring trust ad hoc in individual jobs.

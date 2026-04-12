@@ -21,7 +21,6 @@ match:
     - "process.env."
     - "os.environ"
     - "getenv"
-    - "configuration error"
   none:
     - "PATH"
     - "HOME"

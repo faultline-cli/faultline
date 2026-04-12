@@ -28,11 +28,14 @@ why: >
   or subprocesses without cleaning them up can hit these limits.
 
 fix:
-  - "Increase the relevant ulimit in the CI runner configuration: `ulimit -n 65536`."
-  - Find and fix the resource leak (file handles not closed, threads not joined).
-  - Reduce parallelism to lower peak resource consumption.
+  - Determine which limit was hit first (`ulimit -a`, open files, pids, threads) so you change the right control instead of raising all limits blindly.
+  - Find and fix the leak or bursty workload causing the limit breach, such as file descriptors left open, unbounded goroutines, or too many worker processes.
+  - Reduce test or worker parallelism to lower peak file descriptor, process, and thread usage.
+  - "If the workload is legitimate, raise the specific runner or container limit that failed, for example `ulimit -n 65536` for open files."
+  - Capture diagnostics during the failing step (`lsof`, process counts, runtime metrics) so you can see whether usage is steadily leaking or spiking.
 
 prevent:
-  - "Use resource leak detectors such as `-race` in Go or sanitisers in C/C++."
-  - Always close files, sockets, and database connections in defer/finally blocks.
-  - Profile resource usage over long test runs to catch slow leaks.
+  - Run long-lived integration tests under the same runner limits used in CI so leaks show up before release branches.
+  - Always close files, sockets, and database connections promptly and prefer shared client pools over creating new clients per request.
+  - Cap test and worker parallelism relative to runner size instead of assuming local developer hardware matches CI capacity.
+  - Profile file descriptor, thread, and process usage over time to catch slow leaks before they reach hard limits.

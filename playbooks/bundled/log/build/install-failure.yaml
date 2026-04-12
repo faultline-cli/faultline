@@ -29,12 +29,14 @@ why: >
   may not be configured.
 
 fix:
-  - Check that the package name and version are correct.
-  - Verify the registry or package index is reachable from the CI runner.
-  - "For private registries, ensure the authentication token is configured (e.g., `.npmrc` or `pip.conf`)."
-  - If a package was removed, find an alternative or pin to the last published version.
+  - Re-run the exact install command locally with verbose logging so you can see which package name, version, or index URL failed.
+  - Check that the package name and requested version actually exist in the configured registry or package index.
+  - "For private registries, verify the CI credentials and config files are present before the install step runs (for example `.npmrc`, `pip.conf`, or registry-specific env vars)."
+  - If the failure happens while building a native dependency, install the required compiler toolchain or system headers on the runner image.
+  - If a package was removed or renamed, pin to a known-good published version or replace it with the maintained package.
 
 prevent:
-  - Use a lockfile to pin exact versions so removals only affect lockfile regeneration jobs.
-  - Mirror critical packages in a private registry you control.
-  - Monitor package deprecation notices and act before removal.
+  - Use a lockfile or fully pinned constraints file so dependency resolution changes only happen in deliberate update jobs.
+  - Mirror critical internal and third-party packages in a registry you control so public registry outages or removals do not block builds.
+  - Keep registry configuration and auth bootstrap in a shared CI template so each pipeline uses the same package source settings.
+  - Run a dependency install smoke job whenever the base build image or dependency manifest changes.

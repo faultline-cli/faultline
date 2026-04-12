@@ -2,6 +2,7 @@ package playbooks
 
 import (
 	"fmt"
+	"path/filepath"
 	"os"
 	"strings"
 
@@ -61,13 +62,22 @@ func (c Catalog) Packs() ([]Pack, error) {
 		Name: BundledPackName,
 		Root: root,
 	}}
+	usedNames := map[string]int{BundledPackName: 1}
 	for i, dir := range c.resolvedExtraPackDirs() {
 		root, err := validateDir(dir)
 		if err != nil {
 			return nil, err
 		}
+		name := packNameFromRoot(root)
+		if name == "" {
+			name = fmt.Sprintf("extra-%d", i+1)
+		}
+		usedNames[name]++
+		if usedNames[name] > 1 {
+			name = fmt.Sprintf("%s-%d", name, usedNames[name]-1)
+		}
 		packs = append(packs, Pack{
-			Name: fmt.Sprintf("extra-%d", i+1),
+			Name: name,
 			Root: root,
 		})
 	}
@@ -146,4 +156,12 @@ func cleanPackDirs(dirs []string) []string {
 		out = append(out, dir)
 	}
 	return out
+}
+
+func packNameFromRoot(root string) string {
+	base := strings.TrimSpace(filepath.Base(root))
+	if base == "." || base == string(filepath.Separator) {
+		return ""
+	}
+	return base
 }

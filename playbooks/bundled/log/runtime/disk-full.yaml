@@ -8,15 +8,15 @@ stage_hints: [build, deploy]
 
 match:
   any:
-    - no space left on device
     - disk full
     - file system is full
     - no space remaining
-    - "ENOSPC"
     - not enough space
   none:
     - disk quota exceeded
     - "Write failed: No space left"
+    - "ENOSPC"
+    - no space left on device
 
 explain: >
   The CI runner ran out of disk space. Writes to the filesystem fail

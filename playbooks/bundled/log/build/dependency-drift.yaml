@@ -34,12 +34,14 @@ why: >
   regenerated on different platforms with different available package versions.
 
 fix:
-  - "Run the dependency resolver fresh: `pip install --upgrade pip && pip install -r requirements.txt`, or the equivalent for your tool."
-  - "Use `pip-compile`, `poetry lock`, or `bundle update` to regenerate the lockfile."
-  - Identify the conflicting pair and pin one of them to a compatible version.
-  - Search the issue trackers for the conflicting packages for known compatibility notes.
+  - Re-run dependency resolution from a clean cache or clean environment so you can confirm the conflict is reproducible and not caused by stale artifacts.
+  - Inspect the dependency tree with the native tool (`npm ls`, `pipdeptree`, `bundle viz`, `go mod graph`) to identify the exact packages pulling incompatible versions.
+  - Regenerate the lockfile with the team-standard tool and version, then commit the result instead of hand-editing generated dependency files.
+  - Pin, upgrade, or replace the conflicting dependency pair so all top-level constraints agree on a compatible version range.
+  - If the conflict appears only in CI, align the runtime or package manager version with local development before changing dependency constraints.
 
 prevent:
-  - Use a lockfile for all projects and regenerate it on every dependency update.
-  - Enable a dependency update bot (Renovate, Dependabot) to catch conflicts early.
-  - Test dependency upgrades in an isolated branch before merging.
+  - Use a lockfile for all projects and regenerate it only through one canonical toolchain version in CI or a documented update workflow.
+  - Update related dependency families together so transitive compatibility changes land in a single reviewable pull request.
+  - Run a dependency resolution check in CI on every manifest or lockfile change, not only during full builds.
+  - Avoid manual edits to generated lockfiles; treat them as resolver output, not source-of-truth handwritten config.

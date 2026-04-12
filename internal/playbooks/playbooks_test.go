@@ -142,6 +142,36 @@ match:
 	}
 }
 
+func TestLoadPacksStampsPackMetadata(t *testing.T) {
+	first := t.TempDir()
+	writePlaybookFixture(t, first, "one.yaml", `
+id: shared
+title: Shared
+category: test
+severity: low
+match:
+  any:
+    - "primary error"
+`)
+
+	pbs, err := LoadPacks([]Pack{{Name: "premium-pack", Root: first}})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected one playbook, got %d", len(pbs))
+	}
+	if pbs[0].Metadata.PackName != "premium-pack" {
+		t.Fatalf("expected pack name to be stamped, got %#v", pbs[0].Metadata)
+	}
+	if pbs[0].Metadata.PackRoot != first {
+		t.Fatalf("expected pack root %q, got %#v", first, pbs[0].Metadata)
+	}
+	if pbs[0].Metadata.SourceFile == "" {
+		t.Fatalf("expected source file metadata, got %#v", pbs[0].Metadata)
+	}
+}
+
 func TestCatalogUsesExplicitCustomPack(t *testing.T) {
 	dir := t.TempDir()
 	writePlaybookFixture(t, dir, "sample.yaml", `
@@ -175,7 +205,7 @@ func TestFindPatternConflictsBundled(t *testing.T) {
 		t.Fatal("expected bundled playbooks to produce at least one pattern conflict report")
 	}
 
-	assertConflict(t, conflicts, "context deadline exceeded", []string{"network-timeout", "test-timeout"}, nil)
+	assertConflict(t, conflicts, "context deadline exceeded", []string{"network-timeout", "test-timeout"}, []string{"coverage-gate-failure"})
 
 	report := FormatPatternConflicts(conflicts)
 	if !strings.Contains(report, "context deadline exceeded") {

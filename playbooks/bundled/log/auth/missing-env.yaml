@@ -10,8 +10,6 @@ match:
   any:
     - environment variable not set
     - required env var
-    - is not set
-    - must be set
     - missing required variable
     - unbound variable
     - please set the
@@ -25,6 +23,8 @@ match:
     - getenv
     - undefined variable
     - configuration error
+    - is not set
+    - must be set
 
 explain: >
   A required environment variable was not set in the CI environment. The job

@@ -292,6 +292,10 @@ playbooks/
       deploy/    terraform-state-lock, health-check-failure, container-crash
 Premium packs are distributed from a separate repository and loaded through
 `--playbooks` or `FAULTLINE_PLAYBOOK_DIR`.
+
+When extra packs are composed alongside the starter catalog, Faultline carries
+pack provenance through `list`, `explain`, and analysis JSON so paid rules can
+be audited and supported without guessing which catalog produced a match.
 ```
 
 Each playbook is purely declarative:
@@ -345,6 +349,10 @@ separator:
 faultline analyze --playbook-pack ./packs/acme --playbook-pack ./packs/team build.log
 FAULTLINE_PLAYBOOK_PACKS=./packs/acme:./packs/team faultline analyze build.log
 ```
+
+`faultline list` adds a `PACK` column for composed catalogs, and `faultline
+explain <id>` includes the pack name when the playbook came from an external
+pack.
 
 `--playbooks` remains a full override and should not be combined with
 `--playbook-pack`.

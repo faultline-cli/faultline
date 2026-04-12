@@ -30,8 +30,10 @@ fix:
   - Check whether the hostname is internal-only and requires VPN, VPC DNS, or private resolver access.
   - Retry the job to rule out a transient resolver outage.
   - Resolve the host manually from the same environment using `nslookup`, `dig`, or `getent hosts`.
+  - If the hostname comes from configuration, trace the resolved value in CI logs to confirm the job is not using the wrong environment or secret.
 
 prevent:
   - Keep service endpoints centralized in configuration rather than duplicated across workflows.
   - Add environment-specific connectivity checks for critical internal hosts.
   - Monitor resolver health on persistent runners or clusters.
+  - Document which internal domains require private DNS so new runners are provisioned with the correct resolver settings.

@@ -26,11 +26,14 @@ why: >
   previous job that did not release the lock.
 
 fix:
-  - Wait for the other Terraform operation to complete.
-  - "If the lock is stale (from a crashed job), force-unlock it: `terraform force-unlock <LOCK_ID>`."
-  - Check your CI configuration for parallel jobs that target the same Terraform workspace.
+  - Identify which job or operator currently holds the lock before taking action; the backend usually records the lock ID and owner context.
+  - Wait for any active Terraform apply or plan touching the same state to complete, or cancel the duplicate run in CI.
+  - "Use `terraform force-unlock <LOCK_ID>` only after confirming the lock is stale and no active Terraform process is still working against that state."
+  - Check your CI configuration for parallel jobs, retries, or manual approval paths that target the same Terraform backend or workspace.
+  - If the backend keeps stale locks after runner crashes, inspect backend-specific logs and cleanup behaviour before repeating the apply.
 
 prevent:
-  - Serialize Terraform deployments for the same environment using concurrency or environment locks in your CI provider.
-  - Use Terraform workspaces or separate state files for parallel environments.
-  - Add monitoring for long-running state locks and alert if they exceed a timeout.
+  - Serialize Terraform runs per environment using CI concurrency groups, environment locks, or a single deployment lane.
+  - Use separate state files or workspaces for environments that are expected to run in parallel.
+  - Alert on locks that outlive the normal apply window so stale-state incidents are caught quickly.
+  - Avoid overlapping manual Terraform operations with pipeline-managed infrastructure changes.

@@ -29,12 +29,14 @@ why: >
   reliance on external services that are sometimes unavailable.
 
 fix:
-  - Retry the failing test job to confirm the failure is intermittent.
-  - "Isolate the test: run it alone repeatedly (`go test -run TestName -count=10`)."
-  - Add deterministic waits or polling instead of fixed sleep() delays.
-  - Avoid shared global state between tests; use explicit setup and teardown.
+  - Retry the failing test job once to confirm the failure is intermittent and not a permanent regression.
+  - "Isolate the test and run it repeatedly with the same command CI uses (`go test -run TestName -count=20`, `pytest -k test_name -n 0`, or equivalent)."
+  - Replace fixed sleeps with deterministic waits on observable conditions, event completion, or polling with a bounded timeout.
+  - Remove shared global state, reused temp directories, fixed ports, and cross-test data dependencies by using explicit setup and teardown.
+  - If the test depends on time, randomness, or external services, freeze the clock, record the random seed, or stub the dependency.
 
 prevent:
-  - Use a flakiness detection service that re-runs failing tests automatically.
-  - Track flaky test rates and quarantine tests that fail more than a threshold percentage.
-  - Write tests that are order-independent and self-contained.
+  - Provide shared test helpers for polling, temporary resources, and fake clocks so new tests do not reintroduce timing hacks.
+  - Track flaky-test rates and quarantine or repair tests that exceed an agreed failure threshold.
+  - Run an order-randomized or repeated-test job on the main branch to catch hidden state coupling early.
+  - Write tests so they are self-contained, idempotent, and safe to run in parallel.

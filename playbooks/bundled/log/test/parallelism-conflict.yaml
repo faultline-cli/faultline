@@ -37,8 +37,10 @@ fix:
   - "Reduce test parallelism with `-parallel 1` to confirm the conflict is parallelism-related."
   - Allocate a unique port, database, or temp directory per test rather than sharing a fixed resource.
   - Use test-specific prefixes or random ports in each test's setup.
+  - If the suite must share a resource, serialize only the affected tests instead of disabling parallelism globally.
 
 prevent:
   - Design each test to be fully isolated and self-contained.
   - Avoid hardcoded ports or global singletons in test setup.
   - Run the full test suite in parallel locally before enabling parallel CI.
+  - Provide shared helpers for ephemeral ports, temp databases, and per-test workspaces so resource isolation is the default.

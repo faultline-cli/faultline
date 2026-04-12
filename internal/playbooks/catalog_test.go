@@ -41,7 +41,7 @@ match:
 	if len(packs) != 2 {
 		t.Fatalf("expected bundled and extra pack, got %#v", packs)
 	}
-	if packs[0].Name != BundledPackName || packs[1].Root != extra {
+	if packs[0].Name != BundledPackName || packs[1].Root != extra || packs[1].Name != filepath.Base(extra) {
 		t.Fatalf("unexpected resolved packs: %#v", packs)
 	}
 }

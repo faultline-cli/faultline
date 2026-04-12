@@ -35,6 +35,7 @@ prevent:
   - Keep snapshot inputs deterministic and normalize unstable fields before writing expected output.
   - Review snapshot diffs carefully in pull requests instead of auto-accepting them.
   - Prefer narrow golden files that capture only the behavior that matters.
+  - Store snapshot update commands in the test docs or Makefile so regenerating expected output is consistent across contributors.
 
 workflow:
   likely_files:

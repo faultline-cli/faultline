@@ -48,6 +48,7 @@ prevent:
   - Use service health checks in Docker Compose or CI service definitions.
   - Add explicit wait steps with a timeout and retry loop.
   - Define service startup order in CI to avoid race conditions.
+  - Standardize service hostnames and ports in shared test helpers or env files so jobs do not guess connection targets.
 
 workflow:
   likely_files:

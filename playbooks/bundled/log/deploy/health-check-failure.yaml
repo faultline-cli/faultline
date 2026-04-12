@@ -44,3 +44,4 @@ prevent:
   - Test the health check endpoint locally with the same configuration used in production.
   - Use a staged rollout (canary or blue/green) so health check failures only affect a small percentage of traffic.
   - Add a smoke test step that verifies the service is ready before marking the deployment successful.
+  - Keep health checks simple and aligned with real readiness so they fail on broken startup, not on slow but healthy warm-up paths.

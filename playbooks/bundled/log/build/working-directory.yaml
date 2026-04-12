@@ -40,3 +40,4 @@ prevent:
   - "Use explicit `working-directory` steps rather than relying on implicit directory state."
   - Document expected working directory requirements in step names or comments.
   - Add a directory existence check at the start of jobs that depend on specific paths.
+  - Prefer commands anchored from the repository root in reusable scripts so directory assumptions are not duplicated across workflows.

@@ -33,6 +33,8 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "snapshot mismatch", file: "snapshot-mismatch.log", wantID: "snapshot-mismatch"},
 		{name: "flaky test", file: "flaky-test.log", wantID: "flaky-test"},
 		{name: "test timeout", file: "test-timeout.log", wantID: "test-timeout"},
+			{name: "quality gate failure", file: "quality-gate-failure.log", wantID: "quality-gate-failure"},
+			{name: "coverage gate failure", file: "coverage-gate-failure.log", wantID: "coverage-gate-failure"},
 		{name: "dependency drift", file: "dependency-drift.log", wantID: "dependency-drift"},
 	}
 

@@ -9,6 +9,7 @@ stage_hints: [build, test]
 match:
   any:
     - exit code 137
+    - OOMKilled
     - killed
     - out of memory
     - oom killer

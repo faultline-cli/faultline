@@ -9,10 +9,7 @@ stage_hints: [deploy]
 match:
   any:
     - port is already allocated
-    - address already in use
-    - "bind: address already in use"
     - failed to bind to port
-    - "listen tcp"
     - port conflict
     - "cannot start service"
   none:
@@ -20,6 +17,9 @@ match:
     - concurrent
     - test is not parallelizable
     - database locked
+    - address already in use
+    - "bind: address already in use"
+    - listen tcp
 
 explain: >
   A container or service failed to start because the port it needs to bind to

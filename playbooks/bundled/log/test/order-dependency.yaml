@@ -15,7 +15,6 @@ match:
     - global state
     - "left over from previous"
     - "already exists"
-    - setup failed
 
 explain: >
   A test failed because it depends on side effects or state created by a

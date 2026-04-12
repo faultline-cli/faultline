@@ -117,6 +117,9 @@ type ChangeSensitivity struct {
 
 type PlaybookMeta struct {
 	SchemaVersion string `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+	PackName      string `yaml:"-" json:"pack_name,omitempty"`
+	PackRoot      string `yaml:"-" json:"pack_root,omitempty"`
+	SourceFile    string `yaml:"-" json:"source_file,omitempty"`
 }
 
 type ScoringConfig struct {
