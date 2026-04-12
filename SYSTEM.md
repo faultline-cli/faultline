@@ -30,6 +30,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 ## Primary Commands
 
 - `faultline analyze <logfile>`
+- `faultline inspect <path>`
 - `cat build.log | faultline analyze`
 - `faultline analyze <logfile> --json`
 - `faultline analyze <logfile> --git`
@@ -41,14 +42,15 @@ Given a build log from a local run or CI job, Faultline should identify the most
 ## Architectural Boundaries
 
 - `cmd/main.go` owns CLI startup and command wiring.
-- `internal/engine` owns log ingestion, normalization, and orchestration.
-- `internal/playbooks` owns YAML loading, validation, and deterministic playbook ordering.
-- `internal/matcher` owns pattern matching, evidence extraction, and scoring.
+- `internal/engine` owns log ingestion, source tree scanning, normalization, and orchestration.
+- `internal/detectors` owns detector module interfaces and target contracts.
+- `internal/playbooks` owns pack resolution, YAML loading, validation, and deterministic playbook ordering.
+- `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
 - `internal/output` owns text formatting and JSON serialization.
 - `internal/workflow` owns deterministic next-step planning for local and agentic workflows.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
 - `internal/playbooks` also owns playbook overlap reporting for deterministic review of shared patterns and exclusions.
-- `playbooks/` owns bundled failure definitions and should contain only deterministic rule data.
+- `playbooks/` owns bundled and external-pack boundaries and should contain only deterministic rule data or pack metadata.
 
 ## Core Entities
 
@@ -59,9 +61,16 @@ type Playbook struct {
     ID       string
     Title    string
     Category string
+    Detector string
 
     Match struct {
         Any []string
+    }
+
+    Source struct {
+        Triggers    []SignalMatcher
+        Amplifiers  []SignalMatcher
+        Mitigations []SignalMatcher
     }
 
     Explanation string
@@ -75,6 +84,8 @@ type Playbook struct {
 type Result struct {
     Playbook   Playbook
     Evidence   []string
+    EvidenceBy EvidenceBundle
+    Breakdown  ScoreBreakdown
     Score      int
     Confidence float64
 }

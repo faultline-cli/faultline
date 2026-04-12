@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -139,6 +141,40 @@ func TestAnalyzeReaderSnapshotMismatch(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReaderWithAdditionalPack(t *testing.T) {
+	extra := t.TempDir()
+	if err := os.WriteFile(filepath.Join(extra, "custom.yaml"), []byte(`
+id: extra-custom
+title: Extra Custom
+category: test
+severity: low
+match:
+  any:
+    - "totally custom failure marker"
+explain: custom
+why: custom
+fix:
+  - custom
+`), 0o600); err != nil {
+		t.Fatalf("write custom pack: %v", err)
+	}
+
+	e := New(Options{
+		PlaybookDir:      "",
+		PlaybookPackDirs: []string{extra},
+		NoHistory:        true,
+	})
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+
+	a, err := e.AnalyzeReader(strings.NewReader("totally custom failure marker\n"))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if a.Results[0].Playbook.ID != "extra-custom" {
+		t.Fatalf("expected extra-custom, got %s", a.Results[0].Playbook.ID)
+	}
+}
+
 func repoPlaybookDir(_ testing.TB) string {
-	return "../../playbooks"
+	return "../../playbooks/bundled"
 }

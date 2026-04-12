@@ -6,6 +6,10 @@ It reads a raw CI log from a file or stdin, matches it against a library of
 YAML playbooks, and returns a ranked list of likely failures with evidence and
 concrete fix steps.
 
+Faultline also supports modular detector playbooks. The built-in `inspect`
+command runs source-aware playbooks against a repository tree using the same
+deterministic output model used by log analysis.
+
 The playbook layer is reviewed separately from runtime matching: bundled
 playbooks are validated, then conflict-reported so overlapping patterns and
 `match.none` exclusions stay deterministic as the catalog grows.
@@ -14,7 +18,7 @@ playbooks are validated, then conflict-reported so overlapping patterns and
 
 For private distribution, download the latest release tarball from GitHub
 Releases, then unpack and run Faultline from the extracted directory so the
-bundled `playbooks/` directory stays adjacent to the binary.
+bundled `playbooks/bundled/` directory stays adjacent to the binary.
 
 ```bash
 curl -L <release-tarball-url> -o faultline.tar.gz
@@ -23,8 +27,8 @@ cd faultline_<version>_<os>_<arch>
 ./faultline analyze build.log
 ```
 
-If you move the binary elsewhere, also move `playbooks/` with it or point
-`FAULTLINE_PLAYBOOK_DIR` at the bundled playbook directory.
+If you move the binary elsewhere, also move `playbooks/bundled/` with it or
+point `FAULTLINE_PLAYBOOK_DIR` at the bundled playbook directory.
 
 ## Quick start
 
@@ -53,6 +57,11 @@ faultline analyze --json --git --since 30d --repo . build.log
 # Show only the fix steps
 faultline fix build.log
 
+# Inspect a repository for source-risk patterns
+faultline inspect .
+faultline inspect ./service --mode detailed
+faultline inspect ./service --json
+
 # Generate a local triage workflow from the top diagnosis
 faultline workflow build.log
 
@@ -75,6 +84,7 @@ faultline explain docker-auth
 | Command | Description |
 |---------|-------------|
 | `analyze [file]` | Ranked diagnosis from a file or stdin |
+| `inspect [path]` | Ranked source-risk findings from a repository tree |
 | `fix [file]` | Print only the fix steps for the top match |
 | `workflow [file]` | Generate a deterministic local or agent-ready follow-up plan |
 | `list` | List all built-in playbooks |
@@ -138,6 +148,8 @@ Review guidance:
 - Prefer tightening `match.any` or `match.all` before adding new exclusions.
 - Add `match.none` only for high-confidence false positives that are shared
   with another rule.
+- Keep source detector signals close to the risky scope so mitigations and
+  suppressions can be interpreted structurally.
 - Re-run `make review` after editing bundled playbooks to confirm the overlap
   report still makes sense.
 
@@ -150,10 +162,14 @@ Review guidance:
 | `--json` | false | Emit stable JSON instead of text |
 | `--ci-annotations` | false | Emit `::warning::` GitHub Actions annotations |
 | `--playbooks <dir>` | auto | Override playbook directory |
+| `--playbook-pack <dir>` | none | Add an external pack root on top of bundled starter playbooks |
 | `--no-history` | false | Skip reading and writing local history |
 | `--git` | false | Enrich diagnoses with recent local git repository context |
 | `--since <window>` | `30d` | Git history window for `--git`, for example `7d`, `2w`, `1 month ago` |
 | `--repo <path>` | `.` | Repository path to scan when `--git` is enabled |
+
+`inspect` supports `--top`, `--mode`, `--json`, `--playbooks`,
+`--playbook-pack`, and `--no-history`.
 
 ## Output
 
@@ -261,21 +277,25 @@ Top diagnosis: docker-build-context - Docker build context or Dockerfile path is
 
 ## Playbooks
 
-Playbooks are YAML files organised by category under `playbooks/`:
+Playbooks are packaged as deterministic packs. The shipped starter catalog
+lives under `playbooks/bundled/`:
 
 ```
 playbooks/
-  auth/        docker-auth, git-auth, kubectl-auth, missing-env
-  build/       go-sum-missing, npm-ci-lockfile, yarn-lockfile, ruby-bundler,
-               python-module-missing, dependency-drift, cache-corruption,
-               install-failure, syntax-error, working-directory,
-               path-case-mismatch, runtime-mismatch, maven-dependency-resolution,
-               typescript-compile, docker-build-context
-  test/        flaky-test, parallelism-conflict, order-dependency, snapshot-mismatch
-  network/     network-timeout, ssl-cert-error, dns-resolution
-  runtime/     oom-killed, permission-denied, disk-full, port-in-use, resource-limits
-  deploy/      terraform-state-lock, health-check-failure, container-crash,
-               config-mismatch, database-lock, port-conflict, image-pull-backoff
+  bundled/
+    log/
+      auth/      docker-auth, git-auth, kubectl-auth, missing-env
+      build/     go-sum-missing, npm-ci-lockfile, yarn-lockfile, ruby-bundler
+      test/      flaky-test, parallelism-conflict, order-dependency
+      network/   network-timeout, ssl-cert-error, dns-resolution
+      runtime/   oom-killed, permission-denied, disk-full
+      deploy/    terraform-state-lock, health-check-failure, container-crash
+    source/
+      missing-idempotency-guard
+      network-fanout-without-guards
+  packs/
+    starter/
+    premium/
 ```
 
 Each playbook is purely declarative:
@@ -313,13 +333,25 @@ prevent:
 
 ### Custom playbooks
 
-Point `--playbooks` at any directory (or set `FAULTLINE_PLAYBOOK_DIR`) and
+Point `--playbooks` at any pack root (or set `FAULTLINE_PLAYBOOK_DIR`) and
 Faultline will load all `.yaml` files found recursively:
 
 ```bash
 faultline analyze --playbooks ./my-playbooks build.log
-FAULTLINE_PLAYBOOK_DIR=/opt/playbooks faultline analyze build.log
+FAULTLINE_PLAYBOOK_DIR=/opt/playbooks/bundled faultline analyze build.log
 ```
+
+To compose extra packs alongside the bundled starter catalog, repeat
+`--playbook-pack` or set `FAULTLINE_PLAYBOOK_PACKS` using your platform path
+separator:
+
+```bash
+faultline analyze --playbook-pack ./packs/acme --playbook-pack ./packs/team build.log
+FAULTLINE_PLAYBOOK_PACKS=./packs/acme:./packs/team faultline analyze build.log
+```
+
+`--playbooks` remains a full override and should not be combined with
+`--playbook-pack`.
 
 ### Scoring
 
@@ -392,8 +424,8 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/build.log
 docker run --rm -v "$(pwd)":/workspace faultline analyze --json /workspace/build.log
 ```
 
-The image bundles the binary and all playbooks at `/playbooks` so no extra
-configuration is needed.
+The image bundles the binary and playbook packs at `/playbooks`, and Faultline
+loads `/playbooks/bundled` by default, so no extra configuration is needed.
 
 ## Development
 
@@ -409,14 +441,14 @@ make run LOG=build.log
 cmd/                   Cobra command tree
 internal/
   model/               Shared data types (Playbook, Result, Analysis, Context)
-  playbooks/           YAML loader — recursive directory walk
+  playbooks/           Catalog, pack loading, YAML validation, review
   matcher/             Deterministic scoring and ranking
   engine/              Orchestration: load → normalize → match → history
   output/              All formatters: text, JSON, CI annotations
   cli/                 Input reader (file / stdin)
   app/                 Command handlers (RunAnalyze, RunFix, RunList, RunExplain)
   repo/                Local git scanning, history parsing, signals, correlation
-playbooks/             Bundled YAML playbooks (categorised by subdirectory)
+playbooks/             Bundled starter catalog plus reserved pack boundaries
 ```
 
 Design constraints:

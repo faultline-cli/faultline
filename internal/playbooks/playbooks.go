@@ -20,6 +20,66 @@ import (
 
 const envKey = "FAULTLINE_PLAYBOOK_DIR"
 
+type rawSignalMatcher struct {
+	ID           string   `yaml:"id"`
+	Label        string   `yaml:"label"`
+	Description  string   `yaml:"description"`
+	Patterns     []string `yaml:"patterns"`
+	PathIncludes []string `yaml:"path_includes"`
+	PathExcludes []string `yaml:"path_excludes"`
+	Scopes       []string `yaml:"scopes"`
+	Weight       float64  `yaml:"weight"`
+	Required     bool     `yaml:"required"`
+}
+
+type rawSuppressionRule struct {
+	Style       string   `yaml:"style"`
+	Pattern     string   `yaml:"pattern"`
+	Paths       []string `yaml:"paths"`
+	Playbooks   []string `yaml:"playbooks"`
+	Reason      string   `yaml:"reason"`
+	ExpiresOn   string   `yaml:"expires_on"`
+	Discount    float64  `yaml:"discount"`
+	SuppressAll bool     `yaml:"suppress_all"`
+}
+
+type rawCompoundSignal struct {
+	ID             string   `yaml:"id"`
+	Label          string   `yaml:"label"`
+	Require        []string `yaml:"require"`
+	Scope          string   `yaml:"scope"`
+	Bonus          float64  `yaml:"bonus"`
+	Required       bool     `yaml:"required"`
+	AllowMitigated bool     `yaml:"allow_mitigated"`
+}
+
+type rawConsistencyRule struct {
+	ID                string   `yaml:"id"`
+	Label             string   `yaml:"label"`
+	BaselineSignalIDs []string `yaml:"baseline_signal_ids"`
+	ExpectedSignalID  string   `yaml:"expected_signal_id"`
+	Scope             string   `yaml:"scope"`
+	MinimumPeers      int      `yaml:"minimum_peers"`
+	Threshold         float64  `yaml:"threshold"`
+	Amplifier         float64  `yaml:"amplifier"`
+}
+
+type rawPathClassRule struct {
+	Class    string   `yaml:"class"`
+	Paths    []string `yaml:"paths"`
+	Adjust   float64  `yaml:"adjust"`
+	HotPath  bool     `yaml:"hot_path"`
+	Critical bool     `yaml:"critical"`
+}
+
+type rawSafeContextRule struct {
+	ID       string   `yaml:"id"`
+	Label    string   `yaml:"label"`
+	Paths    []string `yaml:"paths"`
+	Patterns []string `yaml:"patterns"`
+	Discount float64  `yaml:"discount"`
+}
+
 // raw is the on-disk YAML shape.  The legacy "explanation" field is accepted
 // as a fallback for the canonical "explain" field so that older custom
 // playbooks continue to load without modification.
@@ -28,6 +88,7 @@ type raw struct {
 	Title      string   `yaml:"title"`
 	Category   string   `yaml:"category"`
 	Severity   string   `yaml:"severity"`
+	Detector   string   `yaml:"detector"`
 	BaseScore  float64  `yaml:"base_score"`
 	Tags       []string `yaml:"tags"`
 	StageHints []string `yaml:"stage_hints"`
@@ -36,6 +97,23 @@ type raw struct {
 		All  []string `yaml:"all"`
 		None []string `yaml:"none"`
 	} `yaml:"match"`
+	Source struct {
+		Triggers          []rawSignalMatcher   `yaml:"triggers"`
+		Amplifiers        []rawSignalMatcher   `yaml:"amplifiers"`
+		Mitigations       []rawSignalMatcher   `yaml:"mitigations"`
+		Suppressions      []rawSuppressionRule `yaml:"suppressions"`
+		Context           []rawSignalMatcher   `yaml:"context"`
+		CompoundSignals   []rawCompoundSignal  `yaml:"compound_signals"`
+		LocalConsistency  []rawConsistencyRule `yaml:"local_consistency"`
+		PathClasses       []rawPathClassRule   `yaml:"path_classes"`
+		ChangeSensitivity struct {
+			NewFileBonus        float64 `yaml:"new_file_bonus"`
+			ModifiedLineBonus   float64 `yaml:"modified_line_bonus"`
+			LegacyDiscount      float64 `yaml:"legacy_discount"`
+			PreferChangedScopes bool    `yaml:"prefer_changed_scopes"`
+		} `yaml:"change_sensitivity"`
+		SafeContext []rawSafeContextRule `yaml:"safe_context"`
+	} `yaml:"source"`
 	Explain     string   `yaml:"explain"`
 	Explanation string   `yaml:"explanation"` // legacy alias
 	Why         string   `yaml:"why"`
@@ -46,6 +124,22 @@ type raw struct {
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
 	} `yaml:"workflow"`
+	Metadata struct {
+		SchemaVersion string `yaml:"schema_version"`
+	} `yaml:"metadata"`
+	Scoring struct {
+		BaseTriggerWeight          float64 `yaml:"base_trigger_weight"`
+		DefaultAmplifierWeight     float64 `yaml:"default_amplifier_weight"`
+		DefaultMitigationDiscount  float64 `yaml:"default_mitigation_discount"`
+		DefaultSuppressionDiscount float64 `yaml:"default_suppression_discount"`
+		HotPathBonus               float64 `yaml:"hot_path_bonus"`
+		BlastRadiusBonus           float64 `yaml:"blast_radius_bonus"`
+		SafeContextDiscount        float64 `yaml:"safe_context_discount"`
+	} `yaml:"scoring"`
+	ContextFilters struct {
+		PathIncludes []string `yaml:"path_includes"`
+		PathExcludes []string `yaml:"path_excludes"`
+	} `yaml:"context_filters"`
 }
 
 // LoadDefault loads playbooks from the default directory resolved by
@@ -60,9 +154,10 @@ func LoadDefault() ([]model.Playbook, error) {
 
 // DefaultDir resolves the playbook directory using the following priority:
 //  1. FAULTLINE_PLAYBOOK_DIR environment variable
-//  2. A "playbooks" directory found by walking upward from the working
+//  2. A "playbooks/bundled" directory found by walking upward from the working
 //     directory or the executable directory
-//  3. /playbooks (Docker container convention)
+//  3. A legacy "playbooks" directory found by the same upward walk
+//  4. /playbooks/bundled or /playbooks (Docker container conventions)
 func DefaultDir() (string, error) {
 	if envDir := strings.TrimSpace(os.Getenv(envKey)); envDir != "" {
 		return validateDir(envDir)
@@ -74,6 +169,7 @@ func DefaultDir() (string, error) {
 	if exe, err := os.Executable(); err == nil {
 		candidates = append(candidates, upwardDirs(filepath.Dir(exe))...)
 	}
+	candidates = append(candidates, "/playbooks/bundled")
 	candidates = append(candidates, "/playbooks")
 	seen := make(map[string]struct{})
 	for _, c := range candidates {
@@ -90,7 +186,7 @@ func DefaultDir() (string, error) {
 		}
 	}
 	return "", fmt.Errorf(
-		"playbook directory not found; set %s or add a playbooks/ directory",
+		"playbook directory not found; set %s or add a playbooks/bundled directory",
 		envKey,
 	)
 }
@@ -169,6 +265,7 @@ func loadFile(path string) (model.Playbook, error) {
 		Title:      r.Title,
 		Category:   r.Category,
 		Severity:   r.Severity,
+		Detector:   normalizeDetector(r.Detector),
 		BaseScore:  r.BaseScore,
 		Tags:       r.Tags,
 		StageHints: r.StageHints,
@@ -177,6 +274,7 @@ func loadFile(path string) (model.Playbook, error) {
 			All:  r.Match.All,
 			None: r.Match.None,
 		},
+		Source:  convertSourceSpec(r),
 		Explain: explain,
 		Why:     r.Why,
 		Fix:     r.Fix,
@@ -185,6 +283,22 @@ func loadFile(path string) (model.Playbook, error) {
 			LikelyFiles: r.Workflow.LikelyFiles,
 			LocalRepro:  r.Workflow.LocalRepro,
 			Verify:      r.Workflow.Verify,
+		},
+		Metadata: model.PlaybookMeta{
+			SchemaVersion: r.Metadata.SchemaVersion,
+		},
+		Scoring: model.ScoringConfig{
+			BaseTriggerWeight:          r.Scoring.BaseTriggerWeight,
+			DefaultAmplifierWeight:     r.Scoring.DefaultAmplifierWeight,
+			DefaultMitigationDiscount:  r.Scoring.DefaultMitigationDiscount,
+			DefaultSuppressionDiscount: r.Scoring.DefaultSuppressionDiscount,
+			HotPathBonus:               r.Scoring.HotPathBonus,
+			BlastRadiusBonus:           r.Scoring.BlastRadiusBonus,
+			SafeContextDiscount:        r.Scoring.SafeContextDiscount,
+		},
+		Contextual: model.ContextPolicy{
+			PathIncludes: r.ContextFilters.PathIncludes,
+			PathExcludes: r.ContextFilters.PathExcludes,
 		},
 	}, nil
 }
@@ -196,25 +310,72 @@ func validate(r raw, path string) error {
 	if strings.TrimSpace(r.Title) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'title'", path)
 	}
-	if len(r.Match.Any) == 0 && len(r.Match.All) == 0 {
+	detector := normalizeDetector(r.Detector)
+	if detector == "" {
+		detector = "log"
+	}
+	if detector == "log" && len(r.Match.Any) == 0 && len(r.Match.All) == 0 {
 		return fmt.Errorf(
 			"playbook %s: must define at least one pattern in match.any or match.all",
 			path,
 		)
 	}
-	if err := validatePatterns(r.Match.Any, "match.any", path); err != nil {
-		return err
-	}
-	if err := validatePatterns(r.Match.All, "match.all", path); err != nil {
-		return err
-	}
-	if err := validatePatterns(r.Match.None, "match.none", path); err != nil {
-		return err
-	}
-	if err := validateExclusions(r.Match.Any, r.Match.All, r.Match.None, path); err != nil {
-		return err
+	switch detector {
+	case "log":
+		if err := validatePatterns(r.Match.Any, "match.any", path); err != nil {
+			return err
+		}
+		if err := validatePatterns(r.Match.All, "match.all", path); err != nil {
+			return err
+		}
+		if err := validatePatterns(r.Match.None, "match.none", path); err != nil {
+			return err
+		}
+		if err := validateExclusions(r.Match.Any, r.Match.All, r.Match.None, path); err != nil {
+			return err
+		}
+	case "source":
+		if err := validateSource(r, path); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("playbook %s: unknown detector %q", path, detector)
 	}
 	return nil
+}
+
+func validateSource(r raw, path string) error {
+	if len(r.Source.Triggers) == 0 {
+		return fmt.Errorf("playbook %s: source detector requires at least one trigger", path)
+	}
+	for i, matcher := range r.Source.Triggers {
+		if err := validateSignalPatterns(matcher.Patterns, fmt.Sprintf("source.triggers[%d].patterns", i), path); err != nil {
+			return err
+		}
+	}
+	for i, matcher := range r.Source.Amplifiers {
+		if err := validateSignalPatterns(matcher.Patterns, fmt.Sprintf("source.amplifiers[%d].patterns", i), path); err != nil {
+			return err
+		}
+	}
+	for i, matcher := range r.Source.Mitigations {
+		if err := validateSignalPatterns(matcher.Patterns, fmt.Sprintf("source.mitigations[%d].patterns", i), path); err != nil {
+			return err
+		}
+	}
+	for i, matcher := range r.Source.Context {
+		if err := validateSignalPatterns(matcher.Patterns, fmt.Sprintf("source.context[%d].patterns", i), path); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateSignalPatterns(patterns []string, section, path string) error {
+	if len(patterns) == 0 {
+		return fmt.Errorf("playbook %s: %s must define at least one pattern", path, section)
+	}
+	return validatePatterns(patterns, section, path)
 }
 
 func validatePatterns(patterns []string, section, path string) error {
@@ -258,6 +419,88 @@ func normalizePattern(pattern string) string {
 	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(pattern)), " "))
 }
 
+func normalizeDetector(detector string) string {
+	return strings.ToLower(strings.TrimSpace(detector))
+}
+
+func convertSourceSpec(r raw) model.SourceSpec {
+	return model.SourceSpec{
+		Triggers:         convertSignalMatchers(r.Source.Triggers),
+		Amplifiers:       convertSignalMatchers(r.Source.Amplifiers),
+		Mitigations:      convertSignalMatchers(r.Source.Mitigations),
+		Suppressions:     convertSuppressions(r.Source.Suppressions),
+		Context:          convertSignalMatchers(r.Source.Context),
+		CompoundSignals:  convertCompoundSignals(r.Source.CompoundSignals),
+		LocalConsistency: convertConsistencyRules(r.Source.LocalConsistency),
+		PathClasses:      convertPathClassRules(r.Source.PathClasses),
+		ChangeSensitivity: model.ChangeSensitivity{
+			NewFileBonus:        r.Source.ChangeSensitivity.NewFileBonus,
+			ModifiedLineBonus:   r.Source.ChangeSensitivity.ModifiedLineBonus,
+			LegacyDiscount:      r.Source.ChangeSensitivity.LegacyDiscount,
+			PreferChangedScopes: r.Source.ChangeSensitivity.PreferChangedScopes,
+		},
+		SafeContextClasses: convertSafeContextRules(r.Source.SafeContext),
+	}
+}
+
+func convertSignalMatchers(items []rawSignalMatcher) []model.SignalMatcher {
+	out := make([]model.SignalMatcher, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.SignalMatcher{
+			ID:           item.ID,
+			Label:        item.Label,
+			Description:  item.Description,
+			Patterns:     item.Patterns,
+			PathIncludes: item.PathIncludes,
+			PathExcludes: item.PathExcludes,
+			Scopes:       item.Scopes,
+			Weight:       item.Weight,
+			Required:     item.Required,
+		})
+	}
+	return out
+}
+
+func convertSuppressions(items []rawSuppressionRule) []model.SuppressionRule {
+	out := make([]model.SuppressionRule, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.SuppressionRule(item))
+	}
+	return out
+}
+
+func convertCompoundSignals(items []rawCompoundSignal) []model.CompoundSignal {
+	out := make([]model.CompoundSignal, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.CompoundSignal(item))
+	}
+	return out
+}
+
+func convertConsistencyRules(items []rawConsistencyRule) []model.ConsistencyRule {
+	out := make([]model.ConsistencyRule, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.ConsistencyRule(item))
+	}
+	return out
+}
+
+func convertPathClassRules(items []rawPathClassRule) []model.PathClassRule {
+	out := make([]model.PathClassRule, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.PathClassRule(item))
+	}
+	return out
+}
+
+func convertSafeContextRules(items []rawSafeContextRule) []model.SafeContextRule {
+	out := make([]model.SafeContextRule, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.SafeContextRule(item))
+	}
+	return out
+}
+
 func validateDir(dir string) (string, error) {
 	info, err := os.Stat(dir)
 	if err != nil {
@@ -269,11 +512,13 @@ func validateDir(dir string) (string, error) {
 	return dir, nil
 }
 
-// upwardDirs returns a list of "playbooks" directory candidates by walking
-// upward from dir toward the filesystem root.
+// upwardDirs returns a list of playbook directory candidates by walking upward
+// from dir toward the filesystem root. Bundled-pack locations are preferred,
+// with the legacy single-root layout kept as a fallback for compatibility.
 func upwardDirs(dir string) []string {
 	var result []string
 	for {
+		result = append(result, filepath.Join(dir, "playbooks", "bundled"))
 		result = append(result, filepath.Join(dir, "playbooks"))
 		parent := filepath.Dir(dir)
 		if parent == dir {

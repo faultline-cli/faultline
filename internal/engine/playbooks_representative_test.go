@@ -21,6 +21,9 @@ func TestBundledPlaybooksRepresentativeRanking(t *testing.T) {
 	for _, pb := range pbs {
 		pb := pb
 		t.Run(pb.ID, func(t *testing.T) {
+			if pb.Detector == "source" {
+				t.Skip("source playbooks are covered by repository inspection tests")
+			}
 			log := representativeLogForPlaybook(pb, index, "")
 			results := rankRepresentativeLog(t, pbs, log, false)
 			assertRepresentativeResult(t, results, pb.ID, hasExclusivePositiveSignal(pb, index))

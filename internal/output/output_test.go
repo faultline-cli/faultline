@@ -20,9 +20,17 @@ func makeAnalysis(id, title, category string, confidence float64, evidence []str
 					Explain:  "Explanation for " + id,
 					Fix:      []string{"Fix step 1", "Fix step 2"},
 				},
+				Detector:   "log",
 				Confidence: confidence,
 				Score:      confidence,
 				Evidence:   evidence,
+				Explanation: model.ResultExplanation{
+					TriggeredBy: []string{"primary trigger"},
+				},
+				Breakdown: model.ScoreBreakdown{
+					BaseSignalScore: confidence,
+					FinalScore:      confidence,
+				},
 			},
 		},
 	}
@@ -56,6 +64,9 @@ func TestFormatAnalysisJSONMatched(t *testing.T) {
 	r := results[0].(map[string]interface{})
 	if r["failure_id"] != "docker-auth" {
 		t.Errorf("expected failure_id docker-auth, got %v", r["failure_id"])
+	}
+	if r["detector"] != "log" {
+		t.Errorf("expected detector log, got %v", r["detector"])
 	}
 	repoCtx, ok := out["repo_context"].(map[string]interface{})
 	if !ok {
@@ -149,7 +160,7 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 	}
 	text := FormatAnalysisText(a, 1, ModeDetailed)
 
-	checks := []string{"Diagnosis:", "Category:", "Stage:", "Command:", "Cause", "Fix", "Evidence", "Repo Context", "Related commit:", "Hotfix signal:"}
+	checks := []string{"Diagnosis:", "Category:", "Stage:", "Command:", "Cause", "Fix", "Evidence", "Triggered by", "Score Breakdown", "Repo Context", "Related commit:", "Hotfix signal:"}
 	for _, want := range checks {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in detailed output, got:\n%s", want, text)

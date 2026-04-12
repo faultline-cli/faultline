@@ -18,6 +18,8 @@ Keep the repository itself as the product surface:
 ├── cmd/
 ├── internal/
 ├── playbooks/
+│   ├── bundled/
+│   └── packs/
 ├── docs/
 │   └── distribution.md
 ├── .github/
@@ -33,11 +35,11 @@ Keep the repository itself as the product surface:
 Release tarballs include:
 
 - the `faultline` binary
-- the bundled `playbooks/` directory
+- the bundled `playbooks/` directory, including `playbooks/bundled/`
 - the repository `README.md`
 
 Bundling `playbooks/` is required because the CLI loads playbooks from disk at
-runtime.
+runtime and resolves `/playbooks/bundled` by default.
 
 ## Buyer delivery flow
 

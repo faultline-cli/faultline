@@ -14,18 +14,18 @@ import (
 
 func main() {
 	var files []string
-	for _, pat := range []string{
-		"playbooks/auth/*.yaml",
-		"playbooks/build/*.yaml",
-		"playbooks/ci/*.yaml",
-		"playbooks/deploy/*.yaml",
-		"playbooks/network/*.yaml",
-		"playbooks/runtime/*.yaml",
-		"playbooks/test/*.yaml",
-	} {
-		matches, _ := filepath.Glob(pat)
-		files = append(files, matches...)
-	}
+	_ = filepath.Walk("playbooks/bundled", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
+			files = append(files, path)
+		}
+		return nil
+	})
 	ok := true
 	for _, f := range files {
 		data, err := os.ReadFile(f)
@@ -44,7 +44,7 @@ func main() {
 		fmt.Printf("All %d playbooks parsed OK\n", len(files))
 	}
 
-	pbs, err := playbooks.LoadDir("playbooks")
+	pbs, err := playbooks.NewCatalog("playbooks/bundled").Load()
 	if err != nil {
 		fmt.Printf("OVERLAP CHECK ERROR: %v\n", err)
 		return

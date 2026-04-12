@@ -83,6 +83,13 @@ func writeQuick(b *strings.Builder, r model.Result, rank, total int) {
 			pb.ID, pb.Title, pb.Category, severity,
 			int(math.Round(r.Confidence*100)))
 	}
+	if r.Detector != "" && r.Detector != "log" {
+		fmt.Fprintf(b, "Detector: %s", r.Detector)
+		if r.ChangeStatus != "" {
+			fmt.Fprintf(b, "  Change: %s", r.ChangeStatus)
+		}
+		b.WriteString("\n")
+	}
 
 	// Fix steps
 	if len(pb.Fix) > 0 {
@@ -120,10 +127,17 @@ func writeDetailed(b *strings.Builder, a *model.Analysis, r model.Result, rank, 
 		fmt.Fprintf(b, "  Step:        %s\n", a.Context.Step)
 	}
 	fmt.Fprintf(b, "  Category:    %s\n", pb.Category)
+	if r.Detector != "" {
+		fmt.Fprintf(b, "  Detector:    %s\n", r.Detector)
+	}
 	if pb.Severity != "" {
 		fmt.Fprintf(b, "  Severity:    %s\n", pb.Severity)
 	}
+	fmt.Fprintf(b, "  Score:       %.2f\n", r.Score)
 	fmt.Fprintf(b, "  Confidence:  %d%%\n", int(math.Round(r.Confidence*100)))
+	if r.ChangeStatus != "" {
+		fmt.Fprintf(b, "  Change:      %s\n", r.ChangeStatus)
+	}
 	if r.SeenCount > 0 {
 		fmt.Fprintf(b, "  Seen before: %d time", r.SeenCount)
 		if r.SeenCount != 1 {
@@ -157,6 +171,12 @@ func writeDetailed(b *strings.Builder, a *model.Analysis, r model.Result, rank, 
 			fmt.Fprintf(b, "  › %s\n", e)
 		}
 	}
+	writeReasonSection(b, "Triggered by", r.Explanation.TriggeredBy)
+	writeReasonSection(b, "Amplified by", r.Explanation.AmplifiedBy)
+	writeReasonSection(b, "Mitigated by", r.Explanation.MitigatedBy)
+	writeReasonSection(b, "Suppressions", r.Explanation.SuppressedBy)
+	writeReasonSection(b, "Context", r.Explanation.Contextualized)
+	writeScoreBreakdown(b, r.Breakdown)
 
 	// Alternatives: the remaining results listed briefly.
 	if rank == 0 && len(a.Results) > 1 {
@@ -193,6 +213,55 @@ func writeSection(b *strings.Builder, header string, lines []string) {
 			fmt.Fprintf(b, "  %s\n", l)
 		}
 	}
+}
+
+func writeReasonSection(b *strings.Builder, header string, lines []string) {
+	if len(lines) == 0 {
+		return
+	}
+	fmt.Fprintf(b, "\n  %s\n", header)
+	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
+	for _, line := range lines {
+		fmt.Fprintf(b, "  - %s\n", line)
+	}
+}
+
+func writeScoreBreakdown(b *strings.Builder, breakdown model.ScoreBreakdown) {
+	if breakdown.FinalScore == 0 {
+		return
+	}
+	fmt.Fprintln(b, "\n  Score Breakdown")
+	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
+	fmt.Fprintf(b, "  base: %.2f\n", breakdown.BaseSignalScore)
+	if breakdown.CompoundSignalBonus != 0 {
+		fmt.Fprintf(b, "  compound: +%.2f\n", breakdown.CompoundSignalBonus)
+	}
+	if breakdown.BlastRadiusMultiplier != 0 {
+		fmt.Fprintf(b, "  blast radius: +%.2f\n", breakdown.BlastRadiusMultiplier)
+	}
+	if breakdown.HotPathMultiplier != 0 {
+		fmt.Fprintf(b, "  hot path: +%.2f\n", breakdown.HotPathMultiplier)
+	}
+	if breakdown.ChangeIntroducedBonus != 0 {
+		fmt.Fprintf(b, "  change bonus: %.2f\n", breakdown.ChangeIntroducedBonus)
+	}
+	if breakdown.MitigatingEvidenceDiscount != 0 {
+		fmt.Fprintf(b, "  mitigations: -%.2f\n", breakdown.MitigatingEvidenceDiscount)
+	}
+	if breakdown.ExplicitExceptionDiscount != 0 {
+		fmt.Fprintf(b, "  suppressions: -%.2f\n", breakdown.ExplicitExceptionDiscount)
+	}
+	if breakdown.SafeContextDiscount != 0 {
+		fmt.Fprintf(b, "  safe context: -%.2f\n", breakdown.SafeContextDiscount)
+	}
+	fmt.Fprintf(b, "  final: %.2f\n", breakdown.FinalScore)
+}
+
+func fallback(value, fallback string) string {
+	if strings.TrimSpace(value) == "" {
+		return fallback
+	}
+	return value
 }
 
 func noMatchText() string {
@@ -261,19 +330,24 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank       int      `json:"rank"`
-	FailureID  string   `json:"failure_id"`
-	Title      string   `json:"title"`
-	Category   string   `json:"category"`
-	Severity   string   `json:"severity,omitempty"`
-	Score      float64  `json:"score"`
-	Confidence float64  `json:"confidence"`
-	Explain    string   `json:"explain,omitempty"`
-	Why        string   `json:"why,omitempty"`
-	Fix        []string `json:"fix,omitempty"`
-	Prevent    []string `json:"prevent,omitempty"`
-	Evidence   []string `json:"evidence"`
-	SeenCount  int      `json:"seen_count"`
+	Rank         int                     `json:"rank"`
+	FailureID    string                  `json:"failure_id"`
+	Title        string                  `json:"title"`
+	Category     string                  `json:"category"`
+	Severity     string                  `json:"severity,omitempty"`
+	Detector     string                  `json:"detector,omitempty"`
+	Score        float64                 `json:"score"`
+	Confidence   float64                 `json:"confidence"`
+	Explain      string                  `json:"explain,omitempty"`
+	Why          string                  `json:"why,omitempty"`
+	Fix          []string                `json:"fix,omitempty"`
+	Prevent      []string                `json:"prevent,omitempty"`
+	Evidence     []string                `json:"evidence"`
+	EvidenceBy   model.EvidenceBundle    `json:"evidence_by,omitempty"`
+	Explanation  model.ResultExplanation `json:"explanation,omitempty"`
+	Breakdown    model.ScoreBreakdown    `json:"breakdown,omitempty"`
+	ChangeStatus string                  `json:"change_status,omitempty"`
+	SeenCount    int                     `json:"seen_count"`
 }
 
 type repoCtxJSON struct {
@@ -325,19 +399,24 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 		payload.Results = make([]resultJSON, len(results))
 		for i, r := range results {
 			payload.Results[i] = resultJSON{
-				Rank:       i + 1,
-				FailureID:  r.Playbook.ID,
-				Title:      r.Playbook.Title,
-				Category:   r.Playbook.Category,
-				Severity:   r.Playbook.Severity,
-				Score:      r.Score,
-				Confidence: r.Confidence,
-				Explain:    r.Playbook.Explain,
-				Why:        r.Playbook.Why,
-				Fix:        r.Playbook.Fix,
-				Prevent:    r.Playbook.Prevent,
-				Evidence:   r.Evidence,
-				SeenCount:  r.SeenCount,
+				Rank:         i + 1,
+				FailureID:    r.Playbook.ID,
+				Title:        r.Playbook.Title,
+				Category:     r.Playbook.Category,
+				Severity:     r.Playbook.Severity,
+				Detector:     r.Detector,
+				Score:        r.Score,
+				Confidence:   r.Confidence,
+				Explain:      r.Playbook.Explain,
+				Why:          r.Playbook.Why,
+				Fix:          r.Playbook.Fix,
+				Prevent:      r.Playbook.Prevent,
+				Evidence:     r.Evidence,
+				EvidenceBy:   r.EvidenceBy,
+				Explanation:  r.Explanation,
+				Breakdown:    r.Breakdown,
+				ChangeStatus: r.ChangeStatus,
+				SeenCount:    r.SeenCount,
 			}
 		}
 	}

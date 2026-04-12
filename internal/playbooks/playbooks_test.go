@@ -78,8 +78,94 @@ match:
 	}
 }
 
+func TestLoadDirSupportsSourceDetector(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: source-sample
+title: Source Sample
+category: runtime
+detector: source
+severity: high
+source:
+  triggers:
+    - id: outbound
+      patterns:
+        - client.Do(
+`)
+
+	pbs, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("LoadDir: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected 1 playbook, got %d", len(pbs))
+	}
+	if pbs[0].Detector != "source" {
+		t.Fatalf("expected source detector, got %q", pbs[0].Detector)
+	}
+	if len(pbs[0].Source.Triggers) != 1 {
+		t.Fatalf("expected source trigger to load, got %#v", pbs[0].Source.Triggers)
+	}
+}
+
+func TestLoadPacksRejectsDuplicateIDsAcrossPacks(t *testing.T) {
+	first := t.TempDir()
+	second := t.TempDir()
+	writePlaybookFixture(t, first, "one.yaml", `
+id: shared
+title: Shared
+category: test
+severity: low
+match:
+  any:
+    - "primary error"
+`)
+	writePlaybookFixture(t, second, "two.yaml", `
+id: shared
+title: Shared Again
+category: test
+severity: low
+match:
+  any:
+    - "secondary error"
+`)
+
+	_, err := LoadPacks([]Pack{
+		{Name: "starter", Root: first},
+		{Name: "premium", Root: second},
+	})
+	if err == nil {
+		t.Fatal("expected duplicate ID error across packs")
+	}
+	if !strings.Contains(err.Error(), "across packs") {
+		t.Fatalf("expected cross-pack duplicate error, got %v", err)
+	}
+}
+
+func TestCatalogUsesExplicitCustomPack(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: custom-sample
+title: Custom Sample
+category: test
+severity: low
+match:
+  any:
+    - "primary error"
+`)
+
+	catalog := NewCatalog(dir)
+	packs, err := catalog.Packs()
+	if err != nil {
+		t.Fatalf("Packs: %v", err)
+	}
+	if len(packs) != 1 || packs[0].Name != CustomPackName || packs[0].Root != dir {
+		t.Fatalf("unexpected custom packs: %#v", packs)
+	}
+}
+
 func TestFindPatternConflictsBundled(t *testing.T) {
-	pbs, err := LoadDir("../../playbooks")
+	pbs, err := LoadDir("../../playbooks/bundled")
 	if err != nil {
 		t.Fatalf("LoadDir: %v", err)
 	}

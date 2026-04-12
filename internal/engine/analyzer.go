@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
-	"faultline/internal/matcher"
+	"faultline/internal/detectors"
+	"faultline/internal/detectors/logdetector"
+	"faultline/internal/detectors/sourcedetector"
 	"faultline/internal/model"
-	"faultline/internal/playbooks"
 	"faultline/internal/repo"
 )
 
@@ -27,6 +30,8 @@ var (
 type Options struct {
 	// PlaybookDir overrides the default playbook directory resolution.
 	PlaybookDir string
+	// PlaybookPackDirs adds external pack roots on top of the bundled starter pack.
+	PlaybookPackDirs []string
 	// NoHistory disables both reading and writing of the local history store.
 	NoHistory bool
 	// GitContextEnabled enables enrichment of analysis results with local git history.
@@ -40,12 +45,25 @@ type Options struct {
 
 // Engine orchestrates log analysis against loaded playbooks.
 type Engine struct {
-	opts Options
+	opts            Options
+	catalog         playbookCatalog
+	registry        detectors.Registry
+	history         historyRecorder
+	repoEnricher    repoEnricher
+	sourceFileStore sourceLoader
 }
 
 // New returns a new Engine configured with opts.
 func New(opts Options) *Engine {
-	return &Engine{opts: opts}
+	engine := &Engine{
+		opts:            opts,
+		catalog:         newCatalog(opts.PlaybookDir, opts.PlaybookPackDirs),
+		registry:        detectors.NewRegistry(logdetector.Detector{}, sourcedetector.Detector{}),
+		history:         defaultHistoryRecorder{},
+		sourceFileStore: defaultSourceLoader{},
+	}
+	engine.repoEnricher = localRepoEnricher{opts: opts}
+	return engine
 }
 
 // AnalyzePath opens path and delegates to AnalyzeReader.
@@ -82,7 +100,14 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	}
 
 	ctx := ExtractContext(lines)
-	results := matcher.Rank(pbs, lines, ctx)
+	logDetector, err := e.registry.MustLookup(detectors.KindLog)
+	if err != nil {
+		return nil, err
+	}
+	results := logDetector.Detect(detectors.FilterPlaybooks(pbs, detectors.KindLog), detectors.Target{
+		LogLines:   lines,
+		LogContext: ctx,
+	})
 
 	if len(results) == 0 {
 		return &model.Analysis{
@@ -94,7 +119,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	// Enrich results with history seen-counts (best-effort; never blocks analysis).
 	if !e.opts.NoHistory {
 		for i := range results {
-			results[i].SeenCount = countSeen(results[i].Playbook.ID)
+			results[i].SeenCount = e.history.CountSeen(results[i].Playbook.ID)
 		}
 	}
 
@@ -107,12 +132,12 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	// Persist the top result so future runs can report recurrence.
 	if !e.opts.NoHistory {
-		recordResult(results[0])
+		e.history.Record(results[0])
 	}
 
 	// Enrich with git repo context when requested (best-effort; never blocks).
 	if e.opts.GitContextEnabled && len(results) > 0 {
-		if rc := e.enrichRepoContext(results[0]); rc != nil {
+		if rc := e.repoEnricher.Enrich(results[0]); rc != nil {
 			analysis.RepoContext = rc
 		}
 	}
@@ -120,10 +145,56 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	return analysis, nil
 }
 
-// enrichRepoContext scans the local git repository and correlates the failure
-// result with recent commit history. Errors are silently swallowed so that git
-// failures never interrupt analysis output.
-func (e *Engine) enrichRepoContext(result model.Result) *model.RepoContext {
+// AnalyzeRepository scans a repository tree using source-detector playbooks.
+func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (*model.Analysis, error) {
+	pbs, err := e.loadPlaybooks()
+	if err != nil {
+		return nil, err
+	}
+	sourcePlaybooks := detectors.FilterPlaybooks(pbs, detectors.KindSource)
+	if len(sourcePlaybooks) == 0 {
+		return &model.Analysis{Results: []model.Result{}}, ErrNoMatch
+	}
+	files, err := e.sourceFileStore.Load(root)
+	if err != nil {
+		return nil, err
+	}
+	if len(files) == 0 {
+		return nil, ErrNoInput
+	}
+	sourceDetector, err := e.registry.MustLookup(detectors.KindSource)
+	if err != nil {
+		return nil, err
+	}
+	results := sourceDetector.Detect(sourcePlaybooks, detectors.Target{
+		RepositoryRoot: root,
+		Files:          files,
+		ChangeSet:      changeSet,
+	})
+	if len(results) == 0 {
+		return &model.Analysis{Results: []model.Result{}}, ErrNoMatch
+	}
+	if !e.opts.NoHistory {
+		for i := range results {
+			results[i].SeenCount = e.history.CountSeen(results[i].Playbook.ID)
+		}
+		e.history.Record(results[0])
+	}
+	return &model.Analysis{
+		Results:     results,
+		Fingerprint: fingerprint(results[0]),
+		Source:      root,
+	}, nil
+}
+
+type localRepoEnricher struct {
+	opts Options
+}
+
+// Enrich scans the local git repository and correlates the failure result with
+// recent commit history. Errors are silently swallowed so that git failures
+// never interrupt analysis output.
+func (e localRepoEnricher) Enrich(result model.Result) *model.RepoContext {
 	repoPath := e.opts.RepoPath
 	if repoPath == "" {
 		repoPath = "."
@@ -174,28 +245,16 @@ func (e *Engine) enrichRepoContext(result model.Result) *model.RepoContext {
 
 // List returns all playbooks available in the configured directory.
 func (e *Engine) List() ([]model.Playbook, error) {
-	return e.loadPlaybooks()
+	return e.catalog.List()
 }
 
 // Explain returns the playbook identified by id, or an error if not found.
 func (e *Engine) Explain(id string) (model.Playbook, error) {
-	pbs, err := e.loadPlaybooks()
-	if err != nil {
-		return model.Playbook{}, err
-	}
-	for _, pb := range pbs {
-		if pb.ID == id {
-			return pb, nil
-		}
-	}
-	return model.Playbook{}, fmt.Errorf("unknown playbook %q", id)
+	return e.catalog.Explain(id)
 }
 
 func (e *Engine) loadPlaybooks() ([]model.Playbook, error) {
-	if e.opts.PlaybookDir != "" {
-		return playbooks.LoadDir(e.opts.PlaybookDir)
-	}
-	return playbooks.LoadDefault()
+	return e.catalog.Load()
 }
 
 // readLines reads all bytes from r and splits into normalised Line values.
@@ -228,4 +287,55 @@ func readLines(r io.Reader) ([]model.Line, error) {
 
 func normalizeLine(line string) string {
 	return strings.ToLower(strings.Join(strings.Fields(line), " "))
+}
+
+func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
+	var files []detectors.SourceFile
+	err := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			name := info.Name()
+			if name == ".git" || name == "node_modules" || name == "vendor" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !looksLikeSourceFile(path) {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			rel = path
+		}
+		content := strings.ReplaceAll(string(data), "\r\n", "\n")
+		content = strings.ReplaceAll(content, "\r", "\n")
+		files = append(files, detectors.SourceFile{
+			Path:    filepath.ToSlash(rel),
+			Content: content,
+			Lines:   strings.Split(content, "\n"),
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk repository: %w", err)
+	}
+	sort.Slice(files, func(i, j int) bool {
+		return files[i].Path < files[j].Path
+	})
+	return files, nil
+}
+
+func looksLikeSourceFile(path string) bool {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".go", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".rb", ".php", ".cs", ".kt", ".yaml", ".yml":
+		return true
+	default:
+		return false
+	}
 }

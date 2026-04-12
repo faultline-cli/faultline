@@ -13,7 +13,7 @@ import (
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func repoPlaybookDir(_ *testing.T) string {
-	return "../playbooks"
+	return "../playbooks/bundled"
 }
 
 func writeTempLog(t *testing.T, content string) string {
@@ -257,6 +257,39 @@ func TestListCommand(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "docker-auth") {
 		t.Fatalf("expected docker-auth in list, got %q", out.String())
+	}
+}
+
+func TestListCommandWithAdditionalPack(t *testing.T) {
+	extra := t.TempDir()
+	if err := os.WriteFile(filepath.Join(extra, "extra.yaml"), []byte(`
+id: list-extra
+title: List Extra
+category: test
+severity: low
+match:
+  any:
+    - "extra marker"
+explain: extra
+why: extra
+fix:
+  - extra
+`), 0o600); err != nil {
+		t.Fatalf("write extra pack: %v", err)
+	}
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"list", "--playbook-pack", extra})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute list with playbook pack: %v", err)
+	}
+	if !strings.Contains(out.String(), "list-extra") {
+		t.Fatalf("expected list-extra in list output, got %q", out.String())
 	}
 }
 

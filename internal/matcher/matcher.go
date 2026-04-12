@@ -127,18 +127,11 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 
 	score := pb.BaseScore + anyScore + float64(allHits)*1.5
 	if allComplete {
-		score += 2.0
+		score += compoundBonus(allComplete)
 	}
 
 	// Stage bonus (does not contribute to confidence calculation).
-	if ctx.Stage != "" {
-		for _, hint := range pb.StageHints {
-			if strings.EqualFold(hint, ctx.Stage) {
-				score += 0.75
-				break
-			}
-		}
-	}
+	score += stageBonus(pb, ctx)
 
 	// Confidence: weighted pattern coverage, capped at 1.0.
 	// Computed without the situational stage bonus.
@@ -151,16 +144,61 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 	}
 	patternScore := pb.BaseScore + anyScore + float64(allHits)*1.5
 	if allComplete {
-		patternScore += 2.0
+		patternScore += compoundBonus(allComplete)
 	}
 	confidence := math.Round(math.Min(1.0, patternScore/maxScore)*100) / 100
 
 	return model.Result{
 		Playbook:   pb,
+		Detector:   "log",
 		Score:      math.Round(score*100) / 100,
 		Confidence: confidence,
 		Evidence:   evidence,
+		EvidenceBy: model.EvidenceBundle{
+			Triggers: buildLogEvidence(evidence),
+		},
+		Explanation: model.ResultExplanation{
+			TriggeredBy: evidence,
+		},
+		Breakdown: model.ScoreBreakdown{
+			BaseSignalScore:     math.Round((pb.BaseScore+anyScore+float64(allHits)*1.5)*100) / 100,
+			CompoundSignalBonus: math.Round(compoundBonus(allComplete)*100) / 100,
+			HotPathMultiplier:   math.Round(stageBonus(pb, ctx)*100) / 100,
+			FinalScore:          math.Round(score*100) / 100,
+		},
 	}
+}
+
+func buildLogEvidence(lines []string) []model.Evidence {
+	out := make([]model.Evidence, 0, len(lines))
+	for _, line := range lines {
+		out = append(out, model.Evidence{
+			Kind:   model.EvidenceTrigger,
+			Label:  "Matched log evidence",
+			Detail: line,
+			Source: "log",
+		})
+	}
+	return out
+}
+
+func compoundBonus(allComplete bool) float64 {
+	if allComplete {
+		return 2.0
+	}
+	return 0
+}
+
+func stageBonus(pb model.Playbook, ctx model.Context) float64 {
+	if ctx.Stage == "" {
+		return 0
+	}
+	for _, hint := range pb.StageHints {
+		if strings.EqualFold(hint, ctx.Stage) {
+			return 0.75
+		}
+	}
+	return 0
 }
 
 // computeAnyWeights returns a map from normalized pattern string to its IDF

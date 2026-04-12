@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	pbs, err := playbooks.LoadDefault()
+	pbs, err := playbooks.NewCatalog("").Load()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

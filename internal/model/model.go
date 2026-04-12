@@ -5,19 +5,24 @@ package model
 
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
-	ID         string       `yaml:"id" json:"id"`
-	Title      string       `yaml:"title" json:"title"`
-	Category   string       `yaml:"category" json:"category"`
-	Severity   string       `yaml:"severity" json:"severity"`
-	BaseScore  float64      `yaml:"base_score" json:"base_score"`
-	Tags       []string     `yaml:"tags" json:"tags"`
-	StageHints []string     `yaml:"stage_hints" json:"stage_hints"`
-	Match      MatchSpec    `yaml:"match" json:"match"`
-	Explain    string       `yaml:"explain" json:"explain"`
-	Why        string       `yaml:"why" json:"why"`
-	Fix        []string     `yaml:"fix" json:"fix"`
-	Prevent    []string     `yaml:"prevent" json:"prevent"`
-	Workflow   WorkflowSpec `yaml:"workflow" json:"workflow"`
+	ID         string        `yaml:"id" json:"id"`
+	Title      string        `yaml:"title" json:"title"`
+	Category   string        `yaml:"category" json:"category"`
+	Severity   string        `yaml:"severity" json:"severity"`
+	Detector   string        `yaml:"detector,omitempty" json:"detector,omitempty"`
+	BaseScore  float64       `yaml:"base_score" json:"base_score"`
+	Tags       []string      `yaml:"tags" json:"tags"`
+	StageHints []string      `yaml:"stage_hints" json:"stage_hints"`
+	Match      MatchSpec     `yaml:"match" json:"match"`
+	Source     SourceSpec    `yaml:"source,omitempty" json:"source,omitempty"`
+	Explain    string        `yaml:"explain" json:"explain"`
+	Why        string        `yaml:"why" json:"why"`
+	Fix        []string      `yaml:"fix" json:"fix"`
+	Prevent    []string      `yaml:"prevent" json:"prevent"`
+	Workflow   WorkflowSpec  `yaml:"workflow" json:"workflow"`
+	Metadata   PlaybookMeta  `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+	Scoring    ScoringConfig `yaml:"scoring,omitempty" json:"scoring,omitempty"`
+	Contextual ContextPolicy `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
 }
 
 // MatchSpec holds declarative match patterns for a Playbook.
@@ -27,6 +32,106 @@ type MatchSpec struct {
 	Any  []string `yaml:"any" json:"any"`
 	All  []string `yaml:"all" json:"all"`
 	None []string `yaml:"none" json:"none,omitempty"`
+}
+
+// SourceSpec defines a reusable source-code detection schema.
+type SourceSpec struct {
+	Triggers           []SignalMatcher   `yaml:"triggers,omitempty" json:"triggers,omitempty"`
+	Amplifiers         []SignalMatcher   `yaml:"amplifiers,omitempty" json:"amplifiers,omitempty"`
+	Mitigations        []SignalMatcher   `yaml:"mitigations,omitempty" json:"mitigations,omitempty"`
+	Suppressions       []SuppressionRule `yaml:"suppressions,omitempty" json:"suppressions,omitempty"`
+	Context            []SignalMatcher   `yaml:"context,omitempty" json:"context,omitempty"`
+	CompoundSignals    []CompoundSignal  `yaml:"compound_signals,omitempty" json:"compound_signals,omitempty"`
+	LocalConsistency   []ConsistencyRule `yaml:"local_consistency,omitempty" json:"local_consistency,omitempty"`
+	PathClasses        []PathClassRule   `yaml:"path_classes,omitempty" json:"path_classes,omitempty"`
+	ChangeSensitivity  ChangeSensitivity `yaml:"change_sensitivity,omitempty" json:"change_sensitivity,omitempty"`
+	SafeContextClasses []SafeContextRule `yaml:"safe_context,omitempty" json:"safe_context,omitempty"`
+}
+
+type SignalMatcher struct {
+	ID           string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Label        string   `yaml:"label,omitempty" json:"label,omitempty"`
+	Description  string   `yaml:"description,omitempty" json:"description,omitempty"`
+	Patterns     []string `yaml:"patterns,omitempty" json:"patterns,omitempty"`
+	PathIncludes []string `yaml:"path_includes,omitempty" json:"path_includes,omitempty"`
+	PathExcludes []string `yaml:"path_excludes,omitempty" json:"path_excludes,omitempty"`
+	Scopes       []string `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+	Weight       float64  `yaml:"weight,omitempty" json:"weight,omitempty"`
+	Required     bool     `yaml:"required,omitempty" json:"required,omitempty"`
+}
+
+type CompoundSignal struct {
+	ID             string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Label          string   `yaml:"label,omitempty" json:"label,omitempty"`
+	Require        []string `yaml:"require,omitempty" json:"require,omitempty"`
+	Scope          string   `yaml:"scope,omitempty" json:"scope,omitempty"`
+	Bonus          float64  `yaml:"bonus,omitempty" json:"bonus,omitempty"`
+	Required       bool     `yaml:"required,omitempty" json:"required,omitempty"`
+	AllowMitigated bool     `yaml:"allow_mitigated,omitempty" json:"allow_mitigated,omitempty"`
+}
+
+type ConsistencyRule struct {
+	ID                string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Label             string   `yaml:"label,omitempty" json:"label,omitempty"`
+	BaselineSignalIDs []string `yaml:"baseline_signal_ids,omitempty" json:"baseline_signal_ids,omitempty"`
+	ExpectedSignalID  string   `yaml:"expected_signal_id,omitempty" json:"expected_signal_id,omitempty"`
+	Scope             string   `yaml:"scope,omitempty" json:"scope,omitempty"`
+	MinimumPeers      int      `yaml:"minimum_peers,omitempty" json:"minimum_peers,omitempty"`
+	Threshold         float64  `yaml:"threshold,omitempty" json:"threshold,omitempty"`
+	Amplifier         float64  `yaml:"amplifier,omitempty" json:"amplifier,omitempty"`
+}
+
+type SuppressionRule struct {
+	Style       string   `yaml:"style,omitempty" json:"style,omitempty"`
+	Pattern     string   `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	Paths       []string `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Playbooks   []string `yaml:"playbooks,omitempty" json:"playbooks,omitempty"`
+	Reason      string   `yaml:"reason,omitempty" json:"reason,omitempty"`
+	ExpiresOn   string   `yaml:"expires_on,omitempty" json:"expires_on,omitempty"`
+	Discount    float64  `yaml:"discount,omitempty" json:"discount,omitempty"`
+	SuppressAll bool     `yaml:"suppress_all,omitempty" json:"suppress_all,omitempty"`
+}
+
+type PathClassRule struct {
+	Class    string   `yaml:"class,omitempty" json:"class,omitempty"`
+	Paths    []string `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Adjust   float64  `yaml:"adjust,omitempty" json:"adjust,omitempty"`
+	HotPath  bool     `yaml:"hot_path,omitempty" json:"hot_path,omitempty"`
+	Critical bool     `yaml:"critical,omitempty" json:"critical,omitempty"`
+}
+
+type SafeContextRule struct {
+	ID       string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Label    string   `yaml:"label,omitempty" json:"label,omitempty"`
+	Paths    []string `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Patterns []string `yaml:"patterns,omitempty" json:"patterns,omitempty"`
+	Discount float64  `yaml:"discount,omitempty" json:"discount,omitempty"`
+}
+
+type ChangeSensitivity struct {
+	NewFileBonus        float64 `yaml:"new_file_bonus,omitempty" json:"new_file_bonus,omitempty"`
+	ModifiedLineBonus   float64 `yaml:"modified_line_bonus,omitempty" json:"modified_line_bonus,omitempty"`
+	LegacyDiscount      float64 `yaml:"legacy_discount,omitempty" json:"legacy_discount,omitempty"`
+	PreferChangedScopes bool    `yaml:"prefer_changed_scopes,omitempty" json:"prefer_changed_scopes,omitempty"`
+}
+
+type PlaybookMeta struct {
+	SchemaVersion string `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
+}
+
+type ScoringConfig struct {
+	BaseTriggerWeight          float64 `yaml:"base_trigger_weight,omitempty" json:"base_trigger_weight,omitempty"`
+	DefaultAmplifierWeight     float64 `yaml:"default_amplifier_weight,omitempty" json:"default_amplifier_weight,omitempty"`
+	DefaultMitigationDiscount  float64 `yaml:"default_mitigation_discount,omitempty" json:"default_mitigation_discount,omitempty"`
+	DefaultSuppressionDiscount float64 `yaml:"default_suppression_discount,omitempty" json:"default_suppression_discount,omitempty"`
+	HotPathBonus               float64 `yaml:"hot_path_bonus,omitempty" json:"hot_path_bonus,omitempty"`
+	BlastRadiusBonus           float64 `yaml:"blast_radius_bonus,omitempty" json:"blast_radius_bonus,omitempty"`
+	SafeContextDiscount        float64 `yaml:"safe_context_discount,omitempty" json:"safe_context_discount,omitempty"`
+}
+
+type ContextPolicy struct {
+	PathIncludes []string `yaml:"path_includes,omitempty" json:"path_includes,omitempty"`
+	PathExcludes []string `yaml:"path_excludes,omitempty" json:"path_excludes,omitempty"`
 }
 
 // WorkflowSpec defines deterministic local follow-up metadata for a playbook.
@@ -50,13 +155,76 @@ type Context struct {
 	Step        string `json:"step,omitempty"`
 }
 
+type EvidenceKind string
+
+const (
+	EvidenceTrigger     EvidenceKind = "trigger"
+	EvidenceAmplifier   EvidenceKind = "amplifier"
+	EvidenceMitigation  EvidenceKind = "mitigation"
+	EvidenceSuppression EvidenceKind = "suppression"
+	EvidenceContext     EvidenceKind = "context"
+)
+
+type Evidence struct {
+	Kind       EvidenceKind `json:"kind"`
+	SignalID   string       `json:"signal_id,omitempty"`
+	Label      string       `json:"label,omitempty"`
+	Detail     string       `json:"detail,omitempty"`
+	File       string       `json:"file,omitempty"`
+	Line       int          `json:"line,omitempty"`
+	PathClass  string       `json:"path_class,omitempty"`
+	Scope      string       `json:"scope,omitempty"`
+	ScopeName  string       `json:"scope_name,omitempty"`
+	Proximity  string       `json:"proximity,omitempty"`
+	Distance   int          `json:"distance,omitempty"`
+	Weight     float64      `json:"weight,omitempty"`
+	Suppressed bool         `json:"suppressed,omitempty"`
+	ExpiresOn  string       `json:"expires_on,omitempty"`
+	Reason     string       `json:"reason,omitempty"`
+	Source     string       `json:"source,omitempty"`
+}
+
+type EvidenceBundle struct {
+	Triggers     []Evidence `json:"triggers,omitempty"`
+	Amplifiers   []Evidence `json:"amplifiers,omitempty"`
+	Mitigations  []Evidence `json:"mitigations,omitempty"`
+	Suppressions []Evidence `json:"suppressions,omitempty"`
+	Context      []Evidence `json:"context,omitempty"`
+}
+
+type ScoreBreakdown struct {
+	BaseSignalScore            float64 `json:"base_signal_score"`
+	CompoundSignalBonus        float64 `json:"compound_signal_bonus"`
+	BlastRadiusMultiplier      float64 `json:"blast_radius_multiplier"`
+	HotPathMultiplier          float64 `json:"hot_path_multiplier"`
+	ChangeIntroducedBonus      float64 `json:"change_introduced_bonus"`
+	MitigatingEvidenceDiscount float64 `json:"mitigating_evidence_discount"`
+	ExplicitExceptionDiscount  float64 `json:"explicit_exception_discount"`
+	SafeContextDiscount        float64 `json:"safe_context_discount"`
+	FinalScore                 float64 `json:"final_score"`
+}
+
+type ResultExplanation struct {
+	TriggeredBy    []string `json:"triggered_by,omitempty"`
+	AmplifiedBy    []string `json:"amplified_by,omitempty"`
+	MitigatedBy    []string `json:"mitigated_by,omitempty"`
+	SuppressedBy   []string `json:"suppressed_by,omitempty"`
+	Contextualized []string `json:"contextualized_by,omitempty"`
+	ChangeStatus   string   `json:"change_status,omitempty"`
+}
+
 // Result is a single ranked playbook match with its scoring detail.
 type Result struct {
-	Playbook   Playbook `json:"playbook"`
-	Score      float64  `json:"score"`
-	Confidence float64  `json:"confidence"`
-	Evidence   []string `json:"evidence"`
-	SeenCount  int      `json:"seen_count"`
+	Playbook     Playbook          `json:"playbook"`
+	Detector     string            `json:"detector,omitempty"`
+	Score        float64           `json:"score"`
+	Confidence   float64           `json:"confidence"`
+	Evidence     []string          `json:"evidence"`
+	EvidenceBy   EvidenceBundle    `json:"evidence_by,omitempty"`
+	Explanation  ResultExplanation `json:"explanation,omitempty"`
+	Breakdown    ScoreBreakdown    `json:"breakdown,omitempty"`
+	ChangeStatus string            `json:"change_status,omitempty"`
+	SeenCount    int               `json:"seen_count"`
 }
 
 // RepoContext holds git repository context enrichment from a recent commit window.
