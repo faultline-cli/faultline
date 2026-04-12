@@ -74,11 +74,6 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			absentIDs: []string{"oom-killed"},
 		},
 		{
-			name:      "python module missing noisy test log",
-			file:      "python-module-missing-noisy.log",
-			wantTopID: "python-module-missing",
-		},
-		{
 			name:      "snapshot mismatch noisy test log",
 			file:      "snapshot-mismatch-noisy.log",
 			wantTopID: "snapshot-mismatch",

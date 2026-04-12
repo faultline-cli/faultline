@@ -284,18 +284,14 @@ lives under `playbooks/bundled/`:
 playbooks/
   bundled/
     log/
-      auth/      docker-auth, git-auth, kubectl-auth, missing-env
-      build/     go-sum-missing, npm-ci-lockfile, yarn-lockfile, ruby-bundler
+      auth/      docker-auth, git-auth, missing-env
+      build/     go-sum-missing, npm-ci-lockfile, yarn-lockfile
       test/      flaky-test, parallelism-conflict, order-dependency
       network/   network-timeout, ssl-cert-error, dns-resolution
       runtime/   oom-killed, permission-denied, disk-full
       deploy/    terraform-state-lock, health-check-failure, container-crash
-    source/
-      missing-idempotency-guard
-      network-fanout-without-guards
-  packs/
-    starter/
-    premium/
+Premium packs are distributed from a separate repository and loaded through
+`--playbooks` or `FAULTLINE_PLAYBOOK_DIR`.
 ```
 
 Each playbook is purely declarative:

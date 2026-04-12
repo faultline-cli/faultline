@@ -176,8 +176,6 @@ func TestFindPatternConflictsBundled(t *testing.T) {
 	}
 
 	assertConflict(t, conflicts, "context deadline exceeded", []string{"network-timeout", "test-timeout"}, nil)
-	assertConflict(t, conflicts, "connection refused", []string{"connection-refused", "gradle-build"}, nil)
-	assertConflict(t, conflicts, "resource_class", []string{"circleci-resource-class"}, []string{"container-crash", "oom-killed"})
 
 	report := FormatPatternConflicts(conflicts)
 	if !strings.Contains(report, "context deadline exceeded") {

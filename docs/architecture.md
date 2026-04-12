@@ -26,8 +26,9 @@ The playbook catalog resolves directories in this order:
 4. `/playbooks/bundled`
 5. `/playbooks`
 
-That keeps today’s repo layout working while giving packaged starter and future
-external or premium packs a clean root to plug into.
+That keeps today’s repo layout working while giving the starter repository a
+clean default and letting premium packs live in a separate repository loaded
+through an external directory.
 
 Additional packs can be composed on top of the bundled starter catalog through
 the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable

@@ -24,7 +24,6 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "docker auth", file: "docker-auth.log", wantID: "docker-auth"},
 		{name: "image pull backoff", file: "image-pull-backoff.log", wantID: "image-pull-backoff"},
 		{name: "git auth", file: "git-auth.log", wantID: "git-auth"},
-		{name: "ssh key auth", file: "ssh-key-auth.log", wantID: "ssh-key-auth"},
 		{name: "npm ci lockfile", file: "npm-ci-lockfile.log", wantID: "npm-ci-lockfile"},
 		{name: "yarn lockfile", file: "yarn-lockfile.log", wantID: "yarn-lockfile"},
 		{name: "working directory", file: "working-directory.log", wantID: "working-directory"},

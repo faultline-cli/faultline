@@ -85,20 +85,6 @@ func TestAnalyzeReaderContextExtracted(t *testing.T) {
 	}
 }
 
-func TestAnalyzeReaderMavenDependencyResolution(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"[ERROR] Failed to execute goal: Could not resolve dependencies for project demo: could not find artifact com.example:lib:jar:1.2.3\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "maven-dependency-resolution" {
-		t.Fatalf("expected maven-dependency-resolution, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
 func TestAnalyzeReaderDockerBuildContext(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
 
