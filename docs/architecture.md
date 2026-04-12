@@ -14,7 +14,10 @@ explicit deterministic layers:
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and
   deterministic review helpers.
-- `internal/output` owns text, JSON, fix, and workflow rendering.
+- `internal/output` owns command-facing output selection plus JSON/workflow
+  serialization.
+- `internal/renderer` owns terminal-aware human rendering, including plain
+  fallback, markdown rendering, and restrained ANSI styling.
 
 ## Playbook boundary
 
@@ -44,3 +47,14 @@ Detectors stay explicit and separate:
 
 Both emit the shared `model.Result` shape so ranking, output, workflow, and
 history remain stable across command surfaces.
+
+## Rendering boundary
+
+Human-facing longform content is stored in markdown-capable playbook fields such
+as `summary`, `diagnosis_markdown`, `fix_markdown`, and
+`validation_markdown`.
+
+- markdown is presentation content only
+- structured playbook fields still drive matching and ranking
+- `--json` bypasses terminal styling entirely
+- non-TTY and no-color environments fall back to plain output

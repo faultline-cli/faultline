@@ -5,7 +5,24 @@ severity: high
 base_score: 0.5
 tags: [env, config, secrets]
 stage_hints: [build, deploy]
+summary: |-
+  A required environment variable was not set in the CI environment. The job cannot continue without the expected configuration or secret value.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A required environment variable was not set in the CI environment. The job cannot continue without the expected configuration or secret value.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add the missing variable as a CI secret or environment variable in your CI provider settings.
+  2. Reference the variable in your workflow file with the correct name (names are case-sensitive).
+  3. For GitHub Actions, add the secret under Settings › Secrets and variables › Actions.
+  4. Check that repository forks or non-default branches also have access to the required secrets.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Missing required environment variable is gone.
 match:
   any:
     - environment variable not set
@@ -25,23 +42,13 @@ match:
     - configuration error
     - is not set
     - must be set
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A required environment variable was not set in the CI environment. The job
-  cannot continue without the expected configuration or secret value.
+  Environment variables that hold secrets (tokens, API keys, passwords) must be configured explicitly in CI settings. They are not inherited from the local developer environment and are not committed to the repository.
 
-why: >
-  Environment variables that hold secrets (tokens, API keys, passwords) must be
-  configured explicitly in CI settings. They are not inherited from the local
-  developer environment and are not committed to the repository.
+  ## Prevention
 
-fix:
-  - Add the missing variable as a CI secret or environment variable in your CI provider settings.
-  - Reference the variable in your workflow file with the correct name (names are case-sensitive).
-  - For GitHub Actions, add the secret under Settings › Secrets and variables › Actions.
-  - Check that repository forks or non-default branches also have access to the required secrets.
-
-prevent:
   - Document all required environment variables in a .env.example file.
   - Add a validation step at the start of each CI job that checks for required variables.
   - Use a secrets manager or vault integration to avoid manual secret management.

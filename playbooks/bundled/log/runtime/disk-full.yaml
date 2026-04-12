@@ -5,7 +5,24 @@ severity: critical
 base_score: 1.0
 tags: [disk, storage, no space]
 stage_hints: [build, deploy]
+summary: |-
+  The CI runner ran out of disk space. Writes to the filesystem fail immediately when the disk is full, typically causing builds, artifact generation, or log writes to abort.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The CI runner ran out of disk space. Writes to the filesystem fail immediately when the disk is full, typically causing builds, artifact generation, or log writes to abort.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Free space by removing unnecessary Docker images: `docker image prune -a`.
+  2. Remove large intermediate build artifacts: `make clean` or the equivalent.
+  3. Add a disk space check at the start of the job and fail fast if it is below a safe threshold.
+  4. Increase the disk size of the runner.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Disk space exhausted is gone.
 match:
   any:
     - disk full
@@ -17,24 +34,13 @@ match:
     - "Write failed: No space left"
     - "ENOSPC"
     - no space left on device
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The CI runner ran out of disk space. Writes to the filesystem fail
-  immediately when the disk is full, typically causing builds, artifact
-  generation, or log writes to abort.
+  Large Docker images, build artifacts, or log files can fill a runner's disk before the job completes. Caches that are never invalidated also accumulate over time on persistent runners.
 
-why: >
-  Large Docker images, build artifacts, or log files can fill a runner's disk
-  before the job completes. Caches that are never invalidated also accumulate
-  over time on persistent runners.
+  ## Prevention
 
-fix:
-  - "Free space by removing unnecessary Docker images: `docker image prune -a`."
-  - "Remove large intermediate build artifacts: `make clean` or the equivalent."
-  - Add a disk space check at the start of the job and fail fast if it is below a safe threshold.
-  - Increase the disk size of the runner.
-
-prevent:
   - Add a pre-build step that prunes old Docker images and containers.
   - Configure log rotation and limit artifact retention periods.
   - Monitor disk usage on persistent runners and alert before it reaches capacity.

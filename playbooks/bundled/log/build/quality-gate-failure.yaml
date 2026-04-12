@@ -5,7 +5,34 @@ severity: medium
 base_score: 0.4
 tags: [quality, lint, format, static-analysis, checks]
 stage_hints: [build, test]
+summary: |-
+  A non-compiler quality gate failed during CI. The job stopped because lint, formatting, or static-analysis checks reported violations even though the code may still compile.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A non-compiler quality gate failed during CI. The job stopped because lint, formatting, or static-analysis checks reported violations even though the code may still compile.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Re-run the exact quality-check command locally so the failing files and rule names are visible.
+  2. Fix the reported violations first rather than weakening the CI gate globally.
+  3. If the failure followed a shared config update, review that change and confirm the stricter rule was intentional.
+  4. If multiple tools run under one quality step, split them locally so you can identify whether the failure is lint, formatting, or another static-analysis tool.
+validation_markdown: |-
+  ## Validation
+
+  - make lint
+  - make check
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Generic quality gates fail when contributor machines and CI enforce different formatting or analysis rules, when a shared ruleset changes, or when the codebase accumulates style or maintainability issues that CI treats as hard failures.
+
+  ## Prevention
+
+  - Keep formatter, lint, and static-analysis tool versions pinned so CI behavior changes only in deliberate upgrades.
+  - Run the same quality checks in pre-commit, pre-push, or editor integrations for changed files.
+  - Treat shared rule changes like product changes and roll them out with examples and remediation guidance.
 match:
   any:
     - lint failed
@@ -23,29 +50,6 @@ match:
     - cannot find module
     - "ERR_PNPM_"
     - no matching distribution found
-
-explain: >
-  A non-compiler quality gate failed during CI. The job stopped because lint,
-  formatting, or static-analysis checks reported violations even though the
-  code may still compile.
-
-why: >
-  Generic quality gates fail when contributor machines and CI enforce different
-  formatting or analysis rules, when a shared ruleset changes, or when the
-  codebase accumulates style or maintainability issues that CI treats as hard
-  failures.
-
-fix:
-  - Re-run the exact quality-check command locally so the failing files and rule names are visible.
-  - Fix the reported violations first rather than weakening the CI gate globally.
-  - If the failure followed a shared config update, review that change and confirm the stricter rule was intentional.
-  - If multiple tools run under one quality step, split them locally so you can identify whether the failure is lint, formatting, or another static-analysis tool.
-
-prevent:
-  - Keep formatter, lint, and static-analysis tool versions pinned so CI behavior changes only in deliberate upgrades.
-  - Run the same quality checks in pre-commit, pre-push, or editor integrations for changed files.
-  - Treat shared rule changes like product changes and roll them out with examples and remediation guidance.
-
 workflow:
   likely_files:
     - package.json

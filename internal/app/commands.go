@@ -7,6 +7,7 @@ import (
 
 	"faultline/internal/model"
 	"faultline/internal/output"
+	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
 
@@ -74,6 +75,7 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 		return err
 	}
 
-	_, err := fmt.Fprint(w, output.FormatAnalysisText(a, opts.Top, opts.Mode))
+	renderOpts := renderer.DetectOptions(w)
+	_, err := fmt.Fprint(w, output.FormatAnalysisText(a, opts.Top, opts.Mode, renderOpts))
 	return err
 }

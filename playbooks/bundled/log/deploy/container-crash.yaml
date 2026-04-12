@@ -5,7 +5,25 @@ severity: high
 base_score: 1.0
 tags: [container, crash, oomkilled, exit-code, kubernetes, docker]
 stage_hints: [deploy]
+summary: |-
+  The container started but then exited with a non-zero status code. If it keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never becomes ready.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The container started but then exited with a non-zero status code. If it keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never becomes ready.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Retrieve the logs from the previous crashed container: `kubectl logs <pod> --previous`.
+  2. Check the exit code with `kubectl describe pod <pod>` — look for the Last State block.
+  3. If exit 137, increase the memory limit in the container spec or profile memory usage.
+  4. If exit 1, search the log output for `FATAL`, `panic`, or unhandled exception traces.
+  5. Reproduce the failure locally with `docker run` using the same image and environment variables.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Container exited unexpectedly is gone.
 match:
   any:
     - "CrashLoopBackOff"
@@ -20,26 +38,13 @@ match:
     - The build agent was unable to allocate
     - "exit code 137"
     - OOMKilled
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The container started but then exited with a non-zero status code. If it
-  keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never
-  becomes ready.
+  Non-zero exit codes indicate an unhandled error at runtime. Exit 137 is SIGKILL (often an OOM kill or a forced stop). Exit 139 is a segfault. Exit 1 is a generic application error. CrashLoopBackOff is the symptom; the root cause is always in the container logs.
 
-why: >
-  Non-zero exit codes indicate an unhandled error at runtime. Exit 137 is
-  SIGKILL (often an OOM kill or a forced stop). Exit 139 is a segfault. Exit 1
-  is a generic application error. CrashLoopBackOff is the symptom; the root
-  cause is always in the container logs.
+  ## Prevention
 
-fix:
-  - "Retrieve the logs from the previous crashed container: `kubectl logs <pod> --previous`."
-  - "Check the exit code with `kubectl describe pod <pod>` — look for the Last State block."
-  - If exit 137, increase the memory limit in the container spec or profile memory usage.
-  - "If exit 1, search the log output for `FATAL`, `panic`, or unhandled exception traces."
-  - "Reproduce the failure locally with `docker run` using the same image and environment variables."
-
-prevent:
   - Set explicit memory and CPU limits to surface resource problems early.
   - Validate required configuration at startup and exit early with a clear message if anything is missing.
   - Run the container image in CI with a smoke test before merging.

@@ -5,7 +5,34 @@ severity: medium
 base_score: 0.5
 tags: [test, coverage, threshold, quality-gate]
 stage_hints: [test]
+summary: |-
+  The test step completed, but the job failed because measured coverage fell below an enforced minimum. This is a quality policy failure rather than a crash in the test runner itself.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The test step completed, but the job failed because measured coverage fell below an enforced minimum. This is a quality policy failure rather than a crash in the test runner itself.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Review the coverage report to find the files or packages that dropped below the enforced threshold.
+  2. Add focused tests for the newly introduced or changed paths before lowering the threshold.
+  3. If generated or non-critical files are inflating the denominator, exclude them explicitly in the coverage configuration rather than adjusting the target by hand.
+  4. Re-run the same coverage command locally to confirm the failure is reproducible outside CI.
+validation_markdown: |-
+  ## Validation
+
+  - go test ./... -cover
+  - npm test -- --coverage
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Coverage gates usually fail after new code paths are added without tests, when generated or low-value files start counting toward coverage, or when the threshold is raised without first improving the test suite.
+
+  ## Prevention
+
+  - Keep coverage exclusions explicit and version-controlled so threshold drift is intentional.
+  - Raise coverage targets gradually and only after the test suite can sustain them.
+  - Track coverage changes in pull requests so regressions are visible before the merge queue.
 match:
   any:
     - coverage threshold
@@ -21,28 +48,6 @@ match:
     - stored snapshot
     - async test timed out
     - context deadline exceeded
-
-explain: >
-  The test step completed, but the job failed because measured coverage fell
-  below an enforced minimum. This is a quality policy failure rather than a
-  crash in the test runner itself.
-
-why: >
-  Coverage gates usually fail after new code paths are added without tests,
-  when generated or low-value files start counting toward coverage, or when the
-  threshold is raised without first improving the test suite.
-
-fix:
-  - Review the coverage report to find the files or packages that dropped below the enforced threshold.
-  - Add focused tests for the newly introduced or changed paths before lowering the threshold.
-  - If generated or non-critical files are inflating the denominator, exclude them explicitly in the coverage configuration rather than adjusting the target by hand.
-  - Re-run the same coverage command locally to confirm the failure is reproducible outside CI.
-
-prevent:
-  - Keep coverage exclusions explicit and version-controlled so threshold drift is intentional.
-  - Raise coverage targets gradually and only after the test suite can sustain them.
-  - Track coverage changes in pull requests so regressions are visible before the merge queue.
-
 workflow:
   likely_files:
     - coverage.out

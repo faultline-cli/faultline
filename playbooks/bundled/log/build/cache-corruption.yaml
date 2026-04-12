@@ -5,7 +5,24 @@ severity: medium
 base_score: 0.5
 tags: [cache, dependencies, build]
 stage_hints: [build]
+summary: |-
+  The CI dependency cache was restored successfully but the cached contents are corrupt or were created on an incompatible platform, causing installation or linking to fail.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The CI dependency cache was restored successfully but the cached contents are corrupt or were created on an incompatible platform, causing installation or linking to fail.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Delete the CI cache and allow it to rebuild from scratch.
+  2. Invalidate the cache by changing the cache key (e.g., append a version suffix).
+  3. For GitHub Actions, clear the cache via Settings › Actions › Caches.
+  4. If the cache stores platform-specific artifacts, verify the key includes OS, architecture, and toolchain version before restoring it again.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Corrupted or stale dependency cache is gone.
 match:
   any:
     - cache is corrupted
@@ -17,25 +34,14 @@ match:
     - unexpected end of archive
     - corrupted tar archive
     - bad gzip
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The CI dependency cache was restored successfully but the cached contents are
-  corrupt or were created on an incompatible platform, causing installation or
-  linking to fail.
+  Build caches can become stale after tool upgrades (e.g. a new npm or pip version that uses a different binary format), after OS upgrades on the runner, or due to partial writes when a previous CI job was interrupted.
 
-why: >
-  Build caches can become stale after tool upgrades (e.g. a new npm or pip
-  version that uses a different binary format), after OS upgrades on the runner,
-  or due to partial writes when a previous CI job was interrupted.
+  ## Prevention
 
-fix:
-  - Delete the CI cache and allow it to rebuild from scratch.
-  - Invalidate the cache by changing the cache key (e.g., append a version suffix).
-  - For GitHub Actions, clear the cache via Settings › Actions › Caches.
-  - If the cache stores platform-specific artifacts, verify the key includes OS, architecture, and toolchain version before restoring it again.
-
-prevent:
   - Include the tool version in the cache key so upgrades automatically invalidate the old cache.
-  - "Validate the cache after restoration with a fast integrity check (e.g., `npm ci --prefer-offline`)."
+  - Validate the cache after restoration with a fast integrity check (e.g., `npm ci --prefer-offline`).
   - Set a short cache TTL to prevent caches from becoming permanently stale.
   - Avoid caching mutable build outputs that can be partially written when jobs are canceled or retried.

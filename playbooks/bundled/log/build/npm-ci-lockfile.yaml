@@ -5,7 +5,6 @@ severity: medium
 base_score: 1.0
 tags: [npm, node, lockfile, dependencies]
 stage_hints: [build]
-
 match:
   any:
     - npm ci can only install packages when your package.json and package-lock.json
@@ -13,26 +12,31 @@ match:
     - npm ERR! cipm can only install packages
     - package-lock.json does not exist
     - run `npm install` to generate a lockfile
+summary: |-
+  `npm ci` found a missing or out-of-sync `package-lock.json`.
+diagnosis_markdown: |-
+  ## Diagnosis
 
-explain: >
-  `npm ci` requires a package-lock.json that exactly matches the dependencies
-  declared in package.json. The command failed because the lockfile is missing
-  or out of sync.
+  `npm ci` installs strictly from the lockfile. If `package.json` and `package-lock.json` disagree, CI fails instead of regenerating dependencies on the fly.
+fix_markdown: |-
+  ## Fix steps
 
-why: >
-  `npm ci` is designed for reproducible CI installs. It reads only from the
-  lockfile and aborts if the lockfile and package.json are inconsistent. Running
-  `npm install` locally without committing the resulting lockfile is the most
-  common cause.
+  1. Regenerate the lockfile locally:
 
-fix:
-  - "Run `npm install` locally to regenerate the lockfile."
-  - "Commit the updated `package-lock.json`."
-  - "Ensure `package-lock.json` is not listed in `.gitignore`."
-  - If the repo uses workspaces, regenerate the lockfile from the workspace root with the same npm major version CI uses.
+     ```bash
+     npm install
+     ```
 
-prevent:
-  - "Commit `package-lock.json` to source control."
-  - "Add a CI check that fails if `package-lock.json` is modified by `npm install`."
-  - "Use `npm ci` in CI and `npm install` only for local development."
-  - Pin the npm version through the runtime setup step so lockfile format changes do not appear unexpectedly.
+  2. Commit the updated `package-lock.json`.
+  3. Make sure `package-lock.json` is not ignored.
+  4. If the repo uses workspaces, regenerate the lockfile from the workspace root with the same npm major version used in CI.
+validation_markdown: |-
+  ## Validation
+
+  - Run `npm ci` locally.
+  - Re-run the CI job.
+  - Check that `package-lock.json` stays unchanged after the install step.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Lockfile mismatches break reproducibility. Fixing the lockfile keeps local installs and CI installs on the same dependency graph.

@@ -5,7 +5,24 @@ severity: medium
 base_score: 0.8
 tags: [port, conflict, binding, deploy, network]
 stage_hints: [deploy]
+summary: |-
+  A container or service failed to start because the port it needs to bind to is already occupied by another process or a previous deployment's container that has not been fully removed.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A container or service failed to start because the port it needs to bind to is already occupied by another process or a previous deployment's container that has not been fully removed.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Find the process occupying the port: `lsof -i :<port>` or `ss -tlnp | grep <port>`.
+  2. In Kubernetes with host ports: ensure old pods are fully terminated before the new ones start (`kubectl delete pod <old-pod>`).
+  3. Check for Ghost containers: `docker ps -a | grep <image>` and remove stopped containers with `docker rm`.
+  4. If using NodePort or HostPort in Kubernetes, verify no two pods on the same node request the same port.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Port already in use during deployment is gone.
 match:
   any:
     - port is already allocated
@@ -20,24 +37,13 @@ match:
     - address already in use
     - "bind: address already in use"
     - listen tcp
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A container or service failed to start because the port it needs to bind to
-  is already occupied by another process or a previous deployment's container
-  that has not been fully removed.
+  Ports become stuck when a rolling update leaves an old container alive after the port hand-off, when a host-port mapping conflicts between pods on the same node, or when a local dev service was not shut down before deploying.
 
-why: >
-  Ports become stuck when a rolling update leaves an old container alive after
-  the port hand-off, when a host-port mapping conflicts between pods on the
-  same node, or when a local dev service was not shut down before deploying.
+  ## Prevention
 
-fix:
-  - "Find the process occupying the port: `lsof -i :<port>` or `ss -tlnp | grep <port>`."
-  - "In Kubernetes with host ports: ensure old pods are fully terminated before the new ones start (`kubectl delete pod <old-pod>`)."
-  - "Check for Ghost containers: `docker ps -a | grep <image>` and remove stopped containers with `docker rm`."
-  - If using NodePort or HostPort in Kubernetes, verify no two pods on the same node request the same port.
-
-prevent:
   - Avoid HostPort mappings where possible; use ClusterIP + Ingress instead to let Kubernetes manage port allocation.
-  - "Add a rolling update strategy with `maxSurge=0` if host ports must be used, so the old pod is terminated first."
-  - "In local dev, use process supervisors (e.g., docker-compose `restart: unless-stopped`) so ports are always released on stop."
+  - Add a rolling update strategy with `maxSurge=0` if host ports must be used, so the old pod is terminated first.
+  - In local dev, use process supervisors (e.g., docker-compose `restart: unless-stopped`) so ports are always released on stop.

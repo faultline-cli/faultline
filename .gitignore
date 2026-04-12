@@ -12,3 +12,6 @@ coverage.out
 .DS_Store
 *.swp
 *.swo
+
+# Local premium-pack convenience link
+playbooks/packs/premium-local

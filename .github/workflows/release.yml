@@ -18,9 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      PREMIUM_PACK_REPO_TOKEN: ${{ secrets.PREMIUM_PACK_REPO_TOKEN }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Check out premium pack repository
+        if: vars.PREMIUM_PACK_REPO != '' && env.PREMIUM_PACK_REPO_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.PREMIUM_PACK_REPO }}
+          token: ${{ env.PREMIUM_PACK_REPO_TOKEN }}
+          path: premium-pack
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -32,6 +41,10 @@ jobs:
 
       - name: Review bundled playbook conflicts
         run: make review
+
+      - name: Compose starter with premium pack
+        if: vars.PREMIUM_PACK_REPO != '' && env.PREMIUM_PACK_REPO_TOKEN != ''
+        run: make premium-check PREMIUM_PACK_DIR=premium-pack
 
       - name: Build release archives
         run: make release-snapshot VERSION="$VERSION"

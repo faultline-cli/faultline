@@ -20,10 +20,10 @@ func TestBuildLocalPlanUsesTopDiagnosis(t *testing.T) {
 		Results: []model.Result{
 			{
 				Playbook: model.Playbook{
-					ID:      "typescript-compile",
-					Title:   "TypeScript compile or type-check failure",
-					Fix:     []string{"Run `tsc --noEmit` locally.", "Update the affected type definitions."},
-					Prevent: []string{"Run a dedicated type-check step on every pull request."},
+					ID:                   "typescript-compile",
+					Title:                "TypeScript compile or type-check failure",
+					FixMarkdown:          "1. Run `tsc --noEmit` locally.\n2. Update the affected type definitions.",
+					WhyItMattersMarkdown: "## Prevention\n\n- Run a dedicated type-check step on every pull request.",
 					Workflow: model.WorkflowSpec{
 						LikelyFiles: []string{"tsconfig.json", "web/**/*.ts"},
 						LocalRepro:  []string{"npm run build"},
@@ -58,9 +58,9 @@ func TestBuildAgentPlanIncludesPrompt(t *testing.T) {
 		Results: []model.Result{
 			{
 				Playbook: model.Playbook{
-					ID:    "docker-build-context",
-					Title: "Docker build context or Dockerfile path issue",
-					Fix:   []string{"Verify the exact `docker build` command."},
+					ID:          "docker-build-context",
+					Title:       "Docker build context or Dockerfile path issue",
+					FixMarkdown: "1. Verify the exact `docker build` command.",
 					Workflow: model.WorkflowSpec{
 						LocalRepro: []string{"docker build -f Dockerfile ."},
 						Verify:     []string{"docker build -f Dockerfile ."},

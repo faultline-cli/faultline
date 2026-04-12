@@ -5,7 +5,25 @@ severity: medium
 base_score: 1.0
 tags: [dns, network, host, resolution]
 stage_hints: [build, deploy]
+summary: |-
+  The runner could not resolve a hostname to an IP address, so the network call failed before it could connect.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The runner could not resolve a hostname to an IP address, so the network call failed before it could connect.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Verify the hostname in the failing command or configuration for typos.
+  2. Check whether the hostname is internal-only and requires VPN, VPC DNS, or private resolver access.
+  3. Retry the job to rule out a transient resolver outage.
+  4. Resolve the host manually from the same environment using `nslookup`, `dig`, or `getent hosts`.
+  5. If the hostname comes from configuration, trace the resolved value in CI logs to confirm the job is not using the wrong environment or secret.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for DNS resolution failure is gone.
 match:
   any:
     - no such host
@@ -15,24 +33,13 @@ match:
     - "dial tcp: lookup"
     - could not resolve host
     - nodename nor servname provided
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The runner could not resolve a hostname to an IP address, so the network call
-  failed before it could connect.
+  DNS failures can come from typos in hostnames, transient resolver outages, missing private DNS configuration, or network policies that block access to the resolver.
 
-why: >
-  DNS failures can come from typos in hostnames, transient resolver outages,
-  missing private DNS configuration, or network policies that block access to
-  the resolver.
+  ## Prevention
 
-fix:
-  - Verify the hostname in the failing command or configuration for typos.
-  - Check whether the hostname is internal-only and requires VPN, VPC DNS, or private resolver access.
-  - Retry the job to rule out a transient resolver outage.
-  - Resolve the host manually from the same environment using `nslookup`, `dig`, or `getent hosts`.
-  - If the hostname comes from configuration, trace the resolved value in CI logs to confirm the job is not using the wrong environment or secret.
-
-prevent:
   - Keep service endpoints centralized in configuration rather than duplicated across workflows.
   - Add environment-specific connectivity checks for critical internal hosts.
   - Monitor resolver health on persistent runners or clusters.

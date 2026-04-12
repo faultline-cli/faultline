@@ -100,6 +100,9 @@ func TestAnalyzeFileJSON(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute analyze --json: %v", err)
 	}
+	if strings.Contains(out.String(), "\x1b[") {
+		t.Fatalf("json output should not contain ANSI sequences, got %q", out.String())
+	}
 
 	var payload map[string]interface{}
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
@@ -183,8 +186,8 @@ func TestAnalyzeDetailedMode(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute analyze --mode detailed: %v", err)
 	}
-	if !strings.Contains(out.String(), "Diagnosis:") {
-		t.Fatalf("expected detailed diagnosis header, got %q", out.String())
+	if !strings.Contains(out.String(), "Summary") {
+		t.Fatalf("expected detailed summary section, got %q", out.String())
 	}
 }
 
@@ -237,8 +240,8 @@ func TestFixCommand(t *testing.T) {
 	if !strings.Contains(got, "docker-auth") {
 		t.Fatalf("expected fix output to reference docker-auth, got %q", got)
 	}
-	if !strings.Contains(got, "Fix:") {
-		t.Fatalf("expected Fix: section in fix output, got %q", got)
+	if !strings.Contains(got, "Fix steps") && !strings.Contains(got, "Verify the registry username") {
+		t.Fatalf("expected markdown fix content in fix output, got %q", got)
 	}
 }
 
@@ -267,13 +270,23 @@ id: list-extra
 title: List Extra
 category: test
 severity: low
+summary: |
+  Extra summary.
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Extra diagnosis.
+fix_markdown: |
+  ## Fix steps
+
+  1. Extra fix.
+validation_markdown: |
+  ## Validation
+
+  - Extra validation.
 match:
   any:
     - "extra marker"
-explain: extra
-why: extra
-fix:
-  - extra
 `), 0o600); err != nil {
 		t.Fatalf("write extra pack: %v", err)
 	}
@@ -326,7 +339,7 @@ func TestExplainCommand(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute explain: %v", err)
 	}
-	if !strings.Contains(out.String(), "docker-auth") {
+	if !strings.Contains(out.String(), "docker-auth") || !strings.Contains(out.String(), "Diagnosis") {
 		t.Fatalf("expected explain output for docker-auth, got %q", out.String())
 	}
 }

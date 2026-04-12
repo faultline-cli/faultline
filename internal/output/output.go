@@ -7,11 +7,10 @@ package output
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"strings"
-	"text/tabwriter"
 
 	"faultline/internal/model"
+	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
 
@@ -27,293 +26,13 @@ const (
 
 // FormatAnalysisText formats an analysis for human consumption.
 // top limits the number of results shown (0 or negative means show all).
-func FormatAnalysisText(a *model.Analysis, top int, mode Mode) string {
-	if a == nil || len(a.Results) == 0 {
-		return noMatchText()
-	}
-	results := topN(a.Results, top)
-
-	var b strings.Builder
-	for i, r := range results {
-		if i > 0 {
-			b.WriteString("\n")
-		}
-		if mode == ModeDetailed {
-			writeDetailed(&b, a, r, i, len(results))
-		} else {
-			writeQuick(&b, r, i, len(results))
-		}
-	}
-	return b.String()
+func FormatAnalysisText(a *model.Analysis, top int, mode Mode, opts renderer.Options) string {
+	return renderer.New(opts).RenderAnalyze(a, top, mode == ModeDetailed)
 }
 
 // FormatFix formats only the fix steps for the top result.
-func FormatFix(a *model.Analysis) string {
-	if a == nil || len(a.Results) == 0 {
-		return noMatchText()
-	}
-	r := a.Results[0]
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s: %s\n\n", r.Playbook.ID, r.Playbook.Title)
-	if len(r.Playbook.Fix) == 0 {
-		fmt.Fprintln(&b, "No fix steps defined for this playbook.")
-		return b.String()
-	}
-	fmt.Fprintln(&b, "Fix:")
-	for i, step := range r.Playbook.Fix {
-		fmt.Fprintf(&b, "  %d. %s\n", i+1, step)
-	}
-	return b.String()
-}
-
-func writeQuick(b *strings.Builder, r model.Result, rank, total int) {
-	pb := r.Playbook
-
-	// Header line
-	severity := pb.Severity
-	if severity == "" {
-		severity = "unknown"
-	}
-	if total > 1 {
-		fmt.Fprintf(b, "#%d  %s · %s  [%s · %s · %d%%]\n",
-			rank+1, pb.ID, pb.Title, pb.Category, severity,
-			int(math.Round(r.Confidence*100)))
-	} else {
-		fmt.Fprintf(b, "DETECTED  %s · %s  [%s · %s · %d%%]\n",
-			pb.ID, pb.Title, pb.Category, severity,
-			int(math.Round(r.Confidence*100)))
-	}
-	if r.Detector != "" && r.Detector != "log" {
-		fmt.Fprintf(b, "Detector: %s", r.Detector)
-		if r.ChangeStatus != "" {
-			fmt.Fprintf(b, "  Change: %s", r.ChangeStatus)
-		}
-		b.WriteString("\n")
-	}
-	if pack := displayPackName(pb); pack != "" {
-		fmt.Fprintf(b, "Pack: %s\n", pack)
-	}
-
-	// Fix steps
-	if len(pb.Fix) > 0 {
-		fmt.Fprintln(b, "FIX")
-		for i, step := range pb.Fix {
-			fmt.Fprintf(b, "  %d. %s\n", i+1, step)
-		}
-	}
-}
-
-const ruler = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-func writeDetailed(b *strings.Builder, a *model.Analysis, r model.Result, rank, total int) {
-	pb := r.Playbook
-	fmt.Fprintln(b, ruler)
-
-	if total > 1 {
-		fmt.Fprintf(b, "  Diagnosis #%d of %d — %s\n", rank+1, total, pb.Title)
-	} else {
-		fmt.Fprintf(b, "  Diagnosis: %s\n", pb.Title)
-	}
-	fmt.Fprintln(b, ruler)
-
-	// Metadata grid
-	if a.Source != "" {
-		fmt.Fprintf(b, "  Source:      %s\n", a.Source)
-	}
-	if a.Context.Stage != "" {
-		fmt.Fprintf(b, "  Stage:       %s\n", a.Context.Stage)
-	}
-	if a.Context.CommandHint != "" {
-		fmt.Fprintf(b, "  Command:     %s\n", a.Context.CommandHint)
-	}
-	if a.Context.Step != "" {
-		fmt.Fprintf(b, "  Step:        %s\n", a.Context.Step)
-	}
-	fmt.Fprintf(b, "  Category:    %s\n", pb.Category)
-	if r.Detector != "" {
-		fmt.Fprintf(b, "  Detector:    %s\n", r.Detector)
-	}
-	if pack := displayPackName(pb); pack != "" {
-		fmt.Fprintf(b, "  Pack:        %s\n", pack)
-	}
-	if pb.Severity != "" {
-		fmt.Fprintf(b, "  Severity:    %s\n", pb.Severity)
-	}
-	fmt.Fprintf(b, "  Score:       %.2f\n", r.Score)
-	fmt.Fprintf(b, "  Confidence:  %d%%\n", int(math.Round(r.Confidence*100)))
-	if r.ChangeStatus != "" {
-		fmt.Fprintf(b, "  Change:      %s\n", r.ChangeStatus)
-	}
-	if r.SeenCount > 0 {
-		fmt.Fprintf(b, "  Seen before: %d time", r.SeenCount)
-		if r.SeenCount != 1 {
-			b.WriteString("s")
-		}
-		b.WriteString("\n")
-	}
-
-	// Narrative sections
-	writeSection(b, "Cause", []string{pb.Explain})
-	writeSection(b, "Why this happens", []string{pb.Why})
-
-	if len(pb.Fix) > 0 {
-		fmt.Fprintln(b, "\n  Fix")
-		fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-		for i, step := range pb.Fix {
-			fmt.Fprintf(b, "  %d. %s\n", i+1, step)
-		}
-	}
-	if len(pb.Prevent) > 0 {
-		fmt.Fprintln(b, "\n  Prevent")
-		fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-		for i, step := range pb.Prevent {
-			fmt.Fprintf(b, "  %d. %s\n", i+1, step)
-		}
-	}
-	if len(r.Evidence) > 0 {
-		fmt.Fprintln(b, "\n  Evidence")
-		fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-		for _, e := range r.Evidence {
-			fmt.Fprintf(b, "  › %s\n", e)
-		}
-	}
-	writeReasonSection(b, "Triggered by", r.Explanation.TriggeredBy)
-	writeReasonSection(b, "Amplified by", r.Explanation.AmplifiedBy)
-	writeReasonSection(b, "Mitigated by", r.Explanation.MitigatedBy)
-	writeReasonSection(b, "Suppressions", r.Explanation.SuppressedBy)
-	writeReasonSection(b, "Context", r.Explanation.Contextualized)
-	writeScoreBreakdown(b, r.Breakdown)
-
-	// Alternatives: the remaining results listed briefly.
-	if rank == 0 && len(a.Results) > 1 {
-		fmt.Fprintln(b, "\n  Alternatives")
-		fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-		for i, alt := range a.Results[1:] {
-			fmt.Fprintf(b, "  %d. %s: %s (%d%%)\n",
-				i+2, alt.Playbook.ID, alt.Playbook.Title,
-				int(math.Round(alt.Confidence*100)))
-		}
-	}
-
-	writeRepoContext(b, a.RepoContext)
-
-	fmt.Fprintln(b, ruler)
-}
-
-func writeSection(b *strings.Builder, header string, lines []string) {
-	// Skip sections whose content is completely empty.
-	nonEmpty := false
-	for _, l := range lines {
-		if strings.TrimSpace(l) != "" {
-			nonEmpty = true
-			break
-		}
-	}
-	if !nonEmpty {
-		return
-	}
-	fmt.Fprintf(b, "\n  %s\n", header)
-	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-	for _, l := range lines {
-		if l != "" {
-			fmt.Fprintf(b, "  %s\n", l)
-		}
-	}
-}
-
-func writeReasonSection(b *strings.Builder, header string, lines []string) {
-	if len(lines) == 0 {
-		return
-	}
-	fmt.Fprintf(b, "\n  %s\n", header)
-	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-	for _, line := range lines {
-		fmt.Fprintf(b, "  - %s\n", line)
-	}
-}
-
-func writeScoreBreakdown(b *strings.Builder, breakdown model.ScoreBreakdown) {
-	if breakdown.FinalScore == 0 {
-		return
-	}
-	fmt.Fprintln(b, "\n  Score Breakdown")
-	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-	fmt.Fprintf(b, "  base: %.2f\n", breakdown.BaseSignalScore)
-	if breakdown.CompoundSignalBonus != 0 {
-		fmt.Fprintf(b, "  compound: +%.2f\n", breakdown.CompoundSignalBonus)
-	}
-	if breakdown.BlastRadiusMultiplier != 0 {
-		fmt.Fprintf(b, "  blast radius: +%.2f\n", breakdown.BlastRadiusMultiplier)
-	}
-	if breakdown.HotPathMultiplier != 0 {
-		fmt.Fprintf(b, "  hot path: +%.2f\n", breakdown.HotPathMultiplier)
-	}
-	if breakdown.ChangeIntroducedBonus != 0 {
-		fmt.Fprintf(b, "  change bonus: %.2f\n", breakdown.ChangeIntroducedBonus)
-	}
-	if breakdown.MitigatingEvidenceDiscount != 0 {
-		fmt.Fprintf(b, "  mitigations: -%.2f\n", breakdown.MitigatingEvidenceDiscount)
-	}
-	if breakdown.ExplicitExceptionDiscount != 0 {
-		fmt.Fprintf(b, "  suppressions: -%.2f\n", breakdown.ExplicitExceptionDiscount)
-	}
-	if breakdown.SafeContextDiscount != 0 {
-		fmt.Fprintf(b, "  safe context: -%.2f\n", breakdown.SafeContextDiscount)
-	}
-	fmt.Fprintf(b, "  final: %.2f\n", breakdown.FinalScore)
-}
-
-func fallback(value, fallback string) string {
-	if strings.TrimSpace(value) == "" {
-		return fallback
-	}
-	return value
-}
-
-func noMatchText() string {
-	return "No known failure pattern matched.\n" +
-		"  » Run \"faultline list\" to see all available playbooks.\n" +
-		"  » Pass --json for machine-readable output.\n"
-}
-
-func writeRepoContext(b *strings.Builder, repoCtx *model.RepoContext) {
-	if repoCtx == nil {
-		return
-	}
-
-	if repoCtx.RepoRoot == "" &&
-		len(repoCtx.RecentFiles) == 0 &&
-		len(repoCtx.RelatedCommits) == 0 &&
-		len(repoCtx.HotspotDirectories) == 0 &&
-		len(repoCtx.CoChangeHints) == 0 &&
-		len(repoCtx.HotfixSignals) == 0 &&
-		len(repoCtx.DriftSignals) == 0 {
-		return
-	}
-
-	fmt.Fprintln(b, "\n  Repo Context")
-	fmt.Fprintln(b, "  "+strings.Repeat("─", 40))
-	if repoCtx.RepoRoot != "" {
-		fmt.Fprintf(b, "  Repo root: %s\n", repoCtx.RepoRoot)
-	}
-	for _, item := range repoCtx.RecentFiles {
-		fmt.Fprintf(b, "  Recent file: %s\n", item)
-	}
-	for _, commit := range repoCtx.RelatedCommits {
-		fmt.Fprintf(b, "  Related commit: %s  %s  %s\n", commit.Date, commit.Hash, commit.Subject)
-	}
-	for _, dir := range repoCtx.HotspotDirectories {
-		fmt.Fprintf(b, "  Hotspot area: %s\n", dir)
-	}
-	for _, hint := range repoCtx.CoChangeHints {
-		fmt.Fprintf(b, "  Co-change: %s\n", hint)
-	}
-	for _, signal := range repoCtx.HotfixSignals {
-		fmt.Fprintf(b, "  Hotfix signal: %s\n", signal)
-	}
-	for _, signal := range repoCtx.DriftSignals {
-		fmt.Fprintf(b, "  Drift hint: %s\n", signal)
-	}
+func FormatFix(a *model.Analysis, opts renderer.Options) string {
+	return renderer.New(opts).RenderFix(a)
 }
 
 // ── JSON ─────────────────────────────────────────────────────────────────────
@@ -336,25 +55,26 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank         int                     `json:"rank"`
-	FailureID    string                  `json:"failure_id"`
-	Title        string                  `json:"title"`
-	Category     string                  `json:"category"`
-	Pack         string                  `json:"pack,omitempty"`
-	Severity     string                  `json:"severity,omitempty"`
-	Detector     string                  `json:"detector,omitempty"`
-	Score        float64                 `json:"score"`
-	Confidence   float64                 `json:"confidence"`
-	Explain      string                  `json:"explain,omitempty"`
-	Why          string                  `json:"why,omitempty"`
-	Fix          []string                `json:"fix,omitempty"`
-	Prevent      []string                `json:"prevent,omitempty"`
-	Evidence     []string                `json:"evidence"`
-	EvidenceBy   model.EvidenceBundle    `json:"evidence_by,omitempty"`
-	Explanation  model.ResultExplanation `json:"explanation,omitempty"`
-	Breakdown    model.ScoreBreakdown    `json:"breakdown,omitempty"`
-	ChangeStatus string                  `json:"change_status,omitempty"`
-	SeenCount    int                     `json:"seen_count"`
+	Rank                 int                     `json:"rank"`
+	FailureID            string                  `json:"failure_id"`
+	Title                string                  `json:"title"`
+	Category             string                  `json:"category"`
+	Pack                 string                  `json:"pack,omitempty"`
+	Severity             string                  `json:"severity,omitempty"`
+	Detector             string                  `json:"detector,omitempty"`
+	Score                float64                 `json:"score"`
+	Confidence           float64                 `json:"confidence"`
+	Summary              string                  `json:"summary,omitempty"`
+	DiagnosisMarkdown    string                  `json:"diagnosis_markdown,omitempty"`
+	WhyItMattersMarkdown string                  `json:"why_it_matters_markdown,omitempty"`
+	FixMarkdown          string                  `json:"fix_markdown,omitempty"`
+	ValidationMarkdown   string                  `json:"validation_markdown,omitempty"`
+	Evidence             []string                `json:"evidence"`
+	EvidenceBy           model.EvidenceBundle    `json:"evidence_by,omitempty"`
+	Explanation          model.ResultExplanation `json:"explanation,omitempty"`
+	Breakdown            model.ScoreBreakdown    `json:"breakdown,omitempty"`
+	ChangeStatus         string                  `json:"change_status,omitempty"`
+	SeenCount            int                     `json:"seen_count"`
 }
 
 type repoCtxJSON struct {
@@ -406,25 +126,26 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 		payload.Results = make([]resultJSON, len(results))
 		for i, r := range results {
 			payload.Results[i] = resultJSON{
-				Rank:         i + 1,
-				FailureID:    r.Playbook.ID,
-				Title:        r.Playbook.Title,
-				Category:     r.Playbook.Category,
-				Pack:         displayPackName(r.Playbook),
-				Severity:     r.Playbook.Severity,
-				Detector:     r.Detector,
-				Score:        r.Score,
-				Confidence:   r.Confidence,
-				Explain:      r.Playbook.Explain,
-				Why:          r.Playbook.Why,
-				Fix:          r.Playbook.Fix,
-				Prevent:      r.Playbook.Prevent,
-				Evidence:     r.Evidence,
-				EvidenceBy:   r.EvidenceBy,
-				Explanation:  r.Explanation,
-				Breakdown:    r.Breakdown,
-				ChangeStatus: r.ChangeStatus,
-				SeenCount:    r.SeenCount,
+				Rank:                 i + 1,
+				FailureID:            r.Playbook.ID,
+				Title:                r.Playbook.Title,
+				Category:             r.Playbook.Category,
+				Pack:                 displayPackName(r.Playbook),
+				Severity:             r.Playbook.Severity,
+				Detector:             r.Detector,
+				Score:                r.Score,
+				Confidence:           r.Confidence,
+				Summary:              r.Playbook.Summary,
+				DiagnosisMarkdown:    r.Playbook.DiagnosisMarkdown,
+				WhyItMattersMarkdown: r.Playbook.WhyItMattersMarkdown,
+				FixMarkdown:          r.Playbook.FixMarkdown,
+				ValidationMarkdown:   r.Playbook.ValidationMarkdown,
+				Evidence:             r.Evidence,
+				EvidenceBy:           r.EvidenceBy,
+				Explanation:          r.Explanation,
+				Breakdown:            r.Breakdown,
+				ChangeStatus:         r.ChangeStatus,
+				SeenCount:            r.SeenCount,
 			}
 		}
 	}
@@ -473,8 +194,8 @@ func FormatCIAnnotations(a *model.Analysis, top int) string {
 	var b strings.Builder
 	for _, r := range topN(a.Results, top) {
 		fix := ""
-		if len(r.Playbook.Fix) > 0 {
-			fix = " Fix: " + r.Playbook.Fix[0]
+		if first := firstMarkdownListItem(r.Playbook.FixMarkdown); first != "" {
+			fix = " Fix: " + first
 		}
 		fmt.Fprintf(&b, "::warning title=%s::%s.%s\n",
 			r.Playbook.ID, r.Playbook.Title, fix)
@@ -486,75 +207,14 @@ func FormatCIAnnotations(a *model.Analysis, top int) string {
 
 // FormatPlaybookList formats a tab-aligned table of available playbooks.
 // When category is non-empty only matching playbooks are shown.
-func FormatPlaybookList(playbooks []model.Playbook, category string) string {
-	var b strings.Builder
-	w := tabwriter.NewWriter(&b, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tCATEGORY\tSEVERITY\tPACK\tTITLE")
-	filter := strings.ToLower(strings.TrimSpace(category))
-	for _, pb := range playbooks {
-		if filter != "" && strings.ToLower(pb.Category) != filter {
-			continue
-		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-			pb.ID, pb.Category, pb.Severity, fallback(displayPackName(pb), "-"), pb.Title)
-	}
-	_ = w.Flush()
-	return b.String()
+func FormatPlaybookList(playbooks []model.Playbook, category string, opts renderer.Options) string {
+	return renderer.New(opts).RenderList(playbooks, category)
 }
 
 // FormatPlaybookDetails formats all fields of a single playbook for the
 // explain command.
-func FormatPlaybookDetails(pb model.Playbook) string {
-	var b strings.Builder
-	const sep = "═══════════════════════════════════════════════════════"
-
-	fmt.Fprintln(&b, sep)
-	fmt.Fprintf(&b, "  %s — %s\n", pb.ID, pb.Title)
-	fmt.Fprintln(&b, sep)
-	fmt.Fprintf(&b, "  Category:  %s\n", pb.Category)
-	if pack := displayPackName(pb); pack != "" {
-		fmt.Fprintf(&b, "  Pack:      %s\n", pack)
-	}
-	if pb.Severity != "" {
-		fmt.Fprintf(&b, "  Severity:  %s\n", pb.Severity)
-	}
-	if len(pb.Tags) > 0 {
-		fmt.Fprintf(&b, "  Tags:      %s\n", strings.Join(pb.Tags, ", "))
-	}
-	if len(pb.StageHints) > 0 {
-		fmt.Fprintf(&b, "  Stages:    %s\n", strings.Join(pb.StageHints, ", "))
-	}
-
-	writeSection(&b, "Explanation", []string{pb.Explain})
-	writeSection(&b, "Why this happens", []string{pb.Why})
-
-	if len(pb.Fix) > 0 {
-		fmt.Fprintln(&b, "\n  Fix")
-		fmt.Fprintln(&b, "  "+strings.Repeat("─", 40))
-		for i, step := range pb.Fix {
-			fmt.Fprintf(&b, "  %d. %s\n", i+1, step)
-		}
-	}
-	if len(pb.Prevent) > 0 {
-		fmt.Fprintln(&b, "\n  Prevent")
-		fmt.Fprintln(&b, "  "+strings.Repeat("─", 40))
-		for i, step := range pb.Prevent {
-			fmt.Fprintf(&b, "  %d. %s\n", i+1, step)
-		}
-	}
-
-	// Match patterns summary
-	fmt.Fprintln(&b, "\n  Match Patterns")
-	fmt.Fprintln(&b, "  "+strings.Repeat("─", 40))
-	if len(pb.Match.Any) > 0 {
-		fmt.Fprintf(&b, "  any: %s\n", strings.Join(pb.Match.Any, " | "))
-	}
-	if len(pb.Match.All) > 0 {
-		fmt.Fprintf(&b, "  all: %s\n", strings.Join(pb.Match.All, " + "))
-	}
-
-	fmt.Fprintln(&b, sep)
-	return b.String()
+func FormatPlaybookDetails(pb model.Playbook, opts renderer.Options) string {
+	return renderer.New(opts).RenderExplain(pb)
 }
 
 func displayPackName(pb model.Playbook) string {
@@ -670,11 +330,22 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-// topN returns the first n results. When n <= 0 or n > len(results), all
-// results are returned.
 func topN(results []model.Result, n int) []model.Result {
 	if n <= 0 || n > len(results) {
 		return results
 	}
 	return results[:n]
+}
+
+func firstMarkdownListItem(markdown string) string {
+	for _, line := range strings.Split(markdown, "\n") {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "- "):
+			return strings.TrimSpace(strings.TrimPrefix(line, "- "))
+		case len(line) > 3 && line[1] == '.' && line[2] == ' ' && line[0] >= '0' && line[0] <= '9':
+			return strings.TrimSpace(line[3:])
+		}
+	}
+	return ""
 }

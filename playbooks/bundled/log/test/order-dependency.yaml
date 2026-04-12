@@ -5,7 +5,23 @@ severity: medium
 base_score: 0.5
 tags: [test, order, state, isolation]
 stage_hints: [test]
+summary: |-
+  A test failed because it depends on side effects or state created by a different test that ran earlier. When test order changes, the assumed preconditions are absent.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A test failed because it depends on side effects or state created by a different test that ran earlier. When test order changes, the assumed preconditions are absent.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add proper setup and teardown to the failing test so it creates its own required state.
+  2. Remove shared mutable fixtures between tests.
+  3. Run tests in random order with a tool like `gotestsum` or `pytest-randomly` to surface order dependencies.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Test order dependency is gone.
 match:
   any:
     - depends on previous test
@@ -15,23 +31,13 @@ match:
     - global state
     - "left over from previous"
     - "already exists"
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A test failed because it depends on side effects or state created by a
-  different test that ran earlier. When test order changes, the assumed
-  preconditions are absent.
+  Tests that rely on database rows, files, or configuration left by prior tests are brittle. Test frameworks may run tests in any order or in parallel, and CI runners may run on clean environments that lack the expected state.
 
-why: >
-  Tests that rely on database rows, files, or configuration left by prior tests
-  are brittle. Test frameworks may run tests in any order or in parallel, and
-  CI runners may run on clean environments that lack the expected state.
+  ## Prevention
 
-fix:
-  - Add proper setup and teardown to the failing test so it creates its own required state.
-  - Remove shared mutable fixtures between tests.
-  - "Run tests in random order with a tool like `gotestsum` or `pytest-randomly` to surface order dependencies."
-
-prevent:
   - Treat each test as an independent unit; avoid any shared mutable state.
-  - "Write cleanup code in `defer` (Go), `afterEach` (JS), or `teardown` (Python)."
+  - Write cleanup code in `defer` (Go), `afterEach` (JS), or `teardown` (Python).
   - Enable random test ordering in CI to catch ordering assumptions early.

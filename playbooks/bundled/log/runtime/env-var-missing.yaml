@@ -5,7 +5,24 @@ severity: high
 base_score: 1.0
 tags: [env, environment-variable, config, missing]
 stage_hints: [build, deploy, test]
+summary: |-
+  A required environment variable was not set or was empty when the process tried to read it. The application, build script, or test suite could not continue without it.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A required environment variable was not set or was empty when the process tried to read it. The application, build script, or test suite could not continue without it.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the variable name from the error and add it as a CI secret or environment variable.
+  2. Check if the variable is defined in a `.env.example` file and copy the appropriate value.
+  3. For GitHub Actions: add the secret under Settings > Secrets and reference it with `${{ secrets.VAR_NAME }}`.
+  4. For GitLab CI: add it under Settings > CI/CD > Variables.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Required environment variable missing or empty is gone.
 match:
   any:
     - "environment variable"
@@ -29,32 +46,19 @@ match:
     - secret is empty
     - configmap not found
     - secret not found
-
-explain: >
-  A required environment variable was not set or was empty when the process
-  tried to read it. The application, build script, or test suite could not
-  continue without it.
-
-why: >
-  This typically happens when a new configuration variable is added to the
-  application but was not added to the CI secrets or job environment. It also
-  occurs when `.env` files are not committed to version control or when a
-  secret is deleted or renamed.
-
-fix:
-  - Identify the variable name from the error and add it as a CI secret or environment variable.
-  - "Check if the variable is defined in a `.env.example` file and copy the appropriate value."
-  - "For GitHub Actions: add the secret under Settings > Secrets and reference it with `${{ secrets.VAR_NAME }}`."
-  - "For GitLab CI: add it under Settings > CI/CD > Variables."
-
-prevent:
-  - Maintain a `.env.example` that lists every required variable with a description.
-  - Add a startup validation step that checks all required variables before the process begins.
-  - Document required secrets in the repository README.
-
 workflow:
   likely_files:
     - .env.example
     - .env.template
     - .github/workflows/*.yml
     - .gitlab-ci.yml
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  This typically happens when a new configuration variable is added to the application but was not added to the CI secrets or job environment. It also occurs when `.env` files are not committed to version control or when a secret is deleted or renamed.
+
+  ## Prevention
+
+  - Maintain a `.env.example` that lists every required variable with a description.
+  - Add a startup validation step that checks all required variables before the process begins.
+  - Document required secrets in the repository README.

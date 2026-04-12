@@ -5,7 +5,25 @@ severity: high
 base_score: 1.0
 tags: [test, timeout, hang, slow]
 stage_hints: [test]
+summary: |-
+  A test (or the entire test suite) did not complete within the configured timeout period. The test runner killed the pending test and marked it as failed.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A test (or the entire test suite) did not complete within the configured timeout period. The test runner killed the pending test and marked it as failed.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the test name in the timeout message and run it in isolation.
+  2. Check for missing `await`, unresolved promises, or callbacks that are never called.
+  3. Verify that any external services or mocks the test uses are available and responding.
+  4. Increase the timeout as a diagnostic step: if it then passes, the operation is just slow.
+  5. Replace real network or DB calls in unit tests with mocks to remove external dependencies.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Test suite or individual test timed out is gone.
 match:
   any:
     - "Test timed out"
@@ -21,24 +39,13 @@ match:
     - "after 60000ms"
     - "async test timed out"
     - "waiting for assertion"
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A test (or the entire test suite) did not complete within the configured
-  timeout period. The test runner killed the pending test and marked it as failed.
+  Test timeouts occur when a test blocks waiting for an async operation that never resolves, a database or network call that hangs, a mock that is never triggered, or simply a test that is genuinely slow and needs a higher timeout.
 
-why: >
-  Test timeouts occur when a test blocks waiting for an async operation that never
-  resolves, a database or network call that hangs, a mock that is never triggered,
-  or simply a test that is genuinely slow and needs a higher timeout.
+  ## Prevention
 
-fix:
-  - Identify the test name in the timeout message and run it in isolation.
-  - "Check for missing `await`, unresolved promises, or callbacks that are never called."
-  - Verify that any external services or mocks the test uses are available and responding.
-  - "Increase the timeout as a diagnostic step: if it then passes, the operation is just slow."
-  - Replace real network or DB calls in unit tests with mocks to remove external dependencies.
-
-prevent:
   - Set explicit per-test and per-suite timeouts rather than relying on defaults.
   - Mock all external I/O in unit tests so they cannot block on network.
   - Monitor test execution time trend and alert when slow tests emerge.

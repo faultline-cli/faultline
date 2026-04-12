@@ -9,6 +9,7 @@ import (
 	"faultline/internal/engine"
 	"faultline/internal/model"
 	"faultline/internal/output"
+	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
 
@@ -41,7 +42,7 @@ func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer)
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
 	}
-	_, werr := fmt.Fprint(w, output.FormatFix(a))
+	_, werr := fmt.Fprint(w, output.FormatFix(a, renderer.DetectOptions(w)))
 	return werr
 }
 
@@ -55,7 +56,7 @@ func (Service) List(category, playbookDir string, playbookPacks []string, w io.W
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprint(w, output.FormatPlaybookList(pbs, category))
+	_, err = fmt.Fprint(w, output.FormatPlaybookList(pbs, category, renderer.DetectOptions(w)))
 	return err
 }
 
@@ -69,7 +70,7 @@ func (Service) Explain(id, playbookDir string, playbookPacks []string, w io.Writ
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprint(w, output.FormatPlaybookDetails(pb))
+	_, err = fmt.Fprint(w, output.FormatPlaybookDetails(pb, renderer.DetectOptions(w)))
 	return err
 }
 

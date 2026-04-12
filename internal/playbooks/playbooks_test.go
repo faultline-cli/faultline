@@ -108,6 +108,76 @@ source:
 	}
 }
 
+func TestLoadDirSupportsMarkdownContentFields(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: markdown-sample
+title: Markdown Sample
+category: build
+severity: medium
+summary: |
+  Short summary.
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Detailed markdown.
+fix_markdown: |
+  1. Run fix
+validation_markdown: |
+  - Verify fix
+match:
+  any:
+    - "primary error"
+workflow:
+  verify:
+    - go test ./...
+`)
+
+	pbs, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("LoadDir: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected 1 playbook, got %d", len(pbs))
+	}
+	pb := pbs[0]
+	if pb.Summary != "Short summary." {
+		t.Fatalf("expected summary, got %q", pb.Summary)
+	}
+	if !strings.Contains(pb.DiagnosisMarkdown, "## Diagnosis") {
+		t.Fatalf("expected markdown diagnosis, got %q", pb.DiagnosisMarkdown)
+	}
+	if !strings.Contains(pb.ValidationMarkdown, "Verify fix") {
+		t.Fatalf("expected validation markdown, got %q", pb.ValidationMarkdown)
+	}
+}
+
+func TestLoadDirRejectsMissingMarkdownFields(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "sample.yaml")
+	if err := os.WriteFile(path, []byte(strings.TrimSpace(`
+id: invalid-sample
+title: Invalid Sample
+category: build
+severity: medium
+summary: |
+  Summary only.
+match:
+  any:
+    - "primary error"
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write invalid fixture: %v", err)
+	}
+
+	_, err := LoadDir(dir)
+	if err == nil {
+		t.Fatal("expected missing markdown fields to fail validation")
+	}
+	if !strings.Contains(err.Error(), "diagnosis_markdown") {
+		t.Fatalf("expected diagnosis_markdown validation error, got %v", err)
+	}
+}
+
 func TestLoadPacksRejectsDuplicateIDsAcrossPacks(t *testing.T) {
 	first := t.TempDir()
 	second := t.TempDir()
@@ -266,7 +336,19 @@ func sameStringSet(got, want []string) bool {
 func writePlaybookFixture(t *testing.T, dir, name, content string) {
 	t.Helper()
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, []byte(strings.TrimSpace(content)+"\n"), 0o600); err != nil {
+	content = strings.TrimSpace(content)
+	defaults := map[string]string{
+		"summary:":             "summary: |\n  Test summary.",
+		"diagnosis_markdown:":  "diagnosis_markdown: |\n  ## Diagnosis\n\n  Test diagnosis.",
+		"fix_markdown:":        "fix_markdown: |\n  ## Fix steps\n\n  1. Test fix.",
+		"validation_markdown:": "validation_markdown: |\n  ## Validation\n\n  - Test validation.",
+	}
+	for key, block := range defaults {
+		if !strings.Contains(content, key) {
+			content += "\n" + block
+		}
+	}
+	if err := os.WriteFile(path, []byte(content+"\n"), 0o600); err != nil {
 		t.Fatalf("write fixture %s: %v", path, err)
 	}
 }

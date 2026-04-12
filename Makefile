@@ -7,8 +7,10 @@ LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
 WITH_DOCKER ?= 0
+PREMIUM_PACK_DIR ?=
+PREMIUM_PACK_LINK ?= playbooks/packs/premium-local
 
-.PHONY: help build run test bench review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test bench review premium-path premium-link premium-check smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -17,6 +19,9 @@ help:
 		"  test            Run all Go tests" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
+		"  premium-path    Print the resolved premium pack path used locally" \
+		"  premium-link    Create/update the ignored local premium-pack symlink" \
+		"  premium-check   Compose starter with PREMIUM_PACK_DIR and fail on duplicate IDs or pack load errors" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
@@ -43,6 +48,18 @@ bench:
 review:
 	$(GO) run ./cmd/playbook-review
 
+premium-path:
+	@PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh
+
+premium-link:
+	@mkdir -p "$$(dirname "$(PREMIUM_PACK_LINK)")"
+	@ln -sfn ../../../faultline-premium-pack "$(PREMIUM_PACK_LINK)"
+	@printf "%s\n" "linked $(PREMIUM_PACK_LINK) -> ../../../faultline-premium-pack"
+
+premium-check:
+	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
+	$(GO) run ./cmd/pack-compose-check --pack "$$resolved"
+
 smoke-release:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) sh ./scripts/smoke-release.sh
 
@@ -50,6 +67,11 @@ release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
 release-check: test review release-snapshot smoke-release
+	@if PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh >/dev/null 2>&1; then \
+		$(MAKE) premium-check PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)"; \
+	else \
+		printf "%s\n" "skipping premium-check (set PREMIUM_PACK_DIR, run make premium-link, or check out ../faultline-premium-pack)"; \
+	fi
 	@if [ "$(WITH_DOCKER)" = "1" ]; then \
 		$(MAKE) docker-smoke IMAGE=$(IMAGE); \
 	else \

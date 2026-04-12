@@ -5,7 +5,24 @@ severity: critical
 base_score: 1.0
 tags: [oom, memory, kill, exit-137]
 stage_hints: [build, test]
+summary: |-
+  The process was terminated by the operating system's out-of-memory (OOM) killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The process was terminated by the operating system's out-of-memory (OOM) killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Increase the memory limit for the container or CI runner.
+  2. Profile memory usage with `go tool pprof`, `valgrind`, or your language's profiler.
+  3. Reduce parallelism to lower peak memory use: fewer parallel test workers or build threads.
+  4. Check for memory leaks or accidental unbounded data accumulation.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Process killed by OOM killer is gone.
 match:
   any:
     - exit code 137
@@ -22,23 +39,13 @@ match:
     - "Back-off restarting failed container"
     - resource_class
     - CircleCI resource class
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The process was terminated by the operating system's out-of-memory (OOM)
-  killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
+  The process consumed more memory than the CI runner's available physical RAM or the container's memory limit allowed. Large builds, test suites that load big fixtures, or memory leaks commonly trigger this.
 
-why: >
-  The process consumed more memory than the CI runner's available physical RAM
-  or the container's memory limit allowed. Large builds, test suites that load
-  big fixtures, or memory leaks commonly trigger this.
+  ## Prevention
 
-fix:
-  - Increase the memory limit for the container or CI runner.
-  - "Profile memory usage with `go tool pprof`, `valgrind`, or your language's profiler."
-  - "Reduce parallelism to lower peak memory use: fewer parallel test workers or build threads."
-  - Check for memory leaks or accidental unbounded data accumulation.
-
-prevent:
   - Set an explicit memory limit that is slightly above normal usage to catch regressions early.
   - Add a step that reports peak memory usage after each CI run.
   - Define memory budgets in project benchmarks and track them over time.

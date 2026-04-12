@@ -5,7 +5,24 @@ severity: medium
 base_score: 0.5
 tags: [test, parallel, concurrency, port, database]
 stage_hints: [test]
+summary: |-
+  Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or write to the same temporary file simultaneously.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or write to the same temporary file simultaneously.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Reduce test parallelism with `-parallel 1` to confirm the conflict is parallelism-related.
+  2. Allocate a unique port, database, or temp directory per test rather than sharing a fixed resource.
+  3. Use test-specific prefixes or random ports in each test's setup.
+  4. If the suite must share a resource, serialize only the affected tests instead of disabling parallelism globally.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Test parallelism conflict is gone.
 match:
   any:
     - address already in use
@@ -22,24 +39,13 @@ match:
     - cannot start service
     - CrashLoopBackOff
     - host port
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  Parallel test execution caused a resource conflict: two tests tried to bind
-  the same port, access the same fixture, or write to the same temporary file
-  simultaneously.
+  Tests that were written to run sequentially are now running in parallel due to an increased `-parallel` value or a new CI matrix. Without resource isolation, they interfere with each other.
 
-why: >
-  Tests that were written to run sequentially are now running in parallel due to
-  an increased `-parallel` value or a new CI matrix. Without resource isolation,
-  they interfere with each other.
+  ## Prevention
 
-fix:
-  - "Reduce test parallelism with `-parallel 1` to confirm the conflict is parallelism-related."
-  - Allocate a unique port, database, or temp directory per test rather than sharing a fixed resource.
-  - Use test-specific prefixes or random ports in each test's setup.
-  - If the suite must share a resource, serialize only the affected tests instead of disabling parallelism globally.
-
-prevent:
   - Design each test to be fully isolated and self-contained.
   - Avoid hardcoded ports or global singletons in test setup.
   - Run the full test suite in parallel locally before enabling parallel CI.

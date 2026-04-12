@@ -80,9 +80,6 @@ type rawSafeContextRule struct {
 	Discount float64  `yaml:"discount"`
 }
 
-// raw is the on-disk YAML shape.  The legacy "explanation" field is accepted
-// as a fallback for the canonical "explain" field so that older custom
-// playbooks continue to load without modification.
 type raw struct {
 	ID         string   `yaml:"id"`
 	Title      string   `yaml:"title"`
@@ -114,12 +111,12 @@ type raw struct {
 		} `yaml:"change_sensitivity"`
 		SafeContext []rawSafeContextRule `yaml:"safe_context"`
 	} `yaml:"source"`
-	Explain     string   `yaml:"explain"`
-	Explanation string   `yaml:"explanation"` // legacy alias
-	Why         string   `yaml:"why"`
-	Fix         []string `yaml:"fix"`
-	Prevent     []string `yaml:"prevent"`
-	Workflow    struct {
+	Summary              string `yaml:"summary"`
+	DiagnosisMarkdown    string `yaml:"diagnosis_markdown"`
+	FixMarkdown          string `yaml:"fix_markdown"`
+	ValidationMarkdown   string `yaml:"validation_markdown"`
+	WhyItMattersMarkdown string `yaml:"why_it_matters_markdown"`
+	Workflow             struct {
 		LikelyFiles []string `yaml:"likely_files"`
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
@@ -255,11 +252,6 @@ func loadFile(path string) (model.Playbook, error) {
 	if err := validate(r, path); err != nil {
 		return model.Playbook{}, err
 	}
-	// Accept legacy "explanation" if the canonical "explain" is absent.
-	explain := r.Explain
-	if explain == "" {
-		explain = r.Explanation
-	}
 	return model.Playbook{
 		ID:         r.ID,
 		Title:      r.Title,
@@ -274,11 +266,12 @@ func loadFile(path string) (model.Playbook, error) {
 			All:  r.Match.All,
 			None: r.Match.None,
 		},
-		Source:  convertSourceSpec(r),
-		Explain: explain,
-		Why:     r.Why,
-		Fix:     r.Fix,
-		Prevent: r.Prevent,
+		Source:               convertSourceSpec(r),
+		Summary:              normalizeMarkdownBlock(r.Summary),
+		DiagnosisMarkdown:    normalizeMarkdownBlock(r.DiagnosisMarkdown),
+		FixMarkdown:          normalizeMarkdownBlock(r.FixMarkdown),
+		ValidationMarkdown:   normalizeMarkdownBlock(r.ValidationMarkdown),
+		WhyItMattersMarkdown: normalizeMarkdownBlock(r.WhyItMattersMarkdown),
 		Workflow: model.WorkflowSpec{
 			LikelyFiles: r.Workflow.LikelyFiles,
 			LocalRepro:  r.Workflow.LocalRepro,
@@ -304,12 +297,28 @@ func loadFile(path string) (model.Playbook, error) {
 	}, nil
 }
 
+func normalizeMarkdownBlock(value string) string {
+	return strings.TrimSpace(value)
+}
+
 func validate(r raw, path string) error {
 	if strings.TrimSpace(r.ID) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'id'", path)
 	}
 	if strings.TrimSpace(r.Title) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'title'", path)
+	}
+	if strings.TrimSpace(r.Summary) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'summary'", path)
+	}
+	if strings.TrimSpace(r.DiagnosisMarkdown) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'diagnosis_markdown'", path)
+	}
+	if strings.TrimSpace(r.FixMarkdown) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'fix_markdown'", path)
+	}
+	if strings.TrimSpace(r.ValidationMarkdown) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'validation_markdown'", path)
 	}
 	detector := normalizeDetector(r.Detector)
 	if detector == "" {

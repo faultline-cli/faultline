@@ -5,7 +5,24 @@ severity: high
 base_score: 1.0
 tags: [network, connection, refused, service, dependency]
 stage_hints: [build, test, deploy]
+summary: |-
+  A TCP connection attempt was actively refused by the target host. The service is either not running on that address and port, has not finished starting up, or is bound to a different interface.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A TCP connection attempt was actively refused by the target host. The service is either not running on that address and port, has not finished starting up, or is bound to a different interface.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add a readiness probe before the step that connects: `wait-for-it.sh <host>:<port>`.
+  2. Verify the service container started successfully by checking its logs or status.
+  3. Confirm the host and port match what the service is actually bound to.
+  4. For Docker services: use the service name as the hostname, not `localhost`.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Service or dependency connection refused is gone.
 match:
   any:
     - "connection refused"
@@ -26,32 +43,19 @@ match:
     - read timeout
     - dial timeout
     - "ETIMEDOUT"
-
-explain: >
-  A TCP connection attempt was actively refused by the target host. The service
-  is either not running on that address and port, has not finished starting up,
-  or is bound to a different interface.
-
-why: >
-  In CI, this typically means a test or build step tried to contact a service
-  (database, cache, API) before the service was ready to accept connections.
-  It can also mean the service container never started, or the wrong host/port
-  is configured.
-
-fix:
-  - "Add a readiness probe before the step that connects: `wait-for-it.sh <host>:<port>`."
-  - Verify the service container started successfully by checking its logs or status.
-  - Confirm the host and port match what the service is actually bound to.
-  - "For Docker services: use the service name as the hostname, not `localhost`."
-
-prevent:
-  - Use service health checks in Docker Compose or CI service definitions.
-  - Add explicit wait steps with a timeout and retry loop.
-  - Define service startup order in CI to avoid race conditions.
-  - Standardize service hostnames and ports in shared test helpers or env files so jobs do not guess connection targets.
-
 workflow:
   likely_files:
     - docker-compose.yml
     - .github/workflows/*.yml
     - .gitlab-ci.yml
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  In CI, this typically means a test or build step tried to contact a service (database, cache, API) before the service was ready to accept connections. It can also mean the service container never started, or the wrong host/port is configured.
+
+  ## Prevention
+
+  - Use service health checks in Docker Compose or CI service definitions.
+  - Add explicit wait steps with a timeout and retry loop.
+  - Define service startup order in CI to avoid race conditions.
+  - Standardize service hostnames and ports in shared test helpers or env files so jobs do not guess connection targets.

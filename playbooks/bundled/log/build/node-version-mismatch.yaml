@@ -5,7 +5,27 @@ severity: medium
 base_score: 1.0
 tags: [node, nodejs, nvmrc, engines, nvm, version]
 stage_hints: [build]
+summary: |-
+  The Node.js version installed on the CI runner does not satisfy the `engines` constraint declared in `package.json` or the version pinned in `.nvmrc`.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The Node.js version installed on the CI runner does not satisfy the `engines` constraint declared in `package.json` or the version pinned in `.nvmrc`.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the required Node.js version from `.nvmrc`, `.node-version`, or `package.json` `engines.node`.
+  2. GitHub Actions: set `node-version-file: .nvmrc` on the `actions/setup-node` step.
+  3. GitLab CI: use a versioned image — `image: node:20-alpine` — matching your `.nvmrc`.
+  4. CircleCI: use `cimg/node:20.x` or pin the version in the `.circleci/config.yml` executor.
+  5. Azure Pipelines: use the `NodeTool@0` task with a pinned `versionSpec`.
+  6. Locally: run `nvm use` or `volta install node` to switch to the pinned version.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - cat .nvmrc && node --version
+  - nvm use
 match:
   any:
     - "The engine \"node\" is incompatible with this module"
@@ -18,30 +38,6 @@ match:
     - "Expected node version"
     - "Node.js version.*required"
     - "Engines: {\"node\":"
-
-explain: >
-  The Node.js version installed on the CI runner does not satisfy the `engines`
-  constraint declared in `package.json` or the version pinned in `.nvmrc`.
-
-why: >
-  Package.json `engines.node` fields and `.nvmrc` files pin a specific Node.js
-  version for compatibility. If CI installs a different version — often the
-  system default or a recently pinned LTS — builds and tests may fail with
-  syntax errors, missing APIs, or npm engine warnings that are treated as errors.
-
-fix:
-  - "Identify the required Node.js version from `.nvmrc`, `.node-version`, or `package.json` `engines.node`."
-  - "GitHub Actions: set `node-version-file: .nvmrc` on the `actions/setup-node` step."
-  - "GitLab CI: use a versioned image — `image: node:20-alpine` — matching your `.nvmrc`."
-  - "CircleCI: use `cimg/node:20.x` or pin the version in the `.circleci/config.yml` executor."
-  - "Azure Pipelines: use the `NodeTool@0` task with a pinned `versionSpec`."
-  - "Locally: run `nvm use` or `volta install node` to switch to the pinned version."
-
-prevent:
-  - Commit a `.nvmrc` or `.node-version` file so all CI platforms and local environments share one source of truth.
-  - Configure every CI Node.js setup step to read the version from the pinned file rather than hardcoding a version.
-  - "Run `node --version` and compare against `.nvmrc` as an early CI check to catch mismatches before build steps."
-
 workflow:
   likely_files:
     - .nvmrc
@@ -50,3 +46,13 @@ workflow:
   local_repro:
     - "cat .nvmrc && node --version"
     - nvm use
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Package.json `engines.node` fields and `.nvmrc` files pin a specific Node.js version for compatibility. If CI installs a different version — often the system default or a recently pinned LTS — builds and tests may fail with syntax errors, missing APIs, or npm engine warnings that are treated as errors.
+
+  ## Prevention
+
+  - Commit a `.nvmrc` or `.node-version` file so all CI platforms and local environments share one source of truth.
+  - Configure every CI Node.js setup step to read the version from the pinned file rather than hardcoding a version.
+  - Run `node --version` and compare against `.nvmrc` as an early CI check to catch mismatches before build steps.

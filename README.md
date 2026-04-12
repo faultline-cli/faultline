@@ -10,6 +10,9 @@ Faultline also supports modular detector playbooks. The built-in `inspect`
 command runs source-aware playbooks against a repository tree using the same
 deterministic output model used by log analysis.
 
+Human-facing playbook guidance now lives in markdown block strings inside YAML:
+structured fields decide the match, markdown explains the result.
+
 The playbook layer is reviewed separately from runtime matching: bundled
 playbooks are validated, then conflict-reported so overlapping patterns and
 `match.none` exclusions stay deterministic as the catalog grows.
@@ -123,6 +126,26 @@ available:
 make release-check VERSION=v0.1.0 WITH_DOCKER=1 IMAGE=faultline-smoke
 ```
 
+When the premium pack repository is available locally, include it explicitly so
+the release path also fails on future cross-pack duplicate IDs or pack load
+errors:
+
+```bash
+make premium-check PREMIUM_PACK_DIR=../faultline-premium-pack
+make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium-pack
+```
+
+For day-to-day local work, you can avoid repeating the path by creating the
+ignored convenience symlink once:
+
+```bash
+make premium-link
+make premium-check
+make release-check VERSION=v0.1.0
+```
+
+`make premium-path` shows which local premium-pack directory Faultline will use.
+
 Smoke test the packaged release archive before publishing it:
 
 ```bash
@@ -136,6 +159,10 @@ explicit exclusions before changing bundled rules:
 ```bash
 make review
 ```
+
+`premium-check` resolves premium packs in this order: `PREMIUM_PACK_DIR`, the
+ignored local symlink at `playbooks/packs/premium-local`, a CI checkout at
+`premium-pack`, then the sibling repository at `../faultline-premium-pack`.
 
 Smoke test the Docker delivery path when Docker is available:
 
@@ -173,45 +200,48 @@ Review guidance:
 
 ## Output
 
+Faultline auto-detects terminal output. ANSI styling and markdown rendering are
+used only for interactive terminals; redirected output, CI, `NO_COLOR`, and
+`FAULTLINE_PLAIN=1` fall back to readable plain text. `--json` always bypasses
+terminal styling entirely.
+
 **Quick mode** (default) — action-first, minimal noise:
 
 ```text
-DETECTED  docker-auth · Docker registry authentication failure  [auth · high · 67%]
+Docker registry authentication failure (docker-auth) [67% confidence]
+Severity: high
 
-FIX
-  1. Verify the registry username, token, or password configured in CI secrets.
-  2. Ensure the registry login step runs before any docker pull or docker push command.
-  3. Confirm the token has the correct repository scope (read, write, delete) for the image.
-  4. Run `docker login <registry>` locally with the same credentials to validate them.
+Category: auth
+Score: 1.00
+
+Summary
+-------
+CI could not authenticate to the container registry before an image pull or push.
 ```
 
-**Detailed mode** (`--mode detailed`) — full narrative with cause, why, and prevention:
+**Detailed mode** (`--mode detailed`) — compact diagnosis plus evidence and repo context:
 
 ```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- #1  Docker registry authentication failure
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Docker registry authentication failure (docker-auth) [67% confidence]
+Severity: high
 
- ID          docker-auth          Category  auth
- Severity    high                 Score     2.00
- Confidence  67%                  Stage     build
+Category: auth
+Score: 2.00
+Stage: build
 
- Cause ──────────────────────────────────────────────────────────
-  The CI job could not authenticate with the container registry …
+Summary
+-------
+CI could not authenticate to the container registry before an image pull or push.
 
- Fix ─────────────────────────────────────────────────────────────
-  1. Verify the registry username, token, or password …
-  …
+Evidence
+--------
+- pull access denied
 
- Repo Context ────────────────────────────────────────────────────
-  Repo root: /workspace/app
-  Recent file: .github/workflows/deploy.yml
-  Recent file: Dockerfile
-  Related commit: 2026-04-10  a1b2c3d  hotfix: restore registry login step
-  Hotspot area: deploy
-  Co-change: Dockerfile <-> .github/workflows/deploy.yml
-  Hotfix signal: hotfix: restore registry login step
-  Drift hint: Repeated edits in deploy
+Repo Context
+------------
+- Repo root: /workspace/app
+- Recent file: .github/workflows/deploy.yml
+- Related commit: 2026-04-10 a1b2c3d hotfix: restore registry login step
 ```
 
 **JSON** (`--json`) — stable schema for automation:
@@ -242,13 +272,43 @@ FIX
       "severity": "high",
       "score": 2.00,
       "confidence": 0.67,
-      "explain": "The CI job could not authenticate …",
-      "fix": ["Verify the registry …"],
+      "summary": "CI could not authenticate to the container registry before an image pull or push.",
+      "diagnosis_markdown": "## Diagnosis\n\nDocker reached the registry, but the credential failed.",
+      "fix_markdown": "## Fix steps\n\n1. Verify the registry secret.",
+      "validation_markdown": "## Validation\n\n- Re-run the login and image pull.",
       "evidence": ["pull access denied"]
     }
   ]
 }
 ```
+
+## Playbook Authoring
+
+Use yaml structure for detection and ranking, then markdown for human guidance.
+
+```yaml
+summary: |
+  One-line operator summary.
+
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Short explanation of what failed and the most likely cause.
+
+fix_markdown: |
+  ## Fix steps
+
+  1. Do the first thing.
+  2. Do the second thing.
+
+validation_markdown: |
+  ## Validation
+
+  - Re-run the failing command.
+  - Confirm the error is gone.
+```
+
+See [docs/playbooks.md](docs/playbooks.md) for the contributor guide.
 
 **Workflow** (`workflow`) — deterministic follow-up for local or agentic loops:
 
@@ -309,26 +369,36 @@ base_score: 1.0
 tags: [docker, registry, auth]
 stage_hints: [build, deploy]
 
+summary: |
+  CI could not authenticate to the container registry before an image pull or push.
+
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Docker reached the registry, but the configured credential was missing,
+  expired, or scoped incorrectly for the target image.
+
+fix_markdown: |
+  ## Fix steps
+
+  1. Verify the registry username, token, or password configured in CI secrets.
+  2. Ensure the registry login step runs before any docker pull or push.
+
+validation_markdown: |
+  ## Validation
+
+  - Re-run the registry login step.
+  - Confirm the image pull or push completes successfully.
+
+why_it_matters_markdown: |
+  ## Why it matters
+
+  Registry auth failures block both build-time pulls and deploy-time pushes.
+
 match:
   any:
     - pull access denied
     - authentication required
-
-explain: >
-  The CI job could not authenticate with the container registry before
-  pulling or pushing an image.
-
-why: >
-  The registry login step was skipped, the token has expired, or the
-  stored credential does not have the correct scope.
-
-fix:
-  - Verify the registry username, token, or password configured in CI secrets.
-  - Ensure the registry login step runs before any docker pull or push.
-
-prevent:
-  - Rotate registry tokens on a fixed schedule.
-  - Use short-lived OIDC tokens instead of long-lived passwords.
 ```
 
 ### Custom playbooks

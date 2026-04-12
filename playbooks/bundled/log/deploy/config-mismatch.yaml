@@ -5,7 +5,24 @@ severity: medium
 base_score: 0.8
 tags: [config, env, secret, missing-variable, deployment]
 stage_hints: [deploy]
+summary: |-
+  The deployment failed because a required configuration value, environment variable, or secret was absent or had an unexpected value for the target environment.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The deployment failed because a required configuration value, environment variable, or secret was absent or had an unexpected value for the target environment.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Compare the expected configuration keys in the application against what is present in the target environment.
+  2. For Kubernetes: `kubectl get secret <name> -o yaml` and `kubectl get configmap <name> -o yaml`.
+  3. Add or update the missing keys, then re-trigger the deployment.
+  4. If a value was renamed, update both the secret store and the deployment spec atomically.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Deployment configuration mismatch is gone.
 match:
   any:
     - missing configuration
@@ -22,24 +39,13 @@ match:
     - getenv
     - environment variable not set
     - required env
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The deployment failed because a required configuration value, environment
-  variable, or secret was absent or had an unexpected value for the target
-  environment.
+  Configuration mismatches occur when a new deployment requires values that were never provisioned in the target environment, or when a key was renamed in code but not updated in the secret store or ConfigMap.
 
-why: >
-  Configuration mismatches occur when a new deployment requires values that
-  were never provisioned in the target environment, or when a key was renamed
-  in code but not updated in the secret store or ConfigMap.
+  ## Prevention
 
-fix:
-  - Compare the expected configuration keys in the application against what is present in the target environment.
-  - "For Kubernetes: `kubectl get secret <name> -o yaml` and `kubectl get configmap <name> -o yaml`."
-  - Add or update the missing keys, then re-trigger the deployment.
-  - If a value was renamed, update both the secret store and the deployment spec atomically.
-
-prevent:
-  - "Enumerate all required configuration keys in a well-known location (e.g., `.env.example`)."
+  - Enumerate all required configuration keys in a well-known location (e.g., `.env.example`).
   - Add a configuration validation step at container startup that fails fast with a clear error listing every missing key.
   - Use a deployment checklist or IaC tooling (Helm, Terraform) that manages secrets and ConfigMaps alongside the deployment.

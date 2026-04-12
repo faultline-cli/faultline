@@ -5,7 +5,24 @@ severity: critical
 base_score: 1.0
 tags: [syntax, parse, compile]
 stage_hints: [build]
+summary: |-
+  The compiler or interpreter encountered a syntax error in the source code and could not continue. This is a hard failure that requires a code fix before the build can pass.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The compiler or interpreter encountered a syntax error in the source code and could not continue. This is a hard failure that requires a code fix before the build can pass.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Look at the file and line number in the error message.
+  2. Run the compiler or linter locally to reproduce the error.
+  3. Check for unclosed brackets, missing semicolons, or merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
+  4. If the file was generated or transformed, rebuild the generated output from source rather than patching the artifact by hand.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Syntax error in source code is gone.
 match:
   any:
     - "SyntaxError:"
@@ -16,24 +33,13 @@ match:
     - expected ';' before
     - "error: expected expression"
     - invalid syntax
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The compiler or interpreter encountered a syntax error in the source code and
-  could not continue. This is a hard failure that requires a code fix before
-  the build can pass.
+  Syntax errors are introduced when code is edited and the change is not verified locally before pushing, or when a merge conflict marker is left in the file.
 
-why: >
-  Syntax errors are introduced when code is edited and the change is not
-  verified locally before pushing, or when a merge conflict marker is left in
-  the file.
+  ## Prevention
 
-fix:
-  - Look at the file and line number in the error message.
-  - Run the compiler or linter locally to reproduce the error.
-  - "Check for unclosed brackets, missing semicolons, or merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)."
-  - If the file was generated or transformed, rebuild the generated output from source rather than patching the artifact by hand.
-
-prevent:
   - Run a linter or type-checker as a pre-commit hook.
   - Enable editor integration that highlights syntax errors in real time.
   - Require all CI jobs to pass before merging.

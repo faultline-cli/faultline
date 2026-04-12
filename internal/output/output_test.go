@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"faultline/internal/model"
+	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
 
@@ -14,11 +15,12 @@ func makeAnalysis(id, title, category string, confidence float64, evidence []str
 		Results: []model.Result{
 			{
 				Playbook: model.Playbook{
-					ID:       id,
-					Title:    title,
-					Category: category,
-					Explain:  "Explanation for " + id,
-					Fix:      []string{"Fix step 1", "Fix step 2"},
+					ID:                id,
+					Title:             title,
+					Category:          category,
+					Summary:           "Summary for " + id,
+					DiagnosisMarkdown: "Diagnosis for " + id,
+					FixMarkdown:       "1. Fix step 1\n2. Fix step 2",
 				},
 				Detector:   "log",
 				Confidence: confidence,
@@ -114,24 +116,24 @@ func TestFormatAnalysisJSONEmptyResults(t *testing.T) {
 
 func TestFormatAnalysisTextQuickSingleMatch(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker auth", "auth", 1.0, []string{"authentication required"})
-	text := FormatAnalysisText(a, 1, ModeQuick)
+	text := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
 	if !strings.Contains(text, "docker-auth") {
 		t.Errorf("expected playbook ID in quick output, got %q", text)
 	}
-	if !strings.Contains(text, "FIX") {
-		t.Errorf("expected FIX section in quick output, got %q", text)
+	if !strings.Contains(text, "Summary") {
+		t.Errorf("expected Summary section in quick output, got %q", text)
 	}
 }
 
 func TestFormatAnalysisTextQuickTopN(t *testing.T) {
 	a := &model.Analysis{
 		Results: []model.Result{
-			{Playbook: model.Playbook{ID: "a", Title: "A", Fix: []string{"fix a"}}, Confidence: 1.0, Score: 2},
-			{Playbook: model.Playbook{ID: "b", Title: "B", Fix: []string{"fix b"}}, Confidence: 0.5, Score: 1},
-			{Playbook: model.Playbook{ID: "c", Title: "C", Fix: []string{"fix c"}}, Confidence: 0.3, Score: 0.5},
+			{Playbook: model.Playbook{ID: "a", Title: "A", Summary: "A"}, Confidence: 1.0, Score: 2},
+			{Playbook: model.Playbook{ID: "b", Title: "B", Summary: "B"}, Confidence: 0.5, Score: 1},
+			{Playbook: model.Playbook{ID: "c", Title: "C", Summary: "C"}, Confidence: 0.3, Score: 0.5},
 		},
 	}
-	text := FormatAnalysisText(a, 2, ModeQuick)
+	text := FormatAnalysisText(a, 2, ModeQuick, renderer.Options{Plain: true, Width: 88})
 	if !strings.Contains(text, "#1") {
 		t.Errorf("expected rank header #1, got %q", text)
 	}
@@ -149,6 +151,7 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker registry auth failure", "auth", 1.0,
 		[]string{"pull access denied"})
 	a.Context = model.Context{Stage: "deploy", CommandHint: "docker push"}
+	a.Results[0].Playbook.Summary = "Service failed readiness checks."
 	a.RepoContext = &model.RepoContext{
 		RepoRoot:           "/repo",
 		RecentFiles:        []string{"Dockerfile"},
@@ -158,9 +161,9 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 		HotfixSignals:      []string{"hotfix: adjust docker login"},
 		DriftSignals:       []string{"Repeated edits in deploy"},
 	}
-	text := FormatAnalysisText(a, 1, ModeDetailed)
+	text := FormatAnalysisText(a, 1, ModeDetailed, renderer.Options{Plain: true, Width: 88})
 
-	checks := []string{"Diagnosis:", "Category:", "Stage:", "Command:", "Cause", "Fix", "Evidence", "Triggered by", "Score Breakdown", "Repo Context", "Related commit:", "Hotfix signal:"}
+	checks := []string{"Summary", "Category:", "Stage:", "Evidence", "Triggered by", "Score Breakdown", "Repo Context", "Related commit:", "Hotfix signal:"}
 	for _, want := range checks {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in detailed output, got:\n%s", want, text)
@@ -171,7 +174,7 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 // ── No match ─────────────────────────────────────────────────────────────────
 
 func TestFormatAnalysisTextNilAnalysis(t *testing.T) {
-	text := FormatAnalysisText(nil, 1, ModeQuick)
+	text := FormatAnalysisText(nil, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
 	if !strings.Contains(text, "No known failure") {
 		t.Errorf("expected no-match message, got %q", text)
 	}
@@ -181,7 +184,7 @@ func TestFormatAnalysisTextNilAnalysis(t *testing.T) {
 
 func TestFormatCIAnnotations(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker Auth", "auth", 1.0, nil)
-	a.Results[0].Playbook.Fix = []string{"docker login"}
+	a.Results[0].Playbook.FixMarkdown = "1. docker login"
 	out := FormatCIAnnotations(a, 1)
 	if !strings.Contains(out, "::warning") {
 		t.Errorf("expected ::warning annotation, got %q", out)
@@ -199,7 +202,7 @@ func TestFormatPlaybookList(t *testing.T) {
 		{ID: "aws-credentials", Category: "auth", Severity: "high", Title: "AWS Credentials", Metadata: model.PlaybookMeta{PackName: "faultline-premium-pack"}},
 		{ID: "oom-killed", Category: "runtime", Severity: "critical", Title: "OOM Killed"},
 	}
-	text := FormatPlaybookList(pbs, "")
+	text := FormatPlaybookList(pbs, "", renderer.Options{Plain: true, Width: 100})
 	if !strings.Contains(text, "docker-auth") || !strings.Contains(text, "oom-killed") || !strings.Contains(text, "faultline-premium-pack") {
 		t.Errorf("expected both playbooks in list, got %q", text)
 	}
@@ -210,7 +213,7 @@ func TestFormatPlaybookListCategoryFilter(t *testing.T) {
 		{ID: "docker-auth", Category: "auth", Title: "Docker Auth"},
 		{ID: "oom-killed", Category: "runtime", Title: "OOM Killed"},
 	}
-	text := FormatPlaybookList(pbs, "auth")
+	text := FormatPlaybookList(pbs, "auth", renderer.Options{Plain: true, Width: 100})
 	if !strings.Contains(text, "docker-auth") {
 		t.Errorf("expected docker-auth in filtered list, got %q", text)
 	}
@@ -221,18 +224,19 @@ func TestFormatPlaybookListCategoryFilter(t *testing.T) {
 
 func TestFormatPlaybookDetails(t *testing.T) {
 	pb := model.Playbook{
-		ID:       "docker-auth",
-		Title:    "Docker Registry Auth",
-		Category: "auth",
-		Severity: "high",
-		Metadata: model.PlaybookMeta{PackName: "faultline-premium-pack"},
-		Explain:  "The CI job could not authenticate.",
-		Why:      "Token expired.",
-		Fix:      []string{"Run docker login"},
-		Prevent:  []string{"Rotate tokens"},
-		Match:    model.MatchSpec{Any: []string{"pull access denied"}},
+		ID:                   "docker-auth",
+		Title:                "Docker Registry Auth",
+		Category:             "auth",
+		Severity:             "high",
+		Metadata:             model.PlaybookMeta{PackName: "faultline-premium-pack"},
+		Summary:              "The CI job could not authenticate.",
+		DiagnosisMarkdown:    "The CI job could not authenticate.",
+		WhyItMattersMarkdown: "Token expired.",
+		FixMarkdown:          "1. Run docker login",
+		ValidationMarkdown:   "- Retry the image pull",
+		Match:                model.MatchSpec{Any: []string{"pull access denied"}},
 	}
-	text := FormatPlaybookDetails(pb)
+	text := FormatPlaybookDetails(pb, renderer.Options{Plain: true, Width: 88})
 	for _, want := range []string{"docker-auth", "Docker Registry Auth", "auth", "high", "faultline-premium-pack", "Token expired", "Run docker login"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in details, got:\n%s", want, text)
@@ -243,7 +247,7 @@ func TestFormatPlaybookDetails(t *testing.T) {
 func TestFormatAnalysisTextShowsPremiumPack(t *testing.T) {
 	a := makeAnalysis("aws-credentials", "AWS credentials missing or invalid", "auth", 1.0, nil)
 	a.Results[0].Playbook.Metadata.PackName = "faultline-premium-pack"
-	out := FormatAnalysisText(a, 1, ModeQuick)
+	out := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
 	if !strings.Contains(out, "Pack: faultline-premium-pack") {
 		t.Fatalf("expected pack line in quick output, got %q", out)
 	}

@@ -5,7 +5,25 @@ severity: medium
 base_score: 0.5
 tags: [dependencies, lockfile, version]
 stage_hints: [build]
+summary: |-
+  Two or more packages require incompatible versions of a shared dependency. The package manager cannot produce an install plan that satisfies all constraints simultaneously.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  Two or more packages require incompatible versions of a shared dependency. The package manager cannot produce an install plan that satisfies all constraints simultaneously.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Re-run dependency resolution from a clean cache or clean environment so you can confirm the conflict is reproducible and not caused by stale artifacts.
+  2. Inspect the dependency tree with the native tool (`npm ls`, `pipdeptree`, `bundle viz`, `go mod graph`) to identify the exact packages pulling incompatible versions.
+  3. Regenerate the lockfile with the team-standard tool and version, then commit the result instead of hand-editing generated dependency files.
+  4. Pin, upgrade, or replace the conflicting dependency pair so all top-level constraints agree on a compatible version range.
+  5. If the conflict appears only in CI, align the runtime or package manager version with local development before changing dependency constraints.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Dependency version drift is gone.
 match:
   any:
     - conflicting requirements
@@ -22,25 +40,13 @@ match:
     - transfer failed for
     - pluginresolutionexception
     - could not resolve dependencies for project
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  Two or more packages require incompatible versions of a shared dependency.
-  The package manager cannot produce an install plan that satisfies all
-  constraints simultaneously.
+  Dependency drift occurs when direct dependencies are updated independently without re-checking transitive dependency constraints, or when lockfiles are regenerated on different platforms with different available package versions.
 
-why: >
-  Dependency drift occurs when direct dependencies are updated independently
-  without re-checking transitive dependency constraints, or when lockfiles are
-  regenerated on different platforms with different available package versions.
+  ## Prevention
 
-fix:
-  - Re-run dependency resolution from a clean cache or clean environment so you can confirm the conflict is reproducible and not caused by stale artifacts.
-  - Inspect the dependency tree with the native tool (`npm ls`, `pipdeptree`, `bundle viz`, `go mod graph`) to identify the exact packages pulling incompatible versions.
-  - Regenerate the lockfile with the team-standard tool and version, then commit the result instead of hand-editing generated dependency files.
-  - Pin, upgrade, or replace the conflicting dependency pair so all top-level constraints agree on a compatible version range.
-  - If the conflict appears only in CI, align the runtime or package manager version with local development before changing dependency constraints.
-
-prevent:
   - Use a lockfile for all projects and regenerate it only through one canonical toolchain version in CI or a documented update workflow.
   - Update related dependency families together so transitive compatibility changes land in a single reviewable pull request.
   - Run a dependency resolution check in CI on every manifest or lockfile change, not only during full builds.

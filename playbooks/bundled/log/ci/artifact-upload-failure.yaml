@@ -5,7 +5,27 @@ severity: medium
 base_score: 1.0
 tags: [artifact, upload, download, ci, pipeline, storage]
 stage_hints: [build, test, deploy]
+summary: |-
+  A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job. Pipeline stages that depend on the artifact cannot proceed.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job. Pipeline stages that depend on the artifact cannot proceed.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Check whether the producing job actually ran and exited zero before the upload step.
+  2. Verify the artifact path glob matches the actual output location (e.g., `dist/**` vs `build/dist/**`).
+  3. For GitHub Actions: check artifact retention settings (default 90 days) and confirm the artifact name is consistent between upload and download steps.
+  4. For GitLab CI: verify `artifacts.paths` and `artifacts.expire_in` in the producing job's config.
+  5. For CircleCI: confirm `store_artifacts` path matches the actual build output directory.
+  6. For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile.
+  7. Increase the artifact retention period if downstream jobs run long after the producing job.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for CI artifact upload or download failed is gone.
 match:
   any:
     - "artifact upload failed"
@@ -22,36 +42,20 @@ match:
   none:
     - "artifacts have expired"
     - "expired artifact"
-
-explain: >
-  A CI job failed to upload a build artifact, or a downstream job failed
-  to download an artifact produced by an earlier job. Pipeline stages that
-  depend on the artifact cannot proceed.
-
-why: >
-  Artifact failures occur when: storage quota is exceeded, the upload step
-  was skipped because an early step failed, the artifact name or path
-  pattern does not match the files produced, the artifact has expired before
-  the download attempt, or network issues interrupted the upload.
-
-fix:
-  - "Check whether the producing job actually ran and exited zero before the upload step."
-  - "Verify the artifact path glob matches the actual output location (e.g., `dist/**` vs `build/dist/**`)."
-  - "For GitHub Actions: check artifact retention settings (default 90 days) and confirm the artifact name is consistent between upload and download steps."
-  - "For GitLab CI: verify `artifacts.paths` and `artifacts.expire_in` in the producing job's config."
-  - "For CircleCI: confirm `store_artifacts` path matches the actual build output directory."
-  - "For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile."
-  - Increase the artifact retention period if downstream jobs run long after the producing job.
-
-prevent:
-  - "Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail."
-  - Use explicit, stable artifact names rather than glob patterns to prevent accidental mismatches.
-  - Monitor artifact storage usage to avoid hitting quota limits.
-  - For large artifacts, consider uploading to an external store (S3, GCS, Azure Blob) and passing the URL downstream rather than using the CI platform's artifact storage.
-
 workflow:
   likely_files:
     - .github/workflows/
     - .gitlab-ci.yml
     - .circleci/config.yml
     - Jenkinsfile
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Artifact failures occur when: storage quota is exceeded, the upload step was skipped because an early step failed, the artifact name or path pattern does not match the files produced, the artifact has expired before the download attempt, or network issues interrupted the upload.
+
+  ## Prevention
+
+  - Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail.
+  - Use explicit, stable artifact names rather than glob patterns to prevent accidental mismatches.
+  - Monitor artifact storage usage to avoid hitting quota limits.
+  - For large artifacts, consider uploading to an external store (S3, GCS, Azure Blob) and passing the URL downstream rather than using the CI platform's artifact storage.

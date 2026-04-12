@@ -5,7 +5,24 @@ severity: high
 base_score: 1.0
 tags: [test, fixture, seed, database, missing-data]
 stage_hints: [test]
+summary: |-
+  A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run the database seed step before the test suite: `rails db:seed`, `npm run db:seed`.
+  2. Check if the fixture file was recently renamed or deleted in the repo history.
+  3. For factory errors: ensure the factory definition matches the current model schema.
+  4. Update the fixture or factory to match the current data model.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Missing test fixture or seed data is gone.
 match:
   any:
     - "fixture not found"
@@ -28,24 +45,13 @@ match:
     - working directory not found
     - failed to change directory
     - not a git repository
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A test failed because it could not load a required fixture file, seed record,
-  or test helper resource that was expected to exist before the test ran.
+  Fixture errors occur when a fixture file is deleted or renamed without updating the tests that reference it, when a database migration removes a field or table that fixtures depend on, or when a CI environment starts without running the required seed step.
 
-why: >
-  Fixture errors occur when a fixture file is deleted or renamed without
-  updating the tests that reference it, when a database migration removes a
-  field or table that fixtures depend on, or when a CI environment starts
-  without running the required seed step.
+  ## Prevention
 
-fix:
-  - "Run the database seed step before the test suite: `rails db:seed`, `npm run db:seed`."
-  - Check if the fixture file was recently renamed or deleted in the repo history.
-  - "For factory errors: ensure the factory definition matches the current model schema."
-  - Update the fixture or factory to match the current data model.
-
-prevent:
   - Include fixture setup in a shared test setup script that runs automatically.
   - Add a CI lint step that validates all referenced fixture files exist.
   - When migrating, update all fixtures and factories in the same PR.

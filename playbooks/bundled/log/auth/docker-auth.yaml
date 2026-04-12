@@ -5,7 +5,6 @@ severity: high
 base_score: 1.0
 tags: [docker, registry, auth]
 stage_hints: [build, deploy]
-
 match:
   any:
     - pull access denied
@@ -20,29 +19,39 @@ match:
     - errimagepull
     - back-off pulling image
     - manifest unknown
+summary: |-
+  CI could not authenticate to the container registry before an image pull or push.
+diagnosis_markdown: |-
+  ## Diagnosis
 
-explain: >
-  The CI job could not authenticate with the container registry before pulling
-  or pushing an image. Docker requires valid credentials to access private
-  registries.
+  Docker reached the registry, but the credentials used by CI were missing, expired, or scoped incorrectly for the target image.
 
-why: >
-  This usually means the registry login step was skipped, the token has expired,
-  or the stored credential does not have the correct scope for the image being
-  accessed.
+  Typical causes:
 
-fix:
-  - Verify the registry username, token, or password configured in CI secrets.
-  - Ensure the registry login step runs before any docker pull or docker push command.
-  - Confirm the token has the correct repository scope (read, write, delete) for the image.
-  - "Run `docker login <registry>` locally with the same credentials to validate them."
+  - the login step never ran
+  - the secret value rotated without the workflow updating
+  - the token can read one repo but not the image path being used
+why_it_matters_markdown: |-
+  ## Why it matters
 
-prevent:
-  - Rotate registry tokens on a fixed schedule and update the CI secret immediately.
-  - Use short-lived OIDC tokens (e.g. GitHub Actions id-token) instead of long-lived passwords.
-  - Add a smoke test to your pipeline that validates registry credentials on each commit.
-  - Keep registry login in a shared reusable workflow or deploy template so every pipeline authenticates the same way.
+  Registry auth failures block both build-time pulls and deploy-time pushes, so one bad credential can stop the whole pipeline.
+fix_markdown: |-
+  ## Fix steps
 
+  1. Verify the registry username, token, or password configured in CI secrets.
+  2. Ensure the registry login step runs before any `docker pull` or `docker push` command.
+  3. Confirm the token has the correct repository scope for the image being accessed.
+  4. Validate the same credential locally:
+
+     ```bash
+     docker login <registry>
+     ```
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the registry login step.
+  - Confirm the pull or push completes without `authentication required`.
+  - If you changed secret wiring, run one full CI job after rotating the credential.
 workflow:
   likely_files:
     - Dockerfile

@@ -5,7 +5,24 @@ severity: high
 base_score: 1.0
 tags: [permissions, file, chmod, sudo]
 stage_hints: [build, deploy]
+summary: |-
+  The process tried to read, write, execute, or connect to a resource it does not have permission to access.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The process tried to read, write, execute, or connect to a resource it does not have permission to access.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run `ls -la` on the target file or directory to inspect the current permissions.
+  2. Add `chmod +x` for scripts that need to be executable.
+  3. Do not rely on `sudo` in CI; redesign the step to work without elevated privileges.
+  4. For file system paths, ensure the CI user owns or has the correct group access.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Permission denied is gone.
 match:
   any:
     - permission denied
@@ -14,24 +31,14 @@ match:
     - "EPERM"
     - access denied
     - insufficient permissions
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The process tried to read, write, execute, or connect to a resource it does
-  not have permission to access.
+  CI runners run as a non-root user by default (as they should). Scripts or tools that assume root or rely on specific file ownership break in this environment. Files checked out from Git sometimes lose their executable bit.
 
-why: >
-  CI runners run as a non-root user by default (as they should). Scripts or
-  tools that assume root or rely on specific file ownership break in this
-  environment. Files checked out from Git sometimes lose their executable bit.
+  ## Prevention
 
-fix:
-  - "Run `ls -la` on the target file or directory to inspect the current permissions."
-  - "Add `chmod +x` for scripts that need to be executable."
-  - "Do not rely on `sudo` in CI; redesign the step to work without elevated privileges."
-  - For file system paths, ensure the CI user owns or has the correct group access.
-
-prevent:
-  - "Store file permissions in Git for executable scripts: `git update-index --chmod=+x script.sh`."
+  - Store file permissions in Git for executable scripts: `git update-index --chmod=+x script.sh`.
   - Design CI jobs to run with the minimum required permissions.
   - Audit steps that modify the file system and verify they account for non-root users.
   - Prefer images and scripts that assume non-root execution from the start so permission problems surface during local development too.

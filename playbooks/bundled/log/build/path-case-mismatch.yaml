@@ -5,7 +5,23 @@ severity: medium
 base_score: 0.5
 tags: [case-sensitive, filesystem, import, path]
 stage_hints: [build]
+summary: |-
+  A file or module import path uses a different capitalisation from the actual filename on disk. On case-sensitive filesystems (Linux CI runners), this causes an immediate build failure.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A file or module import path uses a different capitalisation from the actual filename on disk. On case-sensitive filesystems (Linux CI runners), this causes an immediate build failure.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the mismatched import: compare the exact filename on disk against the import path.
+  2. Rename the file or fix the import to use consistent casing.
+  3. Search the codebase with `git ls-files | grep -i <filename>` to surface other occurrences.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for File path case mismatch is gone.
 match:
   any:
     - cannot find module
@@ -20,24 +36,14 @@ match:
     - "tsc:"
     - found 1 error
     - type 'string' is not assignable
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A file or module import path uses a different capitalisation from the actual
-  filename on disk. On case-sensitive filesystems (Linux CI runners), this
-  causes an immediate build failure.
+  macOS and Windows use case-insensitive filesystems by default. Code written on those platforms may use inconsistent capitalisation that goes undetected locally but breaks when the CI runner uses a case-sensitive Linux filesystem.
 
-why: >
-  macOS and Windows use case-insensitive filesystems by default. Code written on
-  those platforms may use inconsistent capitalisation that goes undetected
-  locally but breaks when the CI runner uses a case-sensitive Linux filesystem.
+  ## Prevention
 
-fix:
-  - "Identify the mismatched import: compare the exact filename on disk against the import path."
-  - Rename the file or fix the import to use consistent casing.
-  - "Search the codebase with `git ls-files | grep -i <filename>` to surface other occurrences."
-
-prevent:
   - Enforce consistent file naming conventions with a linter.
-  - "Run `git config core.ignorecase false` to make Git's case-sensitive logic consistent with Linux."
-  - "Add a CI check for case collisions: `git ls-files | sort -f | uniq -Di`."
+  - Run `git config core.ignorecase false` to make Git's case-sensitive logic consistent with Linux.
+  - Add a CI check for case collisions: `git ls-files | sort -f | uniq -Di`.
   - Prefer one filename casing convention per language or package so imports are easy to review mechanically.

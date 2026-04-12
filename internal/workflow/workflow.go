@@ -123,7 +123,7 @@ func baseSteps(a *model.Analysis, top model.Result, plan Plan) []string {
 		steps = append(steps, fmt.Sprintf("Local repro: `%s`.", cmd))
 	}
 
-	for _, step := range top.Playbook.Fix {
+	for _, step := range markdownListItems(top.Playbook.FixMarkdown) {
 		steps = append(steps, step)
 	}
 
@@ -131,9 +131,9 @@ func baseSteps(a *model.Analysis, top model.Result, plan Plan) []string {
 		steps = append(steps, fmt.Sprintf("Verify with `%s` after the fix.", cmd))
 	}
 
-	if len(top.Playbook.Prevent) > 0 {
+	if suggestions := markdownListItems(top.Playbook.WhyItMattersMarkdown); len(suggestions) > 0 {
 		steps = append(steps,
-			fmt.Sprintf("After the immediate fix, harden the workflow with: %s.", trimTerminalPunctuation(top.Playbook.Prevent[0])),
+			fmt.Sprintf("After the immediate fix, harden the workflow with: %s.", trimTerminalPunctuation(suggestions[0])),
 		)
 	}
 
@@ -179,7 +179,7 @@ func buildAgentPrompt(a *model.Analysis, top model.Result, plan Plan) string {
 		}
 	}
 	lines = append(lines, "Recommended fix steps:")
-	for _, step := range top.Playbook.Fix {
+	for _, step := range markdownListItems(top.Playbook.FixMarkdown) {
 		lines = append(lines, fmt.Sprintf("- %s", step))
 	}
 	if len(plan.Verify) > 0 {
@@ -208,6 +208,21 @@ func resolveFiles(a *model.Analysis, top model.Result, opts BuildOptions) []stri
 		files = files[:maxFiles]
 	}
 	return files
+}
+
+func markdownListItems(markdown string) []string {
+	lines := strings.Split(markdown, "\n")
+	items := make([]string, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "- "):
+			items = append(items, strings.TrimSpace(strings.TrimPrefix(line, "- ")))
+		case len(line) > 3 && line[1] == '.' && line[2] == ' ' && line[0] >= '0' && line[0] <= '9':
+			items = append(items, strings.TrimSpace(line[3:]))
+		}
+	}
+	return items
 }
 
 func repoRoot(a *model.Analysis, opts BuildOptions) string {

@@ -5,7 +5,33 @@ severity: high
 base_score: 1.0
 tags: [typescript, tsc, javascript, typecheck]
 stage_hints: [build, test]
+summary: |-
+  The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run `tsc --noEmit` locally to reproduce the failing diagnostic with the same config.
+  2. Inspect the first TypeScript error in the log and update the code or type definitions to match.
+  3. If a generated type file changed, regenerate it before committing.
+  4. Confirm path aliases in `tsconfig.json` match the repository layout used in CI.
+validation_markdown: |-
+  ## Validation
+
+  - tsc --noEmit
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Type errors often appear after API changes, dependency upgrades, or partial refactors where code and type definitions drift out of sync.
+
+  ## Prevention
+
+  - Run a dedicated type-check step on every pull request.
+  - Keep generated client or schema types in sync with the source of truth.
+  - Avoid broad `any` escapes that hide drift until a later refactor.
 match:
   any:
     - error ts
@@ -20,26 +46,6 @@ match:
     - capitalization
     - wrong case
     - cannot find module
-
-explain: >
-  The TypeScript compiler rejected the code because a type, symbol, or module
-  import does not match the project's declared types.
-
-why: >
-  Type errors often appear after API changes, dependency upgrades, or partial
-  refactors where code and type definitions drift out of sync.
-
-fix:
-  - Run `tsc --noEmit` locally to reproduce the failing diagnostic with the same config.
-  - Inspect the first TypeScript error in the log and update the code or type definitions to match.
-  - If a generated type file changed, regenerate it before committing.
-  - Confirm path aliases in `tsconfig.json` match the repository layout used in CI.
-
-prevent:
-  - Run a dedicated type-check step on every pull request.
-  - Keep generated client or schema types in sync with the source of truth.
-  - Avoid broad `any` escapes that hide drift until a later refactor.
-
 workflow:
   likely_files:
     - tsconfig.json

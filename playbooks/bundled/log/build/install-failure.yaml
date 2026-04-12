@@ -5,7 +5,25 @@ severity: high
 base_score: 0.5
 tags: [install, dependencies, npm, pip, apt]
 stage_hints: [build]
+summary: |-
+  The package installation step failed because a package or specific version could not be found in the configured registry or package index.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The package installation step failed because a package or specific version could not be found in the configured registry or package index.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Re-run the exact install command locally with verbose logging so you can see which package name, version, or index URL failed.
+  2. Check that the package name and requested version actually exist in the configured registry or package index.
+  3. For private registries, verify the CI credentials and config files are present before the install step runs (for example `.npmrc`, `pip.conf`, or registry-specific env vars).
+  4. If the failure happens while building a native dependency, install the required compiler toolchain or system headers on the runner image.
+  5. If a package was removed or renamed, pin to a known-good published version or replace it with the maintained package.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Package installation failure is gone.
 match:
   any:
     - npm ERR! code E404
@@ -18,24 +36,13 @@ match:
     - "dpkg: error"
     - "E: Unable to locate package"
     - "failed to fetch"
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The package installation step failed because a package or specific version
-  could not be found in the configured registry or package index.
+  The package may have been removed from the registry, unpublished, or the version constraint is too narrow. Private packages require authentication that may not be configured.
 
-why: >
-  The package may have been removed from the registry, unpublished, or the
-  version constraint is too narrow. Private packages require authentication that
-  may not be configured.
+  ## Prevention
 
-fix:
-  - Re-run the exact install command locally with verbose logging so you can see which package name, version, or index URL failed.
-  - Check that the package name and requested version actually exist in the configured registry or package index.
-  - "For private registries, verify the CI credentials and config files are present before the install step runs (for example `.npmrc`, `pip.conf`, or registry-specific env vars)."
-  - If the failure happens while building a native dependency, install the required compiler toolchain or system headers on the runner image.
-  - If a package was removed or renamed, pin to a known-good published version or replace it with the maintained package.
-
-prevent:
   - Use a lockfile or fully pinned constraints file so dependency resolution changes only happen in deliberate update jobs.
   - Mirror critical internal and third-party packages in a registry you control so public registry outages or removals do not block builds.
   - Keep registry configuration and auth bootstrap in a shared CI template so each pipeline uses the same package source settings.

@@ -89,17 +89,25 @@ The workflow:
 
 1. runs `make test`
 2. reviews bundled playbook conflicts with `make review`
-3. builds release tarballs with `make release-snapshot VERSION=<tag>`
-4. smoke tests the built tarball with `make smoke-release VERSION=<tag>`
-5. smoke tests the Docker image with `make docker-smoke IMAGE=faultline-release-smoke`
-6. uploads the archives as workflow artifacts
-7. publishes them to the GitHub Release for tag pushes
+3. composes starter with the premium pack when the premium repository is checked out in CI
+4. builds release tarballs with `make release-snapshot VERSION=<tag>`
+5. smoke tests the built tarball with `make smoke-release VERSION=<tag>`
+6. smoke tests the Docker image with `make docker-smoke IMAGE=faultline-release-smoke`
+7. uploads the archives as workflow artifacts
+8. publishes them to the GitHub Release for tag pushes
 
 To build the same artifacts locally:
 
 ```bash
 make release-snapshot VERSION=v0.1.0
 make smoke-release VERSION=v0.1.0
+```
+
+Add the premium composition gate when the sister repository is available:
+
+```bash
+make premium-check PREMIUM_PACK_DIR=../faultline-premium-pack
+make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium-pack
 ```
 
 Archives are written to `dist/releases/<version>/`.

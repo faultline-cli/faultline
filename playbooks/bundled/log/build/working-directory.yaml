@@ -5,7 +5,24 @@ severity: medium
 base_score: 0.5
 tags: [directory, path, config]
 stage_hints: [build, test, deploy]
+summary: |-
+  A command ran in an unexpected working directory. Relative paths expected a specific directory layout that did not exist at the time of execution.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A command ran in an unexpected working directory. Relative paths expected a specific directory layout that did not exist at the time of execution.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Check the `working-directory` configuration in your CI workflow file.
+  2. Use absolute paths or `$(pwd)` references where possible.
+  3. Add `ls -la` before the failing step to confirm the directory contents.
+  4. Verify the repository structure matches what the workflow expects.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Wrong working directory is gone.
 match:
   any:
     - no such file or directory
@@ -20,24 +37,14 @@ match:
     - factory
     - testdata
     - seed
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A command ran in an unexpected working directory. Relative paths expected a
-  specific directory layout that did not exist at the time of execution.
+  CI jobs sometimes change directory as part of a step but fail to restore the original directory, or a `working-directory` configuration in the workflow file points to a path that does not exist in the checked-out repository.
 
-why: >
-  CI jobs sometimes change directory as part of a step but fail to restore the
-  original directory, or a `working-directory` configuration in the workflow
-  file points to a path that does not exist in the checked-out repository.
+  ## Prevention
 
-fix:
-  - "Check the `working-directory` configuration in your CI workflow file."
-  - "Use absolute paths or `$(pwd)` references where possible."
-  - "Add `ls -la` before the failing step to confirm the directory contents."
-  - Verify the repository structure matches what the workflow expects.
-
-prevent:
-  - "Use explicit `working-directory` steps rather than relying on implicit directory state."
+  - Use explicit `working-directory` steps rather than relying on implicit directory state.
   - Document expected working directory requirements in step names or comments.
   - Add a directory existence check at the start of jobs that depend on specific paths.
   - Prefer commands anchored from the repository root in reusable scripts so directory assumptions are not duplicated across workflows.

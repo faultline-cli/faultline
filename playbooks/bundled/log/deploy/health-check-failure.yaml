@@ -5,7 +5,6 @@ severity: high
 base_score: 1.0
 tags: [health-check, kubernetes, docker, deployment]
 stage_hints: [deploy]
-
 match:
   any:
     - health check failed
@@ -22,26 +21,38 @@ match:
     - Insufficient cpu
     - Insufficient memory
     - FailedScheduling
+summary: |-
+  The new service instance never became healthy enough for traffic.
+diagnosis_markdown: |-
+  ## Diagnosis
 
-explain: >
-  The deployed service did not pass its health check within the configured
-  timeout. Kubernetes, Docker, or the load balancer rolled back or refused to
-  route traffic to the new instance.
+  The deploy reached the runtime environment, but the process did not satisfy the configured readiness or liveness checks before the timeout window closed.
 
-why: >
-  Health check failures indicate the application did not start correctly.
-  Common causes include: missing configuration (environment variables), a failed
-  database migration, a port misconfiguration, or an application crash at
-  startup.
+  Common causes:
 
-fix:
-  - "Check the application logs for startup errors: `kubectl logs <pod> --previous`."
-  - Verify the health check endpoint path and port match what the application actually serves.
-  - Ensure all required environment variables and secrets are present in the deployment.
-  - Check that dependent services (databases, caches) are reachable from the new pod.
+  - missing configuration or secrets
+  - startup migrations failing
+  - the app listening on the wrong port
+  - a crash loop during bootstrap
+fix_markdown: |-
+  ## Fix steps
 
-prevent:
-  - Test the health check endpoint locally with the same configuration used in production.
-  - Use a staged rollout (canary or blue/green) so health check failures only affect a small percentage of traffic.
-  - Add a smoke test step that verifies the service is ready before marking the deployment successful.
-  - Keep health checks simple and aligned with real readiness so they fail on broken startup, not on slow but healthy warm-up paths.
+  1. Inspect startup logs for the failing container:
+
+     ```bash
+     kubectl logs <pod> --previous
+     ```
+
+  2. Verify the health check path and port match what the application actually serves.
+  3. Confirm all required environment variables and secrets are present in the deployment.
+  4. Check that dependent services such as databases and caches are reachable from the new pod.
+validation_markdown: |-
+  ## Validation
+
+  - Hit the readiness endpoint directly from a pod or staging environment.
+  - Confirm the deployment becomes ready without restarts.
+  - Re-run the rollout and watch the probe status until it stabilizes.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Health checks are the deployment gate that protects traffic from a broken release. When they fail, the platform is telling you the new instance is not safely serving requests.

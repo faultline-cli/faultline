@@ -5,7 +5,34 @@ severity: high
 base_score: 1.0
 tags: [github-actions, token, permissions, ci]
 stage_hints: [build, deploy, test]
+summary: |-
+  The GITHUB_TOKEN used by this workflow does not have the permissions required to perform the requested operation (write to repository, create a release, push packages, etc.).
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The GITHUB_TOKEN used by this workflow does not have the permissions required to perform the requested operation (write to repository, create a release, push packages, etc.).
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add the required permission block to your workflow job or at the top level:
+  2. permissions:\n    contents: write\n    packages: write\n    pull-requests: write
+  3. Avoid using `permissions: write-all` — grant only the minimum required scopes.
+  4. Check the step that failed and look up which permission scope it needs in the GitHub docs.
+validation_markdown: |-
+  ## Validation
+
+  - Check under Settings > Actions > General > Workflow permissions
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  GitHub Actions workflows have a default token permission level that may be read-only. If the job needs to write, create releases, or call APIs that require elevated scopes, those permissions must be declared explicitly in the workflow YAML.
+
+  ## Prevention
+
+  - Declare permissions explicitly on every workflow instead of relying on defaults.
+  - Review new third-party actions for required permission scopes before adding them.
+  - Use `permissions: {}` as the default and add only what each job needs.
+  - Keep release, package publish, and repository-write operations isolated in dedicated jobs so elevated permissions are scoped narrowly.
 match:
   any:
     - "HttpError: Resource not accessible by integration"
@@ -17,30 +44,6 @@ match:
     - "Error: HttpError: Resource not accessible by integration"
     - "GraphQL: Resource not accessible by integration"
     - "refusing to allow a GitHub App to create or update file"
-
-explain: >
-  The GITHUB_TOKEN used by this workflow does not have the permissions required
-  to perform the requested operation (write to repository, create a release,
-  push packages, etc.).
-
-why: >
-  GitHub Actions workflows have a default token permission level that may be
-  read-only. If the job needs to write, create releases, or call APIs that
-  require elevated scopes, those permissions must be declared explicitly in
-  the workflow YAML.
-
-fix:
-  - "Add the required permission block to your workflow job or at the top level:"
-  - "  permissions:\\n    contents: write\\n    packages: write\\n    pull-requests: write"
-  - "Avoid using `permissions: write-all` — grant only the minimum required scopes."
-  - "Check the step that failed and look up which permission scope it needs in the GitHub docs."
-
-prevent:
-  - Declare permissions explicitly on every workflow instead of relying on defaults.
-  - Review new third-party actions for required permission scopes before adding them.
-  - "Use `permissions: {}` as the default and add only what each job needs."
-  - Keep release, package publish, and repository-write operations isolated in dedicated jobs so elevated permissions are scoped narrowly.
-
 workflow:
   likely_files:
     - .github/workflows/*.yml

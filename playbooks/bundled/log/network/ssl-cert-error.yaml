@@ -5,7 +5,25 @@ severity: high
 base_score: 1.0
 tags: [ssl, tls, certificate, https]
 stage_hints: [build, deploy]
+summary: |-
+  A TLS/SSL certificate error prevented a secure connection. The certificate was expired, self-signed, or signed by an untrusted certificate authority.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A TLS/SSL certificate error prevented a secure connection. The certificate was expired, self-signed, or signed by an untrusted certificate authority.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Check if the certificate has expired: `openssl s_client -connect <host>:443 | openssl x509 -noout -dates`.
+  2. If connecting to an internal service, add the CA certificate to the system trust store.
+  3. Verify the system clock on the CI runner is correct.
+  4. Contact the service owner if their certificate has actually expired.
+  5. If the failure only appears in corporate CI, confirm whether a TLS-intercepting proxy requires its root CA to be installed on the runner image.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for SSL/TLS certificate error is gone.
 match:
   any:
     - certificate verify failed
@@ -16,25 +34,13 @@ match:
     - "x509:"
     - ssl_error
     - certificate signed by unknown authority
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A TLS/SSL certificate error prevented a secure connection. The certificate
-  was expired, self-signed, or signed by an untrusted certificate authority.
+  Certificate errors commonly occur when: a service's certificate has expired, a self-signed certificate is not trusted by the system CA bundle, a corporate proxy intercepts TLS traffic with its own certificate, or the system clock on the CI runner is wrong.
 
-why: >
-  Certificate errors commonly occur when: a service's certificate has expired,
-  a self-signed certificate is not trusted by the system CA bundle, a corporate
-  proxy intercepts TLS traffic with its own certificate, or the system clock on
-  the CI runner is wrong.
+  ## Prevention
 
-fix:
-  - "Check if the certificate has expired: `openssl s_client -connect <host>:443 | openssl x509 -noout -dates`."
-  - If connecting to an internal service, add the CA certificate to the system trust store.
-  - Verify the system clock on the CI runner is correct.
-  - Contact the service owner if their certificate has actually expired.
-  - If the failure only appears in corporate CI, confirm whether a TLS-intercepting proxy requires its root CA to be installed on the runner image.
-
-prevent:
   - Set up automated certificate renewal (e.g., Let's Encrypt with cert-manager or certbot).
   - Monitor certificate expiry dates and alert 30 days before expiry.
   - Test certificate validity in a scheduled CI job.

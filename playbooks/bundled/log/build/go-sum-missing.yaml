@@ -5,35 +5,43 @@ severity: medium
 base_score: 1.0
 tags: [go, modules, dependencies]
 stage_hints: [build]
-
 match:
   any:
     - missing go.sum entry for module providing package
     - go.sum file is not up to date
     - verifying module
     - no required module provides
+summary: |-
+  The build needs a module checksum that is missing from `go.sum`.
+diagnosis_markdown: |-
+  ## Diagnosis
 
-explain: >
-  The go.sum file is missing a checksum entry for a dependency that the build
-  requires. Go refuses to proceed without a verified checksum.
+  Go refused to continue because the dependency graph references a module version that does not have a matching checksum entry in `go.sum`.
 
-why: >
-  go.sum acts as a lock file for module checksums. If a new dependency was
-  added with `go get` but `go mod tidy` was not run, or if the go.sum was not
-  committed, the CI build will fail.
+  This usually happens after dependency changes were made locally without committing the resulting module metadata.
+why_it_matters_markdown: |-
+  ## Why it matters
 
-fix:
-  - "Run `go mod tidy` with the same Go version used in CI so the module graph is recalculated consistently."
-  - "If the error says no required module provides a package, add or correct the dependency first with `go get <module>` before re-running `go mod tidy`."
-  - "Commit both `go.mod` and `go.sum` if either file changed; checksum and version updates often move together."
-  - "If the dependency is private, set `GOPRIVATE` and `GONOSUMDB` for the module path and verify CI can authenticate to the source repository."
-  - "If a stale module cache is involved, clear it with `go clean -modcache` and rerun the build once."
+  `go.sum` is part of Go's reproducibility contract. If CI cannot verify module checksums, the build stops instead of guessing.
+fix_markdown: |-
+  ## Fix steps
 
-prevent:
-  - "Run `go mod tidy` in CI and fail the job when it changes `go.mod` or `go.sum`: `git diff --exit-code go.mod go.sum`."
-  - Keep the local and CI Go toolchain versions aligned so module resolution stays stable across environments.
-  - Document private module settings (`GOPRIVATE`, `GONOSUMDB`, credentials) in the shared CI template instead of relying on per-runner setup.
+  1. Recalculate module metadata with the same Go version used in CI:
 
+     ```bash
+     go mod tidy
+     ```
+
+  2. If the error says no required module provides a package, add or correct the dependency before rerunning `go mod tidy`.
+  3. Commit both `go.mod` and `go.sum` if either file changed.
+  4. For private modules, verify `GOPRIVATE` and `GONOSUMDB` are set correctly.
+  5. If the module cache looks stale, clear it once with `go clean -modcache` and rerun the build.
+validation_markdown: |-
+  ## Validation
+
+  - Run `git diff --exit-code go.mod go.sum` after `go mod tidy`.
+  - Re-run `go test ./...`.
+  - Confirm CI no longer reports a missing checksum entry.
 workflow:
   likely_files:
     - go.mod

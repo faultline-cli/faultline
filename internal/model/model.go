@@ -5,24 +5,25 @@ package model
 
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
-	ID         string        `yaml:"id" json:"id"`
-	Title      string        `yaml:"title" json:"title"`
-	Category   string        `yaml:"category" json:"category"`
-	Severity   string        `yaml:"severity" json:"severity"`
-	Detector   string        `yaml:"detector,omitempty" json:"detector,omitempty"`
-	BaseScore  float64       `yaml:"base_score" json:"base_score"`
-	Tags       []string      `yaml:"tags" json:"tags"`
-	StageHints []string      `yaml:"stage_hints" json:"stage_hints"`
-	Match      MatchSpec     `yaml:"match" json:"match"`
-	Source     SourceSpec    `yaml:"source,omitempty" json:"source,omitempty"`
-	Explain    string        `yaml:"explain" json:"explain"`
-	Why        string        `yaml:"why" json:"why"`
-	Fix        []string      `yaml:"fix" json:"fix"`
-	Prevent    []string      `yaml:"prevent" json:"prevent"`
-	Workflow   WorkflowSpec  `yaml:"workflow" json:"workflow"`
-	Metadata   PlaybookMeta  `yaml:"metadata,omitempty" json:"metadata,omitempty"`
-	Scoring    ScoringConfig `yaml:"scoring,omitempty" json:"scoring,omitempty"`
-	Contextual ContextPolicy `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
+	ID                   string        `yaml:"id" json:"id"`
+	Title                string        `yaml:"title" json:"title"`
+	Category             string        `yaml:"category" json:"category"`
+	Severity             string        `yaml:"severity" json:"severity"`
+	Detector             string        `yaml:"detector,omitempty" json:"detector,omitempty"`
+	BaseScore            float64       `yaml:"base_score" json:"base_score"`
+	Tags                 []string      `yaml:"tags" json:"tags"`
+	StageHints           []string      `yaml:"stage_hints" json:"stage_hints"`
+	Match                MatchSpec     `yaml:"match" json:"match"`
+	Source               SourceSpec    `yaml:"source,omitempty" json:"source,omitempty"`
+	Summary              string        `yaml:"summary,omitempty" json:"summary,omitempty"`
+	DiagnosisMarkdown    string        `yaml:"diagnosis_markdown,omitempty" json:"diagnosis_markdown,omitempty"`
+	FixMarkdown          string        `yaml:"fix_markdown,omitempty" json:"fix_markdown,omitempty"`
+	ValidationMarkdown   string        `yaml:"validation_markdown,omitempty" json:"validation_markdown,omitempty"`
+	WhyItMattersMarkdown string        `yaml:"why_it_matters_markdown,omitempty" json:"why_it_matters_markdown,omitempty"`
+	Workflow             WorkflowSpec  `yaml:"workflow" json:"workflow"`
+	Metadata             PlaybookMeta  `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+	Scoring              ScoringConfig `yaml:"scoring,omitempty" json:"scoring,omitempty"`
+	Contextual           ContextPolicy `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
 }
 
 // MatchSpec holds declarative match patterns for a Playbook.

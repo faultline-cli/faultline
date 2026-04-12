@@ -5,7 +5,25 @@ severity: high
 base_score: 0.5
 tags: [ulimit, cpu, file-descriptors, threads]
 stage_hints: [build, test]
+summary: |-
+  The process exceeded an OS-enforced resource limit such as the maximum number of open file descriptors, threads, or processes.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  The process exceeded an OS-enforced resource limit such as the maximum number of open file descriptors, threads, or processes.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Determine which limit was hit first (`ulimit -a`, open files, pids, threads) so you change the right control instead of raising all limits blindly.
+  2. Find and fix the leak or bursty workload causing the limit breach, such as file descriptors left open, unbounded goroutines, or too many worker processes.
+  3. Reduce test or worker parallelism to lower peak file descriptor, process, and thread usage.
+  4. If the workload is legitimate, raise the specific runner or container limit that failed, for example `ulimit -n 65536` for open files.
+  5. Capture diagnostics during the failing step (`lsof`, process counts, runtime metrics) so you can see whether usage is steadily leaking or spiking.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Resource limit exceeded is gone.
 match:
   any:
     - too many open files
@@ -17,24 +35,13 @@ match:
     - "EMFILE"
     - "ENFILE"
     - system limit
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  The process exceeded an OS-enforced resource limit such as the maximum number
-  of open file descriptors, threads, or processes.
+  CI environments apply ulimits to prevent runaway processes from consuming all system resources. Tests or build tools that create many file handles, threads, or subprocesses without cleaning them up can hit these limits.
 
-why: >
-  CI environments apply ulimits to prevent runaway processes from consuming all
-  system resources. Tests or build tools that create many file handles, threads,
-  or subprocesses without cleaning them up can hit these limits.
+  ## Prevention
 
-fix:
-  - Determine which limit was hit first (`ulimit -a`, open files, pids, threads) so you change the right control instead of raising all limits blindly.
-  - Find and fix the leak or bursty workload causing the limit breach, such as file descriptors left open, unbounded goroutines, or too many worker processes.
-  - Reduce test or worker parallelism to lower peak file descriptor, process, and thread usage.
-  - "If the workload is legitimate, raise the specific runner or container limit that failed, for example `ulimit -n 65536` for open files."
-  - Capture diagnostics during the failing step (`lsof`, process counts, runtime metrics) so you can see whether usage is steadily leaking or spiking.
-
-prevent:
   - Run long-lived integration tests under the same runner limits used in CI so leaks show up before release branches.
   - Always close files, sockets, and database connections promptly and prefer shared client pools over creating new clients per request.
   - Cap test and worker parallelism relative to runner size instead of assuming local developer hardware matches CI capacity.

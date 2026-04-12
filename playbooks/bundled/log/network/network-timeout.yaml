@@ -5,7 +5,25 @@ severity: medium
 base_score: 1.0
 tags: [network, timeout, http, connection]
 stage_hints: [build, deploy]
+summary: |-
+  A network request exceeded its timeout limit. The remote host did not respond within the expected window, causing the CI step to fail.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  A network request exceeded its timeout limit. The remote host did not respond within the expected window, causing the CI step to fail.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the exact host and command that timed out so you know whether the issue is a registry, API, artifact store, or internal service.
+  2. Retry the failed job once to separate a transient network blip from a persistent routing or service problem.
+  3. Check the service status page and test connectivity from the runner environment with the same protocol and destination the failing step uses.
+  4. Verify the CI runner can reach the required host through any proxy, firewall, or egress policy applied in that environment.
+  5. Increase client-side timeout settings only when the endpoint is healthy and the operation is legitimately large or slow.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Network request timeout is gone.
 match:
   any:
     - connection timed out
@@ -28,24 +46,13 @@ match:
     - "go test -timeout"
     - "Test timed out"
     - "async test timed out"
+why_it_matters_markdown: |-
+  ## Why it matters
 
-explain: >
-  A network request exceeded its timeout limit. The remote host did not respond
-  within the expected window, causing the CI step to fail.
+  CI runners may have restricted outbound network access, or the remote service (package registry, API endpoint, artifact store) is temporarily unavailable or slow. Transient network congestion also causes timeouts.
 
-why: >
-  CI runners may have restricted outbound network access, or the remote service
-  (package registry, API endpoint, artifact store) is temporarily unavailable
-  or slow. Transient network congestion also causes timeouts.
+  ## Prevention
 
-fix:
-  - Identify the exact host and command that timed out so you know whether the issue is a registry, API, artifact store, or internal service.
-  - Retry the failed job once to separate a transient network blip from a persistent routing or service problem.
-  - Check the service status page and test connectivity from the runner environment with the same protocol and destination the failing step uses.
-  - Verify the CI runner can reach the required host through any proxy, firewall, or egress policy applied in that environment.
-  - Increase client-side timeout settings only when the endpoint is healthy and the operation is legitimately large or slow.
-
-prevent:
   - Mirror critical packages, container images, and build artifacts in infrastructure you control to reduce dependency on public services.
   - Add explicit retry and exponential back-off behaviour to network operations that are safe to repeat.
   - Keep runner egress, DNS, and proxy settings under test with a lightweight connectivity check in CI.
