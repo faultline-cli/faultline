@@ -34,6 +34,10 @@ the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 `--playbook-pack` flags. A full `--playbooks` override still resolves a single
 custom catalog root.
 
+Pack roots may optionally carry a `faultline-pack.yaml` manifest. The playbook
+layer validates required metadata and can reject packs whose declared detector
+coverage conflicts with the playbooks they contain.
+
 ## Detector boundary
 
 Detectors stay explicit and separate:

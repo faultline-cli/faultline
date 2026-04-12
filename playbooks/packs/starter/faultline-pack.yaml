@@ -1,0 +1,8 @@
+name: starter
+version: 1.0.0
+description: Bundled starter playbooks shipped with Faultline.
+detectors:
+  - log
+  - source
+includes:
+  - ../../bundled
