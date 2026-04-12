@@ -353,10 +353,6 @@ FAULTLINE_PLAYBOOK_PACKS=./packs/acme:./packs/team faultline analyze build.log
 `--playbooks` remains a full override and should not be combined with
 `--playbook-pack`.
 
-Pack roots may optionally include a `faultline-pack.yaml` manifest describing
-pack identity, version, and detector compatibility. If present, Faultline
-validates it before loading the pack.
-
 ### Scoring
 
 | Match type | Points |

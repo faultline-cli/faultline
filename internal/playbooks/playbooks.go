@@ -208,9 +208,6 @@ func LoadDir(dir string) ([]model.Playbook, error) {
 			return nil
 		}
 		name := d.Name()
-		if name == packManifestFile {
-			return nil
-		}
 		if strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml") {
 			files = append(files, path)
 		}
