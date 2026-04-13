@@ -8,7 +8,7 @@ normalized_log: |-
     Error: Process completed with exit code 1.
     ```
 expectation:
-    expected_playbook: container-crash
+    expected_playbook: build-input-file-missing
     top_n: 3
     min_confidence: 0.55
 source:

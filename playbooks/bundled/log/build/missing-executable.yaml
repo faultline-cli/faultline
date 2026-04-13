@@ -9,12 +9,14 @@ match:
   any:
     - executable file not found in $PATH
     - "exec /"
+    - "exec: \""
     - "command not found"
     - is not recognized as an internal or external command
   none:
     - fixture
     - testdata
     - cannot stat
+    - "withBinaryFile:"
     - package-lock.json
     - "Dockerfile: no such file or directory"
 summary: |-

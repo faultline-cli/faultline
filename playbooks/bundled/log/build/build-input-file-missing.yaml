@@ -1,0 +1,78 @@
+id: build-input-file-missing
+title: Required build input file missing
+category: build
+severity: medium
+base_score: 1.0
+tags: [build, file, path, artifact, input]
+stage_hints: [build, test]
+match:
+  any:
+    - "cp: cannot stat"
+    - "cannot stat"
+    - "withBinaryFile: does not exist"
+    - "does not exist (No such file or directory)"
+  none:
+    - "exec /"
+    - "executable file not found in $PATH"
+    - "working directory not found"
+    - "failed to change directory"
+    - "chdir"
+    - "fixture"
+    - "testdata"
+    - "package-lock.json"
+    - "yarn.lock"
+    - "Dockerfile: no such file or directory"
+summary: |-
+  A build or lint step referenced a file that was never generated, was copied to the wrong path, or is missing from the repository checkout.
+diagnosis: |-
+  ## Diagnosis
+
+  The failing command started normally, but one of the files it expected to read or copy was not present at the referenced path.
+
+  Common causes:
+
+  - a generated file was not created before the step ran
+  - a path changed in the repository without updating the build script
+  - a cache or artifact restore step did not populate the expected file
+  - the file exists locally but is not committed or not included in the CI context
+fix: |-
+  ## Fix steps
+
+  1. Identify the exact missing path from the failing line.
+  2. Confirm whether the file should be committed, generated, restored from cache, or copied from another job.
+  3. Add a directory listing immediately before the failing step to verify the expected file layout:
+
+     ```bash
+     pwd
+     ls -R <parent-directory>
+     ```
+
+  4. If the file is generated, ensure the generation step runs earlier in the same job.
+  5. If the file comes from artifacts or caches, verify the producing job publishes it and the consuming job restores it to the same path.
+validation: |-
+  ## Validation
+
+  - Re-run the build or lint step after restoring or generating the missing file.
+  - Confirm the referenced path exists in the CI workspace before the failing command starts.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing build inputs waste CI time because the job reaches the failing command before discovering that a prerequisite file never arrived.
+
+  ## Prevention
+
+  - Keep generated-file paths explicit in build scripts and workflows.
+  - Add a cheap existence check for critical inputs before expensive build stages.
+  - Version the producer and consumer of generated artifacts together so path changes do not drift.
+workflow:
+  likely_files:
+    - Makefile
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - docker-compose*.yml
+    - scripts/**/*
+  local_repro:
+    - pwd
+    - ls -R <parent-directory>
+  verify:
+    - ls -l <missing-path>

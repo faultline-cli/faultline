@@ -1,11 +1,16 @@
 # Faultline
 
-Faultline is a deterministic CLI for CI failure diagnosis.
+Faultline is a deterministic CLI for people who own broken CI and need a fast,
+defensible answer.
 
 It reads a build log or repository tree, matches the input against a curated
 playbook library, and returns the most likely failure with evidence pulled
 directly from the input plus concrete remediation steps. Same input, same
 playbooks, same output.
+
+If your team is tired of scanning thousands of log lines just to rediscover the
+same auth, dependency, runtime, and deploy failures, Faultline gives you a
+repeatable diagnosis path that works locally, in CI, and inside automation.
 
 ## What Faultline Does
 
@@ -27,6 +32,20 @@ Faultline is intentionally narrow.
 
 This repository is the starter product. It ships with a strong bundled catalog
 for common CI failures and supports deeper premium packs on top.
+
+## Who It Is For
+
+- Application teams that own their own CI pipelines and want faster first-pass triage.
+- Platform and developer-experience teams that need stable JSON and deterministic output for automation.
+- Release, QA, and SRE engineers who want evidence-backed diagnoses instead of vague summaries.
+- Consultancies and internal enablement teams that need a portable CLI rather than a hosted service.
+
+## Where It Helps Most
+
+- CI jobs that fail often enough to deserve playbook-quality diagnosis, but not enough to justify custom internal tooling.
+- Repositories where multiple teams need the same explanation and fix path for recurring failures.
+- Automation flows that need a stable diagnosis primitive without sending logs to an external service.
+- Organizations that want broad starter coverage first, with optional premium depth for provider-specific and advanced operational workflows.
 
 ## Quick Example
 
@@ -216,8 +235,8 @@ Faultline now ships with an exact split.
 
 | Package | Count | What it covers |
 | --- | --- | --- |
-| Bundled starter | 63 playbooks | Common auth, network, generic build, generic runtime, generic test, Node.js, TypeScript, Python, Go, core container and Kubernetes failures, plus starter coverage for missing executables, npm peer conflicts, and Poetry lock drift |
-| Premium repository | 83 playbooks | Deeper JVM, Ruby, Rust, and .NET build stacks, provider-specific CI workflows, Terraform and Helm workflows, richer test-runner coverage, CORS, database pool exhaustion, Node.js runtime debugging, advanced source detectors |
+| Bundled starter | 64 playbooks | Common auth, network, generic build, generic runtime, generic test, Node.js, TypeScript, Python, Go, core container and Kubernetes failures, plus starter coverage for missing executables, missing build inputs, npm peer conflicts, and Poetry lock drift |
+| Premium repository | 84 playbooks | Deeper JVM, Ruby, Rust, and .NET build stacks, provider-specific CI workflows, advanced ingress and platform deployment failures, Terraform and Helm workflows, richer test-runner coverage, CORS, database pool exhaustion, Node.js runtime debugging, advanced source detectors |
 
 Coverage matrix:
 

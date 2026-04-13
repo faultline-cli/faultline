@@ -5,6 +5,7 @@ git-auth,Git authentication failure,auth,4,4,5,4,3,2,base,Broad source fetch aut
 missing-env,Missing required environment variable,auth,5,5,4,4,2,1,base,Essential first-run failure class
 ssh-key-auth,SSH key authentication failure,auth,3,3,5,4,3,2,base,Common private repo access issue
 cache-corruption,Corrupted or stale dependency cache,build,3,4,3,3,2,2,base,Common but usually secondary signal
+build-input-file-missing,Required build input file missing,build,4,4,4,5,3,1,base,Common missing artifact or path drift in build and lint steps
 dependency-drift,Dependency version drift,build,4,5,4,3,3,2,base,Broad package ecosystem coverage
 docker-build-context,Docker build context or Dockerfile path issue,build,3,4,4,4,3,2,base,Useful container build baseline
 eslint-failure,ESLint or linter check failure,build,4,4,3,4,3,3,base,Common JS quality gate

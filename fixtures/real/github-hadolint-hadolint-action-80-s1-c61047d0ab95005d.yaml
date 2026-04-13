@@ -8,7 +8,7 @@ normalized_log: |-
     hadolint: Dockerfile.template: withBinaryFile: does not exist (No such file or directory)
     hadolint: latest/Dockerfile.tws: withBinaryFile: does not exist (No such file or directory)
 expectation:
-    expected_playbook: missing-test-fixture
+    expected_playbook: build-input-file-missing
     top_n: 3
     min_confidence: 0.55
 source:
