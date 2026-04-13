@@ -2,7 +2,7 @@ id: runner-disk-full
 title: CI runner disk full
 category: ci
 severity: critical
-base_score: 1.0
+base_score: 1.1
 tags: [disk, storage, runner, ci, space]
 stage_hints: [build, test]
 summary: |-
@@ -38,6 +38,9 @@ match:
     - "errno 28"
     - "out of disk space"
     - "Disk is full"
+    - "buildkit-mount"
+    - "failed to copy files"
+    - "docker build -t"
   none:
     - "file system is full"
     - "no space remaining"

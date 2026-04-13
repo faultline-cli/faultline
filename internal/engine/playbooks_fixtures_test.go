@@ -42,7 +42,7 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "install failure", file: "install-failure.log", wantID: "install-failure"},
 		{name: "yarn lockfile", file: "yarn-lockfile.log", wantID: "yarn-lockfile"},
 		{name: "working directory", file: "working-directory.log", wantID: "working-directory"},
-		{name: "runtime mismatch", file: "runtime-mismatch.log", wantID: "runtime-mismatch"},
+		{name: "node version mismatch", file: "runtime-mismatch.log", wantID: "node-version-mismatch"},
 		{name: "ssl cert error", file: "ssl-cert-error.log", wantID: "ssl-cert-error"},
 		{name: "container crash", file: "container-crash.log", wantID: "container-crash"},
 		{name: "health check failure", file: "health-check-failure.log", wantID: "health-check-failure"},
@@ -61,12 +61,8 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "quality gate failure", file: "quality-gate-failure.log", wantID: "quality-gate-failure"},
 		{name: "coverage gate failure", file: "coverage-gate-failure.log", wantID: "coverage-gate-failure"},
 		{name: "dependency drift", file: "dependency-drift.log", wantID: "dependency-drift"},
-		{name: "dotnet build", file: "dotnet-build.log", wantID: "dotnet-build"},
 		{name: "go compile error", file: "go-compile-error.log", wantID: "go-compile-error"},
-		{name: "rubocop failure", file: "rubocop-failure.log", wantID: "rubocop-failure"},
 		{name: "segfault", file: "segfault.log", wantID: "segfault"},
-		{name: "rspec failure", file: "rspec-failure.log", wantID: "rspec-failure"},
-		{name: "vitest failure", file: "vitest-failure.log", wantID: "vitest-failure"},
 	}
 
 	for _, tc := range tests {
@@ -104,6 +100,55 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 					results[i].Confidence != again[i].Confidence {
 					t.Fatalf("expected deterministic ranking for %s", tc.wantID)
 				}
+			}
+		})
+	}
+}
+
+func TestPremiumPackFixtures(t *testing.T) {
+	premiumDir := requirePremiumPack(t)
+	pbs, err := playbooks.LoadPacks([]playbooks.Pack{
+		{Name: playbooks.BundledPackName, Root: repoPlaybookDir(t)},
+		{Name: "premium-local", Root: premiumDir},
+	})
+	if err != nil {
+		t.Fatalf("load playbook packs: %v", err)
+	}
+
+	tests := []struct {
+		name   string
+		file   string
+		wantID string
+	}{
+		{name: "dotnet build", file: "dotnet-build.log", wantID: "dotnet-build"},
+		{name: "rubocop failure", file: "rubocop-failure.log", wantID: "rubocop-failure"},
+		{name: "rspec failure", file: "rspec-failure.log", wantID: "rspec-failure"},
+		{name: "vitest failure", file: "vitest-failure.log", wantID: "vitest-failure"},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			logPath := filepath.Join("testdata", "fixtures", tc.file)
+			data, err := os.ReadFile(logPath)
+			if err != nil {
+				t.Fatalf("read fixture %s: %v", logPath, err)
+			}
+
+			lines, err := readLines(strings.NewReader(string(data)))
+			if err != nil {
+				t.Fatalf("read lines: %v", err)
+			}
+			ctx := ExtractContext(lines)
+			results := matcher.Rank(pbs, lines, ctx)
+			if len(results) == 0 {
+				t.Fatalf("expected fixture %s to match at least one playbook", tc.file)
+			}
+			if got := results[0].Playbook.ID; got != tc.wantID {
+				t.Fatalf("expected top match %s, got %s", tc.wantID, got)
+			}
+			if results[0].Playbook.Metadata.PackName != "premium-local" {
+				t.Fatalf("expected premium-local pack metadata, got %#v", results[0].Playbook.Metadata)
 			}
 		})
 	}

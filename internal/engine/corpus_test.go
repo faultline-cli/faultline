@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"faultline/internal/playbooks"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -60,13 +61,6 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			file:      "pipeline-timeout-noisy.log",
 			wantTopID: "pipeline-timeout",
 			wantStage: "build",
-		},
-		{
-			name:      "terraform state lock noisy deploy log",
-			file:      "terraform-state-lock-noisy.log",
-			wantTopID: "terraform-state-lock",
-			wantStage: "deploy",
-			absentIDs: []string{"terraform-init", "terraform-apply-error"},
 		},
 		{
 			name:      "parallelism conflict noisy test log",
@@ -180,5 +174,30 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 				t.Fatalf("expected deterministic analysis for %s", tc.file)
 			}
 		})
+	}
+}
+
+func TestAnalyzeReaderPremiumPackCorpus(t *testing.T) {
+	premiumDir := requirePremiumPack(t)
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+	e := New(Options{PlaybookPackDirs: []string{premiumDir}, NoHistory: true})
+
+	data, err := os.ReadFile(filepath.Join("testdata", "corpus", "terraform-state-lock-noisy.log"))
+	if err != nil {
+		t.Fatalf("read corpus fixture terraform-state-lock-noisy.log: %v", err)
+	}
+
+	analysis, err := e.AnalyzeReader(strings.NewReader(string(data)))
+	if err != nil {
+		t.Fatalf("analyze terraform-state-lock-noisy.log: %v", err)
+	}
+	if len(analysis.Results) == 0 {
+		t.Fatal("expected ranked results for premium corpus fixture")
+	}
+	if got := analysis.Results[0].Playbook.ID; got != "terraform-state-lock" {
+		t.Fatalf("expected top match terraform-state-lock, got %s", got)
+	}
+	if analysis.Results[0].Playbook.Metadata.PackName == "" || analysis.Results[0].Playbook.Metadata.PackName == playbooks.BundledPackName {
+		t.Fatalf("expected premium pack metadata, got %#v", analysis.Results[0].Playbook.Metadata)
 	}
 }

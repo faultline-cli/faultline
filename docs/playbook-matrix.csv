@@ -1,0 +1,78 @@
+id,title,category,frequency,breadth,urgency,fix_confidence,distinctiveness,premiumness,package,notes
+aws-credentials,AWS credentials missing or invalid,auth,4,4,5,4,3,2,base,Broad cloud auth failure
+docker-auth,Docker registry authentication failure,auth,4,4,5,4,3,2,base,Broad container registry auth
+git-auth,Git authentication failure,auth,4,4,5,4,3,2,base,Broad source fetch auth
+missing-env,Missing required environment variable,auth,5,5,4,4,2,1,base,Essential first-run failure class
+ssh-key-auth,SSH key authentication failure,auth,3,3,5,4,3,2,base,Common private repo access issue
+cache-corruption,Corrupted or stale dependency cache,build,3,4,3,3,2,2,base,Common but usually secondary signal
+dependency-drift,Dependency version drift,build,4,5,4,3,3,2,base,Broad package ecosystem coverage
+docker-build-context,Docker build context or Dockerfile path issue,build,3,4,4,4,3,2,base,Useful container build baseline
+eslint-failure,ESLint or linter check failure,build,4,4,3,4,3,3,base,Common JS quality gate
+go-compile-error,Go compilation error,build,4,3,5,4,3,2,base,Clear compiler evidence
+go-sum-missing,Missing go.sum entry,build,3,3,4,5,3,2,base,Deterministic Go dependency repair
+install-failure,Package installation failure,build,4,5,4,3,2,1,base,Broad package install fallback
+merge-conflict,Unresolved merge conflict in source code,build,3,5,5,5,2,1,base,Universal and easy to fix
+node-out-of-memory,Node.js JavaScript heap out of memory,build,4,4,5,4,4,3,base,Frequent high-pain JS build issue
+node-version-mismatch,Node.js version mismatch,build,4,4,4,5,3,2,base,High-frequency CI mismatch
+npm-ci-lockfile,npm ci lockfile mismatch,build,5,4,4,5,3,2,base,Strong day-one npm signal
+path-case-mismatch,File path case mismatch,build,2,3,3,4,4,2,base,Distinct cross-platform failure
+pip-install-failure,pip package install failure,build,4,4,4,4,3,2,base,Broad Python build coverage
+pnpm-lockfile,pnpm lockfile mismatch or frozen install failed,build,3,3,4,5,4,3,base,Strong pnpm developer signal
+python-module-missing,Python module not found,build,4,4,4,4,3,2,base,Broad Python import/install failure
+quality-gate-failure,"Lint, format, or static-analysis gate failure",build,4,5,3,3,2,1,base,Generic fallback after tool-specific rules
+runtime-mismatch,"Python, Ruby, or Go runtime version mismatch",build,2,3,4,4,3,2,base,Narrowed generic fallback for remaining runtimes
+syntax-error,Syntax error in source code,build,5,5,5,4,2,1,base,Universal fallback with obvious evidence
+typescript-compile,TypeScript compile or type-check failure,build,4,4,5,4,4,3,base,Common and trusted TS signal
+working-directory,Wrong working directory,build,3,5,4,5,3,1,base,Broad CI ergonomics issue
+yarn-lockfile,Yarn lockfile out of date,build,4,4,4,5,3,2,base,Common JavaScript install failure
+artifact-upload-failure,CI artifact upload or download failed,ci,3,4,3,4,3,2,base,Broad CI transport failure
+pipeline-timeout,CI job or pipeline exceeded time limit,ci,4,5,5,3,2,1,base,Universal CI pain point
+runner-disk-full,CI runner disk full,ci,3,4,5,4,3,2,base,Important CI-host diagnostic
+secrets-not-available,CI secret or environment variable not available,ci,3,4,5,4,4,3,base,High-value CI platform issue
+config-mismatch,Deployment configuration mismatch,deploy,4,4,4,3,3,2,base,Broad deploy misconfiguration coverage
+container-crash,Container exited unexpectedly,deploy,4,4,5,3,4,3,base,Generic container runtime crash
+health-check-failure,Service health check failure,deploy,4,4,5,3,4,3,base,Common post-deploy failure
+image-pull-backoff,Container image pull failure,deploy,4,4,5,4,4,4,base,Strong Kubernetes starter aha moment
+k8s-crashloopbackoff,Kubernetes pod in CrashLoopBackOff,deploy,4,4,5,4,5,4,base,Iconic Kubernetes failure that builds trust
+port-conflict,Port already in use during deployment,deploy,3,3,4,4,3,2,base,Useful deploy-specific boundary
+connection-refused,Service or dependency connection refused,network,5,5,5,4,2,1,base,Universal network failure class
+dns-resolution,DNS resolution failure,network,4,5,4,4,2,1,base,Broad infrastructure baseline
+firewall-egress-blocked,Outbound network traffic blocked by firewall or security group,network,3,4,5,3,4,4,base,Ops-heavy but broadly valuable
+network-timeout,Network request timeout,network,5,5,4,3,2,1,base,Universal timeout baseline
+rate-limited,Request rate-limited by external service,network,4,4,4,3,4,3,base,Common API and registry bottleneck
+ssl-cert-error,SSL/TLS certificate error,network,4,4,5,4,3,2,base,Broad HTTPS trust issue
+disk-full,Disk space exhausted,runtime,4,4,5,4,2,1,base,Generic host or container storage exhaustion
+env-var-missing,Required environment variable missing or empty,runtime,5,5,4,5,2,1,base,Essential runtime baseline
+oom-killed,Process killed by OOM killer,runtime,4,4,5,4,3,2,base,High-signal exit-137 diagnosis
+permission-denied,Permission denied,runtime,4,5,4,4,2,1,base,Broad filesystem and execution failure
+port-in-use,Port already in use,runtime,4,4,4,5,3,2,base,Common service startup issue
+resource-limits,Resource limit exceeded,runtime,3,4,5,3,3,3,base,Broad but somewhat generic runtime pressure
+segfault,Process terminated by segmentation fault or fatal signal,runtime,2,4,5,2,4,3,base,Severe and distinctive crash class
+coverage-gate-failure,Generic coverage gate failure,test,3,4,3,4,2,1,base,Useful test policy baseline
+database-test-isolation,Test database state pollution between tests,test,3,3,4,3,4,3,base,Common integration-test failure family
+flaky-test,Flaky test failure,test,4,4,3,2,3,3,base,Low-confidence but valuable fallback
+go-data-race,Go race detector found a data race,test,3,2,5,5,5,4,base,Distinctive and commercially strong but important starter showcase
+missing-test-fixture,Missing test fixture or seed data,test,3,4,4,5,3,2,base,Broad test setup failure
+order-dependency,Test order dependency,test,3,3,4,3,4,3,base,Common but somewhat noisy test problem
+parallelism-conflict,Test parallelism conflict,test,3,3,4,4,4,3,base,Distinctive modern CI test issue
+snapshot-mismatch,Snapshot or golden-file mismatch,test,4,4,3,5,3,2,base,Common frontend and CLI test failure
+test-timeout,Test suite or individual test timed out,test,5,5,4,3,2,1,base,Universal test failure class
+missing-error-propagation,Error return value ignored or silently discarded,runtime,2,2,4,4,5,4,base,Starter source-detector baseline for inspect
+panic-in-http-handler,Unrecovered panic in HTTP or RPC handler,runtime,2,2,5,4,5,4,base,Starter source-detector baseline for inspect
+cargo-build,Rust Cargo build failure,build,2,2,4,4,4,5,premium,Valuable but ecosystem-specific
+dotnet-build,.NET/C# build or compile failure,build,3,3,5,4,4,5,premium,Enterprise ecosystem specialization
+gradle-build,Gradle build failure,build,3,3,5,3,4,5,premium,Deeper JVM ecosystem guidance
+java-version-mismatch,Java version incompatibility,build,3,4,4,5,4,4,premium,High-value JVM-specific expertise
+maven-dependency-resolution,Maven or Gradle dependency resolution failure,build,3,3,4,3,4,5,premium,Deep JVM dependency troubleshooting
+rubocop-failure,RuboCop linting failure,build,2,2,3,5,4,5,premium,Strong but Ruby-specific quality gate
+ruby-bundler,Bundler dependency mismatch,build,2,2,4,4,4,5,premium,Ruby ecosystem specialization
+helm-chart-failure,Helm chart install or upgrade failure,deploy,3,2,5,3,5,5,premium,Advanced Kubernetes packaging workflow
+terraform-init,Terraform initialization failure,deploy,3,2,5,4,5,5,premium,Infrastructure workflow specialization
+terraform-state-lock,Terraform state lock conflict,deploy,3,2,5,5,5,5,premium,Painful IaC issue with strong remediation value
+cors-error,CORS policy blocked a cross-origin request,network,3,3,3,3,4,4,premium,Frontend and browser workflow specialization
+database-connection-pool-exhausted,Database connection pool exhausted,runtime,3,3,5,3,5,4,premium,Deep service runtime diagnosis
+nodejs-unhandled-rejection,Node.js unhandled promise rejection,runtime,3,4,5,4,4,4,premium,Runtime debugging depth for Node services
+jest-worker-crash,Jest worker process crashed unexpectedly,test,3,3,4,3,4,4,premium,JS test-runner specialization
+pytest-fixture-error,pytest fixture setup or teardown failure,test,3,3,4,4,4,4,premium,Python test-runner specialization
+rspec-failure,Ruby RSpec test failure,test,2,2,4,4,4,4,premium,Ruby test specialization
+vitest-failure,Vitest test suite failure,test,3,3,4,4,4,4,premium,Modern frontend test specialization

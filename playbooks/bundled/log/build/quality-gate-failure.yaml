@@ -1,16 +1,20 @@
 id: quality-gate-failure
-title: Generic quality gate failure
+title: Lint, format, or static-analysis gate failure
 category: build
 severity: medium
 base_score: 0.4
 tags: [quality, lint, format, static-analysis, checks]
 stage_hints: [build, test]
 summary: |-
-  A non-compiler quality gate failed during CI. The job stopped because lint, formatting, or static-analysis checks reported violations even though the code may still compile.
+  A non-compiler quality gate failed during CI. The job stopped because lint,
+  formatting, or static-analysis checks reported violations even though the
+  code may still compile.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  A non-compiler quality gate failed during CI. The job stopped because lint, formatting, or static-analysis checks reported violations even though the code may still compile.
+  A non-compiler quality gate failed during CI. This playbook is the generic
+  fallback for quality tooling when Faultline cannot match a stronger
+  tool-specific rule.
 fix_markdown: |-
   ## Fix steps
 
@@ -65,6 +69,10 @@ match:
     - formatting violations
     - checks did not pass
   none:
+    - "ESLint"
+    - "eslint"
+    - "rubocop"
+    - "@typescript-eslint"
     - "SyntaxError:"
     - "error TS"
     - "tsc:"

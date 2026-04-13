@@ -7,6 +7,11 @@ Faultline v1 is easiest to ship as two separate products:
 
 That keeps the core binary easy to evaluate while preserving a clean paid upgrade path for additional playbooks.
 
+For local validation, this repo can point at a sibling premium repository
+through the ignored symlink at `playbooks/packs/premium-local` or by setting
+`PREMIUM_PACK_DIR`. Customer delivery should still publish the pack from a
+private repository or private archive.
+
 ## Product Split
 
 Public repository responsibilities:

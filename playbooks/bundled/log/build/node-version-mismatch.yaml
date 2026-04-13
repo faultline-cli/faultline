@@ -30,6 +30,8 @@ match:
   any:
     - "The engine \"node\" is incompatible with this module"
     - "Required engine node"
+    - requires node version
+    - "engine: unsatisfied"
     - "node: /.*: version"
     - "Unsupported engine"
     - "error node@"

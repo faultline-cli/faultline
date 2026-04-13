@@ -6,11 +6,16 @@ base_score: 1.0
 tags: [disk, storage, no space]
 stage_hints: [build, deploy]
 summary: |-
-  The CI runner ran out of disk space. Writes to the filesystem fail immediately when the disk is full, typically causing builds, artifact generation, or log writes to abort.
+  The host or container filesystem ran out of disk space. Writes fail
+  immediately when the disk is full, typically aborting builds, unpack steps,
+  or runtime file creation.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The CI runner ran out of disk space. Writes to the filesystem fail immediately when the disk is full, typically causing builds, artifact generation, or log writes to abort.
+  The host or container filesystem ran out of disk space. This starter rule is
+  intentionally kept separate from CI-runner-specific disk exhaustion so the
+  remediation can stay focused on the machine or filesystem that actually ran
+  out of space.
 fix_markdown: |-
   ## Fix steps
 
@@ -57,15 +62,25 @@ match:
     - file system is full
     - no space remaining
     - not enough space
+    - no space left on device
+    - "ENOSPC"
+    - "errno 28"
+    - "Write failed: No space left"
   none:
     - disk quota exceeded
-    - "Write failed: No space left"
-    - "ENOSPC"
-    - no space left on device
+    - github actions
+    - gitlab ci
+    - circleci
+    - runner
+    - buildkit-mount
+    - failed to copy files
+    - docker build -t
 why_it_matters_markdown: |-
   ## Why it matters
 
-  Large Docker images, build artifacts, or log files can fill a runner's disk before the job completes. Caches that are never invalidated also accumulate over time on persistent runners.
+  Large container layers, extracted archives, temporary build directories, or
+  verbose logs can fill a filesystem before the job completes. This is common
+  both on CI hosts and inside ephemeral containers with small writable layers.
 
   ## Prevention
 

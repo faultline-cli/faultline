@@ -1,48 +1,87 @@
 id: runtime-mismatch
-title: Runtime version mismatch
+title: Python, Ruby, or Go runtime version mismatch
 category: build
 severity: high
 base_score: 1.0
 tags: [node, python, ruby, go, java, version]
 stage_hints: [build, test]
 summary: |-
-  The installed runtime version does not satisfy the version constraint declared by the project. Dependencies or build tools require a different version.
+  The installed Python, Ruby, or Go runtime does not satisfy the version
+  constraint declared by the project. The build is using a language runtime
+  outside the version range expected by the repository or dependency set.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The installed runtime version does not satisfy the version constraint declared by the project. Dependencies or build tools require a different version.
+  The installed Python, Ruby, or Go runtime does not satisfy the version
+  constraint declared by the project. This playbook is the generic fallback
+  for those runtimes after more specific Node.js and Java rules have been
+  considered.
 fix_markdown: |-
   ## Fix steps
 
-  1. Specify the exact runtime version in your workflow file using a version manager (e.g., `actions/setup-node`, `setup-python`).
-  2. Match the version in `.node-version`, `.nvmrc`, `.python-version`, or `.tool-versions`.
-  3. Run the build locally with the same version to confirm it passes.
-  4. If the failure comes from a dependency engine check, confirm the package's documented minimum version before relaxing project constraints.
+  1. Identify the required version from the repository source of truth:
+     `.python-version`, `.ruby-version`, `.tool-versions`, `go.mod`, or the
+     CI image tag.
+  2. Pin the same version in the workflow or container image that runs the
+     failing job.
+  3. Re-run the build locally with the pinned runtime so you can confirm the
+     version mismatch is resolved before re-running CI.
+  4. If the failure came from a dependency upgrade, confirm the new minimum
+     runtime requirement before relaxing project constraints or changing the
+     CI image.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Runtime version mismatch is gone.
+  - Print the runtime version in CI and confirm it matches the version file or
+    toolchain declaration.
+  - Re-run the failing workflow step and confirm the original version error is
+    gone.
 match:
   any:
-    - requires node version
-    - node version not supported
-    - invalid engine node
-    - engines.node incompatible
     - python version
     - requires python
     - requires ruby version
     - go version
+    - unsupported python
+    - ruby version
+    - go.mod requires go
+    - go version .* required
+  none:
+    - node version
+    - engines.node
+    - invalid engine node
+    - setup-node
     - java version mismatch
-    - "engine: unsatisfied"
+    - unsupportedclassversionerror
 why_it_matters_markdown: |-
   ## Why it matters
 
-  Runtime version requirements drift over time. When the CI runner's default runtime is updated—or when the project pins to a newer version—existing workflow files that do not specify an explicit runtime version start failing.
+  Runtime requirements drift over time. When the CI runner's default Python,
+  Ruby, or Go version changes, or when the project begins requiring a newer
+  toolchain, workflows that rely on runner defaults start failing without any
+  change to the failure step itself.
 
   ## Prevention
 
-  - Pin all runtimes explicitly in CI workflow files rather than relying on runner defaults.
-  - Use a version file committed to the repo (`.nvmrc`, `.python-version`) as the single source of truth.
-  - Test against the minimum supported version in addition to the latest.
-  - Keep base images and setup actions versioned in the same pull request when runtime requirements change.
+  - Pin Python, Ruby, and Go versions explicitly in CI rather than relying on
+    runner defaults.
+  - Commit a single source of truth such as `.python-version`,
+    `.ruby-version`, `.tool-versions`, or `go.mod`.
+  - Update local dev tooling and CI images in the same change when runtime
+    requirements move.
+workflow:
+  likely_files:
+    - .python-version
+    - .ruby-version
+    - .tool-versions
+    - go.mod
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - python --version
+    - ruby --version
+    - go version
+  verify:
+    - python --version
+    - ruby --version
+    - go version

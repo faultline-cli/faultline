@@ -177,3 +177,29 @@ match:
 func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks/bundled"
 }
+
+func repoPremiumPackDir(_ testing.TB) string {
+	return "../../playbooks/packs/premium-local"
+}
+
+func requirePremiumPack(t testing.TB) string {
+	t.Helper()
+	for _, path := range []string{
+		repoPremiumPackDir(t),
+		"../../../faultline-premium",
+		"../../../faultline-premium-pack",
+	} {
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+		if resolved, err := filepath.EvalSymlinks(path); err == nil {
+			return resolved
+		}
+		if abs, err := filepath.Abs(path); err == nil {
+			return abs
+		}
+		return path
+	}
+	t.Skip("premium pack repository is not available locally")
+	return ""
+}
