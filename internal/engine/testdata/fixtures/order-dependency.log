@@ -1,0 +1,5 @@
+$ go test -shuffle=on ./...
+--- FAIL: TestInvoiceLifecycle (0.02s)
+invoice state left over from previous test run
+this test depends on previous test setup
+failure only appears when test order changes

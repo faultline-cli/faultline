@@ -1,0 +1,8 @@
+$ pytest -q
+collected 214 items
+users/test_create_user.py::test_creates_default_admin FAILED
+worker logs: retrying seed helper after transient setup warning
+E   sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_email_key"
+DETAIL:  Key (email)=(admin@example.com) already exists.
+previous tests passed in isolation but the full suite now fails together
+SQLSTATE 23505

@@ -1,0 +1,3 @@
+$ git status
+fatal: not a git repository (or any of the parent directories): .git
+bash: cd: src/service: No such file or directory

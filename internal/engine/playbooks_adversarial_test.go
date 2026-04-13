@@ -23,6 +23,18 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 		absentIDs []string
 	}{
 		{
+			name:      "database isolation beats generic order wording on unique violations",
+			file:      "database-test-isolation.log",
+			wantTopID: "database-test-isolation",
+			absentIDs: []string{"order-dependency"},
+		},
+		{
+			name:      "order dependency beats database isolation when logs describe prior-test state",
+			file:      "order-dependency.log",
+			wantTopID: "order-dependency",
+			absentIDs: []string{"database-test-isolation"},
+		},
+		{
 			name:      "runner disk full beats generic disk full wording",
 			file:      "runner-disk-full.log",
 			wantTopID: "runner-disk-full",
@@ -89,10 +101,34 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			absentIDs: []string{"working-directory"},
 		},
 		{
+			name:      "generic missing testdata path stays with missing test fixture",
+			file:      "generic-fixture-path-missing.log",
+			wantTopID: "missing-test-fixture",
+			absentIDs: []string{"working-directory"},
+		},
+		{
+			name:      "generic repo path miss stays with working directory",
+			file:      "generic-working-directory-path-missing.log",
+			wantTopID: "working-directory",
+			absentIDs: []string{"missing-test-fixture"},
+		},
+		{
 			name:      "network timeout beats test timeout style noise",
 			file:      "network-timeout.log",
 			wantTopID: "network-timeout",
 			absentIDs: []string{"connection-refused", "test-timeout", "pipeline-timeout"},
+		},
+		{
+			name:      "test context deadline stays with test timeout when runner evidence is present",
+			file:      "test-context-deadline.log",
+			wantTopID: "test-timeout",
+			absentIDs: []string{"network-timeout"},
+		},
+		{
+			name:      "network context deadline stays with network timeout outside test runner context",
+			file:      "network-context-deadline.log",
+			wantTopID: "network-timeout",
+			absentIDs: []string{"test-timeout"},
 		},
 		{
 			name:      "oom kill beats container crash symptom log",

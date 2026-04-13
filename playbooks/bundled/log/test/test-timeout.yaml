@@ -52,7 +52,6 @@ match:
     - "test timeout of"
     - "jest timeout"
     - "go test -timeout"
-    - "context deadline exceeded"
     - "test exceeded"
     - "after 30000ms"
     - "after 60000ms"

@@ -21,6 +21,13 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 		absentIDs []string
 	}{
 		{
+			name:      "database isolation noisy test log",
+			file:      "database-test-isolation-noisy.log",
+			wantTopID: "database-test-isolation",
+			wantStage: "test",
+			absentIDs: []string{"order-dependency"},
+		},
+		{
 			name:      "docker auth noisy build log",
 			file:      "docker-auth-noisy.log",
 			wantTopID: "docker-auth",

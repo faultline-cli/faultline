@@ -1,0 +1,3 @@
+$ curl -v --max-time 10 https://registry.npmjs.org/react
+Get "https://registry.npmjs.org/react": context deadline exceeded
+request timeout while waiting for upstream response

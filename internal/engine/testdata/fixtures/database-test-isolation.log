@@ -1,0 +1,5 @@
+$ pytest -q
+users/test_create_user.py::test_creates_default_admin FAILED
+E   sqlalchemy.exc.IntegrityError: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_email_key"
+DETAIL:  Key (email)=(admin@example.com) already exists.
+SQLSTATE 23505

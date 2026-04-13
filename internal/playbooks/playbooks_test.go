@@ -275,11 +275,11 @@ func TestFindPatternConflictsBundled(t *testing.T) {
 		t.Fatal("expected bundled playbooks to produce at least one pattern conflict report")
 	}
 
-	assertConflict(t, conflicts, "context deadline exceeded", []string{"network-timeout", "test-timeout"}, []string{"coverage-gate-failure"})
+	assertConflict(t, conflicts, "configmap not found", []string{"config-mismatch"}, []string{"env-var-missing", "missing-test-fixture"})
 
 	report := FormatPatternConflicts(conflicts)
-	if !strings.Contains(report, "context deadline exceeded") {
-		t.Fatalf("expected conflict report to include context deadline exceeded, got %q", report)
+	if !strings.Contains(report, "configmap not found") {
+		t.Fatalf("expected conflict report to include configmap not found, got %q", report)
 	}
 }
 

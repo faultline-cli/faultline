@@ -50,7 +50,6 @@ match:
     - leaked state
     - global state
     - "left over from previous"
-    - "already exists"
 why_it_matters_markdown: |-
   ## Why it matters
 
