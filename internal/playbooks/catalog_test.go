@@ -99,3 +99,47 @@ match:
 		t.Fatal("expected override-plus-extra pack error")
 	}
 }
+
+func TestCatalogIncludesInstalledPacks(t *testing.T) {
+	bundled := t.TempDir()
+	home := t.TempDir()
+	installedRoot := filepath.Join(home, ".faultline", installedPacksSubdir, "faultline-premium-pack")
+	if err := os.MkdirAll(filepath.Join(bundled, "log"), 0o755); err != nil {
+		t.Fatalf("mkdir bundled log dir: %v", err)
+	}
+	writePlaybookFixture(t, filepath.Join(bundled, "log"), "base.yaml", `
+id: bundled-only
+title: Bundled
+category: test
+severity: low
+match:
+  any:
+    - "bundled error"
+`)
+	if err := os.MkdirAll(installedRoot, 0o755); err != nil {
+		t.Fatalf("mkdir installed root: %v", err)
+	}
+	writePlaybookFixture(t, installedRoot, "premium.yaml", `
+id: premium-only
+title: Premium
+category: test
+severity: low
+match:
+  any:
+    - "premium error"
+`)
+
+	t.Setenv(envKey, bundled)
+	t.Setenv("HOME", home)
+
+	packs, err := NewCatalog("").Packs()
+	if err != nil {
+		t.Fatalf("Packs: %v", err)
+	}
+	if len(packs) != 2 {
+		t.Fatalf("expected bundled and installed pack, got %#v", packs)
+	}
+	if packs[1].Name != "faultline-premium-pack" || packs[1].Root != installedRoot {
+		t.Fatalf("unexpected installed pack: %#v", packs[1])
+	}
+}

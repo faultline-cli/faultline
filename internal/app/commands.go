@@ -17,6 +17,8 @@ type AnalyzeOptions struct {
 	Top int
 	// Mode selects quick or detailed human-readable output.
 	Mode output.Mode
+	// Format selects the human-readable output shape.
+	Format output.Format
 	// JSON overrides Mode and emits machine-readable JSON.
 	JSON bool
 	// CIAnnotations emits GitHub Actions-style ::warning:: lines.
@@ -47,8 +49,8 @@ func RunList(category, playbookDir string, w io.Writer) error {
 	return NewService().List(category, playbookDir, nil, w)
 }
 
-func RunExplain(id, playbookDir string, w io.Writer) error {
-	return NewService().Explain(id, playbookDir, nil, w)
+func RunExplain(id, playbookDir string, format output.Format, w io.Writer) error {
+	return NewService().Explain(id, playbookDir, nil, format, w)
 }
 
 func RunWorkflow(r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
@@ -76,6 +78,10 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 	}
 
 	renderOpts := renderer.DetectOptions(w)
+	if opts.Format == output.FormatMarkdown {
+		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(a, opts.Top, opts.Mode))
+		return err
+	}
 	_, err := fmt.Fprint(w, output.FormatAnalysisText(a, opts.Top, opts.Mode, renderOpts))
 	return err
 }

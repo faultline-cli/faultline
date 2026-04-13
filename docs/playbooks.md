@@ -73,3 +73,17 @@ Acceptance bar:
 - short, ordered fixes tied to the root cause
 - explicit negative signals when a nearby false positive is known
 - shipped playbooks must be defendable against at least one confusable example
+
+## Pack composition
+
+Faultline ships the starter catalog from `playbooks/bundled/` and composes any premium or team-specific packs on top of it.
+
+There are three supported ways to add extra packs:
+
+1. `faultline packs install <dir>` to copy a pack into `~/.faultline/packs/` for automatic loading on future runs
+2. repeat `--playbook-pack <dir>` for one-off or scripted composition
+3. set `FAULTLINE_PLAYBOOK_PACKS` for environment-driven composition
+
+Use `--playbooks <dir>` only for full catalog overrides such as testing a pack in isolation.
+
+For shipped premium packs, prefer `faultline packs install` as the customer-facing path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.

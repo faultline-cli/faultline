@@ -35,8 +35,14 @@ through an external directory.
 
 Additional packs can be composed on top of the bundled starter catalog through
 the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
-`--playbook-pack` flags. A full `--playbooks` override still resolves a single
-custom catalog root.
+`--playbook-pack` flags. Faultline also auto-loads any packs installed under
+`~/.faultline/packs/`, which is the persistent user-level upgrade path for
+premium playbooks. A full `--playbooks` override still resolves a single custom
+catalog root and does not combine with extra packs.
+
+This same `~/.faultline/packs/` convention is used by the Docker image at
+`/home/faultline/.faultline/packs`, so a mounted user directory can enable the
+same premium pack set in both local and containerized runs.
 
 ## Detector boundary
 
@@ -56,5 +62,6 @@ as `summary`, `diagnosis_markdown`, `fix_markdown`, and
 
 - markdown is presentation content only
 - structured playbook fields still drive matching and ranking
+- `--format markdown` emits markdown source from the same deterministic content model
 - `--json` bypasses terminal styling entirely
 - non-TTY and no-color environments fall back to plain output

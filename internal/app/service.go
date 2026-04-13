@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"text/tabwriter"
 
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
 	"faultline/internal/model"
 	"faultline/internal/output"
+	"faultline/internal/playbooks"
 	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
@@ -42,6 +44,10 @@ func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer)
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
 	}
+	if opts.Format == output.FormatMarkdown {
+		_, werr := fmt.Fprint(w, output.FormatFixMarkdown(a))
+		return werr
+	}
 	_, werr := fmt.Fprint(w, output.FormatFix(a, renderer.DetectOptions(w)))
 	return werr
 }
@@ -61,7 +67,7 @@ func (Service) List(category, playbookDir string, playbookPacks []string, w io.W
 }
 
 // Explain fetches a single playbook by id and writes its details to w.
-func (Service) Explain(id, playbookDir string, playbookPacks []string, w io.Writer) error {
+func (Service) Explain(id, playbookDir string, playbookPacks []string, format output.Format, w io.Writer) error {
 	pb, err := engine.New(engine.Options{
 		PlaybookDir:      playbookDir,
 		PlaybookPackDirs: playbookPacks,
@@ -70,7 +76,43 @@ func (Service) Explain(id, playbookDir string, playbookPacks []string, w io.Writ
 	if err != nil {
 		return err
 	}
+	if format == output.FormatMarkdown {
+		_, err = fmt.Fprint(w, output.FormatPlaybookDetailsMarkdown(pb))
+		return err
+	}
 	_, err = fmt.Fprint(w, output.FormatPlaybookDetails(pb, renderer.DetectOptions(w)))
+	return err
+}
+
+// ListInstalledPacks prints the user-installed extra packs.
+func (Service) ListInstalledPacks(w io.Writer) error {
+	packs, err := playbooks.ListInstalledPacks()
+	if err != nil {
+		return err
+	}
+	if len(packs) == 0 {
+		_, err := fmt.Fprintln(w, "No installed playbook packs.")
+		return err
+	}
+	tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
+	if _, err := fmt.Fprintln(tw, "NAME\tPLAYBOOKS\tPATH"); err != nil {
+		return err
+	}
+	for _, pack := range packs {
+		if _, err := fmt.Fprintf(tw, "%s\t%d\t%s\n", pack.Name, pack.PlaybookCount, pack.Root); err != nil {
+			return err
+		}
+	}
+	return tw.Flush()
+}
+
+// InstallPack installs a playbook pack into the user's persistent Faultline directory.
+func (Service) InstallPack(srcDir, name string, force bool, w io.Writer) error {
+	pack, err := playbooks.InstallPack(srcDir, name, force)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Installed pack %s with %d playbooks at %s\n", pack.Name, pack.PlaybookCount, pack.Root)
 	return err
 }
 

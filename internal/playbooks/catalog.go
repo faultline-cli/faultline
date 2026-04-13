@@ -2,8 +2,8 @@ package playbooks
 
 import (
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"faultline/internal/model"
@@ -131,14 +131,23 @@ func (c Catalog) Explain(id string) (model.Playbook, error) {
 }
 
 func (c Catalog) resolvedExtraPackDirs() []string {
+	installed := discoverInstalledPackDirs()
 	if len(c.extraPacks) > 0 {
-		return cleanPackDirs(c.extraPacks)
+		return cleanPackDirs(append(append([]string(nil), c.extraPacks...), installed...))
 	}
 	raw := strings.TrimSpace(os.Getenv(packsEnvKey))
 	if raw == "" {
+		return cleanPackDirs(installed)
+	}
+	return cleanPackDirs(append(strings.Split(raw, string(os.PathListSeparator)), installed...))
+}
+
+func discoverInstalledPackDirs() []string {
+	roots, err := DiscoverInstalledPackRoots()
+	if err != nil {
 		return nil
 	}
-	return cleanPackDirs(strings.Split(raw, string(os.PathListSeparator)))
+	return roots
 }
 
 func cleanPackDirs(dirs []string) []string {

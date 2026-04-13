@@ -27,7 +27,16 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newExplainCommand())
 	cmd.AddCommand(newWorkflowCommand())
+	cmd.AddCommand(newPacksCommand())
 	return cmd
+}
+
+func validateOutputFormat(value string) error {
+	format := output.Format(value)
+	if !format.Valid() {
+		return fmt.Errorf("--format must be %q or %q", output.FormatRaw, output.FormatMarkdown)
+	}
+	return nil
 }
 
 func newAnalyzeCommand() *cobra.Command {
@@ -35,6 +44,7 @@ func newAnalyzeCommand() *cobra.Command {
 		jsonOut       bool
 		top           int
 		mode          string
+		format        string
 		playbookDir   string
 		playbookPacks []string
 		ciAnnotations bool
@@ -66,6 +76,9 @@ func newAnalyzeCommand() *cobra.Command {
 			if mode != string(output.ModeQuick) && mode != string(output.ModeDetailed) {
 				return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
 			}
+			if err := validateOutputFormat(format); err != nil {
+				return err
+			}
 
 			input, err := ReadInput(args)
 			if err != nil {
@@ -76,6 +89,7 @@ func newAnalyzeCommand() *cobra.Command {
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:               top,
 				Mode:              output.Mode(mode),
+				Format:            output.Format(format),
 				JSON:              jsonOut,
 				CIAnnotations:     ciAnnotations,
 				NoHistory:         noHistory,
@@ -91,6 +105,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
@@ -103,6 +118,7 @@ func newAnalyzeCommand() *cobra.Command {
 
 func newFixCommand() *cobra.Command {
 	var (
+		format        string
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
@@ -113,6 +129,9 @@ func newFixCommand() *cobra.Command {
 		Short: "Show fix steps for the top diagnosis",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputFormat(format); err != nil {
+				return err
+			}
 			input, err := ReadInput(args)
 			if err != nil {
 				return err
@@ -121,6 +140,7 @@ func newFixCommand() *cobra.Command {
 
 			return app.NewService().Fix(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:              1,
+				Format:           output.Format(format),
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
@@ -128,6 +148,7 @@ func newFixCommand() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
@@ -139,6 +160,7 @@ func newInspectCommand() *cobra.Command {
 		jsonOut       bool
 		top           int
 		mode          string
+		format        string
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
@@ -152,6 +174,9 @@ func newInspectCommand() *cobra.Command {
 			if mode != string(output.ModeQuick) && mode != string(output.ModeDetailed) {
 				return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
 			}
+			if err := validateOutputFormat(format); err != nil {
+				return err
+			}
 			root := "."
 			if len(args) == 1 {
 				root = args[0]
@@ -159,6 +184,7 @@ func newInspectCommand() *cobra.Command {
 			return app.NewService().Inspect(root, app.AnalyzeOptions{
 				Top:              top,
 				Mode:             output.Mode(mode),
+				Format:           output.Format(format),
 				JSON:             jsonOut,
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
@@ -170,6 +196,7 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
@@ -200,6 +227,7 @@ func newListCommand() *cobra.Command {
 
 func newExplainCommand() *cobra.Command {
 	var (
+		format        string
 		playbookDir   string
 		playbookPacks []string
 	)
@@ -209,10 +237,14 @@ func newExplainCommand() *cobra.Command {
 		Short: "Show full details for a failure playbook",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.NewService().Explain(args[0], playbookDir, playbookPacks, cmd.OutOrStdout())
+			if err := validateOutputFormat(format); err != nil {
+				return err
+			}
+			return app.NewService().Explain(args[0], playbookDir, playbookPacks, output.Format(format), cmd.OutOrStdout())
 		},
 	}
 
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
 	return cmd
@@ -278,4 +310,55 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	return cmd
+}
+
+func newPacksCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "packs",
+		Short: "Manage installed playbook packs",
+		Long: strings.Join([]string{
+			"Install and inspect extra playbook packs that should be loaded automatically.",
+			"",
+			"Installed packs live under ~/.faultline/packs so they survive binary upgrades",
+			"and can be mounted into Docker containers using the same path convention.",
+		}, "\n"),
+	}
+	cmd.AddCommand(newPacksInstallCommand())
+	cmd.AddCommand(newPacksListCommand())
+	return cmd
+}
+
+func newPacksInstallCommand() *cobra.Command {
+	var (
+		name  string
+		force bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "install <dir>",
+		Short: "Install an extra playbook pack into the local Faultline directory",
+		Example: strings.Join([]string{
+			"  faultline packs install ../faultline-premium-pack",
+			"  faultline packs install ./faultline-premium-pack --force",
+		}, "\n"),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.NewService().InstallPack(args[0], name, force, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().StringVar(&name, "name", "", "installed pack name override")
+	cmd.Flags().BoolVar(&force, "force", false, "replace an existing installed pack with the same name")
+	return cmd
+}
+
+func newPacksListCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "list",
+		Short: "List locally installed extra playbook packs",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.NewService().ListInstalledPacks(cmd.OutOrStdout())
+		},
+	}
 }

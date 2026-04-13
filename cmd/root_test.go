@@ -191,6 +191,48 @@ func TestAnalyzeDetailedMode(t *testing.T) {
 	}
 }
 
+func TestAnalyzeMarkdownFormat(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--format", "markdown", "--mode", "detailed", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --format markdown: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "# Docker registry authentication failure") {
+		t.Fatalf("expected markdown heading, got %q", got)
+	}
+	if !strings.Contains(got, "- ID: `docker-auth`") {
+		t.Fatalf("expected markdown metadata, got %q", got)
+	}
+}
+
+func TestAnalyzeRejectsInvalidFormat(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--format", "html", "--no-history", logPath})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected invalid format error")
+	}
+	if !strings.Contains(err.Error(), "--format must be \"raw\" or \"markdown\"") {
+		t.Fatalf("unexpected invalid format error: %v", err)
+	}
+}
+
 func TestAnalyzeWithGitContextJSON(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	repoDir := writeTempRepo(t)
@@ -242,6 +284,25 @@ func TestFixCommand(t *testing.T) {
 	}
 	if !strings.Contains(got, "Fix steps") && !strings.Contains(got, "Verify the registry username") {
 		t.Fatalf("expected markdown fix content in fix output, got %q", got)
+	}
+}
+
+func TestFixCommandMarkdownFormat(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fix", "--format", "markdown", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fix --format markdown: %v", err)
+	}
+	if !strings.Contains(out.String(), "## Fix") {
+		t.Fatalf("expected markdown fix heading, got %q", out.String())
 	}
 }
 
@@ -326,6 +387,89 @@ func TestListCategoryFlag(t *testing.T) {
 	}
 }
 
+func TestPacksInstallAndAutoLoad(t *testing.T) {
+	home := t.TempDir()
+	extra := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(extra, ".git"), 0o755); err != nil {
+		t.Fatalf("mkdir .git: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(extra, ".git", "config"), []byte("[core]\nrepositoryformatversion = 0\n"), 0o600); err != nil {
+		t.Fatalf("write .git config: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(extra, "extra.yaml"), []byte(`
+id: premium-installed
+title: Premium Installed
+category: auth
+severity: high
+summary: |
+  Installed premium summary.
+diagnosis_markdown: |
+  ## Diagnosis
+
+  Installed premium diagnosis.
+fix_markdown: |
+  ## Fix steps
+
+  1. Installed premium fix.
+validation_markdown: |
+  ## Validation
+
+  - Installed premium validation.
+match:
+  any:
+    - "premium marker"
+`), 0o600); err != nil {
+		t.Fatalf("write premium pack: %v", err)
+	}
+
+	install := newRootCommand()
+	install.SetArgs([]string{"packs", "install", extra})
+	installOut := &bytes.Buffer{}
+	install.SetOut(installOut)
+	install.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+	t.Setenv("HOME", home)
+
+	if err := install.Execute(); err != nil {
+		t.Fatalf("execute packs install: %v", err)
+	}
+	if !strings.Contains(installOut.String(), "Installed pack") {
+		t.Fatalf("expected install confirmation, got %q", installOut.String())
+	}
+	if _, err := os.Stat(filepath.Join(home, ".faultline", "packs", filepath.Base(extra), ".git")); !os.IsNotExist(err) {
+		t.Fatalf("expected installed pack to skip .git metadata, got err=%v", err)
+	}
+
+	list := newRootCommand()
+	list.SetArgs([]string{"list"})
+	listOut := &bytes.Buffer{}
+	list.SetOut(listOut)
+	list.SetErr(new(bytes.Buffer))
+
+	if err := list.Execute(); err != nil {
+		t.Fatalf("execute list after pack install: %v", err)
+	}
+	if !strings.Contains(listOut.String(), "premium-installed") {
+		t.Fatalf("expected installed premium playbook in list output, got %q", listOut.String())
+	}
+	if !strings.Contains(listOut.String(), filepath.Base(extra)) {
+		t.Fatalf("expected installed pack name in list output, got %q", listOut.String())
+	}
+
+	packs := newRootCommand()
+	packs.SetArgs([]string{"packs", "list"})
+	packsOut := &bytes.Buffer{}
+	packs.SetOut(packsOut)
+	packs.SetErr(new(bytes.Buffer))
+
+	if err := packs.Execute(); err != nil {
+		t.Fatalf("execute packs list: %v", err)
+	}
+	if !strings.Contains(packsOut.String(), filepath.Base(extra)) {
+		t.Fatalf("expected installed pack in packs list, got %q", packsOut.String())
+	}
+}
+
 // ── explain ──────────────────────────────────────────────────────────────────
 
 func TestExplainCommand(t *testing.T) {
@@ -341,6 +485,26 @@ func TestExplainCommand(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "docker-auth") || !strings.Contains(out.String(), "Diagnosis") {
 		t.Fatalf("expected explain output for docker-auth, got %q", out.String())
+	}
+}
+
+func TestExplainCommandMarkdownFormat(t *testing.T) {
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"explain", "--format", "markdown", "docker-auth"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute explain --format markdown: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "# Docker registry authentication failure") {
+		t.Fatalf("expected markdown explain heading, got %q", got)
+	}
+	if !strings.Contains(got, "## Diagnosis") {
+		t.Fatalf("expected markdown diagnosis section, got %q", got)
 	}
 }
 

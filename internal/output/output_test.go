@@ -125,6 +125,27 @@ func TestFormatAnalysisTextQuickSingleMatch(t *testing.T) {
 	}
 }
 
+func TestFormatAnalysisMarkdownDetailed(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.91, []string{"authentication required"})
+	a.Context = model.Context{Stage: "deploy"}
+	a.Results[0].Explanation = model.ResultExplanation{
+		TriggeredBy: []string{"registry rejected credentials"},
+	}
+	a.Results[0].Breakdown = model.ScoreBreakdown{
+		BaseSignalScore:     0.91,
+		FinalScore:          1.11,
+		CompoundSignalBonus: 0.20,
+	}
+	a.RepoContext = &model.RepoContext{RepoRoot: "/repo", RecentFiles: []string{"Dockerfile"}}
+
+	text := FormatAnalysisMarkdown(a, 1, ModeDetailed)
+	for _, want := range []string{"# Docker auth", "- ID: `docker-auth`", "## Summary", "## Evidence", "## Triggered By", "## Score Breakdown", "## Repo Context"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in markdown output, got:\n%s", want, text)
+		}
+	}
+}
+
 func TestFormatAnalysisTextQuickTopN(t *testing.T) {
 	a := &model.Analysis{
 		Results: []model.Result{
@@ -177,6 +198,13 @@ func TestFormatAnalysisTextNilAnalysis(t *testing.T) {
 	text := FormatAnalysisText(nil, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
 	if !strings.Contains(text, "No known failure") {
 		t.Errorf("expected no-match message, got %q", text)
+	}
+}
+
+func TestFormatAnalysisMarkdownNilAnalysis(t *testing.T) {
+	text := FormatAnalysisMarkdown(nil, 1, ModeQuick)
+	if !strings.Contains(text, "# No Match") {
+		t.Fatalf("expected markdown no-match heading, got %q", text)
 	}
 }
 
@@ -244,6 +272,27 @@ func TestFormatPlaybookDetails(t *testing.T) {
 	}
 }
 
+func TestFormatPlaybookDetailsMarkdown(t *testing.T) {
+	pb := model.Playbook{
+		ID:                   "docker-auth",
+		Title:                "Docker Registry Auth",
+		Category:             "auth",
+		Severity:             "high",
+		Summary:              "The CI job could not authenticate.",
+		DiagnosisMarkdown:    "The registry credentials were rejected.",
+		FixMarkdown:          "1. Run docker login",
+		ValidationMarkdown:   "- Retry the image pull",
+		WhyItMattersMarkdown: "Builds cannot fetch images.",
+		Match:                model.MatchSpec{Any: []string{"pull access denied"}},
+	}
+	text := FormatPlaybookDetailsMarkdown(pb)
+	for _, want := range []string{"# Docker Registry Auth", "- ID: `docker-auth`", "## Diagnosis", "## Fix", "## Match Rules", "### match.any"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in markdown details, got:\n%s", want, text)
+		}
+	}
+}
+
 func TestFormatAnalysisTextShowsPremiumPack(t *testing.T) {
 	a := makeAnalysis("aws-credentials", "AWS credentials missing or invalid", "auth", 1.0, nil)
 	a.Results[0].Playbook.Metadata.PackName = "faultline-premium-pack"
@@ -262,6 +311,16 @@ func TestFormatAnalysisJSONIncludesPack(t *testing.T) {
 	}
 	if !strings.Contains(text, "\"pack\":\"faultline-premium-pack\"") {
 		t.Fatalf("expected pack in json output, got %q", text)
+	}
+}
+
+func TestFormatFixMarkdown(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker Auth", "auth", 1.0, nil)
+	text := FormatFixMarkdown(a)
+	for _, want := range []string{"# Docker Auth", "## Fix", "1. Fix step 1"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in markdown fix output, got %q", want, text)
+		}
 	}
 }
 

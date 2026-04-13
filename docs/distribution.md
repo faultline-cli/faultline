@@ -1,126 +1,145 @@
 # Faultline Distribution
 
-This repository is set up for a simple commercial distribution model:
+Faultline v1 is easiest to ship as two separate products:
 
-1. Sell access on Gumroad.
-2. Collect the buyer's GitHub username.
-3. Grant access to the private `faultline-cli` repository.
-4. Distribute versioned release tarballs from GitHub Releases.
+1. a public starter CLI repository with public releases
+2. a private premium playbook repository or private premium release archive
 
-The goal is to keep delivery low-friction without adding a hosted auth system.
+That keeps the core binary easy to evaluate while preserving a clean paid upgrade path for additional playbooks.
 
-## Recommended private repo layout
+## Product Split
 
-Keep the repository itself as the product surface:
+Public repository responsibilities:
 
-```text
-.
-├── cmd/
-├── internal/
-├── playbooks/
-│   ├── bundled/
-│   └── packs/
-├── docs/
-│   └── distribution.md
-├── .github/
-│   └── workflows/
-│       └── release.yml
-└── dist/
-    └── releases/
-        └── v1.2.3/
-            ├── faultline_v1.2.3_darwin_amd64.tar.gz
-            └── faultline_v1.2.3_linux_amd64.tar.gz
-```
+- source code for the CLI
+- bundled starter playbooks under `playbooks/bundled/`
+- public release tarballs
+- public Docker build instructions
 
-Release tarballs include:
+Private premium repository responsibilities:
 
-- the `faultline` binary
-- the bundled `playbooks/` directory, including `playbooks/bundled/`
-- the repository `README.md`
+- premium playbook pack only
+- optional private release archive for buyers who should not clone the repo
+- no fork of the CLI codebase unless there is a separate need
 
-Bundling `playbooks/` is required because the CLI loads playbooks from disk at
-runtime and resolves `/playbooks/bundled` by default.
+The premium repository should be a pack root that Faultline can load recursively.
 
-## Buyer delivery flow
+## Buyer Onboarding
 
-Use Gumroad for payment and GitHub for access control and updates.
-
-Suggested post-purchase message:
-
-```text
-Thanks for purchasing Faultline.
-
-To get access:
-
-1. Reply with your GitHub username or submit it here: <intake link>
-2. You'll be granted access to the private repository shortly
-3. Open the latest GitHub Release and download the archive for your OS
-```
-
-Suggested private repo onboarding snippet:
+The public starter install remains unchanged:
 
 ```bash
-curl -L <release-tarball-url> -o faultline.tar.gz
+curl -L <public-release-tarball-url> -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd faultline_<version>_<os>_<arch>
 ./faultline analyze build.log
-
-# Optional: verify that the premium pack is visible to Faultline.
-./faultline list --playbook-pack ./packs/premium
 ```
 
-## Manual access checklist
-
-For the first sales, keep the process manual:
-
-1. Confirm payment in Gumroad.
-2. Add the buyer to the private GitHub repository.
-3. Confirm they can see Releases.
-4. Ask them to run `faultline list --playbook-pack <premium-pack-dir>` and confirm the expected premium pack name appears in the `PACK` column.
-5. Send the onboarding snippet above.
-
-This keeps the system deterministic and avoids premature infrastructure work.
-
-## Release workflow
-
-Tagged releases are built by [release.yml](/home/jake/workspace/faultline/.github/workflows/release.yml).
-
-The workflow:
-
-1. runs `make test`
-2. reviews bundled playbook conflicts with `make review`
-3. composes starter with the premium pack when the premium repository is checked out in CI
-4. builds release tarballs with `make release-snapshot VERSION=<tag>`
-5. smoke tests the built tarball with `make smoke-release VERSION=<tag>`
-6. smoke tests the Docker image with `make docker-smoke IMAGE=faultline-release-smoke`
-7. uploads the archives as workflow artifacts
-8. publishes them to the GitHub Release for tag pushes
-
-To build the same artifacts locally:
+Premium onboarding should add one explicit install step:
 
 ```bash
-make release-snapshot VERSION=v0.1.0
-make smoke-release VERSION=v0.1.0
+# Option 1: clone the private premium repository
+git clone <private-premium-pack-repo> ../faultline-premium-pack
+
+# Option 2: unpack a private premium release archive
+tar -xzf faultline-premium-pack.tar.gz -C ..
+
+# Install the premium pack once
+./faultline packs install ../faultline-premium-pack
+
+# Verify the install
+./faultline packs list
+./faultline list
 ```
 
-Add the premium composition gate when the sister repository is available:
+`faultline packs install` copies the premium pack into `~/.faultline/packs/<pack-name>`. That gives buyers a stable local upgrade path even when they replace the Faultline binary with a newer public release.
+
+## Premium Upgrades
+
+Premium updates should not require a different CLI build. Buyers update the private pack, then reinstall it in place:
+
+```bash
+cd ../faultline-premium-pack && git pull
+./faultline packs install --force ../faultline-premium-pack
+```
+
+For archive-based delivery, the same pattern applies after unpacking the newer premium archive.
+
+## Verification Checklist
+
+For the initial manual sales flow:
+
+1. Confirm payment.
+2. Grant access to the private premium repository or send the premium archive.
+3. Ask the buyer to run `faultline packs install <premium-pack-dir>`.
+4. Ask the buyer to run `faultline packs list` and confirm the installed pack is shown.
+5. Ask the buyer to run `faultline list` and confirm premium playbooks appear in the `PACK` column.
+
+This keeps the upgrade path deterministic and supportable without a hosted entitlement system.
+
+## Docker Distribution
+
+The public Docker image should continue to ship only the starter catalog.
+
+Premium access in Docker should use the same installed-pack location as the host machine:
+
+```bash
+docker run --rm \
+    -v "$HOME/.faultline":/home/faultline/.faultline \
+    -v "$(pwd)":/workspace \
+    faultline analyze /workspace/build.log
+```
+
+That means one premium install can serve both local CLI runs and containerized runs.
+
+For teams that need premium packs baked into a custom image, create a thin derived image on top of the public base:
+
+```dockerfile
+FROM faultline:latest
+COPY faultline-premium-pack /home/faultline/.faultline/packs/faultline-premium-pack
+```
+
+Use that only for internal delivery or CI images. Keep the public image starter-only.
+
+## Release Artifacts
+
+Public release tarballs should contain:
+
+- the `faultline` binary
+- `playbooks/bundled/`
+- `README.md`
+
+Archives are written to `dist/releases/<version>/` by `make release-snapshot VERSION=<tag>`.
+
+## Release Workflow
+
+Tagged releases should continue to run this sequence:
+
+1. `make test`
+2. `make review`
+3. `make release-snapshot VERSION=<tag>`
+4. `make smoke-release VERSION=<tag>`
+5. `make docker-smoke IMAGE=faultline-release-smoke`
+6. publish release archives
+
+When the private premium repository is available in CI or checked out locally, extend the gate:
 
 ```bash
 make premium-check PREMIUM_PACK_DIR=../faultline-premium-pack
+make premium-review PREMIUM_PACK_DIR=../faultline-premium-pack
 make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium-pack
 ```
 
-Archives are written to `dist/releases/<version>/`.
+This catches duplicate IDs and cross-pack load errors before release.
 
-## Later upgrade path
+## Later Automation
 
-Only automate access after the paid flow is validated.
+Only automate premium access after the manual flow has been exercised enough to justify it.
 
-The first upgrade should be:
+The first reasonable automation step is still:
 
-1. Gumroad webhook
-2. small access service or GitHub Action entry point
-3. GitHub API call to grant repository access
+1. payment webhook or marketplace event
+2. small access grant workflow
+3. private repo invitation or private archive fulfillment
 
-Do not add license keys or a custom auth backend until distribution volume makes
-the manual process unmanageable.
+Avoid license keys or a hosted auth service until the manual repo-or-archive flow becomes operationally expensive.
