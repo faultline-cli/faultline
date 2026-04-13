@@ -165,6 +165,29 @@ premium repository carries the denser ecosystem and operator expertise that is
 most defensible to sell. Raw premium count is higher because the private pack is
 where the long-tail catalog continues to accumulate.
 
+## Current Review Baseline
+
+After the starter-versus-premium cleanup pass, `make premium-review` reports
+175 cross-pack pattern conflicts across the composed starter and premium
+catalogs.
+
+This report should be treated as an inspection artifact, not as a zero-defect
+requirement. At this point the remaining conflicts are concentrated in adjacent
+rule families that intentionally share some vocabulary:
+
+- timeout families such as test, network, and CI timeout wording
+- deploy and runtime restart families such as `container-crash`,
+  `k8s-crashloopbackoff`, and `oom-killed`
+- generic build failures versus ecosystem-specific rules such as Maven,
+  Gradle, .NET restore, and language-specific compile failures
+- artifact, cache, and CI housekeeping families where platforms emit similar
+  operational phrases
+
+The catalog should keep being reviewed for newly over-broad phrases, duplicate
+IDs, or obviously shadowed rules. It should not be forced toward zero reported
+conflicts when the remaining overlap reflects real neighboring root causes that
+still rank correctly in fixtures, adversarial tests, and corpus tests.
+
 ## Boundary Rationale By Theme
 
 - Keep in starter when the failure is common; broad; easy to validate; and
@@ -192,3 +215,6 @@ Use these rules to keep the boundary clean:
   tool-specific rules.
 - Run `make review`, `make premium-check`, and `make test` after any future
   boundary change so the starter and premium catalogs remain deterministic.
+- Treat `make premium-review` as a change-detection tool: new spikes or new
+  broad phrases deserve investigation, but some stable overlap between adjacent
+  rule families is expected.

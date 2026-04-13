@@ -34,8 +34,6 @@ match:
     - "Write failed: No space left"
     - "not enough disk space"
     - "insufficient disk space"
-    - "ENOSPC"
-    - "errno 28"
     - "out of disk space"
     - "Disk is full"
     - "buildkit-mount"

@@ -33,11 +33,8 @@ match:
     - "Error: CrashLoopBackOff"
     - "Restarting failed container"
     - "Reason: CrashLoopBackOff"
-    - "Last State:"
-    - "kubelet"
-    - "Exit Code:"
-    - "OOMKilled"
   none:
+    - "container exited with exit code 1"
     - ImagePullBackOff
     - ErrImagePull
     - "is forbidden"

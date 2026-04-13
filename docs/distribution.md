@@ -136,6 +136,10 @@ make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium
 ```
 
 This catches duplicate IDs and cross-pack load errors before release.
+`make premium-review` should be read as a review report for newly generic or
+confusable patterns. It is not a requirement that composed packs reach zero
+reported conflicts; some overlap between adjacent starter and premium rule
+families is expected and acceptable when ranking remains deterministic.
 
 ## Later Automation
 

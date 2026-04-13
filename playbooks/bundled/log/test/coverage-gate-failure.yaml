@@ -60,8 +60,6 @@ match:
   none:
     - snapshot mismatch
     - stored snapshot
-    - async test timed out
-    - context deadline exceeded
 workflow:
   likely_files:
     - coverage.out

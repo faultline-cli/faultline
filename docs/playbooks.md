@@ -66,6 +66,12 @@ Treat playbook growth as a deterministic review loop, not a content-volume goal.
 5. For every accepted playbook, add at least one positive fixture and one nearby negative or adversarial regression so ranking stays stable in noisy logs.
 6. Re-run `make review` after edits to inspect shared patterns and `make test` to confirm fixture, corpus, and ranking regressions remain deterministic.
 
+Review interpretation:
+
+- `make review` and `make premium-review` are overlap inspection tools, not a requirement that the catalog reach zero shared phrases.
+- Expect some stable overlap between adjacent rules such as timeout families, restart families, and generic-versus-specialized build failures.
+- Investigate new broad phrases, new duplicate IDs, or ranking regressions; do not churn mature rules only to drive the overlap count down.
+
 Acceptance bar:
 
 - one dominant playbook per root cause unless the detection boundary is genuinely different

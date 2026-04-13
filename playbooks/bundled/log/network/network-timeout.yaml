@@ -36,7 +36,8 @@ match:
     - connection timed out
     - read timeout
     - dial timeout
-    - context deadline exceeded
+    - 'Get ".*": context deadline exceeded'
+    - context deadline exceeded while fetching
     - operation timed out
     - request timeout
     - "ETIMEDOUT"

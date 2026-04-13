@@ -46,7 +46,6 @@ match:
     - address already in use
     - "bind: address already in use"
     - listen tcp
-    - cannot assign requested address
     - "EADDRINUSE"
   none:
     - port conflict

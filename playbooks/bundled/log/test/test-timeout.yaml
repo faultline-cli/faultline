@@ -53,8 +53,6 @@ match:
     - "jest timeout"
     - "go test -timeout"
     - "test exceeded"
-    - "after 30000ms"
-    - "after 60000ms"
     - "async test timed out"
     - "waiting for assertion"
   none:

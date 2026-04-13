@@ -6,11 +6,11 @@ base_score: 0.5
 tags: [ulimit, cpu, file-descriptors, threads]
 stage_hints: [build, test]
 summary: |-
-  The process exceeded an OS-enforced resource limit such as the maximum number of open file descriptors, threads, or processes.
+  The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The process exceeded an OS-enforced resource limit such as the maximum number of open file descriptors, threads, or processes.
+  The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
 fix_markdown: |-
   ## Fix steps
 
@@ -26,14 +26,9 @@ validation_markdown: |-
   - Confirm the original failure signature for Resource limit exceeded is gone.
 match:
   any:
-    - too many open files
     - ulimit
     - resource temporarily unavailable
-    - max open files
-    - file descriptor limit
     - cannot create thread
-    - "EMFILE"
-    - "ENFILE"
     - system limit
 why_it_matters_markdown: |-
   ## Why it matters

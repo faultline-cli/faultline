@@ -9,7 +9,6 @@ stage_hints: [build, deploy]
 match:
   any:
     - pull access denied
-    - authentication required
     - requested access to the resource is denied
     - "unauthorized: authentication required"
     - no basic auth credentials

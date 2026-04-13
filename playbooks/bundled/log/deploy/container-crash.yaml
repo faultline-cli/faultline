@@ -32,12 +32,10 @@ validation_markdown: |-
   - Confirm the original failure signature for Container exited unexpectedly is gone.
 match:
   any:
-    - "CrashLoopBackOff"
     - container exited with
     - "exit code 1"
     - "exit code 139"
     - container is restarting
-    - "Back-off restarting failed container"
   none:
     - resource_class
     - CircleCI resource class

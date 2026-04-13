@@ -52,7 +52,6 @@ match:
     - "Connection refused"
     - "ECONNREFUSED"
     - "connect: connection refused"
-    - "dial tcp"
     - "no connection could be made"
     - "failed to connect"
     - "is the server running"
