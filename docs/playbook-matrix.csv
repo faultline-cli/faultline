@@ -12,12 +12,15 @@ go-compile-error,Go compilation error,build,4,3,5,4,3,2,base,Clear compiler evid
 go-sum-missing,Missing go.sum entry,build,3,3,4,5,3,2,base,Deterministic Go dependency repair
 install-failure,Package installation failure,build,4,5,4,3,2,1,base,Broad package install fallback
 merge-conflict,Unresolved merge conflict in source code,build,3,5,5,5,2,1,base,Universal and easy to fix
+missing-executable,Required executable or runtime binary missing,build,4,4,5,5,4,2,base,High-signal CI image or runner toolchain failure
 node-out-of-memory,Node.js JavaScript heap out of memory,build,4,4,5,4,4,3,base,Frequent high-pain JS build issue
 node-version-mismatch,Node.js version mismatch,build,4,4,4,5,3,2,base,High-frequency CI mismatch
 npm-ci-lockfile,npm ci lockfile mismatch,build,5,4,4,5,3,2,base,Strong day-one npm signal
+npm-peer-dependency-conflict,npm peer dependency conflict,build,4,4,4,4,4,2,base,Distinct modern npm resolver failure with clear remediation
 path-case-mismatch,File path case mismatch,build,2,3,3,4,4,2,base,Distinct cross-platform failure
 pip-install-failure,pip package install failure,build,4,4,4,4,3,2,base,Broad Python build coverage
 pnpm-lockfile,pnpm lockfile mismatch or frozen install failed,build,3,3,4,5,4,3,base,Strong pnpm developer signal
+poetry-lockfile-drift,Poetry lockfile drift,build,3,3,4,5,4,2,base,Specific Python manifest-lock mismatch before import fallout
 python-module-missing,Python module not found,build,4,4,4,4,3,2,base,Broad Python import/install failure
 quality-gate-failure,"Lint, format, or static-analysis gate failure",build,4,5,3,3,2,1,base,Generic fallback after tool-specific rules
 runtime-mismatch,"Python, Ruby, or Go runtime version mismatch",build,2,3,4,4,3,2,base,Narrowed generic fallback for remaining runtimes

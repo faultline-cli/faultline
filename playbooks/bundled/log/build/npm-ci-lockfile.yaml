@@ -8,9 +8,12 @@ stage_hints: [build]
 match:
   any:
     - npm ci can only install packages when your package.json and package-lock.json
+    - npm error `npm ci` can only install packages when your
+    - package.json and package-lock.json are in sync
     - missing package-lock.json
     - npm ERR! cipm can only install packages
     - package-lock.json does not exist
+    - from lock file
     - run `npm install` to generate a lockfile
 summary: |-
   `npm ci` found a missing or out-of-sync `package-lock.json`.
@@ -40,3 +43,13 @@ why_it_matters: |-
   ## Why it matters
 
   Lockfile mismatches break reproducibility. Fixing the lockfile keeps local installs and CI installs on the same dependency graph.
+
+workflow:
+  likely_files:
+    - package.json
+    - package-lock.json
+    - .npmrc
+  local_repro:
+    - npm ci
+  verify:
+    - npm ci

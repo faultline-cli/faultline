@@ -33,6 +33,8 @@ match:
     - working directory not found
     - failed to change directory
   none:
+    - executable file not found in $PATH
+    - "exec /"
     - fixture
     - factory
     - testdata

@@ -1,0 +1,33 @@
+id: github-deep-mi-neurolit-11-s1-45a89a0b1aa10d02
+title: 'FATAL: "lit-inpainting": executable file not found in $PATH'
+fixture_class: real
+normalized_log: |-
+    I've git cloned the toolbox today, however, while running it using this script:
+    ```
+    ./neurolit/scripts/run_lit_containerized.sh --singularity \
+    --input_image ${INPUT_IMG} --mask_image ${seg_file_bin} \
+    --output_directory ${OUTPUT_DIR} --dilate 2
+    ```
+    results in this error:
+    ```
+    WARNING: Could not find any nv files on this host!
+    FATAL: "lit-inpainting": executable file not found in $PATH
+    ```
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/Deep-MI/neurolit/issues/11
+    repository: Deep-MI/neurolit
+    issue_number: 11
+    title: 'FATAL: "lit-inpainting": executable file not found in $PATH'
+    author: amirhusseinab
+    snippet: 1
+    fetched_at: "2026-04-13T12:33:43Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:40:53Z"
+fingerprint: 45a89a0b1aa10d02

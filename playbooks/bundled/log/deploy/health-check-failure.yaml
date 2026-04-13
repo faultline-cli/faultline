@@ -10,9 +10,12 @@ match:
     - health check failed
     - liveness probe failed
     - readiness probe failed
+    - readiness probe always fails
     - unhealthy
     - service is not ready
     - waiting for deployment to be ready
+    - /health/ready
+    - status 503 Service Unavailable
   none:
     - ECS
     - CannotPullContainerError
@@ -27,6 +30,8 @@ diagnosis: |-
   ## Diagnosis
 
   The deploy reached the runtime environment, but the process did not satisfy the configured readiness or liveness checks before the timeout window closed.
+
+  If liveness stays green while readiness returns `503`, the process usually started but is still blocked on startup work such as migrations, downstream API checks, or dependency initialization.
 
   Common causes:
 
@@ -46,6 +51,7 @@ fix: |-
   2. Verify the health check path and port match what the application actually serves.
   3. Confirm all required environment variables and secrets are present in the deployment.
   4. Check that dependent services such as databases and caches are reachable from the new pod.
+  5. If liveness is `200` while readiness is `503`, inspect startup tasks and dependency checks that gate the ready endpoint.
 validation: |-
   ## Validation
 

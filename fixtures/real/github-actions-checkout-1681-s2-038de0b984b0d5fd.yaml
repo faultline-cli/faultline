@@ -20,7 +20,7 @@ normalized_log: |-
     /usr/bin/docker exec 0[3](https://github.com/TechWhiskers/fastflow_core/actions/runs/8644594833/job/23700048482#step:3:3)0cae08918d43e6cbb15a[4](https://github.com/TechWhiskers/fastflow_core/actions/runs/8644594833/job/23700048482#step:3:4)a5b7b1b192276fc6a65970291c246d34a8349c3a0 sh -c "cat /etc/*release | grep ^ID"
     exec /__e/node20/bin/node: no such file or directory
 expectation:
-    expected_playbook: working-directory
+    expected_playbook: missing-executable
     top_n: 3
     min_confidence: 0.55
 source:

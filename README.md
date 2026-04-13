@@ -216,7 +216,7 @@ Faultline now ships with an exact split.
 
 | Package | Count | What it covers |
 | --- | --- | --- |
-| Bundled starter | 60 playbooks | Common auth, network, generic build, generic runtime, generic test, Node.js, TypeScript, Python, Go, core container and Kubernetes failures, starter source-detector coverage |
+| Bundled starter | 63 playbooks | Common auth, network, generic build, generic runtime, generic test, Node.js, TypeScript, Python, Go, core container and Kubernetes failures, plus starter coverage for missing executables, npm peer conflicts, and Poetry lock drift |
 | Premium repository | 83 playbooks | Deeper JVM, Ruby, Rust, and .NET build stacks, provider-specific CI workflows, Terraform and Helm workflows, richer test-runner coverage, CORS, database pool exhaustion, Node.js runtime debugging, advanced source detectors |
 
 Coverage matrix:

@@ -1,0 +1,35 @@
+id: github-mvisonneau-gitlab-ci-pipelines-exporter-562-s1-482ca340f6327b3b
+title: Readiness probe failed for gitlab.com
+fixture_class: real
+normalized_log: |-
+    I have deployed the Helm chart using the `gitlab.com` endpoint
+    ```
+    config:
+    gitlab:
+    url: https://gitlab.com/
+    token: $GCPE_GITLAB_TOKEN
+    ```
+    and readiness probe always fails when the exporter is polling the projects correctly.
+    Also, I have checked the liveness endpoint `/health/live` status 200 OK when `/health/ready` status 503 Service Unavailable.
+    Any idea what could be wrong?
+expectation:
+    expected_playbook: health-check-failure
+    top_n: 3
+    expected_stage: deploy
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/mvisonneau/gitlab-ci-pipelines-exporter/issues/562
+    repository: mvisonneau/gitlab-ci-pipelines-exporter
+    issue_number: 562
+    title: Readiness probe failed for gitlab.com
+    labels:
+        - Stale
+    author: max-teren
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:40:52Z"
+fingerprint: 482ca340f6327b3b

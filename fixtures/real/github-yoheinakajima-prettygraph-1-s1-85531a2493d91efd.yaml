@@ -1,0 +1,41 @@
+id: github-yoheinakajima-prettygraph-1-s1-85531a2493d91efd
+title: Poetry.lock is not consistent with pyproject.toml
+fixture_class: real
+normalized_log: |-
+    matt@WSL2:~/working$ git clone https://github.com/yoheinakajima/prettygraph
+    Cloning into 'prettygraph'...
+    remote: Enumerating objects: 29, done.
+    remote: Counting objects: 100% (29/29), done.
+    remote: Compressing objects: 100% (28/28), done.
+    remote: Total 29 (delta 11), reused 0 (delta 0), pack-reused 0
+    Receiving objects: 100% (29/29), 103.88 KiB | 1.85 MiB/s, done.
+    Resolving deltas: 100% (11/11), done.
+    matt@WSL2:~/working$ cd prettygraph/
+    matt@WSL2:~/working/prettygraph (main)$ poetry install
+    Creating virtualenv python-template-hgXLYGdK-py3.10 in /home/matt/.cache/pypoetry/virtualenvs
+    Installing dependencies from lock file
+    Warning: poetry.lock is not consistent with pyproject.toml. You may be getting improper dependencies. Run `poetry lock [--no-update]` to fix it.
+    Because python-template depends on python-dotenv (^0.20.0) which doesn't match any versions, version solving failed.
+    matt@WSL2:~/working/prettygraph (main)$ poetry run python main.py
+    Traceback (most recent call last):
+    File "/home/matt/working/prettygraph/main.py", line 1, in <module>
+    from flask import Flask, render_template, request, jsonify
+    ModuleNotFoundError: No module named 'flask'
+expectation:
+    expected_playbook: poetry-lockfile-drift
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/yoheinakajima/prettygraph/issues/1
+    repository: yoheinakajima/prettygraph
+    issue_number: 1
+    title: Poetry.lock is not consistent with pyproject.toml
+    author: mattlgroff
+    snippet: 1
+    fetched_at: "2026-04-13T12:33:17Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:40:52Z"
+fingerprint: 85531a2493d91efd

@@ -1,0 +1,44 @@
+id: github-mercurjs-b2c-marketplace-storefront-302-s1-c2521a338a59de8d
+title: npm error ERESOLVE unable to resolve dependency tree
+fixture_class: real
+normalized_log: |-
+    npm i
+    npm error code ERESOLVE
+    npm error ERESOLVE unable to resolve dependency tree
+    npm error
+    npm error While resolving: b2c-storefront@1.5.1
+    npm error Found: react@19.2.4
+    npm error node_modules/react
+    npm error react@"^19.2.1" from the root project
+    npm error
+    npm error Could not resolve dependency:
+    npm error peer react@"^18.3.1" from @medusajs/ui@4.1.1
+    npm error node_modules/@medusajs/ui
+    npm error @medusajs/ui@"^4.0.33" from the root project
+    npm error
+    npm error Fix the upstream dependency conflict, or retry
+    npm error this command with --force or --legacy-peer-deps
+    npm error to accept an incorrect (and potentially broken) dependency resolution.
+    npm error
+    npm error
+    npm error For a full report see:
+    npm error \AppData\Local\npm-cache\_logs\2026-02-06T18_27_38_978Z-eresolve-report.txt
+    npm error A complete log of this run can be found in: \AppData\Local\npm-cache\_logs\2026-02-06T18_27_38_978Z-debug-0.log
+expectation:
+    expected_playbook: npm-peer-dependency-conflict
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/mercurjs/b2c-marketplace-storefront/issues/302
+    repository: mercurjs/b2c-marketplace-storefront
+    issue_number: 302
+    title: npm error ERESOLVE unable to resolve dependency tree
+    author: dev-tokn
+    snippet: 1
+    fetched_at: "2026-04-13T12:33:17Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:40:52Z"
+fingerprint: c2521a338a59de8d

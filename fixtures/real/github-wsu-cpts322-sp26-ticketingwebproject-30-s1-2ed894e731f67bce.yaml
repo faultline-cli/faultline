@@ -1,0 +1,26 @@
+id: github-wsu-cpts322-sp26-ticketingwebproject-30-s1-2ed894e731f67bce
+title: 'Fix frontend-ci failure: package-lock.json out of sync with package.json'
+fixture_class: real
+normalized_log: |-
+    ## Error
+    npm error `npm ci` can only install packages when your
+    package.json and package-lock.json are in sync.
+    Missing: yaml@2.8.3 from lock file
+expectation:
+    expected_playbook: npm-ci-lockfile
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/WSU-CPTS322-SP26/TicketingWebProject/issues/30
+    repository: WSU-CPTS322-SP26/TicketingWebProject
+    issue_number: 30
+    title: 'Fix frontend-ci failure: package-lock.json out of sync with package.json'
+    author: SURAKANTISRISHANTHREDDY
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:40:51Z"
+fingerprint: 2ed894e731f67bce

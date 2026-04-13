@@ -1,0 +1,74 @@
+id: missing-executable
+title: Required executable or runtime binary missing
+category: build
+severity: high
+base_score: 1.1
+tags: [toolchain, executable, binary, path, runtime]
+stage_hints: [build, test, deploy]
+match:
+  any:
+    - executable file not found in $PATH
+    - "exec /"
+    - "command not found"
+    - is not recognized as an internal or external command
+  none:
+    - fixture
+    - testdata
+    - cannot stat
+    - package-lock.json
+    - "Dockerfile: no such file or directory"
+summary: |-
+  The job tried to launch a required tool or runtime binary, but that executable was missing from the image, runner, or expected path.
+diagnosis: |-
+  ## Diagnosis
+
+  The failing step reached the point where it tried to execute a binary, but the runner could not find that binary in `$PATH` or at the configured absolute path.
+
+  Common causes:
+
+  - the base image does not include the required tool
+  - the workflow assumes a runtime path that does not exist inside a container job
+  - an install step failed or never ran before the command executed
+  - a wrapper script points at a moved or renamed binary
+fix: |-
+  ## Fix steps
+
+  1. Identify which command or runtime path the failing step expects to execute.
+  2. Confirm the binary exists in the active runner or container image:
+
+     ```bash
+     command -v <tool>
+     ls -l <expected-path>
+     ```
+
+  3. Install the missing package in the job image or switch to an image that already contains the required runtime.
+  4. If the path is hard-coded, update the workflow or wrapper script to use the actual installed location.
+  5. If the failure happens only inside a containerized CI step, make sure the container image includes the same runtime that the host-based workflow expects.
+validation: |-
+  ## Validation
+
+  - `command -v <tool>` returns a valid path inside the same environment that runs the failing step.
+  - Re-run the job and confirm the step starts the executable instead of failing before launch.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing executables stop the job before application logic even begins, so they often hide the real work the pipeline was supposed to perform.
+
+  ## Prevention
+
+  - Standardize runner or container images for each workflow family.
+  - Add a lightweight toolchain smoke step for critical executables before longer build or test stages.
+  - Avoid hard-coding host-specific binary paths when a normal `$PATH` lookup will work.
+workflow:
+  likely_files:
+    - Dockerfile
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - docker-compose*.yml
+    - scripts/**/*
+  local_repro:
+    - command -v <tool>
+    - ls -l <expected-path>
+  verify:
+    - command -v <tool>

@@ -16,6 +16,10 @@ match:
     - failed to resolve dependencies
     - dependency resolution failed
   none:
+    - npm error code ERESOLVE
+    - npm ERR! code ERESOLVE
+    - ERESOLVE unable to resolve dependency tree
+    - --legacy-peer-deps
     - could not find artifact
     - could not resolve all files for configuration
     - transfer failed for

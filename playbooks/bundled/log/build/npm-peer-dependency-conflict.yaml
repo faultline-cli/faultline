@@ -1,0 +1,60 @@
+id: npm-peer-dependency-conflict
+title: npm peer dependency conflict
+category: build
+severity: medium
+base_score: 1.0
+tags: [npm, node, dependencies, peer-deps, resolution]
+stage_hints: [build]
+match:
+  any:
+    - npm error code ERESOLVE
+    - npm ERR! code ERESOLVE
+    - ERESOLVE unable to resolve dependency tree
+    - Fix the upstream dependency conflict, or retry
+    - --legacy-peer-deps
+summary: |-
+  npm could not build a valid dependency tree because one package requires a peer version that conflicts with what the project currently installs.
+diagnosis: |-
+  ## Diagnosis
+
+  npm reached dependency resolution, but a package declared a peer dependency range that does not overlap with the version selected by the root project or another dependency.
+
+  This is more specific than generic dependency drift: the resolver is explicitly telling you that a peer contract is incompatible.
+fix: |-
+  ## Fix steps
+
+  1. Identify the package pair shown in the `Found:` and `Could not resolve dependency:` lines.
+  2. Align the top-level package versions so the peer dependency range is satisfied.
+  3. Regenerate the lockfile after updating `package.json`:
+
+     ```bash
+     npm install
+     ```
+
+  4. Avoid relying on `--legacy-peer-deps` or `--force` in CI unless you are intentionally accepting an unsupported combination.
+  5. If the conflict appeared after a transitive upgrade, pin the affected packages until the upstream packages publish compatible peer ranges.
+validation: |-
+  ## Validation
+
+  - Re-run `npm install` or `npm ci` from a clean environment.
+  - Confirm the resolver no longer reports `ERESOLVE` or a peer dependency conflict.
+why_it_matters: |-
+  ## Why it matters
+
+  Peer dependency conflicts usually mean the package graph is internally inconsistent. Forcing past them can produce builds that install but fail at runtime or during bundling.
+
+  ## Prevention
+
+  - Update tightly coupled frontend packages together.
+  - Review peer dependency ranges before major version upgrades.
+  - Keep the npm version used locally aligned with CI so the resolver behavior stays consistent.
+workflow:
+  likely_files:
+    - package.json
+    - package-lock.json
+    - .npmrc
+  local_repro:
+    - npm install
+    - npm ls
+  verify:
+    - npm ls

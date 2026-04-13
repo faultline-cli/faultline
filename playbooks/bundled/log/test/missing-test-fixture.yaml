@@ -55,6 +55,8 @@ match:
     - "setup failed"
     - "testdata"
   none:
+    - executable file not found in $PATH
+    - "exec /"
     - chdir
     - working directory not found
     - failed to change directory

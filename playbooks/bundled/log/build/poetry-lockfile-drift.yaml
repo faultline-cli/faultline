@@ -1,0 +1,58 @@
+id: poetry-lockfile-drift
+title: Poetry lockfile drift
+category: build
+severity: medium
+base_score: 1.0
+tags: [python, poetry, lockfile, dependencies]
+stage_hints: [build, test]
+match:
+  any:
+    - poetry.lock is not consistent with pyproject.toml
+    - Run `poetry lock [--no-update]` to fix it.
+    - Installing dependencies from lock file
+    - version solving failed
+summary: |-
+  Poetry is installing from a lockfile that no longer matches `pyproject.toml`, so dependency resolution fails before the environment is usable.
+diagnosis: |-
+  ## Diagnosis
+
+  The project manifest and `poetry.lock` have drifted apart. Poetry warns that the lockfile is stale, then fails to solve or install the dependency set that the project now declares.
+
+  Any later import error is usually a downstream effect of the failed install, not the primary root cause.
+fix: |-
+  ## Fix steps
+
+  1. Regenerate the lockfile from the current manifest:
+
+     ```bash
+     poetry lock --no-update
+     ```
+
+  2. If resolution still fails, update the incompatible dependency constraint in `pyproject.toml` and re-run `poetry lock`.
+  3. Commit both `pyproject.toml` and `poetry.lock` together.
+  4. Recreate the virtual environment if Poetry cached a broken environment from an earlier failed install.
+validation: |-
+  ## Validation
+
+  - Run `poetry install` from a clean checkout.
+  - Confirm Poetry no longer warns that `poetry.lock` is inconsistent with `pyproject.toml`.
+  - Re-run the failing Python command after the install completes successfully.
+why_it_matters: |-
+  ## Why it matters
+
+  A stale Poetry lockfile turns a reproducible Python environment into a misleading partial install. The first visible failure may be an import error, but the real defect is manifest-lock drift.
+
+  ## Prevention
+
+  - Update `poetry.lock` in the same change as every manifest edit.
+  - Use one team-standard Poetry version in local development and CI.
+  - Add a CI check that runs `poetry install` from a clean environment on dependency changes.
+workflow:
+  likely_files:
+    - pyproject.toml
+    - poetry.lock
+  local_repro:
+    - poetry install
+    - poetry lock --no-update
+  verify:
+    - poetry install

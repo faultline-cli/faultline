@@ -6,7 +6,7 @@ normalized_log: |-
     exec /__e/node20/bin/node: no such file or directory
     ```
 expectation:
-    expected_playbook: missing-test-fixture
+    expected_playbook: missing-executable
     top_n: 3
     min_confidence: 0.55
 source:
