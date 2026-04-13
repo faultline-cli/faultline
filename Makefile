@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 PREMIUM_PACK_DIR ?=
 PREMIUM_PACK_LINK ?= playbooks/packs/premium-local
 
-.PHONY: help build run test bench review premium-path premium-link premium-check smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test bench review premium-path premium-link premium-check premium-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -22,6 +22,7 @@ help:
 		"  premium-path    Print the resolved premium pack path used locally" \
 		"  premium-link    Create/update the ignored local premium-pack symlink" \
 		"  premium-check   Compose starter with PREMIUM_PACK_DIR and fail on duplicate IDs or pack load errors" \
+		"  premium-review  Compose starter with PREMIUM_PACK_DIR and print overlap conflicts across the combined catalog" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
@@ -59,6 +60,10 @@ premium-link:
 premium-check:
 	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
 	$(GO) run ./cmd/pack-compose-check --pack "$$resolved"
+
+premium-review:
+	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
+	$(GO) run ./cmd/pack-compose-check --pack "$$resolved" --review
 
 smoke-release:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) sh ./scripts/smoke-release.sh

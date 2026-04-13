@@ -1,0 +1,11 @@
+$ pytest -q
+============================= test session starts =============================
+collected 12 items
+
+tests/test_seed.py::test_uses_fixture ERROR
+beforeAll hook failed while loading seed fixture
+FileNotFoundError: [Errno 2] No such file or directory: 'testdata/users.json'
+could not find test data for users fixture
+setup failed
+=========================== short test summary info ===========================
+ERROR tests/test_seed.py::test_uses_fixture

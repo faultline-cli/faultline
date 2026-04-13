@@ -1,0 +1,5 @@
+$ pytest -q
+tests/test_seed.py::test_uses_fixture ERROR
+FileNotFoundError: [Errno 2] No such file or directory: 'testdata/users.json'
+setup failed: fixture file missing
+could not find test data for users fixture

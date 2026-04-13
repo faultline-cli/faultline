@@ -26,7 +26,9 @@ func (s *stringSliceFlag) Set(value string) error {
 
 func main() {
 	var packs stringSliceFlag
+	var review bool
 	flag.Var(&packs, "pack", "external playbook pack directory to compose with the bundled starter catalog; repeatable")
+	flag.BoolVar(&review, "review", false, "print deterministic overlap review for the composed catalog")
 	flag.Parse()
 
 	if len(packs) == 0 {
@@ -53,4 +55,9 @@ func main() {
 
 	fmt.Printf("composed %d packs successfully: %s\n", len(resolved), strings.Join(names, ", "))
 	fmt.Printf("loaded %d playbooks\n", len(pbs))
+	if review {
+		conflicts := playbooks.FindPatternConflicts(pbs)
+		fmt.Printf("found %d pattern conflicts across composed packs\n", len(conflicts))
+		fmt.Print(playbooks.FormatPatternConflicts(conflicts))
+	}
 }

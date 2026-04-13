@@ -1,0 +1,5 @@
+$ npm ci
+npm ERR! code ETIMEDOUT
+npm ERR! network request to https://registry.npmjs.org/react failed, reason: connect ETIMEDOUT 104.16.25.35:443
+npm ERR! network read timeout at: https://registry.npmjs.org/react
+failed to connect to registry.npmjs.org after 3 attempts

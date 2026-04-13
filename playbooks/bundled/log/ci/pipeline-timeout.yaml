@@ -62,6 +62,13 @@ match:
     - "Timeout: Timeout reached"
     - "ERROR: Job failed (system failure): job execution failed on runner"
     - "has been running for more than"
+  none:
+    - "Test timed out"
+    - "async test timed out"
+    - "go test -timeout"
+    - "after 30000ms"
+    - "after 60000ms"
+    - "waiting for assertion"
 why_it_matters_markdown: |-
   ## Why it matters
 

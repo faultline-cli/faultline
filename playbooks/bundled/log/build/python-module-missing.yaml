@@ -1,0 +1,65 @@
+id: python-module-missing
+title: Python dependency import failure
+category: build
+severity: high
+base_score: 1.0
+tags: [python, pip, import, dependency, pytest]
+stage_hints: [build, test]
+summary: |-
+  Python failed during import because the CI environment does not have a required module installed.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  Python reached the failing test or entrypoint, but importing a required module failed before execution could continue.
+
+  This usually means the dependency was not installed into the active environment, the wrong requirements set was used, or the CI job skipped the dependency bootstrap step.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Install the missing package into the same environment used by CI, then rerun the failing command.
+  2. Check the dependency manifest used in CI (`requirements.txt`, `pyproject.toml`, `poetry.lock`, or constraints files) and confirm the missing package is declared there.
+  3. Verify the workflow did not skip the Python dependency installation step or select the wrong extras group.
+  4. If the import is optional locally but required in CI, make the dependency explicit instead of relying on a preloaded runner image.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the dependency install step for the active environment.
+  - Re-run the failing Python command or test target.
+  - Confirm the original `ModuleNotFoundError` is gone.
+match:
+  any:
+    - importerror while importing test module
+    - collected 0 items / 1 error
+  all:
+    - "modulenotfounderror:"
+    - no module named
+  none:
+    - cannot find module
+    - case-insensitive
+    - capitalization
+    - wrong case
+    - error ts
+    - "tsc:"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Missing Python dependencies usually fail early and block the rest of the build or test stage. Tight detection matters because nearby JavaScript and path-case errors can look superficially similar if the rule only keys on generic module text.
+
+  ## Prevention
+
+  - Keep one committed dependency source of truth for CI and local development.
+  - Install dependencies in every CI job instead of assuming the runner image already has them.
+  - Add a lightweight import smoke test for critical Python entrypoints after dependency changes.
+workflow:
+  likely_files:
+    - requirements.txt
+    - pyproject.toml
+    - poetry.lock
+    - constraints*.txt
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - python -m pip install -r requirements.txt
+    - pytest -q
+  verify:
+    - pytest -q

@@ -1,0 +1,4 @@
+$ ./bin/payments-api
+listen tcp :8080: bind: address already in use
+EADDRINUSE
+cannot assign requested address

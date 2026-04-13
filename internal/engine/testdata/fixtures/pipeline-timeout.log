@@ -1,0 +1,6 @@
+Running with gitlab-runner 17.0.0
+$ npm run build
+Job's timeout exceeded
+job timed out
+timed out after 1h0m0s
+has been running for more than 1h0m0s

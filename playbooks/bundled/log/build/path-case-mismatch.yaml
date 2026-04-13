@@ -53,6 +53,8 @@ match:
     - capitalization
     - wrong case
   none:
+    - "modulenotfounderror:"
+    - no module named
     - error ts
     - "tsc:"
     - found 1 error

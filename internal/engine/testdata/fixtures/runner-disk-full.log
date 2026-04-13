@@ -1,0 +1,4 @@
+$ docker build -t app .
+failed to copy files: write /var/lib/docker/tmp/buildkit-mount/cache: no space left on device
+Write failed: No space left
+ENOSPC

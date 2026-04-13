@@ -48,6 +48,12 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			absentIDs: []string{"dns-resolution"},
 		},
 		{
+			name:      "pipeline timeout noisy build log",
+			file:      "pipeline-timeout-noisy.log",
+			wantTopID: "pipeline-timeout",
+			wantStage: "build",
+		},
+		{
 			name:      "terraform state lock noisy deploy log",
 			file:      "terraform-state-lock-noisy.log",
 			wantTopID: "terraform-state-lock",
@@ -59,6 +65,20 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			file:      "parallelism-conflict-noisy.log",
 			wantTopID: "parallelism-conflict",
 			wantStage: "test",
+		},
+		{
+			name:      "missing test fixture noisy test log",
+			file:      "missing-test-fixture-noisy.log",
+			wantTopID: "missing-test-fixture",
+			wantStage: "test",
+			absentIDs: []string{"working-directory"},
+		},
+		{
+			name:      "python module missing noisy test log",
+			file:      "python-module-missing-noisy.log",
+			wantTopID: "python-module-missing",
+			wantStage: "test",
+			absentIDs: []string{"path-case-mismatch", "typescript-compile"},
 		},
 		{
 			name:      "port in use noisy deploy log",

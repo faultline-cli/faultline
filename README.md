@@ -146,6 +146,17 @@ make release-check VERSION=v0.1.0
 
 `make premium-path` shows which local premium-pack directory Faultline will use.
 
+Review the composed starter-plus-premium catalog with the same deterministic
+pattern-conflict report used for bundled playbooks:
+
+```bash
+make premium-review PREMIUM_PACK_DIR=../faultline-premium-pack
+```
+
+This is a review harness, not a hard gate on shared patterns. Use it after
+`make premium-check` to inspect overlap, exclusions, and ranking pressure across
+the combined catalog.
+
 Smoke test the packaged release archive before publishing it:
 
 ```bash

@@ -1,0 +1,5 @@
+$ docker compose up payments
+Error response from daemon: driver failed programming external connectivity on endpoint payments
+Bind for 0.0.0.0:8080 failed: port is already allocated
+cannot start service payments: failed to bind to port 8080
+port conflict

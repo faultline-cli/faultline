@@ -50,7 +50,6 @@ match:
     - "exceeded timeout"
     - "Timeout - Async callback was not invoked within"
     - "test timeout of"
-    - "TIMEOUT"
     - "jest timeout"
     - "go test -timeout"
     - "context deadline exceeded"
@@ -59,6 +58,11 @@ match:
     - "after 60000ms"
     - "async test timed out"
     - "waiting for assertion"
+  none:
+    - "ETIMEDOUT"
+    - "read timeout"
+    - "dial timeout"
+    - "failed to connect"
 why_it_matters_markdown: |-
   ## Why it matters
 

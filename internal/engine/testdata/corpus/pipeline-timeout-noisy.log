@@ -1,0 +1,7 @@
+$ npm run build
+Downloading dependencies...
+context deadline exceeded while waiting for slow upstream cache
+npm WARN retry will retry, error on last attempt: ETIMEDOUT
+The job has been running for more than 1h0m0s
+Job's timeout exceeded
+ERROR: Job failed (system failure): job execution failed on runner

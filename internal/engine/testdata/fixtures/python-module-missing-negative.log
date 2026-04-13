@@ -1,0 +1,5 @@
+$ npm run build
+src/client.ts:4:15 - error
+Module not found: Can't resolve './ApiClient'
+Error: Cannot find module './ApiClient'
+Hint: check import path capitalization on Linux runners

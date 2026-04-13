@@ -1,0 +1,4 @@
+Back-off restarting failed container app in pod app-7d8d5
+container exited with exit code 1
+CrashLoopBackOff
+panic: failed to load runtime configuration

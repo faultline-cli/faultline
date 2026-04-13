@@ -1,0 +1,5 @@
+$ go test ./... -parallel 8 -count=1
+listen tcp 127.0.0.1:8080: bind: address already in use
+sqlite3: database is locked
+warning: shared test data writer still running concurrently from sibling test
+race detected during execution of test
