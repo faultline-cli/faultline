@@ -37,6 +37,7 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "port conflict", file: "port-conflict.log", wantID: "port-conflict"},
 		{name: "port in use", file: "port-in-use.log", wantID: "port-in-use"},
 		{name: "python module missing", file: "python-module-missing.log", wantID: "python-module-missing"},
+		{name: "install failure", file: "install-failure.log", wantID: "install-failure"},
 		{name: "yarn lockfile", file: "yarn-lockfile.log", wantID: "yarn-lockfile"},
 		{name: "working directory", file: "working-directory.log", wantID: "working-directory"},
 		{name: "runtime mismatch", file: "runtime-mismatch.log", wantID: "runtime-mismatch"},

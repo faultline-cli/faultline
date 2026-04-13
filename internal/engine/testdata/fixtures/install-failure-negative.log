@@ -1,0 +1,5 @@
+$ npm ci
+npm ERR! code E401
+npm ERR! Unable to authenticate, your authentication token seems to be invalid.
+token is empty
+Please set the NPM_TOKEN environment variable before running npm ci.

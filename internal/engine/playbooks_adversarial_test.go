@@ -167,6 +167,12 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			absentIDs: []string{"python-module-missing"},
 		},
 		{
+			name:      "package auth failure stays with missing env instead of package not found",
+			file:      "install-failure-negative.log",
+			wantTopID: "missing-env",
+			absentIDs: []string{"install-failure"},
+		},
+		{
 			name:      "coverage gate stays separate from timeout family",
 			file:      "coverage-gate-failure.log",
 			wantTopID: "coverage-gate-failure",
