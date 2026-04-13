@@ -1,0 +1,92 @@
+id: github-kubevirt-containerized-data-importer-3989-s4-270f55fc619adb6b
+title: 'importer pod x509: certificate signed by unknown authority'
+fixture_class: real
+normalized_log: |-
+    > [root@FHCSY-POD1-P0F0-PM-OS01-CUBE-M-001 ~]# kubectl get dv -nkonveyor-forklift -oyaml
+    apiVersion: v1
+    items:
+    \- apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    metadata:
+    annotations:
+    cdi.kubevirt.io/storage.bind.immediate.requested: "true"
+    cdi.kubevirt.io/storage.deleteAfterCompletion: "false"
+    forklift.konveyor.io/disk-source: test-mk/mk-test-root-volume
+    migration: <id>
+    plan: <id>
+    resource: vm-config
+    vmID: <id>
+    creationTimestamp: "2025-12-23T07:38:57Z"
+    generation: 26
+    labels:
+    migration: <id>
+    plan: <id>
+    resource: vm-config
+    vmID: <id>
+    name: mk-test-root-volume
+    namespace: konveyor-forklift
+    resourceVersion: "35198085"
+    uid: <id>
+    spec:
+    source:
+    http:
+    certConfigMap: plan-migration-test-vm1-e21d3aaa-7fdf-4e7a-b97e-ab3292b213twq2z
+    secretExtraHeaders:
+    - plan-migration-test-vm1-e21d3aaa-7fdf-4e7a-b97e-ab3292b213bfxr4
+    url: https://virt-exportproxy.kubevirt/api/export.kubevirt.io/v1beta1/namespaces/test-mk/virtualmachineexports/mk-test/volumes/mk-test-root-volume/disk.img.gz
+    storage:
+    resources:
+    requests:
+    storage: 20Gi
+    storageClassName: rbd-ssd
+    status:
+    claimName: mk-test-root-volume
+    conditions:
+    - lastHeartbeatTime: "2025-12-23T07:39:02Z"
+    lastTransitionTime: "2025-12-23T07:39:02Z"
+    message: PVC mk-test-root-volume Bound
+    reason: Bound
+    status: "True"
+    type: Bound
+    - lastHeartbeatTime: "2025-12-23T07:55:22Z"
+    lastTransitionTime: "2025-12-23T07:38:57Z"
+    status: "False"
+    type: Ready
+    - lastHeartbeatTime: "2025-12-23T07:55:22Z"
+    lastTransitionTime: "2025-12-23T07:55:22Z"
+    message: "Unable to connect to http data source: Get \"https://virt-exportproxy.kubevirt/api/export.kubevirt.io/v1beta1/namespaces/test-mk/virtualmachineexports/mk-test/volumes/mk-test-root-volume/disk.img.gz\":
+    x509: certificate signed by unknown authority HTTP request errored kubevirt.io/containerized-data-importer/pkg/importer.createHTTPReader
+    \tpkg/importer/http-datasource.go:326 kubevirt.io/containerized-data-importer/pkg/importer.NewHTTPDataSource
+    \tpkg/importer/http-datasource.go:100 main.newDataSource \tcmd/cdi-importer/importer.go:255
+    main.handleImport \tcmd/cdi-importer/importer.go:173 main.main \tcmd/cdi-importer/importer.go:143
+    runtime.main \tGOROOT/src/runtime/proc.go:250 runtime.goexit \tGOROOT/src/runtime/asm_amd64.s:1571"
+    reason: Error
+    status: "False"
+    type: Running
+    phase: ImportInProgress
+    progress: N/A
+    restartCount: 8
+    kind: List
+    metadata:
+    resourceVersion: ""
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/kubevirt/containerized-data-importer/issues/3989
+    repository: kubevirt/containerized-data-importer
+    issue_number: 3989
+    title: 'importer pod x509: certificate signed by unknown authority'
+    labels:
+        - kind/bug
+        - lifecycle/stale
+    author: mengkai514
+    snippet: 4
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 270f55fc619adb6b

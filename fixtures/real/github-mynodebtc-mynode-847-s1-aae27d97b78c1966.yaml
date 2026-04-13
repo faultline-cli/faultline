@@ -1,0 +1,113 @@
+id: github-mynodebtc-mynode-847-s1-aae27d97b78c1966
+title: 'Docker error="unauthorized: authentication required"'
+fixture_class: real
+normalized_log: |-
+    Feb 20 <timestamp> mynode mempool[20284]: + sleep 5s
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' true == true ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + isRunning=true
+    Feb 20 <timestamp> mynode mempool[21028]: ++ docker inspect '--format={{.State.Running}}' mempool_db_1
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' 1 ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + [[ '' == *\i\n\f\o\r\m\a\t\i\o\n\_\s\c\h\e\m\a* ]]
+    Feb 20 <timestamp> mynode mempool[20284]: + databases=
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 7 [Warning] Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[21007]: ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[21007]: ++ docker exec -i mempool_db_1 mysql -uroot -padmin -e 'SHOW DATABASES;'
+    Feb 20 <timestamp> mynode mempool[20284]: + sleep 5s
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' true == true ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + isRunning=true
+    Feb 20 <timestamp> mynode mempool[20979]: ++ docker inspect '--format={{.State.Running}}' mempool_db_1
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' 1 ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + [[ '' == *\i\n\f\o\r\m\a\t\i\o\n\_\s\c\h\e\m\a* ]]
+    Feb 20 <timestamp> mynode mempool[20284]: + databases=
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 6 [Warning] Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[20957]: ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[20957]: ++ docker exec -i mempool_db_1 mysql -uroot -padmin -e 'SHOW DATABASES;'
+    Feb 20 <timestamp> mynode mempool[20284]: + sleep 5s
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' true == true ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + isRunning=true
+    Feb 20 <timestamp> mynode mempool[20763]: ++ docker inspect '--format={{.State.Running}}' mempool_db_1
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' 1 ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + [[ '' == *\i\n\f\o\r\m\a\t\i\o\n\_\s\c\h\e\m\a* ]]
+    Feb 20 <timestamp> mynode mempool[20284]: + databases=
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 5 [Warning] Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[20738]: ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: YES)
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 4 [Warning] Aborted connection 4 to db: 'unconnected' user: 'unauthenticated' host: '172.26.0.3' (This connection closed normally without authentication)
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 3 [Warning] Aborted connection 3 to db: 'unconnected' user: 'unauthenticated' host: '172.26.0.4' (This connection closed normally without authentication)
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | Version: '10.9.3-MariaDB-1:10.9.3+maria~ubu2204' socket: '/run/mysqld/mysqld.sock' port: 3306 mariadb.org binary distribution
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] mariadbd: ready for connections.
+    Feb 20 <timestamp> mynode mempool[20738]: ++ docker exec -i mempool_db_1 mysql -uroot -padmin -e 'SHOW DATABASES;'
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 1 [Warning] Failed to load slave replication state from table mysql.gtid_slave_pos: 1146: Table 'mysql.gtid_slave_pos' doesn't exist
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [ERROR] mariadbd: Event Scheduler: An error occurred when initializing system tables. Disabling the Event Scheduler.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [ERROR] Cannot open mysql.event
+    Feb 20 <timestamp> mynode mempool[20283]: api_1 | wait-for-it.sh: db:3306 is available after 7 seconds
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Warning] Can't open and lock time zone table: Table 'mysql.time_zone_leap_second' doesn't exist trying to live without them
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [ERROR] Missing system table mysql.proxies_priv; please run mysql_upgrade to create it
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] Server socket created on IP: '::'.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] Server socket created on IP: '0.0.0.0'.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [ERROR] Can't open and lock privilege tables: Table 'mysql.servers' doesn't exist
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] DDL_LOG: Crash recovery executed 1 entries
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Warning] You need to use --log-bin to make --expire-logs-days or --binlog-expire-logs-seconds work.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Cannot open '/var/lib/mysql/ib_buffer_pool' for reading: No such file or directory
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] Plugin 'FEEDBACK' is disabled.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: log sequence number 36864; transaction id 4
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: File './ibtmp1' size is now 12.000MiB.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Setting file './ibtmp1' size to 12.000MiB. Physically writing the file full; Please wait ...
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Removed temporary tablespace data file: "./ibtmp1"
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: 128 rollback segments are active.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Starting final batch to recover 3 pages from redo log.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Starting crash recovery from checkpoint LSN=17103
+    Feb 20 <timestamp> mynode mempool[20284]: + sleep 5s
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' true == true ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + isRunning=true
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: File system buffers for log disabled (block size=512 bytes)
+    Feb 20 <timestamp> mynode mempool[20695]: ++ docker inspect '--format={{.State.Running}}' mempool_db_1
+    Feb 20 <timestamp> mynode mempool[20284]: + '[' 1 ']'
+    Feb 20 <timestamp> mynode mempool[20284]: + isRunning=
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Completed initialization of buffer pool
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Initializing buffer pool, total size = 128.000MiB, chunk size = 2.000MiB
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Warning] InnoDB: liburing disabled: falling back to innodb_use_native_aio=OFF
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Warning] mariadbd: io_uring_queue_init() failed with errno 1
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] mariadbd: O_TMPFILE is not supported on <tmp> (disabling future attempts)
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Using generic crc32 instructions
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Number of transaction pools: 1
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] InnoDB: Compressed tables use zlib 1.2.11
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] mariadbd: Aria engine: recovery done
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | recovered pages: 0% 100% (0.2 seconds);
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] mariadbd: Aria engine: starting recovery
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> 0 [Note] mariadbd (server 10.9.3-MariaDB-1:10.9.3+maria~ubu2204) starting as process 1 ...
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> [Note] [Entrypoint]: MariaDB upgrade (mariadb-upgrade) required, but skipped due to $MARIADB_AUTO_UPGRADE setting
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> [Note] [Entrypoint]: MariaDB upgrade information missing, assuming required
+    Feb 20 <timestamp> mynode mempool[20283]: web_1 | /var/www/mempool/browser/resources
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:10.9.3+maria~ubu2204 started.
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+    Feb 20 <timestamp> mynode mempool[20283]: db_1 | <timestamp> [Note] [Entrypoint]: Entrypoint script for MariaDB Server 1:10.9.3+maria~ubu2204 started.
+    Feb 20 <timestamp> mynode mempool[20283]: api_1 | wait-for-it.sh: waiting 720 seconds for db:3306
+    Feb 20 <timestamp> mynode mempool[20283]: Attaching to mempool_web_1, mempool_db_1, mempool_api_1
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_api_1 ... done
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_db_1 ... done
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_web_1 ... done
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_api_1 ...
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_web_1 ...
+    Feb 20 <timestamp> mynode mempool[20283]: Starting mempool_db_1 ...
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/mynodebtc/mynode/issues/847
+    repository: mynodebtc/mynode
+    issue_number: 847
+    comment_id: "1955011520"
+    title: 'Docker error="unauthorized: authentication required"'
+    labels:
+        - bug
+    author: nevrrmind
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: aae27d97b78c1966

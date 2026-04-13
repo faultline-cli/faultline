@@ -1,0 +1,25 @@
+id: github-synapt-dev-recall-669-s1-d42122a9451e640f
+title: 'Bug: test_channel_worktree imports tests.recall.test_channel and fails in CI'
+fixture_class: real
+normalized_log: |-
+    ```
+    ModuleNotFoundError: No module named "tests"
+    ```
+expectation:
+    expected_playbook: python-module-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/synapt-dev/recall/issues/669
+    repository: synapt-dev/recall
+    issue_number: 669
+    title: 'Bug: test_channel_worktree imports tests.recall.test_channel and fails in CI'
+    author: laynepenney
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: d42122a9451e640f

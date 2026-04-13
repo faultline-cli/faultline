@@ -1,0 +1,27 @@
+id: github-githedgehog-fabricator-1356-s1-82feca42d22625cd
+title: 'CI: Pre-populate hhfab-cache: No such file or directory'
+fixture_class: real
+normalized_log: |-
+    https://github.com/githedgehog/fabricator/actions/runs/21276536709/job/61237636481
+    ```
+    cp: cannot stat '/hostcache/.hhfab-cache/v1/download-1927167765': No such file or directory
+    Error: Process completed with exit code 1.
+    ```
+expectation:
+    expected_playbook: container-crash
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/githedgehog/fabricator/issues/1356
+    repository: githedgehog/fabricator
+    issue_number: 1356
+    title: 'CI: Pre-populate hhfab-cache: No such file or directory'
+    author: pau-hedgehog
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 82feca42d22625cd

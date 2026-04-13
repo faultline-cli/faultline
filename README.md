@@ -123,6 +123,15 @@ faultline inspect .
 
 # Build a deterministic follow-up workflow
 faultline workflow build.log --mode agent --git --repo .
+
+# Ingest public CI failures into staging
+faultline fixtures ingest --adapter github-issue --url https://github.com/owner/repo/issues/123
+
+# Review staged candidates and current predictions
+faultline fixtures review
+
+# Check the accepted real-fixture regression gate
+faultline fixtures stats --class real --check-baseline
 ```
 
 ## Core Commands
@@ -135,6 +144,10 @@ faultline workflow build.log --mode agent --git --repo .
 | `workflow [file]` | Build a deterministic local or agent-ready follow-up plan |
 | `list` | List available playbooks from the active catalog |
 | `explain <id>` | Show full detail for one playbook |
+| `fixtures ingest` | Fetch public CI issue logs into `fixtures/staging/` |
+| `fixtures review` | Score staged fixtures and surface duplicate hints |
+| `fixtures promote` | Promote reviewed staging fixtures into `fixtures/real/` |
+| `fixtures stats` | Report minimal or real corpus regression metrics |
 | `packs install <dir>` | Install an extra playbook pack into `~/.faultline/packs/` |
 | `packs list` | List locally installed extra packs |
 
@@ -161,6 +174,26 @@ Environment variables:
 | `FAULTLINE_PLAYBOOK_PACKS` | Additional pack roots separated by the platform path separator |
 | `FAULTLINE_PLAIN=1` | Force plain text output |
 | `NO_COLOR` | Disable ANSI colors |
+
+## Fixture Corpora
+
+Faultline now keeps two deterministic fixture corpora in-repo and one staging area:
+
+```text
+fixtures/
+  minimal/  existing exact log fixtures referenced by a manifest
+  real/     curated public CI failures accepted into CI regression gates
+  staging/  ingested public candidates awaiting review and promotion
+```
+
+The fixture workflow reuses the same bundled playbooks and analyzer used by the product runtime.
+
+- `faultline fixtures ingest` fetches public issue content through deterministic source adapters and stores normalized staging fixtures.
+- `faultline fixtures review` runs the current catalog against staging fixtures, surfaces exact and near duplicates, and shows likely top matches.
+- `faultline fixtures promote` moves accepted staging fixtures into `fixtures/real/` with explicit expectations.
+- `faultline fixtures stats` reports top-1, top-3, unmatched, false-positive, and weak-match metrics for `minimal`, `real`, or `all`.
+
+CI keeps the accepted real corpus deterministic by reading only the committed files under `fixtures/`.
 
 ## How Detection Works
 

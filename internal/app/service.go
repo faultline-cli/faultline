@@ -1,13 +1,17 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"text/tabwriter"
+	"time"
 
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
+	"faultline/internal/fixtures"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/playbooks"
@@ -171,4 +175,104 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysi
 		a.Source = source
 	}
 	return a, err
+}
+
+func (Service) FixturesIngest(root string, opts fixtures.IngestOptions, jsonOut bool, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	result, err := fixtures.Ingest(ctxBackground(), layout, opts)
+	if err != nil {
+		return err
+	}
+	formatted, err := fixtures.FormatIngestResult(result, jsonOut)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, formatted)
+	return err
+}
+
+func (Service) FixturesReview(root string, opts fixtures.EvaluateOptions, jsonOut bool, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	report, err := fixtures.Review(layout, opts)
+	if err != nil {
+		return err
+	}
+	formatted, err := fixtures.FormatReviewReport(report, jsonOut)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, formatted)
+	return err
+}
+
+func (Service) FixturesPromote(root string, ids []string, opts fixtures.PromoteOptions, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	if opts.PromotedAt.IsZero() {
+		opts.PromotedAt = time.Now().UTC()
+	}
+	promoted, err := fixtures.Promote(layout, ids, opts)
+	if err != nil {
+		return err
+	}
+	for _, fixture := range promoted {
+		if _, err := fmt.Fprintf(w, "promoted %s -> %s\n", fixture.ID, fixture.Expectation.ExpectedPlaybook); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.EvaluateOptions, baselinePath string, jsonOut, checkBaseline, updateBaseline bool, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	if baselinePath != "" && !filepath.IsAbs(baselinePath) {
+		baselinePath = filepath.Join(layout.Root, baselinePath)
+	}
+	report, err := fixtures.Evaluate(layout, class, opts)
+	if err != nil {
+		return err
+	}
+	if baselinePath != "" {
+		report.AppliedBaselinePath = baselinePath
+	}
+	if updateBaseline {
+		thresholds := fixtures.Thresholds{MinTop1: 0.65, MinTop3: 0.85, MaxUnmatched: 0.15, MaxFalsePositive: 0.35}
+		if err := fixtures.WriteBaseline(baselinePath, report.Baseline(thresholds)); err != nil {
+			return err
+		}
+	}
+	if checkBaseline {
+		baseline, err := fixtures.LoadBaseline(baselinePath)
+		if err != nil {
+			return err
+		}
+		if err := fixtures.CheckBaseline(&report, baseline); err != nil {
+			formatted, ferr := fixtures.FormatStatsReport(report, jsonOut)
+			if ferr == nil {
+				_, _ = fmt.Fprint(w, formatted)
+			}
+			return err
+		}
+	}
+	formatted, err := fixtures.FormatStatsReport(report, jsonOut)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, formatted)
+	return err
+}
+
+func ctxBackground() context.Context {
+	return context.Background()
 }

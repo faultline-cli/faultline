@@ -1,0 +1,30 @@
+id: github-containers-podman-28419-s3-90e4611e16158184
+title: Temporary failure in name resolution
+fixture_class: real
+normalized_log: |-
+    # podman pull nginx
+    Resolved "nginx" as an alias (/etc/containers/registries.conf.d/000-shortnames.conf)
+    Trying to pull docker.io/library/nginx:latest...
+    Error: unable to copy from source docker://nginx:latest: initializing source docker://nginx:latest: pinging container registry registry-1.docker.io: Get "https://registry-1.docker.io/v2/": dial tcp: lookup registry-1.docker.io: Temporary failure in name resolution
+expectation:
+    expected_playbook: dns-resolution
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/containers/podman/issues/28419
+    repository: containers/podman
+    issue_number: 28419
+    title: Temporary failure in name resolution
+    labels:
+        - kind/bug
+        - remote
+        - windows
+    author: davgia
+    snippet: 3
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 90e4611e16158184

@@ -1,0 +1,28 @@
+id: github-lfnovo-open-notebook-708-s1-00e0613bb1ea70e9
+title: '[Bug]: Failed to run database migrations: [Errno -3] Temporary failure in name resolution'
+fixture_class: real
+normalized_log: |-
+    open_notebook-1 | RuntimeError: Failed to run database migrations: [Errno -3] Temporary failure in name resolution
+    open_notebook-1 |
+    open_notebook-1 | ERROR: Application startup failed. Exiting.
+expectation:
+    expected_playbook: dns-resolution
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/lfnovo/open-notebook/issues/708
+    repository: lfnovo/open-notebook
+    issue_number: 708
+    title: '[Bug]: Failed to run database migrations: [Errno -3] Temporary failure in name resolution'
+    labels:
+        - bug
+        - needs-info
+    author: nsu700
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 00e0613bb1ea70e9

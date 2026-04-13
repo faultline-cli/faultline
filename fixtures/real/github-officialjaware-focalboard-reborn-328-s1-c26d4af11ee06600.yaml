@@ -1,0 +1,39 @@
+id: github-officialjaware-focalboard-reborn-328-s1-c26d4af11ee06600
+title: '[issue#4704] Bug: `x509: certificate signed by unknown authority`'
+fixture_class: real
+normalized_log: |-
+    <timestamp> readConfigFile
+    <timestamp> {ServerRoot:http://localhost:8000 Port:8000 DBType:postgres DBConfigString:postgres://<redacted-user>:<redacted-password>.example.internal:5432/dbfocalboard?sslmode=verify-full&connect_timeout=10 DBTablePrefix: UseSSL:false SecureCookie:false WebPath:./pack FilesDriver:local FilesS3Config:{AccessKeyID: SecretAccessKey: Bucket: PathPrefix: Region: Endpoint: SSL:false SignV2:false SSE:false Trace:false Timeout:0} FilesPath:/data/files MaxFileSize:0 Telemetry:true TelemetryID: PrometheusAddress: WebhookUpdate:[] Secret: SessionExpireTime:2592000 SessionRefreshTime:18000 LocalOnly:false EnableLocalMode:true LocalModeSocketLocation:/var<tmp> EnablePublicSharedBoards:false FeatureFlags:map[] EnableDataRetention:false DataRetentionDays:0 TeammateNameDisplay:username ShowEmailAddress:false ShowFullName:false AuthMode:native LoggingCfgFile: LoggingCfgJSON: AuditCfgFile: AuditCfgJSON: NotifyFreqCardSeconds:0 NotifyFreqBoardSeconds:0}
+    info [<timestamp> Z] Focalboard server caller="model/version.go:60" version=7.8.4 edition=linux build_number=dev build_date=n/a build_hash=6fc1d9f8db9d366a16cd0ce18d34a5d7b8d5b1e5
+    error [<timestamp> Z] Database Ping failed caller="server/server.go:220" error="x509: certificate signed by unknown authority"
+    fatal [<timestamp> Z] server.NewStore ERROR caller="main/main.go:136" error="x509: certificate signed by unknown authority"
+    main.main
+    /go/src/focalboard/server/main/main.go:136
+    runtime.main
+    /usr/local/go/src/runtime/proc.go:250
+    runtime.goexit
+    /usr/local/go/src/runtime/asm_amd64.s:1571
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/officialjaware/focalboard-reborn/issues/328
+    repository: officialjaware/focalboard-reborn
+    issue_number: 328
+    title: '[issue#4704] Bug: `x509: certificate signed by unknown authority`'
+    labels:
+        - from-upstream
+        - status:open
+        - human-review
+        - complexity:unknown
+        - priority:unknown
+    author: officialjaware
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: c26d4af11ee06600

@@ -10,13 +10,14 @@ WITH_DOCKER ?= 0
 PREMIUM_PACK_DIR ?=
 PREMIUM_PACK_LINK ?= playbooks/packs/premium-local
 
-.PHONY: help build run test bench review premium-path premium-link premium-check premium-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test fixture-check bench review premium-path premium-link premium-check premium-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
 		"  build           Build the faultline CLI into $(BINARY)" \
 		"  run             Run the CLI locally: make run LOG=build.log" \
 		"  test            Run all Go tests" \
+		"  fixture-check   Run the accepted real-fixture regression gate" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
 		"  premium-path    Print the resolved premium pack path used locally" \
@@ -42,6 +43,9 @@ run:
 
 test:
 	$(GO) test ./...
+
+fixture-check:
+	$(GO) run ./cmd fixtures stats --class real --check-baseline
 
 bench:
 	$(GO) test ./internal/engine -run '^$$' -bench 'Benchmark(LoadBundledPlaybooks|AnalyzeRepresentativeCorpus)' -benchmem
@@ -71,7 +75,7 @@ smoke-release:
 release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
-release-check: test review release-snapshot smoke-release
+release-check: test fixture-check review release-snapshot smoke-release
 	@if PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh >/dev/null 2>&1; then \
 		$(MAKE) premium-check PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)"; \
 	else \

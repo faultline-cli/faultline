@@ -1,0 +1,26 @@
+id: github-jgantunes-ipfs-testbed-1-s1-485072f8b4d26ab3
+title: Readiness probe failed
+fixture_class: real
+normalized_log: |-
+    I am unable to run the container due to probe failures which results in crashloopbackoff. I tried increasing the initialdelayseconds for both IPFS and toxiproxy, but the issue persists.
+    The logs are here: https://pastebin.ubuntu.com/p/DSv3VhMHgn/
+    I added another pod but it's also having the issue : https://pastebin.ubuntu.com/p/BQH5wJFDcW/
+    Kindly let me know how to fix the issue.
+expectation:
+    expected_playbook: k8s-crashloopbackoff
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/JGAntunes/ipfs-testbed/issues/1
+    repository: JGAntunes/ipfs-testbed
+    issue_number: 1
+    title: Readiness probe failed
+    author: minat0namikaze
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 485072f8b4d26ab3

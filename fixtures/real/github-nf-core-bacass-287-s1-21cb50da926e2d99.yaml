@@ -1,0 +1,95 @@
+id: github-nf-core-bacass-287-s1-21cb50da926e2d99
+title: DFAST CI failures due to connection refused issues
+fixture_class: real
+normalized_log: |-
+    $ Test [32a60ed0] '-profile test_dfast'
+    ERROR ~ Error executing process > 'NFCORE_BACASS:BACASS:DFAST (ERR064912-unicycler)'
+    Caused by:
+    Process `NFCORE_BACASS:BACASS:DFAST (ERR064912-unicycler)` terminated with an error exit status (1)
+    Command executed:
+    dfast_file_downloader.py \
+    \
+    --protein dfast \
+    --dbroot .
+    dfast \
+    \
+    --genome ERR064912-unicycler.scaffolds.fa.gz \
+    --config test_config_dfast.py
+    mv RESULT_TEST/ ERR064912-unicycler_results/
+    cat <<-END_VERSIONS > versions.yml
+    "NFCORE_BACASS:BACASS:DFAST":
+    dfast: $( dfast --version | sed -e "s/DFAST ver. //g" )
+    END_VERSIONS
+    Command exit status:
+    1
+    Command output:
+    (empty)
+    Command error:
+    File "/usr/local/lib/python3.12/http/client.py", line 1336, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    File "/usr/local/lib/python3.12/http/client.py", line 1382, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    File "/usr/local/lib/python3.12/http/client.py", line 1331, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    File "/usr/local/lib/python3.12/http/client.py", line 1091, in _send_output
+    self.send(msg)
+    File "/usr/local/lib/python3.12/http/client.py", line 1035, in send
+    self.connect()
+    File "/usr/local/lib/python3.12/http/client.py", line 1470, in connect
+    super().connect()
+    File "/usr/local/lib/python3.12/http/client.py", line 1001, in connect
+    self.sock = self._create_connection(
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/socket.py", line 865, in create_connection
+    raise exceptions[0]
+    File "/usr/local/lib/python3.12/socket.py", line 850, in create_connection
+    sock.connect(sa)
+    ConnectionRefusedError: [Errno 111] Connection refused
+    During handling of the above exception, another exception occurred:
+    Traceback (most recent call last):
+    File "/usr/local/bin/dfast_file_downloader.py", line 247, in <module>
+    retrieved_file = retrieve_dfast_reference(db_name, out_dir)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/bin/dfast_file_downloader.py", line 110, in retrieve_dfast_reference
+    request.urlretrieve(target_url, output_file)
+    File "/usr/local/lib/python3.12/urllib/request.py", line 240, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+    ^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+    ^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+    ^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/usr/local/lib/python3.12/urllib/request.py", line 1347, in do_open
+    raise URLError(err)
+    urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/nf-core/bacass/issues/287
+    repository: nf-core/bacass
+    issue_number: 287
+    title: DFAST CI failures due to connection refused issues
+    labels:
+        - bug
+    author: Daniel-VM
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: 21cb50da926e2d99

@@ -1,0 +1,28 @@
+id: github-napari-docs-986-s1-71e944493fa59840
+title: Open_image.md build fail due to Connection refused
+fixture_class: real
+normalized_log: |-
+    See the CircleCI artifact log for the failing build (signed URL redacted):
+    ```
+    ConnectionError: HTTPSConnectionPool(host='ftp.ebi.ac.uk', port=443): Max retries exceeded with url: /biostudies/fire/S-BIAD/582/S-BIAD582/Files/01_wt_Dprotein555-TL/raw_mps/5-2b_01_wt_Dprotein555-TL_003_rawmp.tif (Caused by NewConnectionError("HTTPSConnection(host='ftp.ebi.ac.uk', port=443): Failed to establish a new connection: [Errno 111] Connection refused"))
+    ```
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/napari/docs/issues/986
+    repository: napari/docs
+    issue_number: 986
+    title: Open_image.md build fail due to Connection refused
+    labels:
+        - task
+    author: psobolewskiPhD
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: 71e944493fa59840

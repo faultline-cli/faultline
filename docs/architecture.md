@@ -6,10 +6,13 @@ explicit deterministic layers:
 - `internal/cli` owns Cobra command definitions, flags, stdin/file handling,
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
-  explain, and workflow.
+  explain, workflow, and fixture-corpus operations.
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, history persistence,
   source loading, and git enrichment.
+- `internal/fixtures` owns deterministic fixture corpora, public-source
+  ingestion adapters, normalization, review metadata, promotion flow, and
+  regression statistics.
 - `internal/detectors` owns the detector registry plus the distinct `log` and
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and

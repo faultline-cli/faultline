@@ -1,0 +1,45 @@
+id: github-kubevirt-containerized-data-importer-3989-s1-1b5f0896a4deac80
+title: 'importer pod x509: certificate signed by unknown authority'
+fixture_class: real
+normalized_log: |-
+    > [root@FHCSY-POD1-P0F0-PM-OS01-CUBE-M-001 ~]# kubectl logs importer-mk-test-root-volume -nkonveyor-forklift
+    I1223 <timestamp> 1 importer.go:104] Starting importer
+    I1223 <timestamp> 1 importer.go:171] begin import process
+    I1223 <timestamp> 1 http-datasource.go:239] Attempting to get certs from /certs/ca.pem
+    E1223 <timestamp> 1 importer.go:324] Get "https://virt-exportproxy.kubevirt/api/export.kubevirt.io/v1beta1/namespaces/test-mk/virtualmachineexports/mk-test/volumes/mk-test-root-volume/disk.img.gz": x509: certificate signed by unknown authority
+    HTTP request errored
+    kubevirt.io/containerized-data-importer/pkg/importer.createHTTPReader
+    pkg/importer/http-datasource.go:326
+    kubevirt.io/containerized-data-importer/pkg/importer.NewHTTPDataSource
+    pkg/importer/http-datasource.go:100
+    main.newDataSource
+    cmd/cdi-importer/importer.go:255
+    main.handleImport
+    cmd/cdi-importer/importer.go:173
+    main.main
+    cmd/cdi-importer/importer.go:143
+    runtime.main
+    GOROOT/src/runtime/proc.go:250
+    runtime.goexit
+    GOROOT/src/runtime/asm_amd64.s:1571
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/kubevirt/containerized-data-importer/issues/3989
+    repository: kubevirt/containerized-data-importer
+    issue_number: 3989
+    title: 'importer pod x509: certificate signed by unknown authority'
+    labels:
+        - kind/bug
+        - lifecycle/stale
+    author: mengkai514
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 1b5f0896a4deac80

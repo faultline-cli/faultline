@@ -1,0 +1,28 @@
+id: github-antonandreevichmoroz-realmikrotikbackup-27-s1-d70e3916fe5c24cd
+title: Temporary failure in name resolution
+fixture_class: real
+normalized_log: |-
+    При попытке сделать backup или тест происходит ошибка
+    `fopen(): php_network_getaddresses: getaddrinfo failed: Temporary failure in name resolution
+    ↵
+    Caused by: yii\base\ErrorException
+    fopen(): php_network_getaddresses: getaddrinfo failed: Temporary failure in name resolution
+    in /app/vendor/yiisoft/yii2-httpclient/src/StreamTransport.php at line 61`
+expectation:
+    expected_playbook: dns-resolution
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/AntonAndreevichMoroz/RealMikrotikBackup/issues/27
+    repository: AntonAndreevichMoroz/RealMikrotikBackup
+    issue_number: 27
+    title: Temporary failure in name resolution
+    author: DIMMonchik
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: d70e3916fe5c24cd

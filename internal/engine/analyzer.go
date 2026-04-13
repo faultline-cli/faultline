@@ -265,11 +265,7 @@ func readLines(r io.Reader) ([]model.Line, error) {
 		return nil, fmt.Errorf("read log input: %w", err)
 	}
 
-	// Normalise line endings.
-	raw := strings.ReplaceAll(string(data), "\r\n", "\n")
-	raw = strings.ReplaceAll(raw, "\r", "\n")
-
-	parts := strings.Split(raw, "\n")
+	parts := strings.Split(CanonicalizeLog(string(data)), "\n")
 	lines := make([]model.Line, 0, len(parts))
 	for n, part := range parts {
 		orig := strings.TrimSpace(part)
@@ -278,15 +274,11 @@ func readLines(r io.Reader) ([]model.Line, error) {
 		}
 		lines = append(lines, model.Line{
 			Original:   orig,
-			Normalized: normalizeLine(orig),
+			Normalized: NormalizeLine(orig),
 			Number:     n + 1,
 		})
 	}
 	return lines, nil
-}
-
-func normalizeLine(line string) string {
-	return strings.ToLower(strings.Join(strings.Fields(line), " "))
 }
 
 func loadSourceFiles(root string) ([]detectors.SourceFile, error) {

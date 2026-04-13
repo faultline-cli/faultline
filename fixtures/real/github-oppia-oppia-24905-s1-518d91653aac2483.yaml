@@ -1,0 +1,43 @@
+id: github-oppia-oppia-24905-s1-518d91653aac2483
+title: '[CI Failure]: ModuleNotFoundError: No module named ''psutil'''
+fixture_class: real
+normalized_log: |-
+    Prepare all required actions
+    Getting action download info
+    Run ./.github/actions/run-a-specific-acceptance-test
+    Run if [[ ! "" =~ ^[a-zA-Z0-9_-]*$ ]]; then
+    Run set -o pipefail; VIDEO_RECORDING_IS_ENABLED=1 xvfb-run -a --server-args="-screen 0, 1920x1080x24" python -m scripts.run_acceptance_tests --skip_build --suite=logged-out-learner/complete-the-embedded-lesson --mobile --prod_env --server_log_level=info | tee acceptance_test_.log
+    Traceback (most recent call last):
+    File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+    File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+    File "/home/runner/work/oppia/oppia/scripts/run_acceptance_tests.py", line 26, in <module>
+    from scripts import build, common, servers
+    File "/home/runner/work/oppia/oppia/scripts/build.py", line 31, in <module>
+    from scripts import (
+    File "/home/runner/work/oppia/oppia/scripts/servers.py", line 33, in <module>
+    import psutil
+    ModuleNotFoundError: No module named 'psutil'
+    Error: Process completed with exit code 1.
+expectation:
+    expected_playbook: python-module-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/oppia/oppia/issues/24905
+    repository: oppia/oppia
+    issue_number: 24905
+    title: '[CI Failure]: ModuleNotFoundError: No module named ''psutil'''
+    labels:
+        - bug
+        - CI breakage
+    author: kishansinghifs1
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: 518d91653aac2483

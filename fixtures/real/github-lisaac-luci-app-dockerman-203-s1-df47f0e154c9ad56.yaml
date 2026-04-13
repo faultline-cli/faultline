@@ -1,0 +1,25 @@
+id: github-lisaac-luci-app-dockerman-203-s1-df47f0e154c9ad56
+title: luci-app-dockerman cannot pull private Docker Hub images (authentication not forwarded)
+fixture_class: real
+normalized_log: |-
+    **Describe the bug**
+    When pulling a private Docker Hub image via LuCI (luci-app-dockerman) web interface, the pull fails with `404 / unauthorized: authentication required`, even though the same image can be successfully pulled via `docker pull` over SSH after `docker login`.
+    It seems that luci-app-dockerman does not pass registry authentication credentials (X-Registry-Auth) to the Docker daemon API when performing image pulls, so private repositories cannot be accessed from the web UI.
+expectation:
+    expected_playbook: docker-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/lisaac/luci-app-dockerman/issues/203
+    repository: lisaac/luci-app-dockerman
+    issue_number: 203
+    title: luci-app-dockerman cannot pull private Docker Hub images (authentication not forwarded)
+    author: CRaFT4ik
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: df47f0e154c9ad56

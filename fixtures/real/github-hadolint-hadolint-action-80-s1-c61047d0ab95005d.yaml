@@ -1,0 +1,28 @@
+id: github-hadolint-hadolint-action-80-s1-c61047d0ab95005d
+title: 'withBinaryFile: does not exist (No such file or directory)'
+fixture_class: real
+normalized_log: |-
+    Lint Dockerfiles.........................................................Failed
+    - hook id: hadolint-docker
+    - exit code: 1
+    hadolint: Dockerfile.template: withBinaryFile: does not exist (No such file or directory)
+    hadolint: latest/Dockerfile.tws: withBinaryFile: does not exist (No such file or directory)
+expectation:
+    expected_playbook: missing-test-fixture
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/hadolint/hadolint-action/issues/80
+    repository: hadolint/hadolint-action
+    issue_number: 80
+    comment_id: "1829490960"
+    title: 'withBinaryFile: does not exist (No such file or directory)'
+    author: pantelis-karamolegkos
+    snippet: 1
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:44Z"
+fingerprint: c61047d0ab95005d

@@ -1,0 +1,33 @@
+id: github-narbehaj-ssl-checker-37-s1-2bab4b45b5a61fc3
+title: '[Errno -3] Temporary failure in name resolution'
+fixture_class: real
+normalized_log: |-
+    Array
+    (
+    [version] => 1.0
+    [app] => ssl-checker-api
+    [host] => sellingtoolz.com
+    [status] => error
+    [result] => Array
+    (
+    [response] => failed
+    [reason] => [Errno -3] Temporary failure in name resolution
+    )
+expectation:
+    expected_playbook: dns-resolution
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/narbehaj/ssl-checker/issues/37
+    repository: narbehaj/ssl-checker
+    issue_number: 37
+    title: '[Errno -3] Temporary failure in name resolution'
+    author: san8work
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 2bab4b45b5a61fc3

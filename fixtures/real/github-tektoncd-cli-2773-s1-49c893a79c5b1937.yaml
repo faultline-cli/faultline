@@ -1,0 +1,27 @@
+id: github-tektoncd-cli-2773-s1-49c893a79c5b1937
+title: 'tkn throwing x509: certificate signed by unknown authority errors'
+fixture_class: real
+normalized_log: |-
+    $ tkn pipeline list
+    Failed to list objects from default namespace
+    Error: failed to list Pipelines from namespace default: Get "https://10.67.31.190:16443/api": tls: failed to verify certificate: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "10.152.183.1")
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/tektoncd/cli/issues/2773
+    repository: tektoncd/cli
+    issue_number: 2773
+    title: 'tkn throwing x509: certificate signed by unknown authority errors'
+    labels:
+        - kind/bug
+    author: john2exonets
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 49c893a79c5b1937

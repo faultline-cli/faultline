@@ -1,0 +1,43 @@
+id: github-mynodebtc-mynode-847-s1-755253e5b1d9f43e
+title: 'Docker error="unauthorized: authentication required"'
+fixture_class: real
+normalized_log: |-
+    **Describe the bug**
+    I don't know what the error is, but the log is full of it.
+    >Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=error msg="Not continuing with pull after error: errors:\ndenied: requested access to the resource is denied\nunauthorized: authentication required\n"
+    Feb 08 <timestamp> mynode dockerd[6513]: time="<timestamp>" level=info msg="Ignoring extra error returned from registry" error="unauthorized: authentication required"
+expectation:
+    expected_playbook: docker-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/mynodebtc/mynode/issues/847
+    repository: mynodebtc/mynode
+    issue_number: 847
+    title: 'Docker error="unauthorized: authentication required"'
+    labels:
+        - bug
+    author: nevrrmind
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: 755253e5b1d9f43e

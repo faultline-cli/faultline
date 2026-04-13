@@ -1,0 +1,93 @@
+id: github-kubevirt-containerized-data-importer-3989-s2-95ac29cd4b8deb75
+title: 'importer pod x509: certificate signed by unknown authority'
+fixture_class: real
+normalized_log: |-
+    **I tried disabling SSL paththrough, and now the certificates mounted by the cdi-importer pod are the same as those used by curl on the host machine, but the pod is still failing authentication.**
+    > [root@mk]# curl -v --cacert cacert.crt https://virt-exportproxy.kubevirt/api/export.kubevirt.io/v1alpha1/namespaces/test-mk/virtualmachineexports/mk-test/external/manifests/all \-H "x-kubevirt-export-token: 23htBzQk2aNo65q0mEsR" -H "Accept: application/yaml"
+    * Trying 10.151.14.206:443...
+    * Connected to virt-exportproxy.kubevirt (10.151.14.206) port 443 (#0)
+    * ALPN, offering h2
+    * ALPN, offering http/1.1
+    * successfully set certificate verify locations:
+    * CAfile: cacert.crt
+    * CApath: none
+    * TLSv1.3 (OUT), TLS handshake, Client hello (1):
+    * TLSv1.3 (IN), TLS handshake, Server hello (2):
+    * TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+    * TLSv1.3 (IN), TLS handshake, Certificate (11):
+    * TLSv1.3 (IN), TLS handshake, CERT verify (15):
+    * TLSv1.3 (IN), TLS handshake, Finished (20):
+    * TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+    * TLSv1.3 (OUT), TLS handshake, Finished (20):
+    * SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+    * ALPN, server accepted to use h2
+    * Server certificate:
+    * subject: O=EKI-PLUS-CERTIFICATE; CN=kubevirt.io@1766681809
+    * start date: Dec 26 <timestamp> 2025 GMT
+    * expire date: Dec 2 <timestamp> 2125 GMT
+    * subjectAltName: host "virt-exportproxy.kubevirt" matched cert's "virt-exportproxy.kubevirt"
+    * issuer: O=EKI-PLUS-CERTIFICATE; CN=kubevirt.io@1766681809
+    * SSL certificate verify ok.
+    * Using HTTP2, server supports multiplexing
+    * Connection state changed (HTTP/2 confirmed)
+    * Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
+    * Using Stream ID: 1 (easy handle 0x55adcc6c3a90)
+    > GET /api/export.kubevirt.io/v1alpha1/namespaces/test-mk/virtualmachineexports/mk-test/external/manifests/all HTTP/2
+    > Host: virt-exportproxy.kubevirt
+    > user-agent: curl/7.79.1
+    > x-kubevirt-export-token: 23htBzQk2aNo65q0mEsR
+    > accept: application/yaml
+    >
+    * TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+    * TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+    * old SSL session ID is stale, removing
+    * Connection state changed (MAX_CONCURRENT_STREAMS == 128)!
+    < HTTP/2 200
+    < date: Sun, 28 Dec 2025 <timestamp> GMT
+    < content-type: text/plain; charset=utf-8
+    < strict-transport-security: max-age=31536000; includeSubDomains
+    <
+    ........
+    * Connection #0 to host virt-exportproxy.kubevirt left intact
+    [root@FHCSY-POD1-P0F0-PM-OS01-CUBE-M-001 mk]# kubectl logs importer-mk-test-root-volume -nkonveyor-forklift
+    I1228 <timestamp> 1 importer.go:104] Starting importer
+    I1228 <timestamp> 1 importer.go:171] begin import process
+    I1228 <timestamp> 1 http-datasource.go:239] Attempting to get certs from /certs/ca.pem
+    E1228 <timestamp> 1 importer.go:324] Get "https://virt-exportproxy.kubevirt/api/export.kubevirt.io/v1beta1/namespaces/test-mk/virtualmachineexports/mk-test/volumes/mk-test-root-volume/disk.img.gz": x509: certificate signed by unknown authority
+    HTTP request errored
+    kubevirt.io/containerized-data-importer/pkg/importer.createHTTPReader
+    pkg/importer/http-datasource.go:326
+    kubevirt.io/containerized-data-importer/pkg/importer.NewHTTPDataSource
+    pkg/importer/http-datasource.go:100
+    main.newDataSource
+    cmd/cdi-importer/importer.go:255
+    main.handleImport
+    cmd/cdi-importer/importer.go:173
+    main.main
+    cmd/cdi-importer/importer.go:143
+    runtime.main
+    GOROOT/src/runtime/proc.go:250
+    runtime.goexit
+    GOROOT/src/runtime/asm_amd64.s:1571
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/kubevirt/containerized-data-importer/issues/3989
+    repository: kubevirt/containerized-data-importer
+    issue_number: 3989
+    comment_id: "3694654302"
+    title: 'importer pod x509: certificate signed by unknown authority'
+    labels:
+        - kind/bug
+        - lifecycle/stale
+    author: mengkai514
+    snippet: 2
+    fetched_at: "2026-04-13T12:01:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 95ac29cd4b8deb75

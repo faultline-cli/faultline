@@ -1,0 +1,41 @@
+id: github-microsoft-mssql-docker-246-s2-531fbe9bf955ae9e
+title: Pull Failed - unauthorized authentication required
+fixture_class: real
+normalized_log: |-
+    docker version
+    Client:
+    Version: 18.09.6
+    API version: 1.39
+    Go version: go1.10.8
+    Git commit: 481bc77
+    Built: Sat May 4 <timestamp> 2019
+    OS/Arch: linux/amd64
+    Experimental: false
+    Server: Docker Engine - Community
+    Engine:
+    Version: 18.09.6
+    API version: 1.39 (minimum version 1.12)
+    Go version: go1.10.8
+    Git commit: 481bc77
+    Built: Sat May 4 <timestamp> 2019
+    OS/Arch: linux/amd64
+    Experimental: false
+expectation:
+    expected_playbook: runtime-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/microsoft/mssql-docker/issues/246
+    repository: microsoft/mssql-docker
+    issue_number: 246
+    comment_id: "510064518"
+    title: Pull Failed - unauthorized authentication required
+    author: amoltandon
+    snippet: 2
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:45Z"
+fingerprint: 531fbe9bf955ae9e

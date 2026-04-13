@@ -1,0 +1,30 @@
+id: github-microsoft-mssql-docker-246-s1-9f811bbb9a5dc853
+title: Pull Failed - unauthorized authentication required
+fixture_class: real
+normalized_log: |-
+    > docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+    > docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
+    Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
+    > docker --debug pull mcr.microsoft.com/mssql/server
+    Using default tag: latest
+    Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+expectation:
+    expected_playbook: docker-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/microsoft/mssql-docker/issues/246
+    repository: microsoft/mssql-docker
+    issue_number: 246
+    comment_id: "510064518"
+    title: Pull Failed - unauthorized authentication required
+    author: amoltandon
+    snippet: 1
+    fetched_at: "2026-04-13T12:00:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-13T12:02:46Z"
+fingerprint: 9f811bbb9a5dc853

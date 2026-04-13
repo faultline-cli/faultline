@@ -1,0 +1,169 @@
+fixtures:
+  - id: minimal-docker-auth
+    path: internal/engine/testdata/fixtures/docker-auth.log
+    expectation:
+      expected_playbook: docker-auth
+  - id: minimal-database-test-isolation
+    path: internal/engine/testdata/fixtures/database-test-isolation.log
+    expectation:
+      expected_playbook: database-test-isolation
+  - id: minimal-image-pull-backoff
+    path: internal/engine/testdata/fixtures/image-pull-backoff.log
+    expectation:
+      expected_playbook: image-pull-backoff
+  - id: minimal-git-auth
+    path: internal/engine/testdata/fixtures/git-auth.log
+    expectation:
+      expected_playbook: git-auth
+  - id: minimal-runner-disk-full
+    path: internal/engine/testdata/fixtures/runner-disk-full.log
+    expectation:
+      expected_playbook: runner-disk-full
+  - id: minimal-connection-refused
+    path: internal/engine/testdata/fixtures/connection-refused.log
+    expectation:
+      expected_playbook: connection-refused
+  - id: minimal-dns-resolution
+    path: internal/engine/testdata/fixtures/dns-resolution.log
+    expectation:
+      expected_playbook: dns-resolution
+  - id: minimal-disk-full
+    path: internal/engine/testdata/fixtures/disk-full.log
+    expectation:
+      expected_playbook: disk-full
+  - id: minimal-network-context-deadline
+    path: internal/engine/testdata/fixtures/network-context-deadline.log
+    expectation:
+      expected_playbook: network-timeout
+  - id: minimal-network-timeout
+    path: internal/engine/testdata/fixtures/network-timeout.log
+    expectation:
+      expected_playbook: network-timeout
+  - id: minimal-npm-ci-lockfile
+    path: internal/engine/testdata/fixtures/npm-ci-lockfile.log
+    expectation:
+      expected_playbook: npm-ci-lockfile
+  - id: minimal-oom-killed
+    path: internal/engine/testdata/fixtures/oom-killed.log
+    expectation:
+      expected_playbook: oom-killed
+  - id: minimal-parallelism-conflict
+    path: internal/engine/testdata/fixtures/parallelism-conflict.log
+    expectation:
+      expected_playbook: parallelism-conflict
+  - id: minimal-pipeline-timeout
+    path: internal/engine/testdata/fixtures/pipeline-timeout.log
+    expectation:
+      expected_playbook: pipeline-timeout
+  - id: minimal-artifact-upload-failure
+    path: internal/engine/testdata/fixtures/artifact-upload-failure.log
+    expectation:
+      expected_playbook: artifact-upload-failure
+  - id: minimal-port-conflict
+    path: internal/engine/testdata/fixtures/port-conflict.log
+    expectation:
+      expected_playbook: port-conflict
+  - id: minimal-port-in-use
+    path: internal/engine/testdata/fixtures/port-in-use.log
+    expectation:
+      expected_playbook: port-in-use
+  - id: minimal-python-module-missing
+    path: internal/engine/testdata/fixtures/python-module-missing.log
+    expectation:
+      expected_playbook: python-module-missing
+  - id: minimal-install-failure
+    path: internal/engine/testdata/fixtures/install-failure.log
+    expectation:
+      expected_playbook: install-failure
+  - id: minimal-yarn-lockfile
+    path: internal/engine/testdata/fixtures/yarn-lockfile.log
+    expectation:
+      expected_playbook: yarn-lockfile
+  - id: minimal-working-directory
+    path: internal/engine/testdata/fixtures/working-directory.log
+    expectation:
+      expected_playbook: working-directory
+  - id: minimal-node-version-mismatch
+    path: internal/engine/testdata/fixtures/runtime-mismatch.log
+    expectation:
+      expected_playbook: node-version-mismatch
+  - id: minimal-ssl-cert-error
+    path: internal/engine/testdata/fixtures/ssl-cert-error.log
+    expectation:
+      expected_playbook: ssl-cert-error
+  - id: minimal-container-crash
+    path: internal/engine/testdata/fixtures/container-crash.log
+    expectation:
+      expected_playbook: container-crash
+  - id: minimal-health-check-failure
+    path: internal/engine/testdata/fixtures/health-check-failure.log
+    expectation:
+      expected_playbook: health-check-failure
+  - id: minimal-config-mismatch
+    path: internal/engine/testdata/fixtures/config-mismatch.log
+    expectation:
+      expected_playbook: config-mismatch
+  - id: minimal-env-var-missing
+    path: internal/engine/testdata/fixtures/env-var-missing.log
+    expectation:
+      expected_playbook: env-var-missing
+  - id: minimal-missing-test-fixture
+    path: internal/engine/testdata/fixtures/missing-test-fixture.log
+    expectation:
+      expected_playbook: missing-test-fixture
+  - id: minimal-missing-env
+    path: internal/engine/testdata/fixtures/missing-env.log
+    expectation:
+      expected_playbook: missing-env
+  - id: minimal-secrets-not-available
+    path: internal/engine/testdata/fixtures/secrets-not-available.log
+    expectation:
+      expected_playbook: secrets-not-available
+  - id: minimal-order-dependency
+    path: internal/engine/testdata/fixtures/order-dependency.log
+    expectation:
+      expected_playbook: order-dependency
+  - id: minimal-snapshot-mismatch
+    path: internal/engine/testdata/fixtures/snapshot-mismatch.log
+    expectation:
+      expected_playbook: snapshot-mismatch
+  - id: minimal-flaky-test
+    path: internal/engine/testdata/fixtures/flaky-test.log
+    expectation:
+      expected_playbook: flaky-test
+  - id: minimal-generic-fixture-path-missing
+    path: internal/engine/testdata/fixtures/generic-fixture-path-missing.log
+    expectation:
+      expected_playbook: missing-test-fixture
+  - id: minimal-generic-working-directory-path-missing
+    path: internal/engine/testdata/fixtures/generic-working-directory-path-missing.log
+    expectation:
+      expected_playbook: working-directory
+  - id: minimal-test-timeout
+    path: internal/engine/testdata/fixtures/test-timeout.log
+    expectation:
+      expected_playbook: test-timeout
+  - id: minimal-test-context-deadline
+    path: internal/engine/testdata/fixtures/test-context-deadline.log
+    expectation:
+      expected_playbook: test-timeout
+  - id: minimal-quality-gate-failure
+    path: internal/engine/testdata/fixtures/quality-gate-failure.log
+    expectation:
+      expected_playbook: quality-gate-failure
+  - id: minimal-coverage-gate-failure
+    path: internal/engine/testdata/fixtures/coverage-gate-failure.log
+    expectation:
+      expected_playbook: coverage-gate-failure
+  - id: minimal-dependency-drift
+    path: internal/engine/testdata/fixtures/dependency-drift.log
+    expectation:
+      expected_playbook: dependency-drift
+  - id: minimal-go-compile-error
+    path: internal/engine/testdata/fixtures/go-compile-error.log
+    expectation:
+      expected_playbook: go-compile-error
+  - id: minimal-segfault
+    path: internal/engine/testdata/fixtures/segfault.log
+    expectation:
+      expected_playbook: segfault

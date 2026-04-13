@@ -28,6 +28,7 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newExplainCommand())
 	cmd.AddCommand(newWorkflowCommand())
 	cmd.AddCommand(newPacksCommand())
+	cmd.AddCommand(newFixturesCommand())
 	return cmd
 }
 
