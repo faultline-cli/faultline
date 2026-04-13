@@ -18,14 +18,14 @@ match:
 summary: |-
   The compiler or interpreter hit invalid source syntax and stopped before the
   build could continue.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The failing source file contains a parse error such as an unclosed delimiter,
   invalid token, missing separator, or unresolved merge marker.
 
   This is a hard failure: the code must be corrected before the build can pass.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Look at the file and line number from the error message.
@@ -34,12 +34,12 @@ fix_markdown: |-
      markers such as `<<<<<<<`, `=======`, and `>>>>>>>`.
   4. If the file was generated or transformed, rebuild the generated output
      from source rather than patching the artifact by hand.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the parser, compiler, or linter locally.
   - Confirm the build step completes without the syntax error.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Syntax failures are immediate and deterministic. They usually indicate code

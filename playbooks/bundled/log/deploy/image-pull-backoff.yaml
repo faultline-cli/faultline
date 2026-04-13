@@ -7,23 +7,23 @@ tags: [kubernetes, docker, image, registry, deploy]
 stage_hints: [deploy]
 summary: |-
   The deployment failed because the runtime could not pull the requested container image from the registry.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The deployment failed because the runtime could not pull the requested container image from the registry.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Verify the image name and tag in the deployment manifest exactly match a published image.
   2. Confirm the cluster or runner has registry credentials for the target repository.
   3. Inspect the imagePullSecrets or runtime credential configuration used by the deployment.
   4. Check the latest successful build or release job to confirm the image was pushed before deploy started.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - kubectl describe pod <pod>
   - kubectl get events --sort-by=.lastTimestamp
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   The tag may not exist, the registry may require authentication, or the image reference in the deployment spec may point at the wrong repository.

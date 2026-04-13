@@ -9,14 +9,14 @@ summary: |-
   The installed Python, Ruby, or Go runtime does not satisfy the version
   constraint declared by the project. The build is using a language runtime
   outside the version range expected by the repository or dependency set.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The installed Python, Ruby, or Go runtime does not satisfy the version
   constraint declared by the project. This playbook is the generic fallback
   for those runtimes after more specific Node.js and Java rules have been
   considered.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the required version from the repository source of truth:
@@ -29,7 +29,7 @@ fix_markdown: |-
   4. If the failure came from a dependency upgrade, confirm the new minimum
      runtime requirement before relaxing project constraints or changing the
      CI image.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Print the runtime version in CI and confirm it matches the version file or
@@ -53,7 +53,7 @@ match:
     - setup-node
     - java version mismatch
     - unsupportedclassversionerror
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Runtime requirements drift over time. When the CI runner's default Python,

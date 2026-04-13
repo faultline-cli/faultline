@@ -7,25 +7,25 @@ tags: [docker, build, context, dockerfile]
 stage_hints: [build]
 summary: |-
   Docker could not read the Dockerfile or a required file from the selected build context, so the image build stopped before executing the full build.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Docker could not read the Dockerfile or a required file from the selected build context, so the image build stopped before executing the full build.
 
   This usually means the command ran from the wrong directory, used the wrong `-f` path, or excluded required files via `.dockerignore`.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Verify the exact `docker build` command and confirm the final argument points at the intended build context.
   2. Check that the Dockerfile path exists relative to the working directory or the `-f` flag.
   3. Inspect `.dockerignore` for patterns that exclude required files such as lockfiles or source directories.
   4. Re-run the same command locally from a clean checkout to confirm the context contents.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
   - Confirm Docker can read the Dockerfile and required build inputs from the selected context.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   If Docker cannot see the intended context or Dockerfile, the build fails before any meaningful image assembly happens.

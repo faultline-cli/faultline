@@ -7,11 +7,11 @@ tags: [port, network, bind, socket]
 stage_hints: [build, test, deploy]
 summary: |-
   A process attempted to bind to a TCP or UDP port that is already occupied by another process on the same CI runner.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A process attempted to bind to a TCP or UDP port that is already occupied by another process on the same CI runner.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify what is holding the port:
@@ -36,7 +36,7 @@ fix_markdown: |-
      can bind to different ports without conflict.
   5. Prefer ephemeral port 0 where supported: let the OS assign a free port
      and retrieve the assigned value from the listening socket handle.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `lsof -i :<port>` — confirm the port is free before starting the service.
@@ -54,7 +54,7 @@ match:
     - race detected
     - database locked
     - test is not parallelizable
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Shared or persistent CI runners retain processes from previous jobs. When a new job tries to bind the same port (e.g., 8080, 3000) that a lingering process is still listening on, the bind call fails immediately.

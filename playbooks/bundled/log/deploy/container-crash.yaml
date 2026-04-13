@@ -7,7 +7,7 @@ tags: [container, crash, oomkilled, exit-code, kubernetes, docker]
 stage_hints: [deploy]
 summary: |-
   The container started but then exited with a non-zero status code. If it keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never becomes ready.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The container started but then exited with a non-zero status code. If it
@@ -17,7 +17,7 @@ diagnosis_markdown: |-
   CrashLoopBackOff is the platform symptom. The root cause is usually in the
   last container logs, the exit code, or the startup configuration passed to
   the image.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Retrieve the logs from the previous crashed container: `kubectl logs <pod> --previous`.
@@ -25,7 +25,7 @@ fix_markdown: |-
   3. If exit 137, increase the memory limit in the container spec or profile memory usage.
   4. If exit 1, search the log output for `FATAL`, `panic`, or unhandled exception traces.
   5. Reproduce the failure locally with `docker run` using the same image and environment variables.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -42,7 +42,7 @@ match:
     - The build agent was unable to allocate
     - "exit code 137"
     - OOMKilled
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Non-zero exit codes indicate an unhandled error at runtime. Exit 137 is SIGKILL (often an OOM kill or a forced stop). Exit 139 is a segfault. Exit 1 is a generic application error. CrashLoopBackOff is the symptom; the root cause is always in the container logs.

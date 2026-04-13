@@ -9,17 +9,17 @@ import (
 
 func samplePlaybook() model.Playbook {
 	return model.Playbook{
-		ID:                   "go-sum-missing",
-		Title:                "Missing go.sum entry",
-		Category:             "build",
-		Severity:             "medium",
-		Summary:              "The build needs a checksum that is missing from `go.sum`.",
-		DiagnosisMarkdown:    "## Diagnosis\n\nThe dependency graph references a module without a checksum entry.",
-		FixMarkdown:          "## Fix steps\n\n1. Run `go mod tidy`\n2. Commit `go.mod` and `go.sum`",
-		ValidationMarkdown:   "## Validation\n\n- Run `go test ./...`",
-		WhyItMattersMarkdown: "## Why it matters\n\nChecksum drift breaks reproducible builds.",
-		Match:                model.MatchSpec{Any: []string{"missing go.sum entry"}},
-		Workflow:             model.WorkflowSpec{Verify: []string{"go test ./..."}},
+		ID:           "go-sum-missing",
+		Title:        "Missing go.sum entry",
+		Category:     "build",
+		Severity:     "medium",
+		Summary:      "The build needs a checksum that is missing from `go.sum`.",
+		Diagnosis:    "## Diagnosis\n\nThe dependency graph references a module without a checksum entry.",
+		Fix:          "## Fix steps\n\n1. Run `go mod tidy`\n2. Commit `go.mod` and `go.sum`",
+		Validation:   "## Validation\n\n- Run `go test ./...`",
+		WhyItMatters: "## Why it matters\n\nChecksum drift breaks reproducible builds.",
+		Match:        model.MatchSpec{Any: []string{"missing go.sum entry"}},
+		Workflow:     model.WorkflowSpec{Verify: []string{"go test ./..."}},
 	}
 }
 

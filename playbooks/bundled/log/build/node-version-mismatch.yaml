@@ -7,11 +7,11 @@ tags: [node, nodejs, nvmrc, engines, nvm, version]
 stage_hints: [build]
 summary: |-
   The Node.js version installed on the CI runner does not satisfy the `engines` constraint declared in `package.json` or the version pinned in `.nvmrc`.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The Node.js version installed on the CI runner does not satisfy the `engines` constraint declared in `package.json` or the version pinned in `.nvmrc`.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the required Node.js version from `.nvmrc`, `.node-version`, or `package.json` `engines.node`.
@@ -20,7 +20,7 @@ fix_markdown: |-
   4. CircleCI: use `cimg/node:20.x` or pin the version in the `.circleci/config.yml` executor.
   5. Azure Pipelines: use the `NodeTool@0` task with a pinned `versionSpec`.
   6. Locally: run `nvm use` or `volta install node` to switch to the pinned version.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
@@ -48,7 +48,7 @@ workflow:
   local_repro:
     - "cat .nvmrc && node --version"
     - nvm use
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Package.json `engines.node` fields and `.nvmrc` files pin a specific Node.js version for compatibility. If CI installs a different version — often the system default or a recently pinned LTS — builds and tests may fail with syntax errors, missing APIs, or npm engine warnings that are treated as errors.

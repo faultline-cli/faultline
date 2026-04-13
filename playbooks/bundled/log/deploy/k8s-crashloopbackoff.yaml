@@ -7,11 +7,11 @@ tags: [kubernetes, k8s, crashloopbackoff, container, restart, pod]
 stage_hints: [deploy]
 summary: |-
   A Kubernetes pod is stuck in CrashLoopBackOff: the container starts, exits with a non-zero code, and Kubernetes restarts it with exponential back-off. The root cause is almost always inside the container itself.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A Kubernetes pod is stuck in CrashLoopBackOff: the container starts, exits with a non-zero code, and Kubernetes restarts it with exponential back-off. The root cause is almost always inside the container itself.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Read the container's last log output before it exited: `kubectl logs <pod> --previous`.
@@ -21,7 +21,7 @@ fix_markdown: |-
   5. For application startup errors: reproduce with `docker run --env-file .env <image>` to isolate the failure from Kubernetes.
   6. For OOM: increase the container's `resources.limits.memory` or reduce the application's memory footprint.
   7. Force-trigger a log dump by temporarily patching the command to sleep: `kubectl patch deployment <name> --patch '{"spec":{"template":{"spec":{"containers":[{"name":"<n>","command":["sleep","3600"]}]}}}}'` then exec in to inspect.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - kubectl get pod <pod> -n <namespace> -w
@@ -51,7 +51,7 @@ workflow:
   verify:
     - "kubectl get pod <pod> -n <namespace>"
     - "kubectl logs <pod> -n <namespace>"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   CrashLoopBackOff is the most common Kubernetes failure mode after a bad deploy. Kubernetes will restart the container up to a back-off ceiling (~5 minutes between restarts), meaning the service is unavailable or degraded for that entire window. Root causes include: missing environment variables or secrets, a misconfigured entrypoint, an application startup error, OOMKill from an undersized memory limit, or an incompatible image for the node architecture.

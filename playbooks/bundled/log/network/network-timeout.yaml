@@ -7,11 +7,11 @@ tags: [network, timeout, http, connection]
 stage_hints: [build, deploy]
 summary: |-
   A network request exceeded its timeout limit. The remote host did not respond within the expected window, causing the CI step to fail.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A network request exceeded its timeout limit. The remote host did not respond within the expected window, causing the CI step to fail.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the exact host and command that timed out — registry, API, artifact store, or internal service — so you know where to look.
@@ -26,7 +26,7 @@ fix_markdown: |-
   4. Check the service status page and confirm the endpoint is healthy before adjusting timeout settings.
   5. Verify the CI runner can reach the required host through any proxy, firewall, or egress policy applied in that environment.
   6. Increase client-side timeout settings only when the endpoint is confirmed healthy and the operation is legitimately large or slow.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `curl -v --max-time 10 <URL>` completes within 10 seconds from the runner.
@@ -53,7 +53,7 @@ match:
     - "go test -timeout"
     - "Test timed out"
     - "async test timed out"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   CI runners may have restricted outbound network access, or the remote service (package registry, API endpoint, artifact store) is temporarily unavailable or slow. Transient network congestion also causes timeouts.

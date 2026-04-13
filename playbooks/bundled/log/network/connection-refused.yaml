@@ -7,11 +7,11 @@ tags: [network, connection, refused, service, dependency]
 stage_hints: [build, test, deploy]
 summary: |-
   A TCP connection attempt was actively refused by the target host. The service is either not running on that address and port, has not finished starting up, or is bound to a different interface.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A TCP connection attempt was actively refused by the target host. The service is either not running on that address and port, has not finished starting up, or is bound to a different interface.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Add a readiness probe before the connecting step:
@@ -40,7 +40,7 @@ fix_markdown: |-
      resolve each other by service name.
   5. Check for race conditions: the client may be starting before the server is
      ready. Add an explicit health-check dependency in the CI service definition.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `curl -sf http://<host>:<port>/health` or `nc -zv <host> <port>` — confirm
@@ -70,7 +70,7 @@ workflow:
     - docker-compose.yml
     - .github/workflows/*.yml
     - .gitlab-ci.yml
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   In CI, this typically means a test or build step tried to contact a service (database, cache, API) before the service was ready to accept connections. It can also mean the service container never started, or the wrong host/port is configured.

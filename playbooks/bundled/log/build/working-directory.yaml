@@ -7,18 +7,18 @@ tags: [directory, path, config]
 stage_hints: [build, test, deploy]
 summary: |-
   A command ran in an unexpected working directory. Relative paths expected a specific directory layout that did not exist at the time of execution.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A command ran in an unexpected working directory. Relative paths expected a specific directory layout that did not exist at the time of execution.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Check the `working-directory` configuration in your CI workflow file.
   2. Use absolute paths or `$(pwd)` references where possible.
   3. Add `ls -la` before the failing step to confirm the directory contents.
   4. Verify the repository structure matches what the workflow expects.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -37,7 +37,7 @@ match:
     - factory
     - testdata
     - seed
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   CI jobs sometimes change directory as part of a step but fail to restore the original directory, or a `working-directory` configuration in the workflow file points to a path that does not exist in the checked-out repository.

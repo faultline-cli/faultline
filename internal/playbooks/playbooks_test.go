@@ -117,13 +117,13 @@ category: build
 severity: medium
 summary: |
   Short summary.
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Detailed markdown.
-fix_markdown: |
+fix: |
   1. Run fix
-validation_markdown: |
+validation: |
   - Verify fix
 match:
   any:
@@ -144,11 +144,11 @@ workflow:
 	if pb.Summary != "Short summary." {
 		t.Fatalf("expected summary, got %q", pb.Summary)
 	}
-	if !strings.Contains(pb.DiagnosisMarkdown, "## Diagnosis") {
-		t.Fatalf("expected markdown diagnosis, got %q", pb.DiagnosisMarkdown)
+	if !strings.Contains(pb.Diagnosis, "## Diagnosis") {
+		t.Fatalf("expected markdown diagnosis, got %q", pb.Diagnosis)
 	}
-	if !strings.Contains(pb.ValidationMarkdown, "Verify fix") {
-		t.Fatalf("expected validation markdown, got %q", pb.ValidationMarkdown)
+	if !strings.Contains(pb.Validation, "Verify fix") {
+		t.Fatalf("expected validation markdown, got %q", pb.Validation)
 	}
 }
 
@@ -173,8 +173,8 @@ match:
 	if err == nil {
 		t.Fatal("expected missing markdown fields to fail validation")
 	}
-	if !strings.Contains(err.Error(), "diagnosis_markdown") {
-		t.Fatalf("expected diagnosis_markdown validation error, got %v", err)
+	if !strings.Contains(err.Error(), "diagnosis") {
+		t.Fatalf("expected diagnosis validation error, got %v", err)
 	}
 }
 
@@ -338,10 +338,10 @@ func writePlaybookFixture(t *testing.T, dir, name, content string) {
 	path := filepath.Join(dir, name)
 	content = strings.TrimSpace(content)
 	defaults := map[string]string{
-		"summary:":             "summary: |\n  Test summary.",
-		"diagnosis_markdown:":  "diagnosis_markdown: |\n  ## Diagnosis\n\n  Test diagnosis.",
-		"fix_markdown:":        "fix_markdown: |\n  ## Fix steps\n\n  1. Test fix.",
-		"validation_markdown:": "validation_markdown: |\n  ## Validation\n\n  - Test validation.",
+		"summary:":    "summary: |\n  Test summary.",
+		"diagnosis:":  "diagnosis: |\n  ## Diagnosis\n\n  Test diagnosis.",
+		"fix:":        "fix: |\n  ## Fix steps\n\n  1. Test fix.",
+		"validation:": "validation: |\n  ## Validation\n\n  - Test validation.",
 	}
 	for key, block := range defaults {
 		if !strings.Contains(content, key) {

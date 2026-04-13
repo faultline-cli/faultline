@@ -77,18 +77,18 @@ source:
       discount: 1.5
 summary: |-
   A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Add a recovery middleware at the router level so all handlers are protected: for Gin use `r.Use(gin.Recovery())`, for Echo use `e.Use(middleware.Recover())`, for stdlib `net/http` write a middleware that defers `recover()`.
   2. Replace the explicit `panic(...)` with a returned error and an appropriate HTTP status code response.
   3. If intentional panics are used for "impossible" invariants, confirm they cannot be triggered by external input (user-supplied data should never reach a `panic` call).
   4. Use `if err != nil { return ..., err }` rather than `panic(err)` in all layers called by handlers.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - go test ./...
@@ -96,7 +96,7 @@ validation_markdown: |-
 scoring:
   blast_radius_bonus: 1.3
   hot_path_bonus: 1.2
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   In Go, a panic that is not caught by a deferred `recover()` propagates up the call stack and terminates the goroutine. For HTTP servers, each request runs in its own goroutine — an unrecovered panic in a handler silently kills that goroutine, resulting in a broken connection for the client. Production frameworks provide recovery middleware precisely because this is a common mistake. The risk is highest when handler code calls third-party functions that may panic on invalid input.

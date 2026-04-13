@@ -19,7 +19,7 @@ match:
 summary: |-
   CI restored a dependency cache, but the cached contents were stale,
   corrupted, or built for an incompatible environment.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The cache layer existed and restored successfully, but one or more cached
@@ -27,7 +27,7 @@ diagnosis_markdown: |-
 
   This usually happens after toolchain upgrades, runner OS changes, or partial
   writes from an interrupted previous job.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Delete the CI cache and allow it to rebuild from scratch.
@@ -36,13 +36,13 @@ fix_markdown: |-
   3. For GitHub Actions, clear the cache via Settings > Actions > Caches.
   4. If the cache stores platform-specific artifacts, verify the key includes
      OS, architecture, and toolchain version before restoring it again.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the build from a cold cache.
   - Confirm dependency install or linking succeeds without archive or checksum
     corruption.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   A bad cache can fail builds repeatedly and nondeterministically across many

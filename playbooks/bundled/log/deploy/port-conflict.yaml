@@ -9,7 +9,7 @@ summary: |-
   A container or service failed to start because the port it needs to bind to
   is already occupied by another process or a previous deployment that has not
   been fully removed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A container or service failed to start because the port it needs to bind to
@@ -18,14 +18,14 @@ diagnosis_markdown: |-
 
   In deploy contexts this usually means a host-port mapping is colliding during
   rollout, or a prior container still owns the port on the target node.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Find the process occupying the port: `lsof -i :<port>` or `ss -tlnp | grep <port>`.
   2. In Kubernetes with host ports: ensure old pods are fully terminated before the new ones start (`kubectl delete pod <old-pod>`).
   3. Check for Ghost containers: `docker ps -a | grep <image>` and remove stopped containers with `docker rm`.
   4. If using NodePort or HostPort in Kubernetes, verify no two pods on the same node request the same port.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -44,7 +44,7 @@ match:
     - address already in use
     - "bind: address already in use"
     - listen tcp
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Ports become stuck when a rolling update leaves an old container alive after the port hand-off, when a host-port mapping conflicts between pods on the same node, or when a local dev service was not shut down before deploying.

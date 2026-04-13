@@ -7,11 +7,11 @@ tags: [artifact, upload, download, ci, pipeline, storage]
 stage_hints: [build, test, deploy]
 summary: |-
   A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job. Pipeline stages that depend on the artifact cannot proceed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job. Pipeline stages that depend on the artifact cannot proceed.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Check whether the producing job actually ran and exited zero before the upload step.
@@ -21,7 +21,7 @@ fix_markdown: |-
   5. For CircleCI: confirm `store_artifacts` path matches the actual build output directory.
   6. For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile.
   7. Increase the artifact retention period if downstream jobs run long after the producing job.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -52,7 +52,7 @@ workflow:
     - ls -R dist build out
   verify:
     - ls -R dist build out
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Artifact failures occur when: storage quota is exceeded, the upload step was skipped because an early step failed, the artifact name or path pattern does not match the files produced, the artifact has expired before the download attempt, or network issues interrupted the upload.

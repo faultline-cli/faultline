@@ -7,11 +7,11 @@ tags: [disk, storage, runner, ci, space]
 stage_hints: [build, test]
 summary: |-
   The CI runner has run out of available disk space. The build, test, or artifact step cannot write files and fails with ENOSPC.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The CI runner has run out of available disk space. The build, test, or artifact step cannot write files and fails with ENOSPC.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Check remaining space before diagnosing: `df -h` and `du -sh /* | sort -rh | head -20`.
@@ -22,7 +22,7 @@ fix_markdown: |-
   6. In CircleCI, set `no_output_timeout` and clean up large workspace directories.
   7. Upgrade to a runner or agent tier with more disk, or split the job across multiple stages.
   8. Reduce `.dockerignore` exclusions to keep the build context small.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -53,7 +53,7 @@ workflow:
     - docker system df
   verify:
     - df -h
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Disk space is consumed by: Docker image layers pulled during the build, large build artifacts not cleaned up between jobs, excessive logging, test fixtures, dependency caches, or container image builds that layer many files.

@@ -9,7 +9,7 @@ summary: |-
   The dependency installation step failed because the requested package or
   version could not be found in the configured registry, package index, or OS
   repository.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The dependency installation step failed because the requested package or
@@ -19,7 +19,7 @@ diagnosis_markdown: |-
   This usually means the package name is wrong, the version constraint points
   at an unpublished release, or CI is configured to use a repository mirror
   that does not contain the requested artifact.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Re-run the exact install command locally with verbose logging so you can
@@ -33,7 +33,7 @@ fix_markdown: |-
      or replace it with the maintained package.
   5. If CI uses a mirror or proxy, confirm the missing version has been synced
      there before retrying the build.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run a registry metadata check for the missing package or version.
@@ -62,7 +62,7 @@ match:
     - context deadline exceeded
     - dial tcp
     - no such host
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Dependency installation is part of the build boundary. When CI cannot

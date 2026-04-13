@@ -9,7 +9,7 @@ summary: |-
   Tests are polluting a shared database with committed data that later tests
   did not expect to find. Tests pass in isolation but fail when the full suite
   runs, or fail only in certain orderings.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Each test is leaving committed rows, modified schema state, or other database
@@ -20,7 +20,7 @@ diagnosis_markdown: |-
   - `already exists` or `duplicate key` errors in tests that insert seed data.
   - Counts or queries that return more rows than expected.
   - Tests pass individually but fail together or in a different order.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Wrap each test in a database transaction that is rolled back after the
@@ -62,7 +62,7 @@ fix_markdown: |-
      pytest --randomly-seed=<N>
      go test -shuffle=on ./...
      ```
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the full suite multiple times in random order and confirm zero
@@ -85,7 +85,7 @@ match:
     - missing fixture
     - seed data
     - "ActiveRecord::RecordNotFound"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   When tests commit data to a shared database without cleaning up, subsequent

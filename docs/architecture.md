@@ -66,8 +66,8 @@ history remain stable across command surfaces.
 ## Rendering boundary
 
 Human-facing longform content is stored in markdown-capable playbook fields such
-as `summary`, `diagnosis_markdown`, `fix_markdown`, and
-`validation_markdown`.
+as `summary`, `diagnosis`, `fix`, and
+`validation`.
 
 - markdown is presentation content only
 - structured playbook fields still drive matching and ranking

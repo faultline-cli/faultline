@@ -25,12 +25,12 @@ match:
 summary: |-
   Dependency constraints have drifted apart enough that the package manager
   cannot compute a valid install plan.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Two or more packages now require incompatible versions of a shared
   dependency, so resolution fails before installation can begin.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Re-run dependency resolution from a clean cache or clean environment to
@@ -43,12 +43,12 @@ fix_markdown: |-
      constraints agree on a compatible range.
   5. If the conflict appears only in CI, align the runtime or package manager
      version with local development before changing dependency constraints.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run dependency resolution from a clean environment.
   - Confirm the lockfile and install step complete without version conflicts.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Version drift tends to accumulate silently until an unrelated update tips the

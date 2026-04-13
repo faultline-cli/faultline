@@ -7,11 +7,11 @@ tags: [git, github, ssh, auth]
 stage_hints: [build, deploy]
 summary: |-
   The CI runner could not authenticate with the remote Git repository. This prevents cloning, fetching, or pushing code.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The CI runner could not authenticate with the remote Git repository. This prevents cloning, fetching, or pushing code.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. For HTTPS: configure Git to inject the token automatically:
@@ -45,7 +45,7 @@ fix_markdown: |-
      ```bash
      git ls-remote origin HEAD
      ```
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `git ls-remote origin HEAD` exits 0 and prints the current HEAD SHA.
@@ -65,7 +65,7 @@ match:
     - "ssh: handshake failed"
     - no such identity
     - "ssh: connect to host"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   CI environments disable interactive terminal prompts, so Git cannot prompt for a username and password. Without a pre-configured credential or SSH key, the operation fails immediately.

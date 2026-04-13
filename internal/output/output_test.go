@@ -15,12 +15,12 @@ func makeAnalysis(id, title, category string, confidence float64, evidence []str
 		Results: []model.Result{
 			{
 				Playbook: model.Playbook{
-					ID:                id,
-					Title:             title,
-					Category:          category,
-					Summary:           "Summary for " + id,
-					DiagnosisMarkdown: "Diagnosis for " + id,
-					FixMarkdown:       "1. Fix step 1\n2. Fix step 2",
+					ID:        id,
+					Title:     title,
+					Category:  category,
+					Summary:   "Summary for " + id,
+					Diagnosis: "Diagnosis for " + id,
+					Fix:       "1. Fix step 1\n2. Fix step 2",
 				},
 				Detector:   "log",
 				Confidence: confidence,
@@ -212,7 +212,7 @@ func TestFormatAnalysisMarkdownNilAnalysis(t *testing.T) {
 
 func TestFormatCIAnnotations(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker Auth", "auth", 1.0, nil)
-	a.Results[0].Playbook.FixMarkdown = "1. docker login"
+	a.Results[0].Playbook.Fix = "1. docker login"
 	out := FormatCIAnnotations(a, 1)
 	if !strings.Contains(out, "::warning") {
 		t.Errorf("expected ::warning annotation, got %q", out)
@@ -252,17 +252,17 @@ func TestFormatPlaybookListCategoryFilter(t *testing.T) {
 
 func TestFormatPlaybookDetails(t *testing.T) {
 	pb := model.Playbook{
-		ID:                   "docker-auth",
-		Title:                "Docker Registry Auth",
-		Category:             "auth",
-		Severity:             "high",
-		Metadata:             model.PlaybookMeta{PackName: "faultline-premium"},
-		Summary:              "The CI job could not authenticate.",
-		DiagnosisMarkdown:    "The CI job could not authenticate.",
-		WhyItMattersMarkdown: "Token expired.",
-		FixMarkdown:          "1. Run docker login",
-		ValidationMarkdown:   "- Retry the image pull",
-		Match:                model.MatchSpec{Any: []string{"pull access denied"}},
+		ID:           "docker-auth",
+		Title:        "Docker Registry Auth",
+		Category:     "auth",
+		Severity:     "high",
+		Metadata:     model.PlaybookMeta{PackName: "faultline-premium"},
+		Summary:      "The CI job could not authenticate.",
+		Diagnosis:    "The CI job could not authenticate.",
+		WhyItMatters: "Token expired.",
+		Fix:          "1. Run docker login",
+		Validation:   "- Retry the image pull",
+		Match:        model.MatchSpec{Any: []string{"pull access denied"}},
 	}
 	text := FormatPlaybookDetails(pb, renderer.Options{Plain: true, Width: 88})
 	for _, want := range []string{"docker-auth", "Docker Registry Auth", "auth", "high", "faultline-premium", "Token expired", "Run docker login"} {
@@ -274,16 +274,16 @@ func TestFormatPlaybookDetails(t *testing.T) {
 
 func TestFormatPlaybookDetailsMarkdown(t *testing.T) {
 	pb := model.Playbook{
-		ID:                   "docker-auth",
-		Title:                "Docker Registry Auth",
-		Category:             "auth",
-		Severity:             "high",
-		Summary:              "The CI job could not authenticate.",
-		DiagnosisMarkdown:    "The registry credentials were rejected.",
-		FixMarkdown:          "1. Run docker login",
-		ValidationMarkdown:   "- Retry the image pull",
-		WhyItMattersMarkdown: "Builds cannot fetch images.",
-		Match:                model.MatchSpec{Any: []string{"pull access denied"}},
+		ID:           "docker-auth",
+		Title:        "Docker Registry Auth",
+		Category:     "auth",
+		Severity:     "high",
+		Summary:      "The CI job could not authenticate.",
+		Diagnosis:    "The registry credentials were rejected.",
+		Fix:          "1. Run docker login",
+		Validation:   "- Retry the image pull",
+		WhyItMatters: "Builds cannot fetch images.",
+		Match:        model.MatchSpec{Any: []string{"pull access denied"}},
 	}
 	text := FormatPlaybookDetailsMarkdown(pb)
 	for _, want := range []string{"# Docker Registry Auth", "- ID: `docker-auth`", "## Diagnosis", "## Fix", "## Match Rules", "### match.any"} {

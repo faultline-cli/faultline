@@ -7,11 +7,11 @@ tags: [oom, memory, kill, exit-137]
 stage_hints: [build, test]
 summary: |-
   The process was terminated by the operating system's out-of-memory (OOM) killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The process was terminated by the operating system's out-of-memory (OOM) killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Confirm the OOM kill. Exit code 137 means the process received SIGKILL:
@@ -41,7 +41,7 @@ fix_markdown: |-
      response bodies, or unbounded in-memory caches that grow over the test run.
   6. Set explicit memory limits and requests in the deployment spec or CI runner
      tier so future OOM events fail fast with a clear reason.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Monitor memory during the re-run: `docker stats` or `kubectl top pod`.
@@ -62,7 +62,7 @@ match:
     - "Back-off restarting failed container"
     - resource_class
     - CircleCI resource class
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   The process consumed more memory than the CI runner's available physical RAM or the container's memory limit allowed. Large builds, test suites that load big fixtures, or memory leaks commonly trigger this.

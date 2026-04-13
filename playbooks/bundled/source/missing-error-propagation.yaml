@@ -98,17 +98,17 @@ source:
       discount: 2.0
 summary: |-
   A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Propagate the error to the caller — wrap it with context: `return fmt.Errorf("context: %w", err)`.
   2. If the error genuinely cannot affect correctness, document why with a comment and log it at WARN level.
   3. Use errcheck (or staticcheck SA9003) in CI to catch ignored error returns statically.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -116,7 +116,7 @@ validation_markdown: |-
 scoring:
   blast_radius_bonus: 1.1
   hot_path_bonus: 1.0
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Silent error discard is the leading cause of undetected data corruption and hard-to-diagnose production issues. When `db.Exec`, `tx.Commit`, or `file.Write` returns an error and it is ignored, the application continues as if the operation succeeded, potentially leaving data in an inconsistent state with no log trail.

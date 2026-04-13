@@ -7,11 +7,11 @@ tags: [python, pip, install, dependencies, build]
 stage_hints: [build]
 summary: |-
   `pip install` could not satisfy one or more package requirements. The package may not exist on PyPI, the version constraint is too restrictive, or a C extension failed to compile.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   `pip install` could not satisfy one or more package requirements. The package may not exist on PyPI, the version constraint is too restrictive, or a C extension failed to compile.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `pip install -r requirements.txt -v` locally for full resolver output.
@@ -19,7 +19,7 @@ fix_markdown: |-
   3. For `Failed building wheel`: install the required system libraries (e.g. `libpq-dev`, `build-essential`).
   4. For private indexes: set `PIP_EXTRA_INDEX_URL` or add `--extra-index-url` to the install command.
   5. Use `pip-compile` from pip-tools to generate a locked `requirements.txt`.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
@@ -53,7 +53,7 @@ workflow:
     - Pipfile
   local_repro:
     - pip install -r requirements.txt
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Common causes: conflicting version constraints across packages, a package that requires a native library or compiler toolchain that is not installed, a private PyPI index that is unreachable, or Python version incompatibility.

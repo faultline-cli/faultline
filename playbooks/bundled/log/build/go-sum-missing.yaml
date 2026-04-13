@@ -13,17 +13,17 @@ match:
     - no required module provides
 summary: |-
   The build needs a module checksum that is missing from `go.sum`.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Go refused to continue because the dependency graph references a module version that does not have a matching checksum entry in `go.sum`.
 
   This usually happens after dependency changes were made locally without committing the resulting module metadata.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   `go.sum` is part of Go's reproducibility contract. If CI cannot verify module checksums, the build stops instead of guessing.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Recalculate module metadata with the same Go version used in CI:
@@ -36,7 +36,7 @@ fix_markdown: |-
   3. Commit both `go.mod` and `go.sum` if either file changed.
   4. For private modules, verify `GOPRIVATE` and `GONOSUMDB` are set correctly.
   5. If the module cache looks stale, clear it once with `go clean -modcache` and rerun the build.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run `git diff --exit-code go.mod go.sum` after `go mod tidy`.

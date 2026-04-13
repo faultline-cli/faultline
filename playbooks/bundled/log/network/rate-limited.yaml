@@ -9,7 +9,7 @@ summary: |-
   A request to an external service was rejected with HTTP 429 Too Many Requests
   or an equivalent rate-limit error. Package registries, container registries,
   and APIs all enforce rate limits that CI can exceed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The CI job made too many requests to an external service in a short window.
@@ -20,7 +20,7 @@ diagnosis_markdown: |-
     pulls/6 h)
   - GitHub API calls from Actions steps or third-party actions
   - PyPI or other package indexes under heavy concurrent load
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify which service is rate-limiting from the error message — the
@@ -53,7 +53,7 @@ fix_markdown: |-
 
   5. Retry transient rate-limit failures with exponential back-off rather than
      failing the job immediately — most registries recover within minutes.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the job after adding caching; confirm the download step skips
@@ -74,7 +74,7 @@ match:
     - authentication required
     - unauthorized
     - access denied
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Rate limits are enforced per IP address or per account. CI runners on shared

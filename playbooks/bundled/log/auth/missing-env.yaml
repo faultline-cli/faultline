@@ -7,11 +7,11 @@ tags: [env, config, secrets]
 stage_hints: [build, deploy]
 summary: |-
   A required environment variable was not set in the CI environment. The job cannot continue without the expected configuration or secret value.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A required environment variable was not set in the CI environment. The job cannot continue without the expected configuration or secret value.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the missing variable name from the error and add it to your CI
@@ -37,7 +37,7 @@ fix_markdown: |-
 
   5. Check that repository forks and non-default branches have access to the
      required secrets and are not blocked by protection rules.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Add a diagnostic step confirming availability without revealing the value.
@@ -61,7 +61,7 @@ match:
     - configuration error
     - is not set
     - must be set
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Environment variables that hold secrets (tokens, API keys, passwords) must be configured explicitly in CI settings. They are not inherited from the local developer environment and are not committed to the repository.

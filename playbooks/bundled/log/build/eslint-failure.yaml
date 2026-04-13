@@ -7,11 +7,11 @@ tags: [eslint, lint, javascript, typescript, code-quality]
 stage_hints: [build, test]
 summary: |-
   A linting or formatting check step (`eslint`, `tslint`, `prettier`) found violations in the source code and exited with a non-zero code, failing the CI step.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A linting or formatting check step (`eslint`, `tslint`, `prettier`) found violations in the source code and exited with a non-zero code, failing the CI step.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `npx eslint . --fix` locally to auto-fix fixable violations (formatting, import ordering, trailing commas).
@@ -21,7 +21,7 @@ fix_markdown: |-
   5. If a new rule was enabled by a shared config update (e.g., `eslint-config-company` bumped): check the config package's changelog and decide whether to fix violations or temporarily raise the rule to `warn`.
   6. For `@typescript-eslint` errors: confirm `parserOptions.project` in `.eslintrc` points to the correct `tsconfig.json` — a missing project reference causes false positives.
   7. For `no-unused-vars` on type imports: use `import type` syntax or add `@typescript-eslint/no-unused-vars` with `varsIgnorePattern`.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - npx eslint .
@@ -49,7 +49,7 @@ workflow:
     - .eslintrc.yml
     - .prettierrc
     - package.json
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Lint failures happen when code is committed without running the linter locally, when a new ESLint rule is enabled in the shared config, or when a dependency update changes rule behaviour. Formatting failures occur when code is not formatted before commit.

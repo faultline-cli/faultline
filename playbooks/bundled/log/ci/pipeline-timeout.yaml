@@ -7,11 +7,11 @@ tags: [timeout, ci, hung, pipeline]
 stage_hints: [build, test, deploy]
 summary: |-
   The CI job ran past its configured time limit and was killed by the CI system. This is a hard stop — no further steps ran.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The CI job ran past its configured time limit and was killed by the CI system. This is a hard stop — no further steps ran.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Check the last progressing log line before the timeout killed the job —
@@ -42,7 +42,7 @@ fix_markdown: |-
 
   6. Increase the CI timeout only after identifying a bounded slow path that
      legitimately needs more time — raising it blindly hides regressions.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing step with `timeout <N>` wrapper and confirm it
@@ -66,7 +66,7 @@ match:
     - "Test timed out"
     - "go test -timeout"
     - "waiting for assertion"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Common causes: a test is stuck waiting on a network call or socket, a build step hangs on user input, a dependency download stalls, or the workload genuinely takes longer than the limit allows.

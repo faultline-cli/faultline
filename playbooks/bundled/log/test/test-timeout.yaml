@@ -7,11 +7,11 @@ tags: [test, timeout, hang, slow]
 stage_hints: [test]
 summary: |-
   A test (or the entire test suite) did not complete within the configured timeout period. The test runner killed the pending test and marked it as failed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A test (or the entire test suite) did not complete within the configured timeout period. The test runner killed the pending test and marked it as failed.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the test name in the timeout message and run it in isolation with
@@ -38,7 +38,7 @@ fix_markdown: |-
      operation is genuinely slow and needs optimisation or mocking.
   7. Replace real network or DB calls in unit tests with mocks to ensure the
      test cannot hang on external I/O.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the specific test in isolation and confirm it completes within the normal
@@ -60,7 +60,7 @@ match:
     - "read timeout"
     - "dial timeout"
     - "failed to connect"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Test timeouts occur when a test blocks waiting for an async operation that never resolves, a database or network call that hangs, a mock that is never triggered, or simply a test that is genuinely slow and needs a higher timeout.

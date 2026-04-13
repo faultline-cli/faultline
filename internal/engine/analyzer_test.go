@@ -136,15 +136,15 @@ category: test
 severity: low
 summary: |
   Custom summary.
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Custom diagnosis.
-fix_markdown: |
+fix: |
   ## Fix steps
 
   1. Custom fix.
-validation_markdown: |
+validation: |
   ## Validation
 
   - Custom validation.

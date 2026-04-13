@@ -9,13 +9,13 @@ summary: |-
   A non-compiler quality gate failed during CI. The job stopped because lint,
   formatting, or static-analysis checks reported violations even though the
   code may still compile.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A non-compiler quality gate failed during CI. This playbook is the generic
   fallback for quality tooling when Faultline cannot match a stronger
   tool-specific rule.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Re-run the exact quality-check command locally to see which files and rules
@@ -43,12 +43,12 @@ fix_markdown: |-
      prettier --check .        # formatting only
      tsc --noEmit              # type-check only
      ```
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `make lint` and `make check` both exit 0.
   - Re-run CI and confirm the quality gate passes.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Generic quality gates fail when contributor machines and CI enforce different formatting or analysis rules, when a shared ruleset changes, or when the codebase accumulates style or maintainability issues that CI treats as hard failures.

@@ -7,11 +7,11 @@ tags: [node, javascript, webpack, nextjs, oom, heap, memory]
 stage_hints: [build]
 summary: |-
   The Node.js process ran out of heap memory during the build. This is common in large Webpack, Next.js, or Jest builds where the default V8 heap limit is too low for the amount of modules being processed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The Node.js process ran out of heap memory during the build. This is common in large Webpack, Next.js, or Jest builds where the default V8 heap limit is too low for the amount of modules being processed.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Increase the Node.js heap limit: set `NODE_OPTIONS=--max-old-space-size=4096` (or higher) before the build command.
@@ -20,7 +20,7 @@ fix_markdown: |-
   4. Upgrade the CI runner to a higher-memory tier — heap expansion is not free; more RAM is the most reliable fix.
   5. Identify the heap consumer: add `--inspect` or run `node --max-old-space-size=2048 --trace-gc` and profile with Chrome DevTools.
   6. Break the build into smaller increments (e.g., build packages individually in a monorepo).
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
@@ -43,7 +43,7 @@ workflow:
     - jest.config.js
   local_repro:
     - "NODE_OPTIONS=--max-old-space-size=4096 npm run build"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Node.js's V8 engine has a default heap size limit (typically 512 MB–1.5 GB depending on the platform). Large bundlers and test suites that load many modules simultaneously can exceed this limit. This is especially frequent when running production builds or full test suites in a memory-constrained CI environment.

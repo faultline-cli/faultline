@@ -7,22 +7,22 @@ tags: [typescript, tsc, javascript, typecheck]
 stage_hints: [build, test]
 summary: |-
   The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `tsc --noEmit` locally to reproduce the failing diagnostic with the same config.
   2. Inspect the first TypeScript error in the log and update the code or type definitions to match.
   3. If a generated type file changed, regenerate it before committing.
   4. Confirm path aliases in `tsconfig.json` match the repository layout used in CI.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - tsc --noEmit
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Type errors often appear after API changes, dependency upgrades, or partial refactors where code and type definitions drift out of sync.

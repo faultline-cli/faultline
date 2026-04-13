@@ -92,7 +92,7 @@ func FormatFixMarkdown(a *model.Analysis) string {
 			"- Category: " + result.Playbook.Category,
 		}, "\n"),
 	}
-	if fix := strings.TrimSpace(result.Playbook.FixMarkdown); fix != "" {
+	if fix := strings.TrimSpace(result.Playbook.Fix); fix != "" {
 		sections = append(sections, "## Fix", "", fix)
 	} else {
 		sections = append(sections, "## Fix", "", "No fix steps defined for this playbook.")
@@ -120,26 +120,26 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank                 int                     `json:"rank"`
-	FailureID            string                  `json:"failure_id"`
-	Title                string                  `json:"title"`
-	Category             string                  `json:"category"`
-	Pack                 string                  `json:"pack,omitempty"`
-	Severity             string                  `json:"severity,omitempty"`
-	Detector             string                  `json:"detector,omitempty"`
-	Score                float64                 `json:"score"`
-	Confidence           float64                 `json:"confidence"`
-	Summary              string                  `json:"summary,omitempty"`
-	DiagnosisMarkdown    string                  `json:"diagnosis_markdown,omitempty"`
-	WhyItMattersMarkdown string                  `json:"why_it_matters_markdown,omitempty"`
-	FixMarkdown          string                  `json:"fix_markdown,omitempty"`
-	ValidationMarkdown   string                  `json:"validation_markdown,omitempty"`
-	Evidence             []string                `json:"evidence"`
-	EvidenceBy           model.EvidenceBundle    `json:"evidence_by,omitempty"`
-	Explanation          model.ResultExplanation `json:"explanation,omitempty"`
-	Breakdown            model.ScoreBreakdown    `json:"breakdown,omitempty"`
-	ChangeStatus         string                  `json:"change_status,omitempty"`
-	SeenCount            int                     `json:"seen_count"`
+	Rank         int                     `json:"rank"`
+	FailureID    string                  `json:"failure_id"`
+	Title        string                  `json:"title"`
+	Category     string                  `json:"category"`
+	Pack         string                  `json:"pack,omitempty"`
+	Severity     string                  `json:"severity,omitempty"`
+	Detector     string                  `json:"detector,omitempty"`
+	Score        float64                 `json:"score"`
+	Confidence   float64                 `json:"confidence"`
+	Summary      string                  `json:"summary,omitempty"`
+	Diagnosis    string                  `json:"diagnosis,omitempty"`
+	WhyItMatters string                  `json:"why_it_matters,omitempty"`
+	Fix          string                  `json:"fix,omitempty"`
+	Validation   string                  `json:"validation,omitempty"`
+	Evidence     []string                `json:"evidence"`
+	EvidenceBy   model.EvidenceBundle    `json:"evidence_by,omitempty"`
+	Explanation  model.ResultExplanation `json:"explanation,omitempty"`
+	Breakdown    model.ScoreBreakdown    `json:"breakdown,omitempty"`
+	ChangeStatus string                  `json:"change_status,omitempty"`
+	SeenCount    int                     `json:"seen_count"`
 }
 
 type repoCtxJSON struct {
@@ -191,26 +191,26 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 		payload.Results = make([]resultJSON, len(results))
 		for i, r := range results {
 			payload.Results[i] = resultJSON{
-				Rank:                 i + 1,
-				FailureID:            r.Playbook.ID,
-				Title:                r.Playbook.Title,
-				Category:             r.Playbook.Category,
-				Pack:                 displayPackName(r.Playbook),
-				Severity:             r.Playbook.Severity,
-				Detector:             r.Detector,
-				Score:                r.Score,
-				Confidence:           r.Confidence,
-				Summary:              r.Playbook.Summary,
-				DiagnosisMarkdown:    r.Playbook.DiagnosisMarkdown,
-				WhyItMattersMarkdown: r.Playbook.WhyItMattersMarkdown,
-				FixMarkdown:          r.Playbook.FixMarkdown,
-				ValidationMarkdown:   r.Playbook.ValidationMarkdown,
-				Evidence:             r.Evidence,
-				EvidenceBy:           r.EvidenceBy,
-				Explanation:          r.Explanation,
-				Breakdown:            r.Breakdown,
-				ChangeStatus:         r.ChangeStatus,
-				SeenCount:            r.SeenCount,
+				Rank:         i + 1,
+				FailureID:    r.Playbook.ID,
+				Title:        r.Playbook.Title,
+				Category:     r.Playbook.Category,
+				Pack:         displayPackName(r.Playbook),
+				Severity:     r.Playbook.Severity,
+				Detector:     r.Detector,
+				Score:        r.Score,
+				Confidence:   r.Confidence,
+				Summary:      r.Playbook.Summary,
+				Diagnosis:    r.Playbook.Diagnosis,
+				WhyItMatters: r.Playbook.WhyItMatters,
+				Fix:          r.Playbook.Fix,
+				Validation:   r.Playbook.Validation,
+				Evidence:     r.Evidence,
+				EvidenceBy:   r.EvidenceBy,
+				Explanation:  r.Explanation,
+				Breakdown:    r.Breakdown,
+				ChangeStatus: r.ChangeStatus,
+				SeenCount:    r.SeenCount,
 			}
 		}
 	}
@@ -259,7 +259,7 @@ func FormatCIAnnotations(a *model.Analysis, top int) string {
 	var b strings.Builder
 	for _, r := range topN(a.Results, top) {
 		fix := ""
-		if first := firstMarkdownListItem(r.Playbook.FixMarkdown); first != "" {
+		if first := firstMarkdownListItem(r.Playbook.Fix); first != "" {
 			fix = " Fix: " + first
 		}
 		fmt.Fprintf(&b, "::warning title=%s::%s.%s\n",
@@ -301,16 +301,16 @@ func FormatPlaybookDetailsMarkdown(pb model.Playbook) string {
 	if summary := strings.TrimSpace(pb.Summary); summary != "" {
 		sections = append(sections, "## Summary", "", summary)
 	}
-	if diagnosis := strings.TrimSpace(pb.DiagnosisMarkdown); diagnosis != "" {
+	if diagnosis := strings.TrimSpace(pb.Diagnosis); diagnosis != "" {
 		sections = append(sections, "## Diagnosis", "", diagnosis)
 	}
-	if why := strings.TrimSpace(pb.WhyItMattersMarkdown); why != "" {
+	if why := strings.TrimSpace(pb.WhyItMatters); why != "" {
 		sections = append(sections, "## Why It Matters", "", why)
 	}
-	if fix := strings.TrimSpace(pb.FixMarkdown); fix != "" {
+	if fix := strings.TrimSpace(pb.Fix); fix != "" {
 		sections = append(sections, "## Fix", "", fix)
 	}
-	if validation := strings.TrimSpace(pb.ValidationMarkdown); validation != "" {
+	if validation := strings.TrimSpace(pb.Validation); validation != "" {
 		sections = append(sections, "## Validation", "", validation)
 	}
 	if matchRules := formatMatchSummaryMarkdown(pb); matchRules != "" {

@@ -10,7 +10,7 @@ summary: |-
   fault), SIGABRT (assertion failure), or SIGBUS (bus error) — and was
   terminated by the operating system. This is a hard crash with no graceful
   recovery.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The process accessed memory it was not permitted to use (null pointer
@@ -28,7 +28,7 @@ diagnosis_markdown: |-
     extension, JNI) crashes and takes the host process with it.
   - **Stack overflow in tests**: a deeply recursive function or an infinite
     mutual recursion blows the default stack size.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the crashing binary and reproduce locally with verbose signal
@@ -66,7 +66,7 @@ fix_markdown: |-
 
   5. Check for version mismatches between shared libraries and the binary —
      a `SIGABRT` from `abort()` often signals an ABI incompatibility.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the reproducing command and confirm the process exits zero, not with
@@ -75,7 +75,7 @@ validation_markdown: |-
     in the output.
   - Run under AddressSanitizer or Valgrind at least once to rule out latent
     memory errors.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   A segmentation fault is always a hard bug — memory safety was violated. The

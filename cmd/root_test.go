@@ -333,15 +333,15 @@ category: test
 severity: low
 summary: |
   Extra summary.
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Extra diagnosis.
-fix_markdown: |
+fix: |
   ## Fix steps
 
   1. Extra fix.
-validation_markdown: |
+validation: |
   ## Validation
 
   - Extra validation.
@@ -403,15 +403,15 @@ category: auth
 severity: high
 summary: |
   Installed premium summary.
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Installed premium diagnosis.
-fix_markdown: |
+fix: |
   ## Fix steps
 
   1. Installed premium fix.
-validation_markdown: |
+validation: |
   ## Validation
 
   - Installed premium validation.

@@ -7,11 +7,11 @@ tags: [test, fixture, seed, database, missing-data]
 stage_hints: [test]
 summary: |-
   A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run the database seed step before the test suite:
@@ -32,7 +32,7 @@ fix_markdown: |-
   4. For factory errors: confirm the factory definition matches the current model schema. Run pending migrations before seeding:
      `rails db:migrate`, `python manage.py migrate`.
   5. Update the fixture file or factory definition to match the current data model, then re-run migrations and seeds before the test suite.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the seed step locally and confirm it exits 0.
@@ -63,7 +63,7 @@ match:
     - secret not found
     - mountvolume.setup failed
     - failedmount
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Fixture errors occur when a fixture file is deleted or renamed without updating the tests that reference it, when a database migration removes a field or table that fixtures depend on, or when a CI environment starts without running the required seed step.

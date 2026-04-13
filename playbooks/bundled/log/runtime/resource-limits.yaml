@@ -7,11 +7,11 @@ tags: [ulimit, cpu, file-descriptors, threads]
 stage_hints: [build, test]
 summary: |-
   The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Determine which limit was hit first (`ulimit -a`, open files, pids, threads) so you change the right control instead of raising all limits blindly.
@@ -19,7 +19,7 @@ fix_markdown: |-
   3. Reduce test or worker parallelism to lower peak file descriptor, process, and thread usage.
   4. If the workload is legitimate, raise the specific runner or container limit that failed, for example `ulimit -n 65536` for open files.
   5. Capture diagnostics during the failing step (`lsof`, process counts, runtime metrics) so you can see whether usage is steadily leaking or spiking.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -30,7 +30,7 @@ match:
     - resource temporarily unavailable
     - cannot create thread
     - system limit
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   CI environments apply ulimits to prevent runaway processes from consuming all system resources. Tests or build tools that create many file handles, threads, or subprocesses without cleaning them up can hit these limits.

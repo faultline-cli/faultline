@@ -111,12 +111,12 @@ type raw struct {
 		} `yaml:"change_sensitivity"`
 		SafeContext []rawSafeContextRule `yaml:"safe_context"`
 	} `yaml:"source"`
-	Summary              string `yaml:"summary"`
-	DiagnosisMarkdown    string `yaml:"diagnosis_markdown"`
-	FixMarkdown          string `yaml:"fix_markdown"`
-	ValidationMarkdown   string `yaml:"validation_markdown"`
-	WhyItMattersMarkdown string `yaml:"why_it_matters_markdown"`
-	Workflow             struct {
+	Summary      string `yaml:"summary"`
+	Diagnosis    string `yaml:"diagnosis"`
+	Fix          string `yaml:"fix"`
+	Validation   string `yaml:"validation"`
+	WhyItMatters string `yaml:"why_it_matters"`
+	Workflow     struct {
 		LikelyFiles []string `yaml:"likely_files"`
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
@@ -266,12 +266,12 @@ func loadFile(path string) (model.Playbook, error) {
 			All:  r.Match.All,
 			None: r.Match.None,
 		},
-		Source:               convertSourceSpec(r),
-		Summary:              normalizeMarkdownBlock(r.Summary),
-		DiagnosisMarkdown:    normalizeMarkdownBlock(r.DiagnosisMarkdown),
-		FixMarkdown:          normalizeMarkdownBlock(r.FixMarkdown),
-		ValidationMarkdown:   normalizeMarkdownBlock(r.ValidationMarkdown),
-		WhyItMattersMarkdown: normalizeMarkdownBlock(r.WhyItMattersMarkdown),
+		Source:       convertSourceSpec(r),
+		Summary:      normalizeMarkdownBlock(r.Summary),
+		Diagnosis:    normalizeMarkdownBlock(r.Diagnosis),
+		Fix:          normalizeMarkdownBlock(r.Fix),
+		Validation:   normalizeMarkdownBlock(r.Validation),
+		WhyItMatters: normalizeMarkdownBlock(r.WhyItMatters),
 		Workflow: model.WorkflowSpec{
 			LikelyFiles: r.Workflow.LikelyFiles,
 			LocalRepro:  r.Workflow.LocalRepro,
@@ -311,14 +311,14 @@ func validate(r raw, path string) error {
 	if strings.TrimSpace(r.Summary) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'summary'", path)
 	}
-	if strings.TrimSpace(r.DiagnosisMarkdown) == "" {
-		return fmt.Errorf("playbook %s: missing required field 'diagnosis_markdown'", path)
+	if strings.TrimSpace(r.Diagnosis) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'diagnosis'", path)
 	}
-	if strings.TrimSpace(r.FixMarkdown) == "" {
-		return fmt.Errorf("playbook %s: missing required field 'fix_markdown'", path)
+	if strings.TrimSpace(r.Fix) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'fix'", path)
 	}
-	if strings.TrimSpace(r.ValidationMarkdown) == "" {
-		return fmt.Errorf("playbook %s: missing required field 'validation_markdown'", path)
+	if strings.TrimSpace(r.Validation) == "" {
+		return fmt.Errorf("playbook %s: missing required field 'validation'", path)
 	}
 	detector := normalizeDetector(r.Detector)
 	if detector == "" {

@@ -7,18 +7,18 @@ tags: [yarn, node, lockfile, dependencies]
 stage_hints: [build]
 summary: |-
   Yarn was run with `--frozen-lockfile` (the recommended CI flag) but the `yarn.lock` file is either missing or no longer matches `package.json`.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Yarn was run with `--frozen-lockfile` (the recommended CI flag) but the `yarn.lock` file is either missing or no longer matches `package.json`.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `yarn install` locally.
   2. Commit the updated `yarn.lock`.
   3. Ensure `yarn.lock` is not in `.gitignore`.
   4. If the repository uses Yarn workspaces, regenerate the lockfile from the workspace root with the same Yarn version used in CI.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -30,7 +30,7 @@ match:
     - "yarn.lock: No such file or directory"
     - error your lockfile needs to be updated
     - yarn install --frozen-lockfile
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   `--frozen-lockfile` prevents Yarn from modifying `yarn.lock` during install, ensuring reproducible builds. If dependencies were updated locally without committing the new lockfile, the CI job fails.

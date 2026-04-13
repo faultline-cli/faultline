@@ -23,7 +23,7 @@ match:
 summary: |
   CI could not authenticate to the container registry before an image pull or push.
 
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Docker reached the registry, but the credentials used by CI were missing, expired, or scoped incorrectly for the target image.
@@ -34,12 +34,12 @@ diagnosis_markdown: |
   - the secret value rotated without the workflow updating
   - the token can read one repo but not the image path being used
 
-why_it_matters_markdown: |
+why_it_matters: |
   ## Why it matters
 
   Registry auth failures block both build-time pulls and deploy-time pushes, so one bad credential can stop the whole pipeline.
 
-fix_markdown: |
+fix: |
   ## Fix steps
 
   1. Verify the registry username, token, or password configured in CI secrets.
@@ -51,7 +51,7 @@ fix_markdown: |
      docker login <registry>
      ```
 
-validation_markdown: |
+validation: |
   ## Validation
 
   - Re-run the registry login step.

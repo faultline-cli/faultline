@@ -55,7 +55,7 @@ func (r Renderer) RenderFix(a *model.Analysis) string {
 	}
 	result := a.Results[0]
 	header := r.renderHeader(result.Playbook, fmt.Sprintf("%d%% confidence", int(math.Round(result.Confidence*100))), "")
-	body := r.renderMarkdown(result.Playbook.FixMarkdown)
+	body := r.renderMarkdown(result.Playbook.Fix)
 	if strings.TrimSpace(body) == "" {
 		body = "No fix steps defined for this playbook."
 	}
@@ -84,16 +84,16 @@ func (r Renderer) RenderExplain(pb model.Playbook) string {
 	if summary := r.renderMarkdown(pb.Summary); summary != "" {
 		sections = append(sections, r.renderSection("Summary", summary))
 	}
-	if diagnosis := r.renderMarkdown(pb.DiagnosisMarkdown); diagnosis != "" {
+	if diagnosis := r.renderMarkdown(pb.Diagnosis); diagnosis != "" {
 		sections = append(sections, r.renderSection("Diagnosis", diagnosis))
 	}
-	if why := r.renderMarkdown(pb.WhyItMattersMarkdown); why != "" {
+	if why := r.renderMarkdown(pb.WhyItMatters); why != "" {
 		sections = append(sections, r.renderSection("Why It Matters", why))
 	}
-	if fix := r.renderMarkdown(pb.FixMarkdown); fix != "" {
+	if fix := r.renderMarkdown(pb.Fix); fix != "" {
 		sections = append(sections, r.renderSection("Fix", fix))
 	}
-	if validation := r.renderMarkdown(pb.ValidationMarkdown); validation != "" {
+	if validation := r.renderMarkdown(pb.Validation); validation != "" {
 		sections = append(sections, r.renderSection("Validation", validation))
 	}
 	sections = append(sections, r.renderCallout("Match rules decide; markdown explains.\n\n"+r.renderMatchSummary(pb)))

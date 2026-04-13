@@ -9,7 +9,7 @@ summary: |-
   The Go compiler rejected the package because of a semantic error — undefined
   identifier, type mismatch, unused import, or interface non-compliance. The
   binary cannot be produced until the errors are resolved.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The Go compiler emitted one or more hard errors and aborted the build. These
@@ -26,7 +26,7 @@ diagnosis_markdown: |-
   - **declared and not used** — a local variable was declared but never read.
   - **does not implement** — a concrete type is used where an interface is
     expected but is missing one or more methods.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `go build ./...` locally to see the full diagnostic output:
@@ -44,13 +44,13 @@ fix_markdown: |-
   5. For `declared and not used`: use the variable or replace it with `_`.
   6. For `does not implement`: add the missing method to the concrete type, or
      use the correct type that already satisfies the interface.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run `go build ./...` locally and confirm zero errors.
   - Run `go vet ./...` to catch additional semantic issues before CI.
   - Confirm the CI build step exits zero.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Go compilation errors are deterministic and hard — the build stops immediately

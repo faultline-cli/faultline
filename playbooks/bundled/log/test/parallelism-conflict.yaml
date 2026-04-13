@@ -7,18 +7,18 @@ tags: [test, parallel, concurrency, port, database]
 stage_hints: [test]
 summary: |-
   Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or write to the same temporary file simultaneously.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or write to the same temporary file simultaneously.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Reduce test parallelism with `-parallel 1` to confirm the conflict is parallelism-related.
   2. Allocate a unique port, database, or temp directory per test rather than sharing a fixed resource.
   3. Use test-specific prefixes or random ports in each test's setup.
   4. If the suite must share a resource, serialize only the affected tests instead of disabling parallelism globally.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the failing workflow step.
@@ -39,7 +39,7 @@ match:
     - host port
     - EADDRINUSE
     - cannot assign requested address
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Tests that were written to run sequentially are now running in parallel due to an increased `-parallel` value or a new CI matrix. Without resource isolation, they interfere with each other.

@@ -7,11 +7,11 @@ tags: [dns, network, host, resolution]
 stage_hints: [build, deploy]
 summary: |-
   The runner could not resolve a hostname to an IP address, so the network call failed before it could connect.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The runner could not resolve a hostname to an IP address, so the network call failed before it could connect.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Verify the hostname in the failing command or configuration for typos.
@@ -33,7 +33,7 @@ fix_markdown: |-
   4. Retry the job once to rule out a transient resolver outage.
   5. If the hostname comes from configuration, trace the resolved value in CI
      logs to confirm the job is not using the wrong environment or secret.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `dig +short <hostname>` or `nslookup <hostname>` — confirm successful
@@ -48,7 +48,7 @@ match:
     - "dial tcp: lookup"
     - could not resolve host
     - nodename nor servname provided
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   DNS failures can come from typos in hostnames, transient resolver outages, missing private DNS configuration, or network policies that block access to the resolver.

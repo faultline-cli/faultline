@@ -7,11 +7,11 @@ tags: [go, race, concurrency, data-race, test]
 stage_hints: [test]
 summary: |-
   The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one performing a write, without any synchronization between them.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one performing a write, without any synchronization between them.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Read the full race report — it shows both goroutine stacks and the file/line for each conflicting access.
@@ -19,7 +19,7 @@ fix_markdown: |-
   3. Replace concurrent map access with `sync.Map` or add a `sync.RWMutex` around reads and writes.
   4. For loop-variable captures: copy the variable into a local before launching the goroutine: `v := v`.
   5. Run locally to reproduce: `go test -race ./...` or `go test -race -count=5 ./...` for intermittent races.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
@@ -51,7 +51,7 @@ workflow:
   local_repro:
     - "go test -race ./..."
     - "go test -race -count=10 ./path/to/package"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Go's race detector instruments every memory access at compile time (`go test -race` or `go build -race`). When it detects unsynchronized concurrent access, it prints the goroutine stacks for both the current and the previous conflicting access and exits with a non-zero status. Common causes: shared variable modified in a goroutine without a mutex, map written from multiple goroutines, or a closure capturing a loop variable that races with goroutines launched inside the loop.

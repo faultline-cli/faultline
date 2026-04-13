@@ -9,14 +9,14 @@ summary: |-
   The host or container filesystem ran out of disk space. Writes fail
   immediately when the disk is full, typically aborting builds, unpack steps,
   or runtime file creation.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The host or container filesystem ran out of disk space. This starter rule is
   intentionally kept separate from CI-runner-specific disk exhaustion so the
   remediation can stay focused on the machine or filesystem that actually ran
   out of space.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Check how much space remains and which paths are largest:
@@ -51,7 +51,7 @@ fix_markdown: |-
 
   6. If cleanup is not enough, increase the runner disk size or split build and
      test stages into separate smaller jobs with lighter footprints.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `df -h` — confirm at least 1–2 GB is available before re-running.
@@ -75,7 +75,7 @@ match:
     - buildkit-mount
     - failed to copy files
     - docker build -t
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Large container layers, extracted archives, temporary build directories, or

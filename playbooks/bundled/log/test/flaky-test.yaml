@@ -7,11 +7,11 @@ tags: [test, flaky, intermittent, timing]
 stage_hints: [test]
 summary: |-
   A test failed but the failure is not consistently reproducible. Flaky tests indicate timing dependencies, global state, or resource contention that produce different outcomes on each run.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A test failed but the failure is not consistently reproducible. Flaky tests indicate timing dependencies, global state, or resource contention that produce different outcomes on each run.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Retry the failing test job once to confirm the failure is intermittent.
@@ -35,7 +35,7 @@ fix_markdown: |-
   5. If the test depends on time, randomness, or external services, freeze the
      clock, record and log the random seed, or stub the dependency so the
      test produces the same result on every run.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the isolated test in a loop (at least 20 runs) and confirm zero failures.
@@ -51,7 +51,7 @@ match:
     - "retry attempt"
     - test passed on retry
     - sporadically fails
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Flaky tests are most commonly caused by: shared global state between tests, async operations without explicit waits, time-dependent assertions, or reliance on external services that are sometimes unavailable.

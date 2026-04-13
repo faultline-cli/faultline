@@ -16,10 +16,10 @@ Do not hide matching logic, ranking hints, or machine-important state inside pro
 Use these markdown-capable string fields for operator-facing guidance:
 
 - `summary`
-- `diagnosis_markdown`
-- `fix_markdown`
-- `validation_markdown`
-- `why_it_matters_markdown` (optional)
+- `diagnosis`
+- `fix`
+- `validation`
+- `why_it_matters` (optional)
 
 Use YAML block scalars for each field:
 
@@ -27,18 +27,18 @@ Use YAML block scalars for each field:
 summary: |
   One-line summary for ranked output.
 
-diagnosis_markdown: |
+diagnosis: |
   ## Diagnosis
 
   Explain the likely root cause in plain language.
 
-fix_markdown: |
+fix: |
   ## Fix steps
 
   1. Keep steps short and operational.
   2. Use short code fences only when they clarify the action.
 
-validation_markdown: |
+validation: |
   ## Validation
 
   - Re-run the relevant command.
@@ -53,7 +53,7 @@ validation_markdown: |
 - Use short code fences for exact commands, not long scripts.
 - Put deterministic commands in `workflow.local_repro` and `workflow.verify` as well as the markdown if they matter operationally.
 - Do not hide branching logic or detector assumptions inside markdown prose.
-- `summary`, `diagnosis_markdown`, `fix_markdown`, and `validation_markdown` are required for shipped playbooks.
+- `summary`, `diagnosis`, `fix`, and `validation` are required for shipped playbooks.
 
 ## Improvement pipeline
 

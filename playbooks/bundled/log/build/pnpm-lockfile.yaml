@@ -7,17 +7,17 @@ tags: [pnpm, lockfile, node, javascript, ci]
 stage_hints: [build]
 summary: |-
   The pnpm lockfile (`pnpm-lock.yaml`) is out of sync with `package.json`. CI uses `--frozen-lockfile` to ensure reproducible installs, so any discrepancy causes the install step to fail immediately.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The pnpm lockfile (`pnpm-lock.yaml`) is out of sync with `package.json`. CI uses `--frozen-lockfile` to ensure reproducible installs, so any discrepancy causes the install step to fail immediately.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Run `pnpm install` locally to regenerate `pnpm-lock.yaml`.
   2. Commit the updated `pnpm-lock.yaml` to the repository.
   3. If using workspaces, run `pnpm install` from the workspace root.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
@@ -39,7 +39,7 @@ workflow:
   local_repro:
     - pnpm install
     - git diff pnpm-lock.yaml
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   This happens when `package.json` dependencies are updated without running `pnpm install` to regenerate the lockfile, or when the lockfile is not committed after a dependency change.

@@ -9,7 +9,7 @@ summary: |-
   A file contains unresolved merge conflict markers (`<<<<<<<`, `=======`,
   `>>>>>>>`). The build, linter, or type-checker rejects the file because the
   conflict was not resolved before the commit was pushed.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A file contains unresolved merge conflict markers left over after a merge or
@@ -21,7 +21,7 @@ diagnosis_markdown: |-
   - A merge or rebase was interrupted and finished partially.
   - An editor auto-resolved a conflict incorrectly, leaving stale markers.
   - The conflict was committed accidentally without checking the diff.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Find all files with unresolved conflict markers:
@@ -58,7 +58,7 @@ fix_markdown: |-
      # In .githooks/pre-commit:
      grep -rn "^<<<<<<< " --include="*.go" --include="*.ts" . && exit 1 || true
      ```
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `git grep "^<<<<<<< " -- ':!*.md'` returns no results.
@@ -76,7 +76,7 @@ match:
   none:
     - already up to date
     - fast-forward
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Conflict markers are valid text but invalid syntax in every programming

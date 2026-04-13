@@ -14,11 +14,11 @@ match:
     - run `npm install` to generate a lockfile
 summary: |-
   `npm ci` found a missing or out-of-sync `package-lock.json`.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   `npm ci` installs strictly from the lockfile. If `package.json` and `package-lock.json` disagree, CI fails instead of regenerating dependencies on the fly.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Regenerate the lockfile locally:
@@ -30,13 +30,13 @@ fix_markdown: |-
   2. Commit the updated `package-lock.json`.
   3. Make sure `package-lock.json` is not ignored.
   4. If the repo uses workspaces, regenerate the lockfile from the workspace root with the same npm major version used in CI.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run `npm ci` locally.
   - Re-run the CI job.
   - Check that `package-lock.json` stays unchanged after the install step.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Lockfile mismatches break reproducibility. Fixing the lockfile keeps local installs and CI installs on the same dependency graph.

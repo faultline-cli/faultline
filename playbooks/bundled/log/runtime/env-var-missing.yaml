@@ -7,11 +7,11 @@ tags: [env, environment-variable, config, missing]
 stage_hints: [build, deploy, test]
 summary: |-
   A required environment variable was not set or was empty when the process tried to read it. The application, build script, or test suite could not continue without it.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A required environment variable was not set or was empty when the process tried to read it. The application, build script, or test suite could not continue without it.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the exact variable name from the error message.
@@ -41,7 +41,7 @@ fix_markdown: |-
      ```bash
      : "${VAR_NAME:?VAR_NAME must be set before this job runs}"
      ```
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Add a diagnostic step that confirms presence without echoing the value:
@@ -80,7 +80,7 @@ workflow:
     - .env.template
     - .github/workflows/*.yml
     - .gitlab-ci.yml
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   This typically happens when a new configuration variable is added to the application but was not added to the CI secrets or job environment. It also occurs when `.env` files are not committed to version control or when a secret is deleted or renamed.

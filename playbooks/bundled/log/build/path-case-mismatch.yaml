@@ -7,11 +7,11 @@ tags: [case-sensitive, filesystem, import, path]
 stage_hints: [build]
 summary: |-
   A file or module import path uses a different capitalisation from the actual filename on disk. On case-sensitive filesystems (Linux CI runners), this causes an immediate build failure.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A file or module import path uses a different capitalisation from the actual filename on disk. On case-sensitive filesystems (Linux CI runners), this causes an immediate build failure.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Identify the mismatched import: compare the exact filename on disk with
@@ -37,7 +37,7 @@ fix_markdown: |-
   5. For TypeScript projects, enable `"forceConsistentCasingInFileNames": true`
      in `tsconfig.json` to catch future mismatches at compile time rather than
      only on case-sensitive file systems.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `find . -iname "<filename>" -not -path "*/node_modules/*"` returns exactly
@@ -59,7 +59,7 @@ match:
     - "tsc:"
     - found 1 error
     - type 'string' is not assignable
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   macOS and Windows use case-insensitive filesystems by default. Code written on those platforms may use inconsistent capitalisation that goes undetected locally but breaks when the CI runner uses a case-sensitive Linux filesystem.

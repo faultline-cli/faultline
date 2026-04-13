@@ -7,11 +7,11 @@ tags: [test, coverage, threshold, quality-gate]
 stage_hints: [test]
 summary: |-
   The test step completed, but the job failed because measured coverage fell below an enforced minimum. This is a quality policy failure rather than a crash in the test runner itself.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The test step completed, but the job failed because measured coverage fell below an enforced minimum. This is a quality policy failure rather than a crash in the test runner itself.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Find exactly which files or packages dropped below the threshold:
@@ -32,12 +32,12 @@ fix_markdown: |-
      target percentage.
   4. Re-run the same coverage command locally to confirm the failure is
      reproducible outside CI before writing new tests.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `go test ./... -cover` or `npm test -- --coverage`
   - Confirm the reported total percentage meets or exceeds the gate threshold.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Coverage gates usually fail after new code paths are added without tests, when generated or low-value files start counting toward coverage, or when the threshold is raised without first improving the test suite.

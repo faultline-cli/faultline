@@ -123,7 +123,7 @@ func baseSteps(a *model.Analysis, top model.Result, plan Plan) []string {
 		steps = append(steps, fmt.Sprintf("Local repro: `%s`.", cmd))
 	}
 
-	for _, step := range markdownListItems(top.Playbook.FixMarkdown) {
+	for _, step := range markdownListItems(top.Playbook.Fix) {
 		steps = append(steps, step)
 	}
 
@@ -131,7 +131,7 @@ func baseSteps(a *model.Analysis, top model.Result, plan Plan) []string {
 		steps = append(steps, fmt.Sprintf("Verify with `%s` after the fix.", cmd))
 	}
 
-	if suggestions := markdownListItems(top.Playbook.WhyItMattersMarkdown); len(suggestions) > 0 {
+	if suggestions := markdownListItems(top.Playbook.WhyItMatters); len(suggestions) > 0 {
 		steps = append(steps,
 			fmt.Sprintf("After the immediate fix, harden the workflow with: %s.", trimTerminalPunctuation(suggestions[0])),
 		)
@@ -179,7 +179,7 @@ func buildAgentPrompt(a *model.Analysis, top model.Result, plan Plan) string {
 		}
 	}
 	lines = append(lines, "Recommended fix steps:")
-	for _, step := range markdownListItems(top.Playbook.FixMarkdown) {
+	for _, step := range markdownListItems(top.Playbook.Fix) {
 		lines = append(lines, fmt.Sprintf("- %s", step))
 	}
 	if len(plan.Verify) > 0 {

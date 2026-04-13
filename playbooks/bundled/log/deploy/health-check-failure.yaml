@@ -23,7 +23,7 @@ match:
     - FailedScheduling
 summary: |-
   The new service instance never became healthy enough for traffic.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The deploy reached the runtime environment, but the process did not satisfy the configured readiness or liveness checks before the timeout window closed.
@@ -34,7 +34,7 @@ diagnosis_markdown: |-
   - startup migrations failing
   - the app listening on the wrong port
   - a crash loop during bootstrap
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Inspect startup logs for the failing container:
@@ -46,13 +46,13 @@ fix_markdown: |-
   2. Verify the health check path and port match what the application actually serves.
   3. Confirm all required environment variables and secrets are present in the deployment.
   4. Check that dependent services such as databases and caches are reachable from the new pod.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Hit the readiness endpoint directly from a pod or staging environment.
   - Confirm the deployment becomes ready without restarts.
   - Re-run the rollout and watch the probe status until it stabilizes.
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Health checks are the deployment gate that protects traffic from a broken release. When they fail, the platform is telling you the new instance is not safely serving requests.

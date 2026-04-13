@@ -9,7 +9,7 @@ summary: |-
   The deployment failed because a required configuration value, environment
   variable, or secret was absent or had an unexpected value for the target
   environment.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   The deployment failed because a required configuration value, environment
@@ -19,7 +19,7 @@ diagnosis_markdown: |-
   This usually happens when a deployment references a secret or ConfigMap that
   was never provisioned, or when a key name changed in code without a matching
   change to the environment definition.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Compare expected configuration keys against what is present in the target
@@ -43,7 +43,7 @@ fix_markdown: |-
   5. Add a start-of-process config validation step in the application that
      lists every missing required key at boot time rather than failing later
      with a cryptic error.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - `kubectl exec <pod> -- env | grep KEY_NAME` shows the expected value.
@@ -64,7 +64,7 @@ match:
     - getenv
     - environment variable not set
     - required env
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Configuration mismatches occur when a new deployment requires values that were never provisioned in the target environment, or when a key was renamed in code but not updated in the secret store or ConfigMap.

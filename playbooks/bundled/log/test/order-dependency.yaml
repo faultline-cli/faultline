@@ -7,11 +7,11 @@ tags: [test, order, state, isolation]
 stage_hints: [test]
 summary: |-
   A test failed because it depends on side effects or state created by a different test that ran earlier. When test order changes, the assumed preconditions are absent.
-diagnosis_markdown: |-
+diagnosis: |-
   ## Diagnosis
 
   A test failed because it depends on side effects or state created by a different test that ran earlier. When test order changes, the assumed preconditions are absent.
-fix_markdown: |-
+fix: |-
   ## Fix steps
 
   1. Add proper setup and teardown to the failing test so it creates its own
@@ -36,7 +36,7 @@ fix_markdown: |-
 
   4. Add cleanup in `defer` (Go), `afterEach`/`afterAll` (Jest), or `teardown`
      (Python) to guarantee state is reset regardless of test outcome.
-validation_markdown: |-
+validation: |-
   ## Validation
 
   - Run the full suite with shuffle enabled several times and confirm zero
@@ -50,7 +50,7 @@ match:
     - leaked state
     - global state
     - "left over from previous"
-why_it_matters_markdown: |-
+why_it_matters: |-
   ## Why it matters
 
   Tests that rely on database rows, files, or configuration left by prior tests are brittle. Test frameworks may run tests in any order or in parallel, and CI runners may run on clean environments that lack the expected state.
