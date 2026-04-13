@@ -1,0 +1,63 @@
+id: go-data-race
+title: Go race detector found a data race
+category: test
+severity: high
+base_score: 1.0
+tags: [go, race, concurrency, data-race, test]
+stage_hints: [test]
+summary: |-
+  The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one performing a write, without any synchronization between them.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one performing a write, without any synchronization between them.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Read the full race report — it shows both goroutine stacks and the file/line for each conflicting access.
+  2. Protect the shared variable with `sync.Mutex` or `sync.RWMutex`, or use an atomic operation (`sync/atomic`) for simple counters.
+  3. Replace concurrent map access with `sync.Map` or add a `sync.RWMutex` around reads and writes.
+  4. For loop-variable captures: copy the variable into a local before launching the goroutine: `v := v`.
+  5. Run locally to reproduce: `go test -race ./...` or `go test -race -count=5 ./...` for intermittent races.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - go test -race ./...
+  - go test -race -count=10 ./path/to/package
+match:
+  any:
+    - "WARNING: DATA RACE"
+    - "DATA RACE"
+    - "Previous read at"
+    - "Previous write at"
+    - "Read at 0x"
+    - "Write at 0x"
+    - "Goroutine.*running"
+    - "PASS (race)"
+    - "race condition"
+    - "Found 1 data race"
+    - "race detected"
+    - "-race"
+  none:
+    - "address already in use"
+    - "port already in use"
+    - "all goroutines are asleep"
+    - "deadlock!"
+    - "concurrent map"
+workflow:
+  likely_files:
+    - "**/*.go"
+  local_repro:
+    - "go test -race ./..."
+    - "go test -race -count=10 ./path/to/package"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Go's race detector instruments every memory access at compile time (`go test -race` or `go build -race`). When it detects unsynchronized concurrent access, it prints the goroutine stacks for both the current and the previous conflicting access and exits with a non-zero status. Common causes: shared variable modified in a goroutine without a mutex, map written from multiple goroutines, or a closure capturing a loop variable that races with goroutines launched inside the loop.
+
+  ## Prevention
+
+  - Add `go test -race ./...` as a required CI check on every PR.
+  - Use `go vet` and `staticcheck` alongside the race detector to catch common sharing patterns before tests are written.
+  - Prefer channel-based state sharing over shared memory for new concurrency code to reduce the likelihood of races by design.

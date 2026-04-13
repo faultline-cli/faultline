@@ -1,0 +1,62 @@
+id: cors-error
+title: CORS policy blocked a cross-origin request
+category: network
+severity: medium
+base_score: 0.9
+tags: [cors, network, browser, e2e, preflight, headers]
+stage_hints: [test, deploy]
+summary: |-
+  A cross-origin request was blocked by the browser's CORS policy because the server did not include the expected `Access-Control-Allow-Origin` header. The request did not reach its destination.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A cross-origin request was blocked by the browser's CORS policy because the server did not include the expected `Access-Control-Allow-Origin` header. The request did not reach its destination.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add the test origin to the server's CORS allowed-origins list.
+  2. For development servers: ensure `--allowed-origins` or `CORS_ORIGIN` env var includes the URL used by the test runner.
+  3. For API gateways or nginx: verify the `add_header Access-Control-Allow-Origin` rule targets the correct domain and is not overridden by a downstream proxy.
+  4. For preflight failures: confirm the server responds to `OPTIONS` requests with `Access-Control-Allow-Methods` and `Access-Control-Allow-Headers`.
+  5. Locally reproduce with: `curl -H 'Origin: http://localhost:3001' -I <api-url>`
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - curl -v -H 'Origin: http://localhost:3001' -X OPTIONS <api-url>
+match:
+  any:
+    - "has been blocked by CORS policy"
+    - "No 'Access-Control-Allow-Origin' header"
+    - "Access to XMLHttpRequest at"
+    - "Access to fetch at"
+    - "from origin.*has been blocked"
+    - "Response to preflight request"
+    - "Cross-Origin Request Blocked"
+    - "CORS policy"
+    - "is not allowed by Access-Control-Allow-Origin"
+    - "cross-origin resource sharing"
+    - "preflight response"
+  none:
+    - "rate limited"
+    - "429"
+workflow:
+  likely_files:
+    - nginx.conf
+    - "*.conf"
+    - playwright.config.ts
+    - playwright.config.js
+    - cypress.config.ts
+    - .env.test
+  local_repro:
+    - "curl -v -H 'Origin: http://localhost:3001' -X OPTIONS <api-url>"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Browsers enforce the Same-Origin Policy for `fetch` and `XMLHttpRequest`. When a request crosses origins (different protocol, host, or port), the server must respond with matching `Access-Control-Allow-Origin` headers. In CI, this most often surfaces during E2E or integration tests where the test runner origin differs from the origin configured in the test server or API gateway.
+
+  ## Prevention
+
+  - Drive CORS configuration from a shared constant rather than duplicating the allowed-origins list across services.
+  - Add a CI smoke test that sends an `OPTIONS` preflight request to the API and asserts the correct CORS response headers before merging.
+  - Keep test server origin configuration in sync with CI environment variables.

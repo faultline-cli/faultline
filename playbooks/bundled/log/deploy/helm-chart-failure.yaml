@@ -1,0 +1,63 @@
+id: helm-chart-failure
+title: Helm chart install or upgrade failure
+category: deploy
+severity: high
+base_score: 1.0
+tags: [helm, kubernetes, chart, deploy]
+stage_hints: [deploy]
+summary: |-
+  A Helm chart installation or upgrade failed. Helm wraps Kubernetes API errors and may leave a release in a `pending-upgrade` or `failed` state that blocks future deploys.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A Helm chart installation or upgrade failed. Helm wraps Kubernetes API errors and may leave a release in a `pending-upgrade` or `failed` state that blocks future deploys.
+fix_markdown: |-
+  ## Fix steps
+
+  1. For a stuck release: `helm rollback <release> <revision>` or `helm uninstall <release>`.
+  2. For `resource already exists`: adopt the resource into Helm with `--force` or add annotations.
+  3. For invalid API versions: run `helm template <chart> | kubectl apply --dry-run=client -f -`.
+  4. For timeout: increase `--timeout` or check pod events with `kubectl describe pod`.
+  5. Debug with: `helm upgrade --debug --dry-run <release> <chart>`.
+validation_markdown: |-
+  ## Validation
+
+  - kubectl get pods -n <namespace>
+  - helm list -n <namespace>
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Common causes: a Kubernetes resource already exists outside Helm's ownership, a previous release is stuck in `pending-upgrade`, the chart templates contain invalid YAML or API references not supported by the cluster version, or a rollout timeout was reached.
+
+  ## Prevention
+
+  - Use `helm diff upgrade` (helm-diff plugin) in CI before applying changes.
+  - Run `helm lint` on every chart change.
+  - Implement a rollback step in your pipeline that fires on upgrade failure.
+match:
+  any:
+    - "Error: INSTALLATION FAILED"
+    - "Error: UPGRADE FAILED"
+    - "Error: cannot re-use a name that is still in use"
+    - "Error: release"
+    - "helm install"
+    - "helm upgrade"
+    - "rendered manifests contain a resource that already exists"
+    - "resource mapping not found"
+    - "unable to recognize"
+    - "UPGRADE FAILED: another operation"
+    - "Error: context deadline exceeded"
+  none:
+    - "has been rolled back"
+    - "rollback was triggered following"
+    - "release.*failed.*reverted"
+workflow:
+  likely_files:
+    - "helm/**"
+    - "charts/**"
+    - "values*.yaml"
+  local_repro:
+    - helm upgrade --debug --dry-run <release> <chart>
+  verify:
+    - kubectl get pods -n <namespace>
+    - helm list -n <namespace>

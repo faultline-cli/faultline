@@ -1,0 +1,57 @@
+id: circleci-config-invalid
+title: CircleCI config.yml validation error
+category: ci
+severity: high
+base_score: 1.0
+tags: [circleci, config, yaml, orb, workflow, ci]
+stage_hints: [build]
+summary: |-
+  The `.circleci/config.yml` configuration failed CircleCI's validation. The pipeline will not run until the configuration is fixed.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The `.circleci/config.yml` configuration failed CircleCI's validation. The pipeline will not run until the configuration is fixed.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Validate locally with the CircleCI CLI: `circleci config validate .circleci/config.yml`.
+  2. Process the config to expand orbs: `circleci config process .circleci/config.yml`.
+  3. Check orb availability: visit the CircleCI Orb Registry at `circleci.com/developer/orbs`.
+  4. Ensure all jobs referenced in workflow steps are defined as top-level jobs in the config.
+  5. For version-dependent features, confirm `version: 2.1` is set at the top of the file.
+  6. Check for YAML indentation errors with `yamllint .circleci/config.yml`.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for CircleCI config.yml validation error is gone.
+match:
+  any:
+    - "ERROR IN CONFIG FILE"
+    - "Error: .circleci/config.yml"
+    - "Config processing error"
+    - "Unknown key"
+    - "expected type"
+    - "orb.*not found"
+    - "Did you forget to include"
+    - "circleci config validate"
+    - "required key 'version' not found"
+    - "invalid orb"
+    - "Could not find executor"
+    - "workflow.*is not defined"
+    - "requires a job named"
+workflow:
+  likely_files:
+    - .circleci/config.yml
+    - .circleci/
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  CircleCI validates config files on push. Common errors include schema violations (unknown keys, wrong value types), referencing an orb that does not exist or requires a namespace, referencing a workflow job that is not defined, or using features that require a higher config `version`.
+
+  ## Prevention
+
+  - Add `circleci config validate` to your pre-push hook or a lightweight CI job triggered on every push.
+  - Pin orb versions explicitly (e.g., `circleci/node@5.1.0`) rather than using `@volatile` or `@latest`.
+  - Use the CircleCI VS Code extension which validates config syntax in the editor.
+  - Test new config changes in a feature branch before merging to avoid breaking the main pipeline.

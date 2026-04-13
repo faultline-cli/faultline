@@ -78,6 +78,11 @@ Acceptance bar:
 
 Faultline ships the starter catalog from `playbooks/bundled/` and composes any premium or team-specific packs on top of it.
 
+Use this boundary when deciding where a playbook belongs:
+
+- bundled: high-frequency failures across common stacks or CI systems, plus enough baseline source coverage for `inspect` to produce useful starter results
+- premium: provider-specific workflows, advanced deployment and platform operations, security-heavy rules, and deeper source-detector coverage beyond the starter baseline
+
 There are three supported ways to add extra packs:
 
 1. `faultline packs install <dir>` to copy a pack into `~/.faultline/packs/` for automatic loading on future runs

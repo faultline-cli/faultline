@@ -1,0 +1,108 @@
+id: panic-in-http-handler
+title: Unrecovered panic in HTTP or RPC handler
+category: runtime
+severity: high
+detector: source
+base_score: 1.1
+tags: [source, go, panic, http, rpc, recovery, middleware]
+source:
+  triggers:
+    - id: http_handler
+      label: HTTP or RPC handler function
+      patterns:
+        - "func.*Handler"
+        - "func.*Handle("
+        - "http.HandleFunc"
+        - "r.GET("
+        - "r.POST("
+        - "r.PUT("
+        - "r.DELETE("
+        - "r.Handle("
+        - "mux.Handle"
+        - "router.Handle"
+        - "chi.Get("
+        - "chi.Post("
+        - "echo.GET"
+        - "gin.GET"
+        - "grpc.*Handler"
+      weight: 1.2
+    - id: panic_call
+      label: explicit panic call
+      patterns:
+        - "panic("
+      weight: 1.5
+  amplifiers:
+    - id: no_recover
+      label: no recover present in handler
+      patterns:
+        - "recover()"
+        - "defer.*recover"
+      weight: 1.4
+    - id: force_unwrap
+      label: unsafe dereference or type assertion
+      patterns:
+        - ".(type)"
+        - ".(*"
+        - "[0]"
+        - "result[0]"
+      weight: 1.1
+  mitigations:
+    - id: recover_in_defer
+      label: recover called inside defer
+      patterns:
+        - "defer func()"
+        - "recover()"
+        - "if r := recover"
+      weight: 2.0
+    - id: recovery_middleware
+      label: recovery middleware applied
+      patterns:
+        - "Recovery("
+        - "recovery.Recover"
+        - "middleware.Recover"
+        - "negroni.Recovery"
+        - "gin.Recovery()"
+        - "echo.WrapMiddleware"
+      weight: 1.8
+  compound_signals:
+    - id: handler_panic_no_recover
+      label: panic inside handler with no recovery
+      require: [http_handler, panic_call]
+      scope: function
+      bonus: 2.0
+  safe_context:
+    - id: test_files_safer
+      label: test-only path
+      paths: [_test.go, tests/, test/]
+      discount: 1.5
+summary: |-
+  A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
+fix_markdown: |-
+  ## Fix steps
+
+  1. Add a recovery middleware at the router level so all handlers are protected: for Gin use `r.Use(gin.Recovery())`, for Echo use `e.Use(middleware.Recover())`, for stdlib `net/http` write a middleware that defers `recover()`.
+  2. Replace the explicit `panic(...)` with a returned error and an appropriate HTTP status code response.
+  3. If intentional panics are used for "impossible" invariants, confirm they cannot be triggered by external input (user-supplied data should never reach a `panic` call).
+  4. Use `if err != nil { return ..., err }` rather than `panic(err)` in all layers called by handlers.
+validation_markdown: |-
+  ## Validation
+
+  - go test ./...
+  - go vet ./...
+scoring:
+  blast_radius_bonus: 1.3
+  hot_path_bonus: 1.2
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  In Go, a panic that is not caught by a deferred `recover()` propagates up the call stack and terminates the goroutine. For HTTP servers, each request runs in its own goroutine — an unrecovered panic in a handler silently kills that goroutine, resulting in a broken connection for the client. Production frameworks provide recovery middleware precisely because this is a common mistake. The risk is highest when handler code calls third-party functions that may panic on invalid input.
+
+  ## Prevention
+
+  - Apply a recovery middleware globally at the outermost router layer.
+  - Lint for `panic` calls in non-test source files using `go vet` or a custom staticcheck rule.
+  - Code review: flag any `panic` in a function reachable from an HTTP or gRPC handler.

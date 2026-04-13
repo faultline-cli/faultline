@@ -1,0 +1,63 @@
+id: jest-worker-crash
+title: Jest worker process crashed unexpectedly
+category: test
+severity: high
+base_score: 1.0
+tags: [jest, javascript, worker, crash, node, signal]
+stage_hints: [test]
+summary: |-
+  A Jest worker process crashed mid-test run. Jest spawns multiple worker processes to run tests in parallel; if one exits unexpectedly (via a signal or unhandled exception), Jest reports this as a worker crash and may force- exit without a clean summary.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A Jest worker process crashed mid-test run. Jest spawns multiple worker processes to run tests in parallel; if one exits unexpectedly (via a signal or unhandled exception), Jest reports this as a worker crash and may force- exit without a clean summary.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run with a single worker to isolate the failing test: `jest --runInBand --testPathPattern <file>`.
+  2. Identify which test suite crashes: `jest --runInBand 2>&1 | head -50`.
+  3. If a native addon is involved: rebuild it for the current Node version with `npm rebuild` or `node-pre-gyp rebuild`.
+  4. If it's an OOM kill: increase Node memory with `NODE_OPTIONS=--max-old-space-size=4096 jest`.
+  5. For `process.exit()` in tests: search the codebase for calls to `process.exit` or `process.abort` inside test files.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - jest --runInBand
+  - NODE_OPTIONS='--max-old-space-size=4096' jest
+match:
+  any:
+    - "A worker process has quit unexpectedly"
+    - "Jest worker exited"
+    - "Force exiting Jest"
+    - "jest-worker"
+    - "Worker failed after"
+    - "worker.*crashed"
+    - "Jest encountered an unexpected token"
+    - "The worker has exited."
+    - "jest-circus"
+    - "worker.*exited with signal"
+    - "Cannot find module.*jest"
+    - "jest did not exit"
+  none:
+    - "PASS"
+    - "● Test Suites"
+    - "test suite failed to run"
+workflow:
+  likely_files:
+    - jest.config.js
+    - jest.config.ts
+    - package.json
+  local_repro:
+    - "jest --runInBand"
+    - "NODE_OPTIONS='--max-old-space-size=4096' jest"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Jest worker crashes are commonly caused by: a native Node.js add-on (`.node` file) segfaulting inside a worker, a test that consumes too much memory and is killed by the OS, a `process.exit()` called from test code, an infinite loop that causes a timeout kill, or a Jest version incompatible with the currently installed Node.js version.
+
+  ## Prevention
+
+  - Run `jest --runInBand` in CI as a sanity check when the worker crash cannot be reproduced with normal parallelism.
+  - Set `maxWorkers` in `jest.config.js` to an explicit count that fits within CI runner memory rather than using the default (50% of CPU cores).
+  - Audit test files for `process.exit()`, `process.abort()`, or native addon calls that can terminate the worker process.

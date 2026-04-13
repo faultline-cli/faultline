@@ -1,0 +1,127 @@
+id: missing-error-propagation
+title: Error return value ignored or silently discarded
+category: runtime
+severity: high
+detector: source
+base_score: 1.0
+tags: [source, error-handling, go, silent-failure, observability]
+source:
+  triggers:
+    - id: error_discarded
+      label: error return discarded
+      patterns:
+        - "_ ="
+        - "_, _ ="
+        - "_ = err"
+        - "err = nil"
+      weight: 1.3
+    - id: error_shadowed
+      label: error assigned but not checked
+      patterns:
+        - "err :="
+        - "err ="
+      weight: 0.8
+    - id: side_effect_call
+      label: side-effecting call
+      patterns:
+        - "os.Remove("
+        - "os.Rename("
+        - "file.Write("
+        - "db.Exec("
+        - "tx.Commit("
+        - "tx.Rollback("
+        - "resp.Body.Close("
+        - "rows.Close("
+      weight: 1.2
+  amplifiers:
+    - id: no_return_check
+      label: no if-err check after call
+      patterns:
+        - "if err != nil"
+        - "if err =="
+        - "errors.Is("
+        - "errors.As("
+        - "return.*err"
+      weight: 1.1
+    - id: missing_log
+      label: no error logged
+      patterns:
+        - "log.Error"
+        - "log.Warn"
+        - "logger.Error"
+        - "fmt.Errorf"
+        - "slog.Error"
+      weight: 0.9
+  mitigations:
+    - id: error_checked
+      label: error is checked
+      patterns:
+        - "if err != nil {"
+        - "if err =="
+        - "errors.Is(err"
+        - "return fmt.Errorf"
+        - "return err"
+      weight: 1.8
+    - id: error_wrapped
+      label: error wrapped or logged
+      patterns:
+        - "fmt.Errorf(\"%w\""
+        - "errors.Wrap("
+        - "log.Error("
+        - "slog.Error("
+      weight: 1.2
+  compound_signals:
+    - id: ignored_io_error
+      label: I/O call with ignored error and no log
+      require: [error_discarded, side_effect_call]
+      scope: function
+      bonus: 2.0
+  local_consistency:
+    - id: local_error_check_idiom
+      label: violates local error-check idiom
+      scope: module
+      minimum_peers: 3
+      threshold: 0.7
+      amplifier: 1.4
+  change_sensitivity:
+    new_file_bonus: 1.0
+    modified_line_bonus: 0.9
+    legacy_discount: 0.6
+  safe_context:
+    - id: tests_are_safer
+      label: test-only path
+      paths: [tests/, test/, _test.go]
+      discount: 1.5
+    - id: examples_are_safer
+      label: example code
+      paths: [examples/, example/]
+      discount: 2.0
+summary: |-
+  A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Propagate the error to the caller — wrap it with context: `return fmt.Errorf("context: %w", err)`.
+  2. If the error genuinely cannot affect correctness, document why with a comment and log it at WARN level.
+  3. Use errcheck (or staticcheck SA9003) in CI to catch ignored error returns statically.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for Error return value ignored or silently discarded is gone.
+scoring:
+  blast_radius_bonus: 1.1
+  hot_path_bonus: 1.0
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Silent error discard is the leading cause of undetected data corruption and hard-to-diagnose production issues. When `db.Exec`, `tx.Commit`, or `file.Write` returns an error and it is ignored, the application continues as if the operation succeeded, potentially leaving data in an inconsistent state with no log trail.
+
+  ## Prevention
+
+  - Enable `errcheck` and `staticcheck` in the CI linting step.
+  - Use a shared wrapper for common I/O operations that always checks and propagates their errors.

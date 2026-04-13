@@ -101,7 +101,7 @@ No-match schema:
 
 - YAML-based
 - Deterministic matching
-- Roughly 12 to 15 high-value bundled failure patterns for V1
+- Broad bundled starter coverage for high-frequency CI failures across common stacks, with premium packs extending into provider-specific and advanced workflows
 
 ### 4. CLI Utilities
 

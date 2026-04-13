@@ -1,0 +1,65 @@
+id: pytest-fixture-error
+title: pytest fixture setup or teardown failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [pytest, python, fixture, setup, teardown, conftest]
+stage_hints: [test]
+summary: |-
+  A pytest fixture failed during setup or teardown, causing the associated test to be marked as `ERROR` rather than `FAILED`. The test body never ran, or cleanup after the test raised an exception.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A pytest fixture failed during setup or teardown, causing the associated test to be marked as `ERROR` rather than `FAILED`. The test body never ran, or cleanup after the test raised an exception.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Read the full `ERROR at setup of <test_name>` traceback — the relevant line is usually in the fixture body, not the test.
+  2. For 'fixture not found': check the fixture name spelling and that it is defined in `conftest.py` or imported in the same module.
+  3. For `ScopeMismatch`: a `session`-scoped fixture cannot depend on a `function`-scoped fixture — widen the dependent scope or pass the value directly.
+  4. Reproduce the fixture setup locally: `pytest -x --setup-show tests/path/to_test.py`
+  5. For teardown failures: ensure the `yield` fixture wraps teardown in a `try/finally` block so cleanup always runs.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - pytest -x --setup-show tests/
+  - pytest --co -q tests/
+match:
+  any:
+    - "ERROR at setup of"
+    - "ERROR at teardown of"
+    - "fixture.*not found"
+    - "fixture.*error"
+    - "ScopeMismatch"
+    - "could not import conftest"
+    - "ERROR collecting"
+    - "E   fixture"
+    - "ERRORS"
+    - "in request.addfinalizer"
+    - "DuplicateOptionError"
+    - "PytestWarning: PytestUnraisableExceptionWarning"
+    - "conftest.py"
+  none:
+    - "FAILED"
+    - "assert"
+    - "AssertionError"
+workflow:
+  likely_files:
+    - conftest.py
+    - "tests/conftest.py"
+    - "pytest.ini"
+    - "pyproject.toml"
+  local_repro:
+    - "pytest -x --setup-show tests/"
+    - "pytest --co -q tests/"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Fixture errors occur when: a fixture dependency cannot be resolved (fixture not found or misspelled), fixture scope is inconsistent (a wider-scoped fixture depends on a narrower-scope one), an external resource (database, container, file) fails to initialize inside the fixture, or a generator fixture raises during its `yield` teardown block.
+
+  ## Prevention
+
+  - Keep fixtures that access external resources (DBs, containers) in a separate `conftest.py` with explicit scope annotations.
+  - Run the test suite with `--setup-show` in CI to make fixture resolution visible in the failure report.
+  - Add a smoke fixture test that runs at session startup to validate required external dependencies early.

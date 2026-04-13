@@ -5,25 +5,7 @@ severity: high
 base_score: 1.0
 tags: [terraform, state, lock, infra]
 stage_hints: [deploy]
-summary: |-
-  Terraform could not acquire the state lock because another Terraform process is currently holding it. Only one Terraform operation can modify state at a time.
-diagnosis_markdown: |-
-  ## Diagnosis
 
-  Terraform could not acquire the state lock because another Terraform process is currently holding it. Only one Terraform operation can modify state at a time.
-fix_markdown: |-
-  ## Fix steps
-
-  1. Identify which job or operator currently holds the lock before taking action; the backend usually records the lock ID and owner context.
-  2. Wait for any active Terraform apply or plan touching the same state to complete, or cancel the duplicate run in CI.
-  3. Use `terraform force-unlock <LOCK_ID>` only after confirming the lock is stale and no active Terraform process is still working against that state.
-  4. Check your CI configuration for parallel jobs, retries, or manual approval paths that target the same Terraform backend or workspace.
-  5. If the backend keeps stale locks after runner crashes, inspect backend-specific logs and cleanup behaviour before repeating the apply.
-validation_markdown: |-
-  ## Validation
-
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Terraform state lock conflict is gone.
 match:
   any:
     - error locking state
@@ -32,13 +14,25 @@ match:
     - another terraform process
     - terraform state is locked
     - error acquiring the state lock
-why_it_matters_markdown: |-
-  ## Why it matters
 
-  State locking prevents concurrent modifications to the same infrastructure. The lock is usually held by a parallel CI job, a manual run, or a crashed previous job that did not release the lock.
+explain: >
+  Terraform could not acquire the state lock because another Terraform process
+  is currently holding it. Only one Terraform operation can modify state at
+  a time.
 
-  ## Prevention
+why: >
+  State locking prevents concurrent modifications to the same infrastructure.
+  The lock is usually held by a parallel CI job, a manual run, or a crashed
+  previous job that did not release the lock.
 
+fix:
+  - Identify which job or operator currently holds the lock before taking action; the backend usually records the lock ID and owner context.
+  - Wait for any active Terraform apply or plan touching the same state to complete, or cancel the duplicate run in CI.
+  - "Use `terraform force-unlock <LOCK_ID>` only after confirming the lock is stale and no active Terraform process is still working against that state."
+  - Check your CI configuration for parallel jobs, retries, or manual approval paths that target the same Terraform backend or workspace.
+  - If the backend keeps stale locks after runner crashes, inspect backend-specific logs and cleanup behaviour before repeating the apply.
+
+prevent:
   - Serialize Terraform runs per environment using CI concurrency groups, environment locks, or a single deployment lane.
   - Use separate state files or workspaces for environments that are expected to run in parallel.
   - Alert on locks that outlive the normal apply window so stale-state incidents are caught quickly.

@@ -1,0 +1,61 @@
+id: java-version-mismatch
+title: Java version incompatibility
+category: build
+severity: high
+base_score: 1.0
+tags: [java, jdk, jvm, maven, gradle, version]
+stage_hints: [build]
+summary: |-
+  The Java version used to compile or run the project does not match the version required by the source code or by a dependency.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The Java version used to compile or run the project does not match the version required by the source code or by a dependency.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run `java -version` in the failing CI job and compare against the version in `pom.xml` (`maven.compiler.source`) or `build.gradle` (`sourceCompatibility`).
+  2. GitHub Actions: add `actions/setup-java@v4` with a pinned `java-version` (e.g., `java-version: '21'`).
+  3. GitLab CI: use a versioned Maven/JDK image — `image: maven:3.9-amazoncorretto-21`.
+  4. CircleCI: use `cimg/openjdk:21.0` or the appropriate versioned executor.
+  5. Azure Pipelines: add the `JavaToolInstaller@0` task with the desired `versionSpec`.
+  6. Jenkins: use the JDK tool binding in the Jenkinsfile: `tools { jdk 'JDK21' }` and ensure the tool is configured in Jenkins.
+  7. For local mismatches: use SDKMAN (`sdk use java 21`) or asdf (`asdf install java`) to switch versions.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - java -version
+  - mvn -version
+match:
+  any:
+    - "release version .* not supported"
+    - "source release .* requires target release"
+    - "error: invalid source release"
+    - "error: invalid target release"
+    - "Unsupported class file major version"
+    - "has been compiled by a more recent version of the Java Runtime"
+    - "UnsupportedClassVersionError"
+    - "requires Java"
+    - "Incompatible because this component"
+    - "Could not target platform: Java SE"
+workflow:
+  likely_files:
+    - pom.xml
+    - build.gradle
+    - build.gradle.kts
+    - .java-version
+  local_repro:
+    - java -version
+    - mvn -version
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Java source compatibility settings in `pom.xml` or `build.gradle` specify a minimum JDK version. Running a build compiled for Java 17 on JDK 11 causes `UnsupportedClassVersionError`. Compiling with source/target flags that exceed the installed JDK version causes a compile-time error.
+
+  ## Prevention
+
+  - Commit a `.java-version` or `.tool-versions` (asdf) file to express the required JDK version.
+  - Pin the JDK version in every CI setup step rather than relying on the runner's installed default.
+  - Add a CI early-exit check: `java -version 2>&1 | grep -q '21' || exit 1`.
+  - Use the Maven Toolchains plugin to enforce the compiler JDK independently of the runner's default.

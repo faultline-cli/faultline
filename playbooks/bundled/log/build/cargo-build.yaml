@@ -1,0 +1,65 @@
+id: cargo-build
+title: Rust Cargo build failure
+category: build
+severity: high
+base_score: 1.0
+tags: [rust, cargo, compile, build]
+stage_hints: [build]
+summary: |-
+  The Rust compiler (rustc via Cargo) encountered one or more hard errors and could not produce a binary. The error code `E####` identifies the specific type of violation.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The Rust compiler (rustc via Cargo) encountered one or more hard errors and could not produce a binary. The error code `E####` identifies the specific type of violation.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run `cargo build` locally to see the full compiler output with suggestions.
+  2. For `E0308 mismatched types`, check return types and explicit type annotations.
+  3. For `E0502 cannot borrow`, restructure the code to avoid simultaneous borrows.
+  4. For `E0277 the trait bound`, derive or implement the missing trait.
+  5. Use `rustup update stable` if the toolchain is outdated.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - cargo build
+  - cargo check
+match:
+  any:
+    - "error[E"
+    - "error: could not compile"
+    - "^ ---- required by this bound"
+    - "the trait bound"
+    - "mismatched types"
+    - "cannot borrow"
+    - "borrow of moved value"
+    - "does not live long enough"
+    - "no method named"
+    - "use of undeclared"
+    - "cargo build"
+    - "cargo test"
+    - "Compiling"
+    - "aborting due to previous error"
+    - "could not find `Cargo.toml`"
+  none:
+    - "warning:"
+    - clippy
+workflow:
+  likely_files:
+    - Cargo.toml
+    - Cargo.lock
+    - src/**/*.rs
+  local_repro:
+    - cargo build
+    - cargo check
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Rust compile errors commonly fall into: type mismatches, missing trait implementations, lifetime violations, or use of moved values. These are always deterministic — the same source reliably produces the same error.
+
+  ## Prevention
+
+  - Run `cargo check` as a pre-push hook to catch errors before CI.
+  - Enable Clippy in CI (`cargo clippy -- -D warnings`) to catch issues early.
+  - Pin the Rust toolchain version in `rust-toolchain.toml` for reproducible builds.

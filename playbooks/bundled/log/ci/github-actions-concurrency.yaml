@@ -1,0 +1,41 @@
+id: github-actions-concurrency
+title: GitHub Actions workflow cancelled by concurrency group
+category: ci
+severity: low
+base_score: 0.8
+tags: [github-actions, concurrency, cancelled, ci]
+stage_hints: [build, deploy, test]
+summary: |-
+  The workflow run was cancelled because a newer run for the same concurrency group was triggered. This is expected behaviour when `cancel-in-progress: true` is set on a concurrency group.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The workflow run was cancelled because a newer run for the same concurrency group was triggered. This is expected behaviour when `cancel-in-progress: true` is set on a concurrency group.
+fix_markdown: |-
+  ## Fix steps
+
+  1. This cancellation is intentional — check the latest run on the same branch.
+  2. If the cancellation is unwanted, remove or widen the concurrency group key.
+  3. Set `cancel-in-progress: false` if you need every run to finish.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for GitHub Actions workflow cancelled by concurrency group is gone.
+match:
+  any:
+    - "The operation was canceled"
+    - "Run was cancelled"
+    - "This run was cancelled"
+    - "cancelled because a newer run"
+    - "concurrency group"
+    - "cancel-in-progress"
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  GitHub Actions concurrency groups are used to queue or cancel redundant runs. When a new commit is pushed before the previous run finishes, the older run is cancelled to avoid wasting resources.
+
+  ## Prevention
+
+  - Document your concurrency strategy in the workflow file with a comment.
+  - Use distinct concurrency keys for deployment jobs to avoid cancelling in-flight deploys.

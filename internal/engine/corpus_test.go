@@ -110,7 +110,7 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 		{
 			name:      "container crash noisy deploy log",
 			file:      "container-crash-noisy.log",
-			wantTopID: "container-crash",
+			wantTopID: "k8s-crashloopbackoff",
 			wantStage: "deploy",
 			absentIDs: []string{"oom-killed"},
 		},

@@ -40,6 +40,12 @@ the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 premium playbooks. A full `--playbooks` override still resolves a single custom
 catalog root and does not combine with extra packs.
 
+Starter pack composition should stay generous for adoption: broad coverage for
+common CI failures across popular ecosystems, plus a minimal source-detector
+baseline so `inspect` is useful without an extra install. Premium packs should
+concentrate on provider-specific depth, advanced deployment or operations
+workflows, and deeper source or security rules.
+
 This same `~/.faultline/packs/` convention is used by the Docker image at
 `/home/faultline/.faultline/packs`, so a mounted user directory can enable the
 same premium pack set in both local and containerized runs.
