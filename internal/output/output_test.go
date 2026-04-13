@@ -227,11 +227,11 @@ func TestFormatCIAnnotations(t *testing.T) {
 func TestFormatPlaybookList(t *testing.T) {
 	pbs := []model.Playbook{
 		{ID: "docker-auth", Category: "auth", Severity: "high", Title: "Docker Auth"},
-		{ID: "aws-credentials", Category: "auth", Severity: "high", Title: "AWS Credentials", Metadata: model.PlaybookMeta{PackName: "faultline-premium-pack"}},
+		{ID: "aws-credentials", Category: "auth", Severity: "high", Title: "AWS Credentials", Metadata: model.PlaybookMeta{PackName: "faultline-premium"}},
 		{ID: "oom-killed", Category: "runtime", Severity: "critical", Title: "OOM Killed"},
 	}
 	text := FormatPlaybookList(pbs, "", renderer.Options{Plain: true, Width: 100})
-	if !strings.Contains(text, "docker-auth") || !strings.Contains(text, "oom-killed") || !strings.Contains(text, "faultline-premium-pack") {
+	if !strings.Contains(text, "docker-auth") || !strings.Contains(text, "oom-killed") || !strings.Contains(text, "faultline-premium") {
 		t.Errorf("expected both playbooks in list, got %q", text)
 	}
 }
@@ -256,7 +256,7 @@ func TestFormatPlaybookDetails(t *testing.T) {
 		Title:                "Docker Registry Auth",
 		Category:             "auth",
 		Severity:             "high",
-		Metadata:             model.PlaybookMeta{PackName: "faultline-premium-pack"},
+		Metadata:             model.PlaybookMeta{PackName: "faultline-premium"},
 		Summary:              "The CI job could not authenticate.",
 		DiagnosisMarkdown:    "The CI job could not authenticate.",
 		WhyItMattersMarkdown: "Token expired.",
@@ -265,7 +265,7 @@ func TestFormatPlaybookDetails(t *testing.T) {
 		Match:                model.MatchSpec{Any: []string{"pull access denied"}},
 	}
 	text := FormatPlaybookDetails(pb, renderer.Options{Plain: true, Width: 88})
-	for _, want := range []string{"docker-auth", "Docker Registry Auth", "auth", "high", "faultline-premium-pack", "Token expired", "Run docker login"} {
+	for _, want := range []string{"docker-auth", "Docker Registry Auth", "auth", "high", "faultline-premium", "Token expired", "Run docker login"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in details, got:\n%s", want, text)
 		}
@@ -295,21 +295,21 @@ func TestFormatPlaybookDetailsMarkdown(t *testing.T) {
 
 func TestFormatAnalysisTextShowsPremiumPack(t *testing.T) {
 	a := makeAnalysis("aws-credentials", "AWS credentials missing or invalid", "auth", 1.0, nil)
-	a.Results[0].Playbook.Metadata.PackName = "faultline-premium-pack"
+	a.Results[0].Playbook.Metadata.PackName = "faultline-premium"
 	out := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
-	if !strings.Contains(out, "Pack: faultline-premium-pack") {
+	if !strings.Contains(out, "Pack: faultline-premium") {
 		t.Fatalf("expected pack line in quick output, got %q", out)
 	}
 }
 
 func TestFormatAnalysisJSONIncludesPack(t *testing.T) {
 	a := makeAnalysis("aws-credentials", "AWS credentials missing or invalid", "auth", 1.0, nil)
-	a.Results[0].Playbook.Metadata.PackName = "faultline-premium-pack"
+	a.Results[0].Playbook.Metadata.PackName = "faultline-premium"
 	text, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
 		t.Fatalf("format analysis json: %v", err)
 	}
-	if !strings.Contains(text, "\"pack\":\"faultline-premium-pack\"") {
+	if !strings.Contains(text, "\"pack\":\"faultline-premium\"") {
 		t.Fatalf("expected pack in json output, got %q", text)
 	}
 }

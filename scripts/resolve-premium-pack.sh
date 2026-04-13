@@ -17,7 +17,9 @@ fi
 
 for candidate in \
 	"playbooks/packs/premium-local" \
+	"faultline-premium" \
 	"premium-pack" \
+	"../faultline-premium" \
 	"../faultline-premium-pack"
 do
 	if [ -d "$candidate" ]; then
@@ -26,5 +28,5 @@ do
 	fi
 done
 
-printf '%s\n' "premium pack directory not found; set PREMIUM_PACK_DIR, run 'make premium-link', or check out ../faultline-premium-pack" >&2
+printf '%s\n' "premium pack directory not found; set PREMIUM_PACK_DIR, run 'make premium-link', or check out ../faultline-premium" >&2
 	exit 1

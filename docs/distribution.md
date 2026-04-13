@@ -39,13 +39,13 @@ Premium onboarding should add one explicit install step:
 
 ```bash
 # Option 1: clone the private premium repository
-git clone <private-premium-pack-repo> ../faultline-premium-pack
+git clone <private-premium-pack-repo> ../faultline-premium
 
 # Option 2: unpack a private premium release archive
-tar -xzf faultline-premium-pack.tar.gz -C ..
+tar -xzf faultline-premium.tar.gz -C ..
 
 # Install the premium pack once
-./faultline packs install ../faultline-premium-pack
+./faultline packs install ../faultline-premium
 
 # Verify the install
 ./faultline packs list
@@ -59,8 +59,8 @@ tar -xzf faultline-premium-pack.tar.gz -C ..
 Premium updates should not require a different CLI build. Buyers update the private pack, then reinstall it in place:
 
 ```bash
-cd ../faultline-premium-pack && git pull
-./faultline packs install --force ../faultline-premium-pack
+cd ../faultline-premium && git pull
+./faultline packs install --force ../faultline-premium
 ```
 
 For archive-based delivery, the same pattern applies after unpacking the newer premium archive.
@@ -96,7 +96,7 @@ For teams that need premium packs baked into a custom image, create a thin deriv
 
 ```dockerfile
 FROM faultline:latest
-COPY faultline-premium-pack /home/faultline/.faultline/packs/faultline-premium-pack
+COPY faultline-premium /home/faultline/.faultline/packs/faultline-premium
 ```
 
 Use that only for internal delivery or CI images. Keep the public image starter-only.
@@ -125,9 +125,9 @@ Tagged releases should continue to run this sequence:
 When the private premium repository is available in CI or checked out locally, extend the gate:
 
 ```bash
-make premium-check PREMIUM_PACK_DIR=../faultline-premium-pack
-make premium-review PREMIUM_PACK_DIR=../faultline-premium-pack
-make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium-pack
+make premium-check PREMIUM_PACK_DIR=../faultline-premium
+make premium-review PREMIUM_PACK_DIR=../faultline-premium
+make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium
 ```
 
 This catches duplicate IDs and cross-pack load errors before release.

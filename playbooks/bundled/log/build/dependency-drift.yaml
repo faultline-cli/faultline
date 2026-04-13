@@ -22,28 +22,6 @@ match:
     - pluginresolutionexception
     - could not resolve dependencies for project
 
-explain: >
-  Two or more packages require incompatible versions of a shared dependency.
-  The package manager cannot produce an install plan that satisfies all
-  constraints simultaneously.
-
-why: >
-  Dependency drift occurs when direct dependencies are updated independently
-  without re-checking transitive dependency constraints, or when lockfiles are
-  regenerated on different platforms with different available package versions.
-
-fix:
-  - Re-run dependency resolution from a clean cache or clean environment so you can confirm the conflict is reproducible and not caused by stale artifacts.
-  - Inspect the dependency tree with the native tool (`npm ls`, `pipdeptree`, `bundle viz`, `go mod graph`) to identify the exact packages pulling incompatible versions.
-  - Regenerate the lockfile with the team-standard tool and version, then commit the result instead of hand-editing generated dependency files.
-  - Pin, upgrade, or replace the conflicting dependency pair so all top-level constraints agree on a compatible version range.
-  - If the conflict appears only in CI, align the runtime or package manager version with local development before changing dependency constraints.
-
-prevent:
-  - Use a lockfile for all projects and regenerate it only through one canonical toolchain version in CI or a documented update workflow.
-  - Update related dependency families together so transitive compatibility changes land in a single reviewable pull request.
-  - Run a dependency resolution check in CI on every manifest or lockfile change, not only during full builds.
-  - Avoid manual edits to generated lockfiles; treat them as resolver output, not source-of-truth handwritten config.
 summary: |-
   Dependency constraints have drifted apart enough that the package manager
   cannot compute a valid install plan.

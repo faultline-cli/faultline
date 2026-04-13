@@ -5,6 +5,37 @@ severity: medium
 base_score: 0.8
 tags: [docker, build, context, dockerfile]
 stage_hints: [build]
+summary: |-
+  Docker could not read the Dockerfile or a required file from the selected build context, so the image build stopped before executing the full build.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  Docker could not read the Dockerfile or a required file from the selected build context, so the image build stopped before executing the full build.
+
+  This usually means the command ran from the wrong directory, used the wrong `-f` path, or excluded required files via `.dockerignore`.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Verify the exact `docker build` command and confirm the final argument points at the intended build context.
+  2. Check that the Dockerfile path exists relative to the working directory or the `-f` flag.
+  3. Inspect `.dockerignore` for patterns that exclude required files such as lockfiles or source directories.
+  4. Re-run the same command locally from a clean checkout to confirm the context contents.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - Confirm Docker can read the Dockerfile and required build inputs from the selected context.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  If Docker cannot see the intended context or Dockerfile, the build fails before any meaningful image assembly happens.
+
+  ## Prevention
+
+  - Keep Docker build commands explicit in CI, including both `-f` and context path.
+  - Add a lightweight image build smoke test to pull requests that touch Docker-related files.
+  - Avoid broad `.dockerignore` globs that can silently exclude required inputs.
+  - Keep Dockerfiles close to their intended build context so path assumptions stay obvious during refactors.
 
 match:
   any:
@@ -15,26 +46,6 @@ match:
     - file not found in build context or excluded by .dockerignore
     - forbidden path outside the build context
     - unable to prepare context
-
-explain: >
-  Docker could not read the Dockerfile or a required file from the selected
-  build context, so the image build stopped before executing the full build.
-
-why: >
-  The command may be running from the wrong directory, using the wrong `-f`
-  path, or excluding required files via `.dockerignore`.
-
-fix:
-  - Verify the exact `docker build` command and confirm the final argument points at the intended build context.
-  - Check that the Dockerfile path exists relative to the working directory or the `-f` flag.
-  - Inspect `.dockerignore` for patterns that exclude required files such as lockfiles or source directories.
-  - Re-run the same command locally from a clean checkout to confirm the context contents.
-
-prevent:
-  - Keep Docker build commands explicit in CI, including both `-f` and context path.
-  - Add a lightweight image build smoke test to pull requests that touch Docker-related files.
-  - Avoid broad `.dockerignore` globs that can silently exclude required inputs.
-  - Keep Dockerfiles close to their intended build context so path assumptions stay obvious during refactors.
 
 workflow:
   likely_files:

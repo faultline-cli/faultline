@@ -39,6 +39,11 @@ match:
     - "Could not fetch URL"
     - "Connection error"
     - "ERROR: Failed building wheel"
+  none:
+    - "ModuleNotFoundError: No module named"
+    - "ImportError: No module named"
+    - "cannot import name"
+    - "No module named '"
 workflow:
   likely_files:
     - requirements.txt

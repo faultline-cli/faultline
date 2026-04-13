@@ -158,8 +158,8 @@ Premium or team-specific playbooks live outside the public starter release. Faul
 Recommended premium flow:
 
 ```bash
-git clone <private-premium-pack-repo> ../faultline-premium-pack
-faultline packs install ../faultline-premium-pack
+git clone <private-premium-pack-repo> ../faultline-premium
+faultline packs install ../faultline-premium
 faultline packs list
 faultline list
 ```
@@ -167,14 +167,14 @@ faultline list
 Update flow:
 
 ```bash
-cd ../faultline-premium-pack && git pull
-faultline packs install --force ../faultline-premium-pack
+cd ../faultline-premium && git pull
+faultline packs install --force ../faultline-premium
 ```
 
 One-off composition without installation:
 
 ```bash
-faultline analyze build.log --playbook-pack ../faultline-premium-pack
+faultline analyze build.log --playbook-pack ../faultline-premium
 ```
 
 Use `--playbooks <dir>` only for full catalog overrides. It replaces the starter catalog instead of composing with it.
@@ -266,9 +266,9 @@ make release-check VERSION=v0.1.0 WITH_DOCKER=1 IMAGE=faultline-smoke
 When a premium pack is available locally, include cross-pack validation:
 
 ```bash
-make premium-check PREMIUM_PACK_DIR=../faultline-premium-pack
-make premium-review PREMIUM_PACK_DIR=../faultline-premium-pack
-make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium-pack
+make premium-check PREMIUM_PACK_DIR=../faultline-premium
+make premium-review PREMIUM_PACK_DIR=../faultline-premium
+make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium
 ```
 
 `make premium-link` creates the ignored local symlink used by the Makefile convenience flow, and `make premium-path` shows which premium directory those targets resolve.

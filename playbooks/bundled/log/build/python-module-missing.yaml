@@ -5,37 +5,43 @@ severity: medium
 base_score: 1.0
 tags: [python, pip, modules, dependencies]
 stage_hints: [build, test]
+summary: |-
+  Python could not import a required module because it is missing from the environment used by the failing CI step or the import path is wrong for the installed package.
+diagnosis_markdown: |-
+  ## Diagnosis
 
+  Python could not import a required module because it is missing from the environment used by the failing CI step or the import path is wrong for the installed package.
+
+  This usually happens when dependency installation was skipped, the job uses a different virtual environment than expected, the package name differs from the importable module name, or the selected Python version is incompatible with the dependency set.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Ensure the dependency install step runs before tests or application startup in the same environment that executes the failing command.
+  2. Verify the package name in `requirements.txt`, `pyproject.toml`, or the lockfile matches the module import used in code.
+  3. Confirm CI is activating the intended virtual environment and Python interpreter instead of falling back to the system Python.
+  4. If the import moved between package versions, pin the dependency to the compatible release and update the import path deliberately.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the failing step after reinstalling dependencies in the same environment.
+  - Confirm the import succeeds and `pip check` reports no broken dependency state.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Missing imports usually indicate the runtime environment and the declared dependency set have drifted apart. Left unresolved, the same mismatch tends to reappear across multiple jobs or branches.
+
+  ## Prevention
+
+  - Keep Python dependencies pinned in a lockfile or generated requirements file and install them from a clean environment in CI.
+  - Add a lightweight import smoke test for critical modules so missing dependencies fail early.
+  - Standardize environment activation in the CI template so every Python step uses the same interpreter and virtual environment.
+  - Keep dependency installation and test execution in the same job image so imports are not validated in one environment and used in another.
 match:
   any:
     - "ModuleNotFoundError: No module named"
     - "ImportError: No module named"
     - "cannot import name"
     - "No module named"
-
-explain: >
-  Python could not import a required module because it is missing from the
-  environment used by the failing CI step or the import path is wrong for the
-  installed package.
-
-why: >
-  This happens when dependency installation was skipped, the job uses a
-  different virtual environment than expected, the package name differs from
-  the importable module name, or the selected Python version is incompatible
-  with the dependency set.
-
-fix:
-  - Ensure the dependency install step runs before tests or application startup in the same environment that executes the failing command.
-  - Verify the package name in `requirements.txt`, `pyproject.toml`, or the lockfile matches the module import used in code.
-  - Confirm CI is activating the intended virtual environment and Python interpreter instead of falling back to the system Python.
-  - If the import moved between package versions, pin the dependency to the compatible release and update the import path deliberately.
-
-prevent:
-  - Keep Python dependencies pinned in a lockfile or generated requirements file and install them from a clean environment in CI.
-  - Add a lightweight import smoke test for critical modules so missing dependencies fail early.
-  - Standardize environment activation in the CI template so every Python step uses the same interpreter and virtual environment.
-  - Keep dependency installation and test execution in the same job image so imports are not validated in one environment and used in another.
-
 workflow:
   likely_files:
     - requirements.txt

@@ -338,8 +338,8 @@ func newPacksInstallCommand() *cobra.Command {
 		Use:   "install <dir>",
 		Short: "Install an extra playbook pack into the local Faultline directory",
 		Example: strings.Join([]string{
-			"  faultline packs install ../faultline-premium-pack",
-			"  faultline packs install ./faultline-premium-pack --force",
+			"  faultline packs install ../faultline-premium",
+			"  faultline packs install ./faultline-premium --force",
 		}, "\n"),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

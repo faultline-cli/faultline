@@ -5,6 +5,37 @@ severity: low
 base_score: 0.8
 tags: [test, snapshot, golden, fixtures]
 stage_hints: [test]
+summary: |-
+  A test compared current output against a committed snapshot or golden file and found a difference.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  A test compared current output against a committed snapshot or golden file and found a difference.
+
+  The behavior may have changed intentionally without regenerating the snapshot, or the output may now depend on unstable ordering, timestamps, or environment details.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Inspect the diff between the current output and the stored snapshot to decide whether the behavior change is expected.
+  2. If the new output is correct, regenerate and commit the updated snapshots or golden files.
+  3. If the diff is unstable, remove nondeterministic fields such as timestamps, UUIDs, or map iteration order before snapshotting.
+  4. Re-run the specific test locally to confirm the output is stable across repeated runs.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the affected test after updating the snapshot or normalizing unstable output.
+  - Confirm the test passes repeatedly with the same output.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Snapshot failures can reflect either a real behavior change or hidden nondeterminism. Treating them casually makes it easy to bless unstable output into the test suite.
+
+  ## Prevention
+
+  - Keep snapshot inputs deterministic and normalize unstable fields before writing expected output.
+  - Review snapshot diffs carefully in pull requests instead of auto-accepting them.
+  - Prefer narrow golden files that capture only the behavior that matters.
+  - Store snapshot update commands in the test docs or Makefile so regenerating expected output is consistent across contributors.
 
 match:
   any:
@@ -15,27 +46,6 @@ match:
     - golden file mismatch
     - does not match the expected snapshot
     - update snapshots
-
-explain: >
-  A test compared current output against a committed snapshot or golden file and
-  found a difference.
-
-why: >
-  The behavior may have changed intentionally without regenerating the snapshot,
-  or the output may now depend on unstable ordering, timestamps, or environment
-  details.
-
-fix:
-  - Inspect the diff between the current output and the stored snapshot to decide whether the behavior change is expected.
-  - If the new output is correct, regenerate and commit the updated snapshots or golden files.
-  - If the diff is unstable, remove nondeterministic fields such as timestamps, UUIDs, or map iteration order before snapshotting.
-  - Re-run the specific test locally to confirm the output is stable across repeated runs.
-
-prevent:
-  - Keep snapshot inputs deterministic and normalize unstable fields before writing expected output.
-  - Review snapshot diffs carefully in pull requests instead of auto-accepting them.
-  - Prefer narrow golden files that capture only the behavior that matters.
-  - Store snapshot update commands in the test docs or Makefile so regenerating expected output is consistent across contributors.
 
 workflow:
   likely_files:

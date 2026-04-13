@@ -29,7 +29,7 @@ jobs:
         with:
           repository: ${{ vars.PREMIUM_PACK_REPO }}
           token: ${{ env.PREMIUM_PACK_REPO_TOKEN }}
-          path: premium-pack
+          path: faultline-premium
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -44,7 +44,7 @@ jobs:
 
       - name: Compose starter with premium pack
         if: vars.PREMIUM_PACK_REPO != '' && env.PREMIUM_PACK_REPO_TOKEN != ''
-        run: make premium-check PREMIUM_PACK_DIR=premium-pack
+        run: make premium-check PREMIUM_PACK_DIR=faultline-premium
 
       - name: Build release archives
         run: make release-snapshot VERSION="$VERSION"

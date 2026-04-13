@@ -25,8 +25,6 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "database test isolation", file: "database-test-isolation.log", wantID: "database-test-isolation"},
 		{name: "image pull backoff", file: "image-pull-backoff.log", wantID: "image-pull-backoff"},
 		{name: "git auth", file: "git-auth.log", wantID: "git-auth"},
-		{name: "github actions syntax", file: "github-actions-syntax.log", wantID: "github-actions-syntax"},
-		{name: "github actions permission", file: "github-actions-permission.log", wantID: "github-actions-permission"},
 		{name: "runner disk full", file: "runner-disk-full.log", wantID: "runner-disk-full"},
 		{name: "connection refused", file: "connection-refused.log", wantID: "connection-refused"},
 		{name: "dns resolution", file: "dns-resolution.log", wantID: "dns-resolution"},

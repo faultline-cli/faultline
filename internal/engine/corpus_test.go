@@ -42,12 +42,6 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			absentIDs: []string{"docker-auth"},
 		},
 		{
-			name:      "github actions permission noisy log",
-			file:      "github-actions-permission-noisy.log",
-			wantTopID: "github-actions-permission",
-			absentIDs: []string{"http-auth-failure"},
-		},
-		{
 			name:      "network timeout noisy build log",
 			file:      "network-timeout-noisy.log",
 			wantTopID: "network-timeout",

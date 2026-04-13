@@ -54,8 +54,8 @@ premium-path:
 
 premium-link:
 	@mkdir -p "$$(dirname "$(PREMIUM_PACK_LINK)")"
-	@ln -sfn ../../../faultline-premium-pack "$(PREMIUM_PACK_LINK)"
-	@printf "%s\n" "linked $(PREMIUM_PACK_LINK) -> ../../../faultline-premium-pack"
+	@ln -sfn ../../../faultline-premium "$(PREMIUM_PACK_LINK)"
+	@printf "%s\n" "linked $(PREMIUM_PACK_LINK) -> ../../../faultline-premium"
 
 premium-check:
 	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
