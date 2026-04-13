@@ -1,0 +1,4 @@
+$ kubectl apply -f deploy/payments.yaml
+Warning  FailedMount  MountVolume.SetUp failed for volume "app-config": configmap "payments-config" not found
+Error from server (NotFound): secrets "payments-secrets" not found
+cannot find key DATABASE_URL in Secret payments-secrets

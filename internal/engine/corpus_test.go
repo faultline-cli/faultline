@@ -48,6 +48,13 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			absentIDs: []string{"dns-resolution"},
 		},
 		{
+			name:      "connection refused noisy test log",
+			file:      "connection-refused-noisy.log",
+			wantTopID: "connection-refused",
+			wantStage: "test",
+			absentIDs: []string{"network-timeout"},
+		},
+		{
 			name:      "pipeline timeout noisy build log",
 			file:      "pipeline-timeout-noisy.log",
 			wantTopID: "pipeline-timeout",
@@ -79,6 +86,13 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			wantTopID: "python-module-missing",
 			wantStage: "test",
 			absentIDs: []string{"path-case-mismatch", "typescript-compile"},
+		},
+		{
+			name:      "config mismatch noisy deploy log",
+			file:      "config-mismatch-noisy.log",
+			wantTopID: "config-mismatch",
+			wantStage: "deploy",
+			absentIDs: []string{"missing-env", "env-var-missing", "missing-test-fixture"},
 		},
 		{
 			name:      "port in use noisy deploy log",

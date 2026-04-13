@@ -53,6 +53,30 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			absentIDs: []string{"parallelism-conflict", "port-in-use"},
 		},
 		{
+			name:      "secret-empty auth failure beats runtime and deploy env wording",
+			file:      "missing-env.log",
+			wantTopID: "missing-env",
+			absentIDs: []string{"env-var-missing", "config-mismatch"},
+		},
+		{
+			name:      "runtime env lookup beats auth and deploy env wording",
+			file:      "env-var-missing.log",
+			wantTopID: "env-var-missing",
+			absentIDs: []string{"missing-env", "config-mismatch"},
+		},
+		{
+			name:      "deploy config mismatch beats auth and runtime env wording",
+			file:      "config-mismatch.log",
+			wantTopID: "config-mismatch",
+			absentIDs: []string{"missing-env", "env-var-missing", "missing-test-fixture"},
+		},
+		{
+			name:      "connection refused beats generic failed-to-connect timeout wording",
+			file:      "connection-refused.log",
+			wantTopID: "connection-refused",
+			absentIDs: []string{"network-timeout"},
+		},
+		{
 			name:      "working directory beats generic missing file wording in build logs",
 			file:      "working-directory.log",
 			wantTopID: "working-directory",
@@ -68,7 +92,7 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			name:      "network timeout beats test timeout style noise",
 			file:      "network-timeout.log",
 			wantTopID: "network-timeout",
-			absentIDs: []string{"test-timeout", "pipeline-timeout"},
+			absentIDs: []string{"connection-refused", "test-timeout", "pipeline-timeout"},
 		},
 		{
 			name:      "oom kill beats container crash symptom log",

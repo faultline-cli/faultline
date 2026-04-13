@@ -15,12 +15,11 @@ fix_markdown: |-
   ## Fix steps
 
   1. Run the database seed step before the test suite:
-     `rails db:seed`, `npm run db:seed`, `python manage.py loaddata`, or the
-     project equivalent.
+     `rails db:seed`, `npm run db:seed`, `python manage.py loaddata`, or the project equivalent.
   2. Check if the fixture file was recently renamed or deleted:
 
      ```bash
-     git log --diff-filter=D --name-only --pretty=format: -- testdata/ fixtures/        | grep -v "^$" | head -20
+     git log --diff-filter=D --name-only --pretty=format: -- testdata/ fixtures/ | grep -v "^$" | head -20
      ```
 
   3. Verify the fixture path is committed and not gitignored:
@@ -30,11 +29,9 @@ fix_markdown: |-
      git ls-files fixtures/
      ```
 
-  4. For factory errors: confirm the factory definition matches the current
-     model schema. Run pending migrations before seeding:
+  4. For factory errors: confirm the factory definition matches the current model schema. Run pending migrations before seeding:
      `rails db:migrate`, `python manage.py migrate`.
-  5. Update the fixture file or factory definition to match the current data
-     model, then re-run migrations and seeds before the test suite.
+  5. Update the fixture file or factory definition to match the current data model, then re-run migrations and seeds before the test suite.
 validation_markdown: |-
   ## Validation
 
@@ -62,6 +59,10 @@ match:
     - working directory not found
     - failed to change directory
     - not a git repository
+    - configmap not found
+    - secret not found
+    - mountvolume.setup failed
+    - failedmount
 why_it_matters_markdown: |-
   ## Why it matters
 

@@ -1,0 +1,6 @@
+$ kubectl rollout status deployment/payments
+Waiting for deployment "payments" rollout to finish: 1 old replica is pending termination
+Warning  FailedMount  MountVolume.SetUp failed for volume "app-config": configmap "payments-config" not found
+Error from server (NotFound): secrets "payments-secrets" not found
+application bootstrap failed: invalid configuration for target cluster
+cannot find key DATABASE_URL in Secret payments-secrets

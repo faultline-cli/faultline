@@ -1,0 +1,7 @@
+$ npm test
+starting integration suite
+waiting for postgres service container
+psql: error: connection to server at "postgres" (172.18.0.3), port 5432 failed: Connection refused
+failed to connect to postgres after retry 1
+is the server running on that host and accepting TCP/IP connections?
+ECONNREFUSED
