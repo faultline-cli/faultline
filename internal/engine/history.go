@@ -119,5 +119,15 @@ func saveHistory(store historyStore) error {
 	if err != nil {
 		return fmt.Errorf("marshal history: %w", err)
 	}
-	return os.WriteFile(path, data, 0o600)
+	// Write to a sibling temp file then rename for an atomic replacement,
+	// so a crash mid-write never leaves the history file partially written.
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return fmt.Errorf("write history temp: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("commit history: %w", err)
+	}
+	return nil
 }

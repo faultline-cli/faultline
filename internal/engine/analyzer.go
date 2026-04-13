@@ -222,25 +222,7 @@ func (e localRepoEnricher) Enrich(result model.Result) *model.RepoContext {
 		commits,
 		sigs,
 	)
-
-	// Convert repo.RepoContext → model.RepoContext
-	out := &model.RepoContext{
-		RepoRoot:           repoCtx.RepoRoot,
-		RecentFiles:        repoCtx.RecentFiles,
-		HotspotDirectories: repoCtx.HotspotDirectories,
-		CoChangeHints:      repoCtx.CoChangeHints,
-		HotfixSignals:      repoCtx.HotfixSignals,
-		DriftSignals:       repoCtx.DriftSignals,
-	}
-	out.RelatedCommits = make([]model.RepoCommit, len(repoCtx.RelatedCommits))
-	for i, c := range repoCtx.RelatedCommits {
-		out.RelatedCommits[i] = model.RepoCommit{
-			Hash:    c.Hash,
-			Subject: c.Subject,
-			Date:    c.Date,
-		}
-	}
-	return out
+	return &repoCtx
 }
 
 // List returns all playbooks available in the configured directory.

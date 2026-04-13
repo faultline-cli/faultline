@@ -40,6 +40,20 @@ func validateOutputFormat(value string) error {
 	return nil
 }
 
+func validateOutputMode(value string) error {
+	if value != string(output.ModeQuick) && value != string(output.ModeDetailed) {
+		return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
+	}
+	return nil
+}
+
+func validateWorkflowMode(value string) error {
+	if value != string(workflow.ModeLocal) && value != string(workflow.ModeAgent) {
+		return fmt.Errorf("--mode must be %q or %q", workflow.ModeLocal, workflow.ModeAgent)
+	}
+	return nil
+}
+
 func newAnalyzeCommand() *cobra.Command {
 	var (
 		jsonOut       bool
@@ -74,8 +88,8 @@ func newAnalyzeCommand() *cobra.Command {
 		}, "\n"),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if mode != string(output.ModeQuick) && mode != string(output.ModeDetailed) {
-				return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
+			if err := validateOutputMode(mode); err != nil {
+				return err
 			}
 			if err := validateOutputFormat(format); err != nil {
 				return err
@@ -172,8 +186,8 @@ func newInspectCommand() *cobra.Command {
 		Short: "Inspect source code using modular detector playbooks",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if mode != string(output.ModeQuick) && mode != string(output.ModeDetailed) {
-				return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
+			if err := validateOutputMode(mode); err != nil {
+				return err
 			}
 			if err := validateOutputFormat(format); err != nil {
 				return err
@@ -280,8 +294,8 @@ func newWorkflowCommand() *cobra.Command {
 		}, "\n"),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if mode != string(workflow.ModeLocal) && mode != string(workflow.ModeAgent) {
-				return fmt.Errorf("--mode must be %q or %q", workflow.ModeLocal, workflow.ModeAgent)
+			if err := validateWorkflowMode(mode); err != nil {
+				return err
 			}
 
 			input, err := ReadInput(args)

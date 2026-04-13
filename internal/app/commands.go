@@ -8,7 +8,6 @@ import (
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/renderer"
-	"faultline/internal/workflow"
 )
 
 // AnalyzeOptions collects all flags that influence the analyze and fix commands.
@@ -35,30 +34,6 @@ type AnalyzeOptions struct {
 	GitSince string
 	// RepoPath overrides the repository path used for git context scanning.
 	RepoPath string
-}
-
-func RunAnalyze(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	return NewService().Analyze(r, source, opts, w)
-}
-
-func RunFix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	return NewService().Fix(r, source, opts, w)
-}
-
-func RunList(category, playbookDir string, w io.Writer) error {
-	return NewService().List(category, playbookDir, nil, w)
-}
-
-func RunExplain(id, playbookDir string, format output.Format, w io.Writer) error {
-	return NewService().Explain(id, playbookDir, nil, format, w)
-}
-
-func RunWorkflow(r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
-	return NewService().Workflow(r, source, opts, mode, jsonOut, w)
-}
-
-func RunInspect(root string, opts AnalyzeOptions, w io.Writer) error {
-	return NewService().Inspect(root, opts, w)
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

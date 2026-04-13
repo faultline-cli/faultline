@@ -182,7 +182,7 @@ func (Service) FixturesIngest(root string, opts fixtures.IngestOptions, jsonOut 
 	if err != nil {
 		return err
 	}
-	result, err := fixtures.Ingest(ctxBackground(), layout, opts)
+	result, err := fixtures.Ingest(context.Background(), layout, opts)
 	if err != nil {
 		return err
 	}
@@ -271,8 +271,4 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 	}
 	_, err = fmt.Fprint(w, formatted)
 	return err
-}
-
-func ctxBackground() context.Context {
-	return context.Background()
 }

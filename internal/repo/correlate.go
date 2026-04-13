@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"faultline/internal/model"
 )
 
 const (
@@ -14,41 +16,15 @@ const (
 	maxSignalHints    = 5
 )
 
-// RepoContext is the final output of the repo analysis - everything that is
-// useful to show alongside a failure diagnosis.
-type RepoContext struct {
-	// RepoRoot is the absolute path to the discovered git repository root.
-	RepoRoot string `json:"repo_root"`
-	// RecentFiles are changed files relevant to the diagnosed failure.
-	RecentFiles []string `json:"recent_files,omitempty"`
-	// RelatedCommits are commits whose changed files overlap the failure area.
-	RelatedCommits []CommitSummary `json:"related_commits,omitempty"`
-	// HotspotDirectories are the top churned directories in the recent window.
-	HotspotDirectories []string `json:"hotspot_directories,omitempty"`
-	// CoChangeHints are file pairs that tend to change together.
-	CoChangeHints []string `json:"co_change_hints,omitempty"`
-	// HotfixSignals contains subjects of hotfix-like commits in the window.
-	HotfixSignals []string `json:"hotfix_signals,omitempty"`
-	// DriftSignals contains revert-like and repeated-edit hints in the window.
-	DriftSignals []string `json:"drift_signals,omitempty"`
-}
-
-// CommitSummary is a trimmed commit for output.
-type CommitSummary struct {
-	Hash    string `json:"hash"`
-	Subject string `json:"subject"`
-	Date    string `json:"date"`
-}
-
 type correlationSpec struct {
 	Patterns []string
 }
 
-// Correlate builds a RepoContext by mapping a failure category and playbook ID
+// Correlate builds a model.RepoContext by mapping a failure category and playbook ID
 // to the most relevant commits and file areas from history and signals.
-func Correlate(root, category, playbookID string, commits []Commit, sigs Signals) RepoContext {
+func Correlate(root, category, playbookID string, commits []Commit, sigs Signals) model.RepoContext {
 	spec := failureSpec(category, playbookID)
-	ctx := RepoContext{RepoRoot: root}
+	ctx := model.RepoContext{RepoRoot: root}
 
 	relevantFiles := rankRelevantFiles(spec, commits, sigs)
 	ctx.RecentFiles = limitStrings(relevantFiles, maxRecentFiles)
@@ -99,8 +75,8 @@ func rankRelevantFiles(spec correlationSpec, commits []Commit, sigs Signals) []s
 	return fallback
 }
 
-func relatedCommits(spec correlationSpec, commits []Commit) []CommitSummary {
-	results := make([]CommitSummary, 0, maxRelatedCommits)
+func relatedCommits(spec correlationSpec, commits []Commit) []model.RepoCommit {
+	results := make([]model.RepoCommit, 0, maxRelatedCommits)
 	for _, commit := range commits {
 		if len(matchedFiles(spec, commit.Files)) == 0 {
 			continue
@@ -109,7 +85,7 @@ func relatedCommits(spec correlationSpec, commits []Commit) []CommitSummary {
 		if len(hash) > 7 {
 			hash = hash[:7]
 		}
-		results = append(results, CommitSummary{
+		results = append(results, model.RepoCommit{
 			Hash:    hash,
 			Subject: commit.Subject,
 			Date:    commit.Time.Format("2006-01-02"),
