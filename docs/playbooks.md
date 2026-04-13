@@ -68,7 +68,7 @@ Treat playbook growth as a deterministic review loop, not a content-volume goal.
 
 Review interpretation:
 
-- `make review` and `make premium-review` are overlap inspection tools, not a requirement that the catalog reach zero shared phrases.
+- `make review` and the composed-pack review checks are overlap inspection tools, not a requirement that the catalog reach zero shared phrases.
 - Expect some stable overlap between adjacent rules such as timeout families, restart families, and generic-versus-specialized build failures.
 - Investigate new broad phrases, new duplicate IDs, or ranking regressions; do not churn mature rules only to drive the overlap count down.
 
@@ -82,12 +82,12 @@ Acceptance bar:
 
 ## Pack composition
 
-Faultline ships the starter catalog from `playbooks/bundled/` and composes any premium or team-specific packs on top of it.
+Faultline ships the default catalog from `playbooks/bundled/` and can compose team-specific or extended packs on top of it.
 
 Use this boundary when deciding where a playbook belongs:
 
-- bundled: high-frequency failures across common stacks or CI systems, plus enough baseline source coverage for `inspect` to produce useful starter results
-- premium: provider-specific workflows, advanced deployment and platform operations, security-heavy rules, and deeper source-detector coverage beyond the starter baseline
+- bundled: high-frequency failures across common stacks or CI systems, plus enough baseline source coverage for `inspect` to produce useful default results
+- extra pack: provider-specific workflows, advanced deployment and platform operations, security-heavy rules, and deeper source-detector coverage beyond the default baseline
 
 There are three supported ways to add extra packs:
 
@@ -97,4 +97,4 @@ There are three supported ways to add extra packs:
 
 Use `--playbooks <dir>` only for full catalog overrides such as testing a pack in isolation.
 
-For shipped premium packs, prefer `faultline packs install` as the customer-facing path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.
+For installed extra packs, prefer `faultline packs install` as the long-lived path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.

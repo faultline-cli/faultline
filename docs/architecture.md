@@ -32,26 +32,26 @@ The playbook catalog resolves directories in this order:
 4. `/playbooks/bundled`
 5. `/playbooks`
 
-That keeps today’s repo layout working while giving the starter repository a
-clean default and letting premium packs live in a separate repository loaded
-through an external directory.
+That keeps today’s repo layout working while giving the repository a clean
+default and letting extra packs live in separate directories loaded through an
+external path.
 
 Additional packs can be composed on top of the bundled starter catalog through
 the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 `--playbook-pack` flags. Faultline also auto-loads any packs installed under
-`~/.faultline/packs/`, which is the persistent user-level upgrade path for
-premium playbooks. A full `--playbooks` override still resolves a single custom
-catalog root and does not combine with extra packs.
+`~/.faultline/packs/`, which is the persistent user-level install path for
+extra playbook packs. A full `--playbooks` override still resolves a single
+custom catalog root and does not combine with extra packs.
 
 Starter pack composition should stay generous for adoption: broad coverage for
 common CI failures across popular ecosystems, plus a minimal source-detector
-baseline so `inspect` is useful without an extra install. Premium packs should
+baseline so `inspect` is useful without an extra install. Extra packs can
 concentrate on provider-specific depth, advanced deployment or operations
 workflows, and deeper source or security rules.
 
 This same `~/.faultline/packs/` convention is used by the Docker image at
 `/home/faultline/.faultline/packs`, so a mounted user directory can enable the
-same premium pack set in both local and containerized runs.
+same installed pack set in both local and containerized runs.
 
 ## Detector boundary
 

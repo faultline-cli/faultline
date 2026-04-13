@@ -1,4 +1,4 @@
-# ADR 0002: Starter Catalog With External Premium Packs
+# ADR 0002: Catalog Packaging And Extra Pack Composition
 
 - Status: Accepted
 - Date: 2026-04-13

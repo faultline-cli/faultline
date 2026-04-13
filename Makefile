@@ -20,10 +20,6 @@ help:
 		"  fixture-check   Run the accepted real-fixture regression gate" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
-		"  premium-path    Print the resolved premium pack path used locally" \
-		"  premium-link    Create/update the ignored local premium-pack symlink" \
-		"  premium-check   Compose starter with PREMIUM_PACK_DIR and fail on duplicate IDs or pack load errors" \
-		"  premium-review  Compose starter with PREMIUM_PACK_DIR and print overlap conflicts across the combined catalog" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
@@ -31,7 +27,9 @@ help:
 		"  docker-build    Build the Docker image tagged $(IMAGE)" \
 		"  docker-analyze  Analyze a mounted log in Docker: make docker-analyze LOG=build.log" \
 		"  docker-smoke    Build the Docker image and verify an auth fixture end to end" \
-		"  WITH_DOCKER=1   Include docker-smoke when running release-check"
+		"  WITH_DOCKER=1   Include docker-smoke when running release-check" \
+		"" \
+		"Internal pack-composition targets remain available but are intentionally omitted from the public help summary."
 
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"

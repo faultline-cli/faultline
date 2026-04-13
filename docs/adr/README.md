@@ -7,7 +7,7 @@ These ADRs are intentionally brief and point back to the authoritative product a
 ## Index
 
 - [0001: Deterministic CLI Architecture](0001-deterministic-cli-architecture.md)
-- [0002: Starter Catalog With External Premium Packs](0002-starter-catalog-and-external-premium-packs.md)
+- [0002: Catalog Packaging And Extra Pack Composition](0002-catalog-packaging-and-extra-pack-composition.md)
 - [0003: Structured Playbooks With Markdown Rendering](0003-structured-playbooks-with-markdown-rendering.md)
 - [0004: Deterministic Review And Ranking Gates](0004-deterministic-review-and-ranking-gates.md)
 

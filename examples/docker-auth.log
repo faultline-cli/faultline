@@ -1,0 +1,8 @@
+> docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+
+> docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
+Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
+> docker --debug pull mcr.microsoft.com/mssql/server
+Using default tag: latest
+Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
