@@ -1,0 +1,122 @@
+id: segfault
+title: Process terminated by segmentation fault or fatal signal
+category: runtime
+severity: critical
+base_score: 1.0
+tags: [segfault, sigsegv, signal, crash, core-dump]
+stage_hints: [build, test, deploy]
+summary: |-
+  The process received a fatal signal — most commonly SIGSEGV (segmentation
+  fault), SIGABRT (assertion failure), or SIGBUS (bus error) — and was
+  terminated by the operating system. This is a hard crash with no graceful
+  recovery.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The process accessed memory it was not permitted to use (null pointer
+  dereference, buffer overrun, use-after-free) or explicitly aborted via an
+  assertion failure or `abort()` call. The OS kills the process immediately and
+  may produce a core dump.
+
+  Common causes:
+  - **Null pointer dereference**: a pointer is used before being initialised or
+    after being freed.
+  - **Buffer overrun / stack overflow**: writing past the end of a fixed-size
+    buffer or allocating an unbounded recursive call stack.
+  - **Use-after-free**: memory that was freed is accessed again.
+  - **C extension fault in a managed runtime**: a native library (CGo, Python C
+    extension, JNI) crashes and takes the host process with it.
+  - **Stack overflow in tests**: a deeply recursive function or an infinite
+    mutual recursion blows the default stack size.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Identify the crashing binary and reproduce locally with verbose signal
+     handling:
+
+     ```bash
+     # Linux: enable core dumps and inspect with gdb
+     ulimit -c unlimited
+     ./failing-binary
+     gdb ./failing-binary core
+
+     # Go: set GOTRACEBACK for a full goroutine stack on crash
+     GOTRACEBACK=all go test ./...
+
+     # Python C extension
+     python -c "import faulthandler; faulthandler.enable(); import your_module"
+     ```
+
+  2. Attach a memory sanitiser to find the root cause:
+
+     ```bash
+     # C/C++: compile with AddressSanitizer
+     gcc -fsanitize=address -g -o binary source.c
+     ./binary
+
+     # Go: use the race detector for concurrent access faults
+     go test -race ./...
+     ```
+
+  3. For stack overflows: add a base case to the recursion, increase the goroutine
+     stack limit, or rewrite the logic iteratively.
+
+  4. For C extension crashes: pin the extension to a known-good version, or
+     run it inside a subprocess so the host process survives a crash.
+
+  5. Check for version mismatches between shared libraries and the binary —
+     a `SIGABRT` from `abort()` often signals an ABI incompatibility.
+validation_markdown: |-
+  ## Validation
+
+  - Run the reproducing command and confirm the process exits zero, not with
+    a signal.
+  - Confirm no `Segmentation fault`, `signal: killed`, or core dump appears
+    in the output.
+  - Run under AddressSanitizer or Valgrind at least once to rule out latent
+    memory errors.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  A segmentation fault is always a hard bug — memory safety was violated. The
+  crash is deterministic given the same inputs and memory layout, even if it
+  first appears intermittently. Unlike an application exception, there is no
+  stack trace from the process itself; the OS terminates it silently unless a
+  core dump or signal handler is in place.
+
+  ## Prevention
+
+  - Run tests with AddressSanitizer (`-fsanitize=address`) in CI for native code.
+  - Use Go's race detector and fuzz testing to surface memory-adjacent bugs.
+  - Wrap native extension calls in a subprocess with a health check so a crash
+    in the extension does not take down the host process in production.
+match:
+  any:
+    - "segmentation fault"
+    - "Segmentation fault"
+    - "SIGSEGV"
+    - "signal: segmentation fault"
+    - "core dumped"
+    - "signal: abort trap"
+    - "signal: aborted"
+    - "SIGABRT"
+    - "SIGBUS"
+    - "signal: bus error"
+  none:
+    - OOMKilled
+    - "out of memory"
+    - "oom killer"
+    - "exit code 137"
+    - "DATA RACE"
+    - CrashLoopBackOff
+workflow:
+  likely_files:
+    - "**/*.c"
+    - "**/*.cpp"
+    - "**/*.go"
+    - "**/*.py"
+  local_repro:
+    - GOTRACEBACK=all go test ./...
+    - ulimit -c unlimited && ./failing-binary
+  verify:
+    - go test -race ./...

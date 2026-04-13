@@ -1,0 +1,10 @@
+ FAIL  src/components/Button.test.ts [ src/components/Button.test.ts ]
+ × Button renders with custom text
+
+ Failed Tests 1
+
+ FAIL  src/components/Button.test.ts > Button renders with custom text
+AssertionError: expected 'Submit' to strictly equal 'Click me'
+
+ Test Files  1 failed (5)
+ Tests       1 failed (12)

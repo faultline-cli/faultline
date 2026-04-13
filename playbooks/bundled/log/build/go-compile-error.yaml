@@ -1,0 +1,95 @@
+id: go-compile-error
+title: Go compilation error
+category: build
+severity: high
+base_score: 1.0
+tags: [go, golang, compile, build, undefined]
+stage_hints: [build]
+summary: |-
+  The Go compiler rejected the package because of a semantic error — undefined
+  identifier, type mismatch, unused import, or interface non-compliance. The
+  binary cannot be produced until the errors are resolved.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The Go compiler emitted one or more hard errors and aborted the build. These
+  are always deterministic: the source must be corrected before `go build ./...`
+  can succeed.
+
+  Common error classes:
+  - **undefined:** — a symbol, function, or type is referenced but not declared
+    in the current package or any imported package.
+  - **cannot use X as Y** — a value of one type is passed where a different type
+    is required, and no implicit conversion exists.
+  - **imported and not used** — a package was imported but none of its exported
+    names appear in the file.
+  - **declared and not used** — a local variable was declared but never read.
+  - **does not implement** — a concrete type is used where an interface is
+    expected but is missing one or more methods.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run `go build ./...` locally to see the full diagnostic output:
+
+     ```bash
+     go build ./... 2>&1 | head -30
+     ```
+
+  2. For `undefined: Foo`: import the package that defines `Foo` or move the
+     declaration into scope.
+  3. For `cannot use x (variable of type A) as type B`: correct the type or add
+     an explicit conversion where the semantics are safe.
+  4. For `imported and not used`: remove the unused import, or add a blank
+     import `_ "pkg"` if the side-effect is intentional.
+  5. For `declared and not used`: use the variable or replace it with `_`.
+  6. For `does not implement`: add the missing method to the concrete type, or
+     use the correct type that already satisfies the interface.
+validation_markdown: |-
+  ## Validation
+
+  - Run `go build ./...` locally and confirm zero errors.
+  - Run `go vet ./...` to catch additional semantic issues before CI.
+  - Confirm the CI build step exits zero.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Go compilation errors are deterministic and hard — the build stops immediately
+  with no output binary. All downstream test and deploy steps are blocked until
+  the root error is fixed. The compiler message always names the exact file,
+  line, and column: start there and work outward.
+
+  ## Prevention
+
+  - Run `go build ./...` and `go vet ./...` as a pre-push hook.
+  - Enable editor integration (gopls / VS Code Go) so errors surface on save.
+  - Add a dedicated `go build` step before the test step in CI so compile errors
+    produce a clear signal rather than hiding inside a test failure.
+match:
+  any:
+    - "imported and not used"
+    - "declared and not used"
+    - "does not implement"
+    - "undefined: "
+    - "cannot use "
+    - "too many arguments in call to"
+    - "not enough arguments in call to"
+    - "cannot assign to"
+    - "multiple-value expression in single-value context"
+  none:
+    - go.sum
+    - "missing go.sum"
+    - "no required module"
+    - "SyntaxError:"
+    - "parse error"
+    - "syntax error:"
+    - clippy
+    - "error CS"
+workflow:
+  likely_files:
+    - "**/*.go"
+    - go.mod
+  local_repro:
+    - go build ./...
+    - go vet ./...
+  verify:
+    - go build ./...

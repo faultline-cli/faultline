@@ -40,6 +40,9 @@ match:
     - "Gradle version"
   none:
     - "BUILD SUCCESS"
+    - "imported and not used"
+    - "declared and not used"
+    - "undefined: "
 workflow:
   likely_files:
     - build.gradle

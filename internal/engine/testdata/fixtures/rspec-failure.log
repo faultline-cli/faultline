@@ -1,0 +1,18 @@
+..F....
+
+Failures:
+
+  1) UserService#create returns the created user
+     Failure/Error: expect(result.email).to eq("alice@example.com")
+
+       expected: "alice@example.com"
+            got: nil
+
+     # ./spec/services/user_service_spec.rb:18:in `block (3 levels) in <top (required)>'
+
+Finished in 0.43201 seconds (files took 3.12 seconds to load)
+7 examples, 1 failure
+
+Failed examples:
+
+rspec spec/services/user_service_spec.rb:14

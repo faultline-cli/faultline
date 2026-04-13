@@ -1,0 +1,4 @@
+./internal/service/user.go:42:15: undefined: UserRepository
+./internal/service/user.go:43:19: cannot use db (variable of type *sql.DB) as *postgres.DB value in function call
+./internal/handler/orders.go:78:2: imported and not used: "fmt"
+build failed

@@ -1,0 +1,3 @@
+./bin/server: line 1: 14823 Segmentation fault      (core dumped) ./bin/server
+signal: segmentation fault (core dumped)
+SIGSEGV

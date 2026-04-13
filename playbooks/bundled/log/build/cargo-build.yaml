@@ -37,14 +37,15 @@ match:
     - "does not live long enough"
     - "no method named"
     - "use of undeclared"
-    - "cargo build"
-    - "cargo test"
-    - "Compiling"
     - "aborting due to previous error"
     - "could not find `Cargo.toml`"
+    - "aborting due to 1 previous error"
+    - "aborting due to 2 previous errors"
   none:
-    - "warning:"
     - clippy
+    - "test result: ok"
+    - "Finished release"
+    - "Finished dev"
 workflow:
   likely_files:
     - Cargo.toml

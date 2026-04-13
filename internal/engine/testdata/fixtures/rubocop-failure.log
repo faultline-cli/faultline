@@ -1,0 +1,16 @@
+Inspecting 23 files
+........C..W...E....F..
+
+Offenses:
+
+app/models/user.rb:14:5: C: Style/GuardClause: Use a guard clause instead of wrapping the code inside a conditional expression.
+  if user.active?
+  ^^
+app/controllers/orders_controller.rb:31:7: W: Rails/SkipsModelValidations: update_attribute skips model validations.
+  order.update_attribute(:status, params[:status])
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app/services/payment_service.rb:8:1: E: Lint/MissingSuper: Call `super` to initialize state of the parent class.
+  def initialize(gateway)
+  ^^^
+
+23 files inspected, 3 offenses detected

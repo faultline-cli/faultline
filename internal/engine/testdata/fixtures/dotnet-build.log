@@ -1,0 +1,6 @@
+src/Services/OrderService.cs(89,14): error CS0246: The type or namespace name 'IOrderRepository' could not be found (are you missing a using directive or an assembly reference?) [/home/runner/work/api/src/MyApi.csproj]
+src/Controllers/OrderController.cs(12,7): error CS0234: The type or namespace name 'Services' does not exist in the namespace 'MyApi' [/home/runner/work/api/src/MyApi.csproj]
+Build FAILED.
+     0 Warning(s)
+     2 Error(s)
+Error: Process completed with exit code 1.

@@ -61,6 +61,12 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "quality gate failure", file: "quality-gate-failure.log", wantID: "quality-gate-failure"},
 		{name: "coverage gate failure", file: "coverage-gate-failure.log", wantID: "coverage-gate-failure"},
 		{name: "dependency drift", file: "dependency-drift.log", wantID: "dependency-drift"},
+		{name: "dotnet build", file: "dotnet-build.log", wantID: "dotnet-build"},
+		{name: "go compile error", file: "go-compile-error.log", wantID: "go-compile-error"},
+		{name: "rubocop failure", file: "rubocop-failure.log", wantID: "rubocop-failure"},
+		{name: "segfault", file: "segfault.log", wantID: "segfault"},
+		{name: "rspec failure", file: "rspec-failure.log", wantID: "rspec-failure"},
+		{name: "vitest failure", file: "vitest-failure.log", wantID: "vitest-failure"},
 	}
 
 	for _, tc := range tests {

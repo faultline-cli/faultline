@@ -1,0 +1,99 @@
+id: vitest-failure
+title: Vitest test suite failure
+category: test
+severity: high
+base_score: 1.0
+tags: [vitest, vite, javascript, typescript, test, assertion]
+stage_hints: [test]
+summary: |-
+  One or more Vitest test files or test cases failed. The `FAIL` block and the
+  `Test Files N failed` summary line identify what broke and where.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  Vitest ran the test suite and at least one test case produced an assertion
+  error, thrown exception, or timeout. The output includes:
+  - A `FAIL` line per failing file (e.g., `FAIL src/components/Button.test.ts`)
+  - A `Failed Tests N` section listing each failing test name and location
+  - The specific `AssertionError` or thrown value explaining what was expected
+    versus what was received
+  - A `Test Files N failed (M)` summary at the bottom
+
+  Common causes:
+  - A component or function return value changed without updating the test.
+  - A mock or stub doesn't match the new API signature.
+  - An asynchronous test didn't `await` a promise and the assertion ran before
+    the operation completed.
+  - A snapshot is outdated after a UI change.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run only the failing test file locally:
+
+     ```bash
+     npx vitest run src/components/Button.test.ts
+     ```
+
+  2. Read the `AssertionError` block: compare the `Expected` and `Received`
+     values to understand what changed.
+
+  3. If the production code changed intentionally and the expected value is now
+     correct, update the test expectation or snapshot:
+
+     ```bash
+     npx vitest run --update-snapshots
+     ```
+
+  4. If the test should still pass, revert the production code change or fix
+     the regression in the implementation.
+
+  5. For `await`-related failures: add `await` before the call, or wrap the
+     assertion in `waitFor` / `vi.waitUntil` if the operation is inherently
+     async.
+validation_markdown: |-
+  ## Validation
+
+  - Run the full Vitest suite:
+    ```bash
+    npx vitest run
+    ```
+  - Confirm the output shows `Test Files N passed` with 0 failing.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  Vitest runs directly in the Vite transformation pipeline, so test failures here
+  can indicate regressions in both the source and the build configuration. A
+  failing `AssertionError` always means either the production code diverged from
+  the expected behaviour or the expected value is stale.
+
+  ## Prevention
+
+  - Run `npx vitest run` as a required CI step on every pull request.
+  - Update snapshots intentionally with `--update-snapshots` rather than
+    committing stale snapshot files.
+  - Use `vi.mock` for external dependencies so test assertions stay focused on
+    the unit under test rather than transitive behaviour.
+match:
+  any:
+    - "vitest"
+    - "Test Files  "
+    - "Failed Tests "
+    - "npx vitest"
+    - "run vitest"
+  none:
+    - jest
+    - mocha
+    - karma
+    - "Test Files  0 failed"
+workflow:
+  likely_files:
+    - "**/*.test.ts"
+    - "**/*.test.tsx"
+    - "**/*.spec.ts"
+    - "**/*.spec.tsx"
+    - vite.config.ts
+    - vitest.config.ts
+  local_repro:
+    - npx vitest run
+  verify:
+    - npx vitest run

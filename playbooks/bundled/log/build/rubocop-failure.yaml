@@ -1,0 +1,112 @@
+id: rubocop-failure
+title: RuboCop linting failure
+category: build
+severity: medium
+base_score: 1.0
+tags: [ruby, rubocop, lint, style, offense]
+stage_hints: [build, test]
+summary: |-
+  RuboCop found one or more style, layout, or lint offenses in the Ruby source
+  and exited non-zero. The CI lint gate cannot pass until the offenses are
+  corrected or explicitly suppressed.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  RuboCop reports offenses in the format:
+
+  ```
+  path/to/file.rb:line:col: Severity: CopName: Description
+  ```
+
+  Each offense line starts with a severity indicator:
+  - **C** — Convention (style guide deviation)
+  - **W** — Warning (potential problem)
+  - **E** — Error (likely bug)
+  - **F** — Fatal (parse or configuration error)
+
+  The build summary shows the total count: `N files inspected, M offenses
+  detected`. A non-zero offense count exits RuboCop with status 1.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Run RuboCop locally to see all offenses with suggested corrections:
+
+     ```bash
+     bundle exec rubocop
+     ```
+
+  2. Apply auto-corrections for safe cops (Style, Layout, Lint):
+
+     ```bash
+     bundle exec rubocop --autocorrect
+     bundle exec rubocop --autocorrect-all   # includes unsafe auto-corrections
+     ```
+
+  3. For offenses that cannot be auto-corrected, edit the file manually using
+     the cop name and description as guidance.
+  4. If a violation is intentional and cannot be refactored, add an inline
+     suppression comment (prefer the specific cop name over blanket disables):
+
+     ```ruby
+     # rubocop:disable Style/GuardClause
+     complex_block do
+       ...
+     end
+     # rubocop:enable Style/GuardClause
+     ```
+
+  5. For project-wide exclusions, add the file to `.rubocop.yml`:
+
+     ```yaml
+     AllCops:
+       Exclude:
+         - 'db/schema.rb'
+         - 'vendor/**/*'
+     ```
+validation_markdown: |-
+  ## Validation
+
+  - Run `bundle exec rubocop` and confirm:
+    ```
+    N files inspected, no offenses detected
+    ```
+  - Re-run CI to confirm the lint gate exits zero.
+why_it_matters_markdown: |-
+  ## Why it matters
+
+  RuboCop enforces a consistent Ruby style across the codebase. Unresolved
+  offenses in CI indicate either code that genuinely needs correction or a
+  missing `.rubocop.yml` exclusion for intentional exceptions. Leaving offenses
+  unaddressed erodes the quality gate over time.
+
+  ## Prevention
+
+  - Run `bundle exec rubocop --autocorrect` before every commit or as a
+    pre-commit hook.
+  - Configure `.rubocop.yml` with project-appropriate severity levels so the
+    gate fails only on genuinely problematic patterns.
+  - Exclude generated files (`db/schema.rb`, migrations, protobuf output) from
+    RuboCop inspection to avoid false positives.
+match:
+  any:
+    - "offenses detected"
+    - "files inspected,"
+    - "rubocop"
+    - "Offense:"
+    - "correctable with"
+  none:
+    - "no offenses detected"
+    - "0 offenses detected"
+    - "rubocop-rails"
+    - "'rubocop'"
+workflow:
+  likely_files:
+    - .rubocop.yml
+    - .rubocop_todo.yml
+    - Gemfile
+    - "**/*.rb"
+  local_repro:
+    - bundle exec rubocop
+    - bundle exec rubocop --autocorrect
+  verify:
+    - bundle exec rubocop
