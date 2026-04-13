@@ -48,6 +48,10 @@ workflow:
     - .gitlab-ci.yml
     - .circleci/config.yml
     - Jenkinsfile
+  local_repro:
+    - ls -R dist build out
+  verify:
+    - ls -R dist build out
 why_it_matters_markdown: |-
   ## Why it matters
 

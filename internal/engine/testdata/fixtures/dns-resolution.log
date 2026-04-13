@@ -1,0 +1,3 @@
+$ curl https://packages.internal.example/api
+curl: (6) Could not resolve host: packages.internal.example
+no such host

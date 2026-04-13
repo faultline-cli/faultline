@@ -72,3 +72,13 @@ why_it_matters_markdown: |-
   - Set an explicit memory limit that is slightly above normal usage to catch regressions early.
   - Add a step that reports peak memory usage after each CI run.
   - Define memory budgets in project benchmarks and track them over time.
+workflow:
+  likely_files:
+    - Dockerfile
+    - k8s/**/*.yaml
+    - deploy/**/*.yaml
+    - .github/workflows/*.yml
+  local_repro:
+    - /usr/bin/time -v <command>
+  verify:
+    - /usr/bin/time -v <command>

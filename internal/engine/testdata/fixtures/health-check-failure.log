@@ -1,0 +1,5 @@
+$ kubectl rollout status deploy/payments
+Waiting for deployment "payments" rollout to finish: 1 of 2 updated replicas are available...
+Readiness probe failed: Get http://10.42.0.12:8080/ready: connection refused
+service is not ready
+health check failed

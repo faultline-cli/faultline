@@ -80,3 +80,13 @@ why_it_matters_markdown: |-
   - Add explicit timeout or watchdog settings to test runners, network-heavy scripts, and deploy commands.
   - Emit periodic progress logs or heartbeats for long-running steps so silent hangs are easy to distinguish from slow but healthy work.
   - Track median and p95 job duration by pipeline so regressions are visible before they start hitting the hard limit.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - .circleci/config.yml
+    - Makefile
+  local_repro:
+    - timeout 120 <command>
+  verify:
+    - timeout 120 <command>

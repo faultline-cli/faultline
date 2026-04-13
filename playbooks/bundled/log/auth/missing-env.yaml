@@ -71,3 +71,13 @@ why_it_matters_markdown: |-
   - Document all required environment variables in a .env.example file.
   - Add a validation step at the start of each CI job that checks for required variables.
   - Use a secrets manager or vault integration to avoid manual secret management.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - .env.example
+  local_repro:
+    - 'echo "VAR set: $(test -n "$VAR_NAME" && echo yes || echo NO)"'
+  verify:
+    - 'echo "VAR set: $(test -n "$VAR_NAME" && echo yes || echo NO)"'

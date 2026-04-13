@@ -6,11 +6,19 @@ base_score: 0.8
 tags: [config, env, secret, missing-variable, deployment]
 stage_hints: [deploy]
 summary: |-
-  The deployment failed because a required configuration value, environment variable, or secret was absent or had an unexpected value for the target environment.
+  The deployment failed because a required configuration value, environment
+  variable, or secret was absent or had an unexpected value for the target
+  environment.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The deployment failed because a required configuration value, environment variable, or secret was absent or had an unexpected value for the target environment.
+  The deployment failed because a required configuration value, environment
+  variable, or secret was absent or had an unexpected value for the target
+  environment.
+
+  This usually happens when a deployment references a secret or ConfigMap that
+  was never provisioned, or when a key name changed in code without a matching
+  change to the environment definition.
 fix_markdown: |-
   ## Fix steps
 
@@ -66,3 +74,15 @@ why_it_matters_markdown: |-
   - Enumerate all required configuration keys in a well-known location (e.g., `.env.example`).
   - Add a configuration validation step at container startup that fails fast with a clear error listing every missing key.
   - Use a deployment checklist or IaC tooling (Helm, Terraform) that manages secrets and ConfigMaps alongside the deployment.
+workflow:
+  likely_files:
+    - k8s/**/*.yaml
+    - deploy/**/*.yaml
+    - helm/**/*.yaml
+    - .env.example
+  local_repro:
+    - kubectl get secret <name> -n <namespace> -o yaml
+    - kubectl get configmap <name> -n <namespace> -o yaml
+  verify:
+    - kubectl exec <pod> -- env | sort
+    - kubectl rollout status deploy/<name>

@@ -74,3 +74,14 @@ why_it_matters_markdown: |-
   - Add a CI lint step that validates all referenced fixture files exist.
   - When migrating, update all fixtures and factories in the same PR.
   - Keep seed data, factories, and schema changes versioned together so test setup does not drift behind the application model.
+workflow:
+  likely_files:
+    - testdata/
+    - fixtures/
+    - .github/workflows/*.yml
+    - migrations/
+  local_repro:
+    - git ls-files testdata/
+    - git ls-files fixtures/
+  verify:
+    - git ls-files testdata/

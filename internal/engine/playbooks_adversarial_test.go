@@ -71,6 +71,12 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			absentIDs: []string{"env-var-missing", "config-mismatch"},
 		},
 		{
+			name:      "ci secret availability stays with ci rule instead of generic env rules",
+			file:      "secrets-not-available.log",
+			wantTopID: "secrets-not-available",
+			absentIDs: []string{"missing-env", "env-var-missing"},
+		},
+		{
 			name:      "runtime env lookup beats auth and deploy env wording",
 			file:      "env-var-missing.log",
 			wantTopID: "env-var-missing",
@@ -86,6 +92,12 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			name:      "connection refused beats generic failed-to-connect timeout wording",
 			file:      "connection-refused.log",
 			wantTopID: "connection-refused",
+			absentIDs: []string{"network-timeout"},
+		},
+		{
+			name:      "dns resolution stays above generic timeout wording when lookup evidence is present",
+			file:      "dns-resolution.log",
+			wantTopID: "dns-resolution",
 			absentIDs: []string{"network-timeout"},
 		},
 		{
@@ -147,6 +159,12 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			file:      "container-crash.log",
 			wantTopID: "container-crash",
 			absentIDs: []string{"oom-killed"},
+		},
+		{
+			name:      "health check failure stays above crash and config neighbors when probe evidence is present",
+			file:      "health-check-failure.log",
+			wantTopID: "health-check-failure",
+			absentIDs: []string{"container-crash", "config-mismatch"},
 		},
 		{
 			name:      "python dependency import failure ranks above neighboring rules",

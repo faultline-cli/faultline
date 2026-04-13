@@ -50,3 +50,13 @@ why_it_matters_markdown: |-
   - Avoid hardcoded ports or global singletons in test setup.
   - Run the full test suite in parallel locally before enabling parallel CI.
   - Provide shared helpers for ephemeral ports, temp databases, and per-test workspaces so resource isolation is the default.
+workflow:
+  likely_files:
+    - docker-compose.yml
+    - .github/workflows/*.yml
+    - testdata/
+    - internal/
+  local_repro:
+    - go test -parallel 1 ./...
+  verify:
+    - go test -parallel 1 ./...

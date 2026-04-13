@@ -6,11 +6,18 @@ base_score: 0.8
 tags: [port, conflict, binding, deploy, network]
 stage_hints: [deploy]
 summary: |-
-  A container or service failed to start because the port it needs to bind to is already occupied by another process or a previous deployment's container that has not been fully removed.
+  A container or service failed to start because the port it needs to bind to
+  is already occupied by another process or a previous deployment that has not
+  been fully removed.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  A container or service failed to start because the port it needs to bind to is already occupied by another process or a previous deployment's container that has not been fully removed.
+  A container or service failed to start because the port it needs to bind to
+  is already occupied by another process or a previous deployment that has not
+  been fully removed.
+
+  In deploy contexts this usually means a host-port mapping is colliding during
+  rollout, or a prior container still owns the port on the target node.
 fix_markdown: |-
   ## Fix steps
 
@@ -47,3 +54,15 @@ why_it_matters_markdown: |-
   - Avoid HostPort mappings where possible; use ClusterIP + Ingress instead to let Kubernetes manage port allocation.
   - Add a rolling update strategy with `maxSurge=0` if host ports must be used, so the old pod is terminated first.
   - In local dev, use process supervisors (e.g., docker-compose `restart: unless-stopped`) so ports are always released on stop.
+workflow:
+  likely_files:
+    - docker-compose.yml
+    - docker-compose*.yml
+    - k8s/**/*.yaml
+    - deploy/**/*.yaml
+  local_repro:
+    - ss -tlnp | grep <port>
+    - docker ps -a
+  verify:
+    - kubectl get pods -o wide
+    - kubectl rollout status deploy/<name>

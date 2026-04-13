@@ -73,3 +73,14 @@ why_it_matters_markdown: |-
   - Mock all external I/O in unit tests so they cannot block on network.
   - Monitor test execution time trend and alert when slow tests emerge.
   - Capture stack traces, goroutine dumps, or runner diagnostics on timeout so recurring hangs are debuggable after the fact.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - testdata/
+    - internal/
+  local_repro:
+    - go test -timeout 60s -run TestName ./...
+    - jest --testNamePattern="failing test" --detectOpenHandles
+  verify:
+    - go test -timeout 60s -run TestName ./...

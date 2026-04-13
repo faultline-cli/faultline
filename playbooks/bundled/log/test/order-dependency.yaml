@@ -60,3 +60,13 @@ why_it_matters_markdown: |-
   - Treat each test as an independent unit; avoid any shared mutable state.
   - Write cleanup code in `defer` (Go), `afterEach` (JS), or `teardown` (Python).
   - Enable random test ordering in CI to catch ordering assumptions early.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - testdata/
+    - internal/
+  local_repro:
+    - go test -shuffle=on ./...
+  verify:
+    - go test -shuffle=on ./...

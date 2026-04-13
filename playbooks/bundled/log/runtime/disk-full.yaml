@@ -72,3 +72,14 @@ why_it_matters_markdown: |-
   - Add a pre-build step that prunes old Docker images and containers.
   - Configure log rotation and limit artifact retention periods.
   - Monitor disk usage on persistent runners and alert before it reaches capacity.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - Dockerfile
+    - docker-compose*.yml
+  local_repro:
+    - df -h
+    - docker system df
+  verify:
+    - df -h

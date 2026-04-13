@@ -101,3 +101,14 @@ why_it_matters_markdown: |-
     tests for cases that genuinely need committed data.
   - Track and review any test that uses `TRUNCATE` or `DELETE` outside a
     rollback boundary — these affect concurrent parallel tests.
+workflow:
+  likely_files:
+    - docker-compose.yml
+    - .github/workflows/*.yml
+    - migrations/
+    - testdata/
+  local_repro:
+    - go test -shuffle=on ./...
+    - pytest --randomly-seed=<N>
+  verify:
+    - go test -shuffle=on ./...

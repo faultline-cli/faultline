@@ -10,7 +10,13 @@ summary: |-
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The container started but then exited with a non-zero status code. If it keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never becomes ready.
+  The container started but then exited with a non-zero status code. If it
+  keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never
+  becomes ready.
+
+  CrashLoopBackOff is the platform symptom. The root cause is usually in the
+  last container logs, the exit code, or the startup configuration passed to
+  the image.
 fix_markdown: |-
   ## Fix steps
 
@@ -48,3 +54,15 @@ why_it_matters_markdown: |-
   - Set explicit memory and CPU limits to surface resource problems early.
   - Validate required configuration at startup and exit early with a clear message if anything is missing.
   - Run the container image in CI with a smoke test before merging.
+workflow:
+  likely_files:
+    - Dockerfile
+    - k8s/**/*.yaml
+    - deploy/**/*.yaml
+    - docker-compose*.yml
+  local_repro:
+    - kubectl logs <pod> --previous
+    - kubectl describe pod <pod>
+  verify:
+    - kubectl rollout status deploy/<name>
+    - kubectl get pods

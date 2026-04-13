@@ -65,3 +65,13 @@ why_it_matters_markdown: |-
   - Use ephemeral ports in tests rather than fixed well-known ports.
   - Add a cleanup step at the end of each CI job to stop background services.
   - Use isolated container-per-job CI runners to avoid cross-job process leakage.
+workflow:
+  likely_files:
+    - docker-compose.yml
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .env.example
+  local_repro:
+    - lsof -i :<port>
+  verify:
+    - lsof -i :<port>
