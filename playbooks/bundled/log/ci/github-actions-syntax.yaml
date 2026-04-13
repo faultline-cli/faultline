@@ -44,6 +44,9 @@ workflow:
   local_repro:
     - "yamllint .github/workflows/"
     - "actionlint"
+  verify:
+    - "yamllint .github/workflows/"
+    - "actionlint"
 why_it_matters_markdown: |-
   ## Why it matters
 

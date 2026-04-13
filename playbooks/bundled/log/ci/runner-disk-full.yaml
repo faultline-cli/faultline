@@ -45,6 +45,13 @@ workflow:
   likely_files:
     - .dockerignore
     - Dockerfile
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - df -h
+    - docker system df
+  verify:
+    - df -h
 why_it_matters_markdown: |-
   ## Why it matters
 

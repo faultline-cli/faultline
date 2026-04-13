@@ -2,28 +2,44 @@ id: install-failure
 title: Package installation failure
 category: build
 severity: high
-base_score: 0.5
+base_score: 1.0
 tags: [install, dependencies, npm, pip, apt]
 stage_hints: [build]
 summary: |-
-  The package installation step failed because a package or specific version could not be found in the configured registry or package index.
+  The dependency installation step failed because the requested package or
+  version could not be found in the configured registry, package index, or OS
+  repository.
 diagnosis_markdown: |-
   ## Diagnosis
 
-  The package installation step failed because a package or specific version could not be found in the configured registry or package index.
+  The dependency installation step failed because the requested package or
+  version could not be found in the configured registry, package index, or OS
+  repository.
+
+  This usually means the package name is wrong, the version constraint points
+  at an unpublished release, or CI is configured to use a repository mirror
+  that does not contain the requested artifact.
 fix_markdown: |-
   ## Fix steps
 
-  1. Re-run the exact install command locally with verbose logging so you can see which package name, version, or index URL failed.
-  2. Check that the package name and requested version actually exist in the configured registry or package index.
-  3. For private registries, verify the CI credentials and config files are present before the install step runs (for example `.npmrc`, `pip.conf`, or registry-specific env vars).
-  4. If the failure happens while building a native dependency, install the required compiler toolchain or system headers on the runner image.
-  5. If a package was removed or renamed, pin to a known-good published version or replace it with the maintained package.
+  1. Re-run the exact install command locally with verbose logging so you can
+     see which package name, version, or index URL failed.
+  2. Check that the package name and requested version actually exist in the
+     configured registry or package index.
+  3. If the package is private, verify the registry configuration files are
+     present before the install step runs, for example `.npmrc`, `pip.conf`,
+     or the apt sources list used by the job.
+  4. If a package was removed or renamed, pin to a known-good published version
+     or replace it with the maintained package.
+  5. If CI uses a mirror or proxy, confirm the missing version has been synced
+     there before retrying the build.
 validation_markdown: |-
   ## Validation
 
-  - Re-run the failing workflow step.
-  - Confirm the original failure signature for Package installation failure is gone.
+  - Run a registry metadata check for the missing package or version.
+  - Re-run the failing install command.
+  - Confirm CI proceeds past dependency installation without the original
+    package-not-found signature.
 match:
   any:
     - npm ERR! code E404
@@ -35,15 +51,43 @@ match:
     - apt-get install failed
     - "dpkg: error"
     - "E: Unable to locate package"
-    - "failed to fetch"
+  none:
+    - npm ERR! code E401
+    - npm ERR! code E403
+    - authentication required
+    - unable to authenticate
+    - forbidden
+    - token is empty
+    - secret is empty
+    - context deadline exceeded
+    - dial tcp
+    - no such host
 why_it_matters_markdown: |-
   ## Why it matters
 
-  The package may have been removed from the registry, unpublished, or the version constraint is too narrow. Private packages require authentication that may not be configured.
+  Dependency installation is part of the build boundary. When CI cannot
+  resolve the exact package set, later compile and test failures are noise
+  rather than the root cause.
 
   ## Prevention
 
-  - Use a lockfile or fully pinned constraints file so dependency resolution changes only happen in deliberate update jobs.
-  - Mirror critical internal and third-party packages in a registry you control so public registry outages or removals do not block builds.
-  - Keep registry configuration and auth bootstrap in a shared CI template so each pipeline uses the same package source settings.
-  - Run a dependency install smoke job whenever the base build image or dependency manifest changes.
+  - Keep dependency versions pinned in a lockfile or constraints file.
+  - Mirror critical internal and third-party packages in a registry you
+    control.
+  - Keep registry bootstrap and auth wiring in a shared CI template so package
+    source settings do not drift between pipelines.
+workflow:
+  likely_files:
+    - package.json
+    - package-lock.json
+    - requirements.txt
+    - pyproject.toml
+    - .npmrc
+    - pip.conf
+  local_repro:
+    - npm view <package>@<version>
+    - pip index versions <package>
+    - apt-cache policy <package>
+  verify:
+    - npm install
+    - pip install -r requirements.txt

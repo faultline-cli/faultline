@@ -70,3 +70,12 @@ why_it_matters_markdown: |-
   - Run `git config core.ignorecase false` to make Git's case-sensitive logic consistent with Linux.
   - Add a CI check for case collisions: `git ls-files | sort -f | uniq -Di`.
   - Prefer one filename casing convention per language or package so imports are easy to review mechanically.
+workflow:
+  likely_files:
+    - src/
+    - tsconfig.json
+    - .github/workflows/*.yml
+  local_repro:
+    - git ls-files | sort -f | uniq -Di
+  verify:
+    - git ls-files | sort -f | uniq -Di

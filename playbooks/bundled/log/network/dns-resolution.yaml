@@ -59,3 +59,14 @@ why_it_matters_markdown: |-
   - Add environment-specific connectivity checks for critical internal hosts.
   - Monitor resolver health on persistent runners or clusters.
   - Document which internal domains require private DNS so new runners are provisioned with the correct resolver settings.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - docker-compose*.yml
+    - .env.example
+  local_repro:
+    - getent hosts <hostname>
+    - nslookup <hostname>
+  verify:
+    - getent hosts <hostname>

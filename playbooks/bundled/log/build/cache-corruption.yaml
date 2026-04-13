@@ -5,49 +5,6 @@ severity: medium
 base_score: 0.5
 tags: [cache, dependencies, build]
 stage_hints: [build]
-summary: |-
-  The CI dependency cache was restored successfully but the cached contents are corrupt or were created on an incompatible platform, causing installation or linking to fail.
-diagnosis_markdown: |-
-  ## Diagnosis
-
-  The CI dependency cache was restored successfully but the cached contents are corrupt or were created on an incompatible platform, causing installation or linking to fail.
-fix_markdown: |-
-  ## Fix steps
-
-  1. Delete the CI cache entirely and let it rebuild from scratch. A corrupted
-     cache will keep causing failures until it is cleared.
-
-  2. Invalidate the cache by incrementing the cache key version:
-
-     ```yaml
-     key: v2-deps-${{ hashFiles(...) }}
-     ```
-
-  3. For GitHub Actions: clear the cache via Settings › Actions › Caches, or
-     use the CLI:
-
-     ```bash
-     gh cache delete --all
-     ```
-
-  4. Clear the local package manager cache as well if artifacts may have been
-     cached with bad checksums:
-
-     ```bash
-     npm cache clean --force          # npm
-     pip cache purge                  # pip
-     ./gradlew --stop && rm -rf ~/.gradle/caches   # Gradle
-     ```
-
-  5. If the cache stores platform-specific compiled artifacts (e.g., native
-     modules), verify the cache key includes OS, architecture, and toolchain
-     version so a Linux cache is never restored on macOS or ARM.
-validation_markdown: |-
-  ## Validation
-
-  - Re-run the job without a cache restore and confirm it builds and tests
-    clean.
-  - On the second run, confirm the cache is populated and the job is faster.
 match:
   any:
     - cache is corrupted
@@ -59,14 +16,54 @@ match:
     - unexpected end of archive
     - corrupted tar archive
     - bad gzip
+summary: |-
+  CI restored a dependency cache, but the cached contents were stale,
+  corrupted, or built for an incompatible environment.
+diagnosis_markdown: |-
+  ## Diagnosis
+
+  The cache layer existed and restored successfully, but one or more cached
+  artifacts could not be trusted for the current build.
+
+  This usually happens after toolchain upgrades, runner OS changes, or partial
+  writes from an interrupted previous job.
+fix_markdown: |-
+  ## Fix steps
+
+  1. Delete the CI cache and allow it to rebuild from scratch.
+  2. Invalidate the cache by changing the cache key, for example by appending a
+     version suffix.
+  3. For GitHub Actions, clear the cache via Settings > Actions > Caches.
+  4. If the cache stores platform-specific artifacts, verify the key includes
+     OS, architecture, and toolchain version before restoring it again.
+validation_markdown: |-
+  ## Validation
+
+  - Re-run the build from a cold cache.
+  - Confirm dependency install or linking succeeds without archive or checksum
+    corruption.
 why_it_matters_markdown: |-
   ## Why it matters
 
-  Build caches can become stale after tool upgrades (e.g. a new npm or pip version that uses a different binary format), after OS upgrades on the runner, or due to partial writes when a previous CI job was interrupted.
+  A bad cache can fail builds repeatedly and nondeterministically across many
+  branches until someone invalidates it. The broken cache becomes shared build
+  infrastructure rather than a single-job problem.
 
   ## Prevention
 
-  - Include the tool version in the cache key so upgrades automatically invalidate the old cache.
-  - Validate the cache after restoration with a fast integrity check (e.g., `npm ci --prefer-offline`).
+  - Include the tool version in the cache key so upgrades invalidate old cache
+    content automatically.
+  - Validate the cache after restoration with a fast integrity check.
   - Set a short cache TTL to prevent caches from becoming permanently stale.
-  - Avoid caching mutable build outputs that can be partially written when jobs are canceled or retried.
+  - Avoid caching mutable build outputs that can be partially written when jobs
+    are canceled or retried.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - Dockerfile
+    - package-lock.json
+  local_repro:
+    - rm -rf ~/.cache
+  verify:
+    - rm -rf ~/.cache

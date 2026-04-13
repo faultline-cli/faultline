@@ -76,3 +76,13 @@ why_it_matters_markdown: |-
   - Prefer short-lived tokens (GitHub Actions GITHUB_TOKEN) over persistent PATs.
   - Document the required secret names in your repository README.
   - Add a lightweight clone or fetch smoke step to validate repository credentials before long build stages begin.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitmodules
+    - .ssh/config
+  local_repro:
+    - git ls-remote <repo-url>
+  verify:
+    - git ls-remote <repo-url>

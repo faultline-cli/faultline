@@ -63,3 +63,13 @@ why_it_matters_markdown: |-
   - Monitor certificate expiry dates and alert 30 days before expiry.
   - Test certificate validity in a scheduled CI job.
   - Bake required internal CA certificates into the base runner image instead of configuring trust ad hoc in individual jobs.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - Dockerfile
+    - docker-compose*.yml
+  local_repro:
+    - openssl s_client -connect <host>:443 </dev/null
+  verify:
+    - openssl s_client -connect <host>:443 </dev/null

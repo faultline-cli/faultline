@@ -56,3 +56,16 @@ why_it_matters_markdown: |-
   ## Why it matters
 
   Health checks are the deployment gate that protects traffic from a broken release. When they fail, the platform is telling you the new instance is not safely serving requests.
+workflow:
+  likely_files:
+    - k8s/**/*.yaml
+    - deploy/**/*.yaml
+    - docker-compose*.yml
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - kubectl logs <pod> --previous
+    - kubectl describe pod <pod>
+  verify:
+    - kubectl rollout status deploy/<name>
+    - kubectl get events --sort-by=.lastTimestamp
