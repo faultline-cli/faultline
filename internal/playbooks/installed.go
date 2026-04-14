@@ -174,9 +174,17 @@ func copyFile(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("create %s: %w", dest, err)
 	}
-	defer out.Close()
+	defer func() {
+		if out != nil {
+			_ = out.Close()
+		}
+	}()
 	if _, err := io.Copy(out, in); err != nil {
 		return fmt.Errorf("copy %s: %w", src, err)
 	}
+	if err := out.Close(); err != nil {
+		return fmt.Errorf("close %s: %w", dest, err)
+	}
+	out = nil
 	return nil
 }
