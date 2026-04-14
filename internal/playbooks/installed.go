@@ -45,7 +45,10 @@ func DiscoverInstalledPackRoots() ([]string, error) {
 	for _, entry := range entries {
 		path := filepath.Join(root, entry.Name())
 		info, statErr := os.Stat(path)
-		if statErr != nil || !info.IsDir() {
+		if statErr != nil {
+			continue
+		}
+		if !info.IsDir() {
 			continue
 		}
 		roots = append(roots, path)
