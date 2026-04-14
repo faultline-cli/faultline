@@ -4,16 +4,16 @@ Faultline V1 is now implemented as a CLI-only product.
 
 ## Shipped Scope
 
-- CLI entrypoint in [`cmd/`](./cmd)
-- deterministic analyzer modules in [`internal/engine/`](./internal/engine), [`internal/playbooks/`](./internal/playbooks), [`internal/matcher/`](./internal/matcher), and [`internal/output/`](./internal/output)
-- bundled YAML playbooks in [`playbooks/`](./playbooks)
-- CLI-first build and container workflow in [`Makefile`](./Makefile) and [`Dockerfile`](./Dockerfile)
+- CLI entrypoint in [`cmd/`](../cmd)
+- deterministic analyzer modules in [`internal/engine/`](../internal/engine), [`internal/playbooks/`](../internal/playbooks), [`internal/matcher/`](../internal/matcher), and [`internal/output/`](../internal/output)
+- bundled YAML playbooks in [`playbooks/`](../playbooks)
+- CLI-first build and container workflow in [`Makefile`](../Makefile) and [`Dockerfile`](../Dockerfile)
 - tests covering command behavior, loading, ranking, and formatting
 
 ## Repository State
 
 - legacy hosted-service, frontend, storage, and scan-era code has been removed
-- the repository structure now matches the CLI architecture described in [`SYSTEM.md`](./SYSTEM.md)
+- the repository structure now matches the CLI architecture described in [`SYSTEM.md`](../SYSTEM.md)
 - remaining work should extend the CLI and playbooks directly instead of reviving removed product shapes
 
 ## Completion Checklist

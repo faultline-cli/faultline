@@ -1,7 +1,7 @@
 # Faultline Product Spec
 
 > **AGENTS: Do not derive architecture, module boundaries, or data models from this document.**
-> For implementation decisions, [`SYSTEM.md`](./SYSTEM.md) is the single authoritative source.
+> For implementation decisions, [`SYSTEM.md`](../SYSTEM.md) is the single authoritative source.
 > This document describes product positioning and user-facing behavior only.
 
 ## Positioning
@@ -244,7 +244,7 @@ Primary bundle:
 
 Delivery format:
 
-- ZIP file
+- tar.gz archive
 
 Indicative price:
 
@@ -257,5 +257,3 @@ Indicative price:
 CI failed? Run this. Get the fix instantly.
 
 ### Secondary message
-
-Works locally or inside any CI pipeline.

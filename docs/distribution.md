@@ -17,17 +17,19 @@ Optional extra playbook packs can be composed on top when needed, but the defaul
 
 ## Install Flow
 
-The release archive flow is:
+Tagged releases publish tarballs named `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
-VERSION=v0.1.0
-curl -L "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
+VERSION=<published-tag>
+curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze build.log
 ```
 
 If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FAULTLINE_PLAYBOOK_DIR`.
+
+For day-zero repository use before a tagged release is published, prefer `make build` or the Docker flow from the root README.
 
 ## Docker Distribution
 
@@ -57,9 +59,10 @@ Tagged releases should continue to run this sequence:
 
 1. `make test`
 2. `make review`
-3. `make release-snapshot VERSION=<tag>`
-4. `make smoke-release VERSION=<tag>`
-5. `make docker-smoke IMAGE=faultline-release-smoke`
-6. publish release archives
+3. `make fixture-check`
+4. `make release-snapshot VERSION=<tag>`
+5. `make smoke-release VERSION=<tag>`
+6. `make docker-smoke IMAGE=faultline-release-smoke`
+7. publish release archives to the GitHub release created from that tag
 
 

@@ -7,7 +7,7 @@
 
 Faultline is positioned as a deterministic CI failure analysis tool, not a hosted diagnosis service or probabilistic assistant. The repository already reflects a CLI-only architecture with explicit layers for command handling, orchestration, detectors, playbook loading, matching, output, workflow generation, and repository context.
 
-This architectural stance appears in [SYSTEM.md](../../SYSTEM.md), [docs/architecture.md](../architecture.md), [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md), and the repository history from the initial CLI-focused baseline onward.
+This architectural stance appears in [SYSTEM.md](../../SYSTEM.md), [docs/architecture.md](../architecture.md), [docs/implementation-status.md](../implementation-status.md), and the repository history from the initial CLI-focused baseline onward.
 
 ## Decision
 
@@ -36,5 +36,5 @@ The architecture keeps these boundaries stable:
 
 - [SYSTEM.md](../../SYSTEM.md)
 - [docs/architecture.md](../architecture.md)
-- [IMPLEMENTATION_PLAN.md](../../IMPLEMENTATION_PLAN.md)
+- [docs/implementation-status.md](../implementation-status.md)
 - Git history: `cf15d08` initial repository baseline, followed by the CLI-focused cleanup reflected in current docs

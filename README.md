@@ -1,12 +1,43 @@
 # Faultline
 
-Faultline is a deterministic CLI for CI failure analysis.
+CI failed. Faultline gives you a deterministic diagnosis from the log, the exact evidence that matched, and concrete fix steps you can act on immediately.
 
-Give it a failing build log and it returns the likeliest known failure pattern, the exact evidence that matched, and concrete fix and validation steps. It can also inspect a local repository for source-level failure risks and optionally correlate diagnoses with recent local git history.
-
-Faultline is local-first, runs without network calls during analysis, and keeps ML or LLM systems out of the product path.
+It is built for the repetitive failures that waste engineering time: missing credentials, version drift, lockfile mistakes, missing executables, runner problems, flaky tests, network failures, and other known CI breakages. Faultline runs locally or in CI, makes no network calls during analysis, and keeps ML or LLM systems out of the product path.
 
 ![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
+
+## Try it in 60 seconds
+
+Build the CLI and run it on a checked-in sample log:
+
+```bash
+make build
+./bin/faultline analyze examples/docker-auth.log
+```
+
+Or use Docker without installing Go:
+
+```bash
+docker build -t faultline .
+docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
+```
+
+What you get back is a ranked diagnosis with evidence, not a generic summary. The bundled Docker auth example starts like this:
+
+```md
+# Docker registry authentication failure
+
+- ID: `docker-auth`
+- Confidence: 33%
+- Category: auth
+- Severity: high
+
+## Summary
+
+CI could not authenticate to the container registry before an image pull or push.
+```
+
+Tagged releases publish tarballs on the GitHub Releases page. If you are browsing the repository before a new release is cut, use `make build` or Docker for the fastest first run.
 
 ## Why it exists
 
@@ -21,6 +52,14 @@ Faultline is built for engineers who want:
 
 It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows.
 
+## Why trust it
+
+- Same input and playbook set produce the same result every time.
+- Evidence is pulled directly from matched log lines.
+- Fix steps come from checked-in playbooks, not probabilistic generation.
+- JSON output stays stable for automation and agent workflows.
+- Analysis runs locally without shipping build logs to a hosted service.
+
 ## What it does
 
 - Analyze CI logs from a file or stdin.
@@ -28,19 +67,20 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Render concise terminal, markdown, or stable JSON output.
 - Generate deterministic follow-up workflows from the analysis result.
 
-Common bundled diagnoses include Docker registry auth failures, missing executables, runtime mismatches, dependency drift, network failures, and common CI environment problems.
+## What it catches today
 
-## Quickstart
+Bundled playbooks currently cover 67 deterministic diagnoses across common CI failure categories, including:
 
-### Release archive
+- Auth: Docker registry auth, Git auth, SSH key auth, missing environment variables, AWS credential failures.
+- Build: runtime mismatch, missing executable, dependency drift, lockfile drift, pip install failure, TypeScript compile failure, eslint failure, Go compile errors, missing build inputs, cache corruption.
+- Network: DNS resolution failures, TLS certificate errors, blocked egress, connection refused, network timeout, rate limiting.
+- Runtime: port already in use, permission denied, Docker daemon unavailable, disk full, OOM killed, resource limits.
+- Test: flaky tests, test timeouts, coverage gate failures, snapshot mismatches, data races, missing test fixtures, order dependency.
+- Deploy and CI: image pull backoff, CrashLoopBackOff, health-check failure, artifact upload failures, secrets unavailable, runner disk full, pipeline timeout.
 
-```bash
-VERSION=v0.1.0
-curl -L "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
-tar -xzf faultline.tar.gz
-cd "faultline_${VERSION}_linux_amd64"
-./faultline analyze examples/docker-auth.log
-```
+The repository ships three small runnable sample logs for quick smoke tests and 112 accepted real fixtures for regression coverage.
+
+## Install options
 
 ### Build from source
 
@@ -58,29 +98,34 @@ docker build -t faultline .
 docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
 ```
 
-## First run
+### Release archive
 
-The repository includes runnable examples and expected markdown output.
+Tagged releases publish tarballs named `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page.
+
+```bash
+VERSION=<published-tag>
+curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
+tar -xzf faultline.tar.gz
+cd "faultline_${VERSION}_linux_amd64"
+./faultline analyze build.log
+```
+
+If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FAULTLINE_PLAYBOOK_DIR`.
+
+## First run examples
+
+The repository includes runnable sample logs and expected markdown output.
 
 ```bash
 ./bin/faultline analyze examples/docker-auth.log
+./bin/faultline analyze examples/missing-executable.log
+./bin/faultline analyze examples/runtime-mismatch.log
 ./bin/faultline analyze examples/docker-auth.log --format markdown
 ./bin/faultline fix examples/docker-auth.log --format markdown
 ./bin/faultline explain docker-auth
 ```
 
-Expected markdown output for the Docker auth example starts like this:
-
-```md
-# Docker registry authentication failure
-
-- ID: `docker-auth`
-- Confidence: 33%
-- Category: auth
-- Severity: high
-```
-
-More runnable examples are documented in `examples/README.md`.
+More runnable examples and output snapshots are documented in `examples/README.md`.
 
 ## Core commands
 
@@ -92,7 +137,6 @@ More runnable examples are documented in `examples/README.md`.
 | `explain <id>` | Show the full playbook for one diagnosis |
 | `list` | List bundled and installed playbooks |
 | `workflow [file]` | Generate a deterministic follow-up workflow |
-| `packs` | Install and manage optional extra playbook packs |
 | `completion` | Generate shell completion scripts |
 
 Useful flags:
@@ -106,6 +150,10 @@ Useful flags:
 | `--git` | Enrich analysis with recent local git context |
 | `--repo <path>` | Choose the repository used by `--git` |
 
+Advanced usage:
+
+- `packs` installs and manages optional extra playbook packs after the bundled catalog is no longer enough.
+
 ## How it works
 
 1. Faultline normalizes the input log into stable lines.
@@ -114,6 +162,18 @@ Useful flags:
 4. It returns a diagnosis, evidence, fix steps, and validation guidance.
 
 The same input and playbook set should produce the same result every time.
+
+## Support matrix
+
+| Capability | Supported |
+| --- | --- |
+| Local log files | Yes |
+| Stdin input | Yes |
+| Stable JSON output | Yes |
+| Docker usage | Yes |
+| CI usage | Yes |
+| Local repo inspection | Yes |
+| Network calls during analysis | No |
 
 ## Credibility checks
 
@@ -127,6 +187,8 @@ These numbers describe the checked-in regression corpus, not the full space of C
 ## Repository guide
 
 - `examples/README.md` shows runnable sample logs and expected output.
+- `docs/product-spec.md` describes user-facing product behavior and positioning.
+- `docs/implementation-status.md` captures the current CLI-only repository status.
 - `docs/architecture.md` explains package boundaries and runtime flow.
 - `docs/playbooks.md` documents playbook authoring and pack composition.
 - `docs/distribution.md` covers release and Docker packaging.
