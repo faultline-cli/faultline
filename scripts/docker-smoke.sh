@@ -19,6 +19,9 @@ pull access denied
 authentication required
 EOF
 
+chmod 755 "$TMP_DIR"
+chmod 644 "$TMP_DIR/docker-auth.log"
+
 docker build -t "$IMAGE" "$ROOT_DIR"
 output="$(docker run --rm -v "$TMP_DIR":/workspace "$IMAGE" analyze /workspace/docker-auth.log)"
 printf '%s\n' "$output"
