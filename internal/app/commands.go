@@ -26,7 +26,7 @@ type AnalyzeOptions struct {
 	NoHistory bool
 	// PlaybookDir overrides the default playbook directory.
 	PlaybookDir string
-	// PlaybookPackDirs adds extra pack roots on top of the bundled starter pack.
+	// PlaybookPackDirs adds extra pack roots on top of the bundled catalog.
 	PlaybookPackDirs []string
 	// GitContextEnabled enriches diagnosis results with local git history.
 	GitContextEnabled bool

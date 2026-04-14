@@ -15,16 +15,16 @@ import (
 func NewRootCommand(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "faultline",
-		Short: "Deterministic CI failure diagnosis from logs",
+		Short: "Deterministic CI failure diagnosis from logs and repository scans",
 		Long: strings.Join([]string{
-			"Faultline analyzes CI logs and repository trees using deterministic playbook matching.",
-			"It returns evidence-backed diagnoses, concrete fixes, and stable output for automation.",
+			"Faultline turns CI logs and repository scans into deterministic diagnoses.",
+			"It returns evidence-backed explanations, concrete fixes, and stable output for automation.",
 		}, "\n\n"),
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
 			"  cat build.log | faultline analyze --json",
+			"  faultline fix build.log --format markdown",
 			"  faultline inspect .",
-			"  faultline workflow build.log --mode agent --git --repo .",
 		}, "\n"),
 		Version:       version,
 		SilenceUsage:  true,
@@ -83,7 +83,7 @@ func newAnalyzeCommand() *cobra.Command {
 		Use:   "analyze [file]",
 		Short: "Analyze a CI log from a file or stdin",
 		Long: strings.Join([]string{
-			"Analyze a CI log using deterministic playbook matching.",
+			"Analyze a CI log and rank matching playbooks using deterministic rules.",
 			"",
 			"When --git is enabled, Faultline also inspects recent local git history",
 			"to correlate the likely failure with recently changed files, commits,",
@@ -127,12 +127,12 @@ func newAnalyzeCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
@@ -173,9 +173,9 @@ func newFixCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	return cmd
 }
@@ -218,12 +218,12 @@ func newInspectCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	return cmd
 }
@@ -237,16 +237,16 @@ func newListCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "List available failure playbooks",
+		Short: "List available playbooks",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.NewService().List(category, playbookDir, playbookPacks, cmd.OutOrStdout())
 		},
 	}
 
-	cmd.Flags().StringVar(&category, "category", "", "filter by failure category (e.g. auth, build, deploy)")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().StringVar(&category, "category", "", "filter by category (for example auth, build, deploy)")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	return cmd
 }
 
@@ -259,7 +259,7 @@ func newExplainCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "explain <id>",
-		Short: "Show full details for a failure playbook",
+		Short: "Show full details for a playbook",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateOutputFormat(format); err != nil {
@@ -269,9 +269,9 @@ func newExplainCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "human output format: raw|markdown")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	return cmd
 }
 
@@ -327,9 +327,9 @@ func newWorkflowCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&mode, "mode", string(workflow.ModeLocal), "workflow mode: local|agent")
-	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
-	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with the default catalog")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich the workflow with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
@@ -340,11 +340,11 @@ func newWorkflowCommand() *cobra.Command {
 func newPacksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packs",
-		Short: "Manage installed extra playbook packs",
+		Short: "Manage local playbook packs",
 		Long: strings.Join([]string{
-			"Install and inspect extra playbook packs that should be loaded automatically.",
+			"Install and inspect playbook packs that should be loaded automatically.",
 			"",
-			"Installed packs live under ~/.faultline/packs so they survive binary upgrades",
+			"Installed packs live under ~/.faultline/packs so they persist across CLI updates",
 			"and can be mounted into Docker containers using the same path convention.",
 		}, "\n"),
 	}
@@ -361,7 +361,7 @@ func newPacksInstallCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "install <dir>",
-		Short: "Install an extra playbook pack into the local Faultline directory",
+		Short: "Install a playbook pack into the local Faultline directory",
 		Example: strings.Join([]string{
 			"  faultline packs install ./playbooks/company-pack",
 			"  faultline packs install ./playbooks/extended-pack --force",
@@ -380,7 +380,7 @@ func newPacksInstallCommand() *cobra.Command {
 func newPacksListCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "List locally installed extra playbook packs",
+		Short: "List locally installed playbook packs",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.NewService().ListInstalledPacks(cmd.OutOrStdout())

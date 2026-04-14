@@ -196,7 +196,7 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 
 func TestFormatAnalysisTextNilAnalysis(t *testing.T) {
 	text := FormatAnalysisText(nil, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
-	if !strings.Contains(text, "No known failure") {
+	if !strings.Contains(text, "No known playbook matched this input.") {
 		t.Errorf("expected no-match message, got %q", text)
 	}
 }

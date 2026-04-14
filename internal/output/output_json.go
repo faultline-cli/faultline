@@ -76,7 +76,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 	}
 
 	if a == nil {
-		payload.Message = "No known failure pattern matched."
+		payload.Message = "No known playbook matched this input."
 		payload.Results = []resultJSON{}
 		data, err := json.Marshal(payload)
 		if err != nil {
@@ -95,7 +95,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 	payload.RepoContext = repoContextJSON(a.RepoContext)
 
 	if !payload.Matched {
-		payload.Message = "No known failure pattern matched."
+		payload.Message = "No known playbook matched this input."
 		payload.Results = []resultJSON{}
 	} else {
 		results := topN(a.Results, top)

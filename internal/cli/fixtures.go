@@ -12,8 +12,9 @@ import (
 
 func newFixturesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fixtures",
-		Short: "Manage minimal, staging, and real fixture corpora",
+		Use:    "fixtures",
+		Short:  "Manage minimal, staging, and real fixture corpora",
+		Hidden: true,
 	}
 	cmd.AddCommand(newFixturesIngestCommand())
 	cmd.AddCommand(newFixturesReviewCommand())
@@ -79,7 +80,7 @@ func newFixturesReviewCommand() *cobra.Command {
 	}
 	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	return cmd
 }
@@ -157,7 +158,7 @@ func newFixturesStatsCommand() *cobra.Command {
 	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
 	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassAll), "fixture class to evaluate: minimal|real|all")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
-	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "additional playbook pack directory; repeat to compose with bundled starter playbooks")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().StringVar(&baselinePath, "baseline", "fixtures/real/baseline.json", "baseline snapshot path")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().BoolVar(&checkBaseline, "check-baseline", false, "fail if the current report regresses from the baseline snapshot")

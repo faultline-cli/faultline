@@ -27,7 +27,7 @@ func New(opts Options) Renderer {
 }
 
 func (r Renderer) RenderNoMatch() string {
-	return "No known failure pattern matched.\n" +
+	return "No known playbook matched this input.\n" +
 		"  - Run \"faultline list\" to see available playbooks.\n" +
 		"  - Pass --json for machine-readable output.\n"
 }

@@ -101,7 +101,7 @@ No-match schema:
 
 - YAML-based
 - Deterministic matching
-- Broad bundled starter coverage for high-frequency CI failures across common stacks, with premium packs extending into provider-specific and advanced workflows
+- Broad bundled coverage for high-frequency CI failures across common stacks, with additional packs reserved for deeper provider-specific and advanced workflows
 
 ### 4. CLI Utilities
 

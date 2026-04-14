@@ -1,30 +1,30 @@
 # Faultline
 
-Faultline is a deterministic CLI that turns noisy CI failures into a ranked diagnosis with evidence and concrete next steps.
+Faultline is a deterministic CLI that explains CI failures from logs and repository scans.
 
-It is built for engineers who own broken pipelines, release jobs, or deploy logs and want a fast answer they can trust. Instead of re-reading the same auth, dependency, runtime, and deploy failures by hand, Faultline gives you a repeatable first-pass triage path that works locally, in CI, and inside automation.
+It is built for engineers who own broken pipelines, release jobs, and deployment failures and need a fast first answer they can trust. CI failures are repetitive, noisy, and expensive to reread by hand; Faultline turns that first-pass triage into something consistent, local, and reviewable.
 
-## Why Teams Use It
+## Why it is useful
 
-- Diagnose CI failures from a log file or stdin.
-- Show exact evidence lines that triggered the diagnosis.
-- Return practical fix and validation steps instead of vague summaries.
+- Diagnose a CI log from a file or stdin.
+- Show the exact evidence lines behind the diagnosis.
+- Return concrete fix and validation steps instead of vague summaries.
 - Inspect a repository tree for source-level failure risks.
-- Emit stable text, markdown, JSON, and workflow output.
-- Preserve deterministic behavior: same input, same playbooks, same result.
-- Avoid LLM drift and hidden server-side logic.
-
-Additional playbook packs with extended coverage are planned.
+- Emit stable text, markdown, and JSON for humans and automation.
+- Stay deterministic: same input, same playbooks, same result.
+- Avoid LLM drift, hosted analysis services, and hidden heuristics.
 
 ## Example
 
-Real log excerpt:
+Real CI log input:
 
 ```text
 > docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
 Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+
 > docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
 Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
+
 > docker --debug pull mcr.microsoft.com/mssql/server
 Using default tag: latest
 Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
@@ -33,10 +33,10 @@ Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
 Command:
 
 ```bash
-faultline analyze build.log --format markdown
+faultline analyze build.log --format markdown --mode detailed
 ```
 
-Faultline output:
+Output:
 
 ```markdown
 # Docker registry authentication failure
@@ -52,34 +52,24 @@ Faultline output:
 ## Summary
 
 CI could not authenticate to the container registry before an image pull or push.
+
+## Evidence
+
+- Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
 ```
 
 ## Quick Start
 
-### Build from source
+Build from source and run the bundled examples:
 
 ```bash
 make build
 ./bin/faultline analyze examples/docker-auth.log
+./bin/faultline analyze examples/missing-executable.log
+./bin/faultline analyze examples/runtime-mismatch.log
 ```
 
-### Use a release archive
-
-```bash
-curl -L <release-tarball-url> -o faultline.tar.gz
-tar -xzf faultline.tar.gz
-cd faultline_<version>_<os>_<arch>
-./faultline analyze examples/docker-auth.log
-```
-
-### Docker
-
-```bash
-docker build -t faultline .
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
-```
-
-### Minimal usage
+Minimal usage:
 
 ```bash
 # Analyze a log file
@@ -88,94 +78,81 @@ faultline analyze build.log
 # Read from stdin
 cat build.log | faultline analyze
 
-# Stable JSON for automation
+# Emit stable JSON for automation
 faultline analyze build.log --json
 
 # Show only the fix steps for the top diagnosis
-faultline fix build.log
+faultline fix build.log --format markdown
 
 # Inspect a repository for source-level findings
 faultline inspect .
+```
 
-# Build a deterministic follow-up workflow
-faultline workflow build.log --mode agent --git --repo .
+Docker:
+
+```bash
+docker build -t faultline .
+docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
+```
+
+Release archive:
+
+```bash
+curl -L <release-tarball-url> -o faultline.tar.gz
+tar -xzf faultline.tar.gz
+cd faultline_<version>_<os>_<arch>
+./faultline analyze examples/docker-auth.log
 ```
 
 ## Commands
 
-| Command | Description |
+| Command | Purpose |
 | --- | --- |
 | `analyze [file]` | Diagnose a CI log from a file or stdin |
-| `fix [file]` | Print only the fix steps for the top diagnosis |
-| `inspect [path]` | Inspect a repository tree for source-level failure risks |
-| `workflow [file]` | Build a deterministic follow-up workflow |
+| `fix [file]` | Print the fix steps for the top diagnosis |
+| `inspect [path]` | Inspect a repository for source-level failure risks |
+| `workflow [file]` | Generate a deterministic follow-up workflow |
 | `list` | List available playbooks |
-| `explain <id>` | Show full detail for one playbook |
-| `packs install <dir>` | Install an extra playbook pack for automatic loading |
-| `packs list` | List installed extra packs |
-| `fixtures ingest` | Fetch public CI failure snippets into staging |
-| `fixtures review` | Review staged fixtures with predicted matches |
-| `fixtures promote` | Promote reviewed fixtures into the real corpus |
-| `fixtures stats` | Report regression metrics across fixture corpora |
+| `explain <id>` | Show the details of one playbook |
 
 Common flags:
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--top N` | `1` | Show top N ranked results |
-| `--mode quick\|detailed` | `quick` | Human output verbosity |
-| `--format raw\|markdown` | `raw` | Human-readable output shape |
-| `--json` | `false` | Emit stable JSON |
-| `--playbooks <dir>` | auto | Replace the active catalog with one directory |
-| `--playbook-pack <dir>` | none | Add one or more extra pack roots |
-| `--git` | `false` | Enrich analysis with recent local git context |
-| `--since <window>` | `30d` | History window for `--git` |
-| `--repo <path>` | `.` | Repository path used by `--git` |
+| Flag | Description |
+| --- | --- |
+| `--json` | Emit machine-readable JSON |
+| `--format raw\|markdown` | Select the human-readable output format |
+| `--mode quick\|detailed` | Control output detail for human-readable results |
+| `--top N` | Show the top N ranked results |
+| `--git` | Enrich analysis with recent local git context |
+| `--repo <path>` | Choose the repository path used by `--git` |
 
 ## Playbooks
 
 Playbooks are deterministic rules plus operator-facing guidance.
 
-- The structured fields decide whether a failure matches.
-- The evidence lines explain why the match won.
-- The diagnosis, fix, and validation sections turn the match into an actionable response.
+- Structured fields decide whether a log or repository state matches.
+- Evidence lines show why that playbook won.
+- Summary, diagnosis, fix, and validation fields turn the match into an actionable response.
 
-This keeps Faultline reviewable and stable: the matching logic stays explicit, while the human guidance stays concise and useful.
+This keeps the engine explicit and reviewable while still producing useful operator output.
+
+Additional playbook packs with extended coverage are planned.
 
 ## Credibility
 
 - Real regression corpus under `fixtures/real/` built from public CI failures.
 - Deterministic engine with stable ranking and evidence-first output.
+- Real-world example logs under `examples/` with checked-in expected output.
 - Source inspection support for repository-level failure risks.
-- Fixture promotion and review flow that keeps new coverage testable.
-- Release workflow that checks tests, playbook review, packaging, and smoke paths.
+- Release and regression workflow that exercises tests, overlap review, and delivery paths.
 
-## Try The Examples
+## Feedback
 
-The `examples/` directory contains runnable samples built from real failure patterns:
+The highest-value contribution is a real failure that Faultline should explain better.
 
-- `examples/docker-auth.log`
-- `examples/missing-executable.log`
-- `examples/runtime-mismatch.log`
-
-Each sample has a matching expected output file so you can compare behavior quickly.
-
-```bash
-./bin/faultline analyze examples/docker-auth.log
-./bin/faultline analyze examples/missing-executable.log
-./bin/faultline analyze examples/runtime-mismatch.log
-```
-
-## How Detection Works
-
-1. Read log input from a file path or stdin, or walk a repository tree for source inspection.
-2. Normalize the input into stable lines or source signals.
-3. Load the bundled catalog plus any installed or explicitly composed extra packs.
-4. Validate playbook structure and review overlap conflicts deterministically.
-5. Match and rank with explicit rules, not hidden heuristics.
-6. Render concise text, markdown, JSON, or workflow output.
-
-The product constraints live in `SYSTEM.md`.
+- Open an issue with the failing log snippet, expected diagnosis, and relevant context.
+- Add or refine fixtures when a failure should be preserved in regression tests.
+- If Faultline misses a recurring CI failure, send that case. Those misses are the fastest way to improve the tool.
 
 ## Development
 
@@ -183,30 +160,14 @@ The product constraints live in `SYSTEM.md`.
 make build
 make test
 make review
-make fixture-check
 ```
 
-Useful targets:
+Helpful references:
 
-- `make bench` for deterministic load and analysis benchmarks
-- `make release-snapshot VERSION=v0.1.0` to build release archives
-- `make smoke-release VERSION=v0.1.0` to verify a built release archive
-- `make docker-smoke IMAGE=faultline-smoke` to verify the Docker delivery path
+- `examples/README.md` for runnable sample logs and expected outputs
+- `docs/architecture.md` for package boundaries and runtime flow
+- `docs/playbooks.md` for playbook authoring rules
+- `docs/distribution.md` for release and Docker packaging
+- `docs/detectors.md` for detector expectations
+- `docs/adr/README.md` for architectural decisions
 
-## Contributing
-
-The highest-value contribution is a real failure that Faultline should explain better.
-
-- Submit an issue with the failing log snippet, expected diagnosis, and surrounding context.
-- Add or refine fixtures when a failure pattern should be preserved in regression tests.
-- Run `make test` and `make review` before opening a change.
-
-If you have a recurring CI failure that Faultline misses, open an issue or send a fixture candidate. Those cases are the fastest path to making the tool more useful.
-
-## Docs
-
-- `docs/architecture.md`: core package boundaries and runtime flow
-- `docs/playbooks.md`: playbook authoring rules and pack composition
-- `docs/distribution.md`: release artifacts and delivery workflow
-- `docs/detectors.md`: source-detector model and expectations
-- `docs/adr/README.md`: architectural decision records

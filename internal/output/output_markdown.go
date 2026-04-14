@@ -15,7 +15,7 @@ func FormatAnalysisMarkdown(a *model.Analysis, top int, mode Mode) string {
 		return strings.Join([]string{
 			"# No Match",
 			"",
-			"No known failure pattern matched.",
+			"No known playbook matched this input.",
 			"",
 			"- Run `faultline list` to see available playbooks.",
 			"- Pass `--json` for machine-readable output.",

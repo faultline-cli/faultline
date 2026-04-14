@@ -7,10 +7,10 @@ LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
 WITH_DOCKER ?= 0
-PREMIUM_PACK_DIR ?=
-PREMIUM_PACK_LINK ?= playbooks/packs/premium-local
+EXTRA_PACK_DIR ?=
+EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bench review premium-path premium-link premium-check premium-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test fixture-check bench review extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -51,20 +51,20 @@ bench:
 review:
 	$(GO) run ./cmd/playbook-review
 
-premium-path:
-	@PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh
+extra-pack-path:
+	@EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh
 
-premium-link:
-	@mkdir -p "$$(dirname "$(PREMIUM_PACK_LINK)")"
-	@ln -sfn ../../../faultline-premium "$(PREMIUM_PACK_LINK)"
-	@printf "%s\n" "linked $(PREMIUM_PACK_LINK) -> ../../../faultline-premium"
+extra-pack-link:
+	@mkdir -p "$$(dirname "$(EXTRA_PACK_LINK)")"
+	@ln -sfn ../../../faultline-extra-pack "$(EXTRA_PACK_LINK)"
+	@printf "%s\n" "linked $(EXTRA_PACK_LINK) -> ../../../faultline-extra-pack"
 
-premium-check:
-	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
+extra-pack-check:
+	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
 	$(GO) run ./cmd/pack-compose-check --pack "$$resolved"
 
-premium-review:
-	@resolved="$$(PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh)" && \
+extra-pack-review:
+	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
 	$(GO) run ./cmd/pack-compose-check --pack "$$resolved" --review
 
 smoke-release:
@@ -74,10 +74,10 @@ release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
 release-check: test fixture-check review release-snapshot smoke-release
-	@if PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)" sh ./scripts/resolve-premium-pack.sh >/dev/null 2>&1; then \
-		$(MAKE) premium-check PREMIUM_PACK_DIR="$(PREMIUM_PACK_DIR)"; \
+	@if EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh >/dev/null 2>&1; then \
+		$(MAKE) extra-pack-check EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)"; \
 	else \
-		printf "%s\n" "skipping premium-check (set PREMIUM_PACK_DIR, run make premium-link, or check out ../faultline-premium-pack)"; \
+		printf "%s\n" "skipping extra-pack-check (set EXTRA_PACK_DIR, run make extra-pack-link, or set an explicit extra pack path)"; \
 	fi
 	@if [ "$(WITH_DOCKER)" = "1" ]; then \
 		$(MAKE) docker-smoke IMAGE=$(IMAGE); \

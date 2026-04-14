@@ -11,7 +11,7 @@ Faultline v1 was originally framed as two separate products:
 
 That positioning kept the core binary easy to evaluate while preserving a paid upgrade path for additional playbooks.
 
-For local validation, this repo can point at a sibling premium repository through the ignored symlink at `playbooks/packs/premium-local` or by setting `PREMIUM_PACK_DIR`. Customer delivery can still publish the pack from a private repository or private archive.
+For local validation, this repo can point at a sibling premium repository through the ignored symlink at `playbooks/packs/extra-local` or by setting `EXTRA_PACK_DIR`. Customer delivery can still publish the pack from a private repository or private archive.
 
 ## Product Split
 
@@ -112,9 +112,9 @@ Use that only for internal delivery or CI images. Keep the public image starter-
 When the private premium repository is available in CI or checked out locally, extend the public release gate:
 
 ```bash
-make premium-check PREMIUM_PACK_DIR=../faultline-premium
-make premium-review PREMIUM_PACK_DIR=../faultline-premium
-make release-check VERSION=v0.1.0 PREMIUM_PACK_DIR=../faultline-premium
+make extra-pack-check EXTRA_PACK_DIR=../faultline-premium
+make extra-pack-review EXTRA_PACK_DIR=../faultline-premium
+make release-check VERSION=v0.1.0 EXTRA_PACK_DIR=../faultline-premium
 ```
 
 This catches duplicate IDs and cross-pack load errors before release.
