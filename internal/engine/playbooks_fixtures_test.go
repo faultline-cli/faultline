@@ -105,11 +105,11 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 	}
 }
 
-func TestPremiumPackFixtures(t *testing.T) {
-	premiumDir := requirePremiumPack(t)
+func TestExtraPackFixtures(t *testing.T) {
+	extraDir := requireExtraPack(t)
 	pbs, err := playbooks.LoadPacks([]playbooks.Pack{
 		{Name: playbooks.BundledPackName, Root: repoPlaybookDir(t)},
-		{Name: "premium-local", Root: premiumDir},
+		{Name: "extra-local", Root: extraDir},
 	})
 	if err != nil {
 		t.Fatalf("load playbook packs: %v", err)
@@ -147,8 +147,8 @@ func TestPremiumPackFixtures(t *testing.T) {
 			if got := results[0].Playbook.ID; got != tc.wantID {
 				t.Fatalf("expected top match %s, got %s", tc.wantID, got)
 			}
-			if results[0].Playbook.Metadata.PackName != "premium-local" {
-				t.Fatalf("expected premium-local pack metadata, got %#v", results[0].Playbook.Metadata)
+			if results[0].Playbook.Metadata.PackName != "extra-local" {
+				t.Fatalf("expected extra-local pack metadata, got %#v", results[0].Playbook.Metadata)
 			}
 		})
 	}

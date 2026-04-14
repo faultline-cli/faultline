@@ -178,16 +178,15 @@ func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks/bundled"
 }
 
-func repoPremiumPackDir(_ testing.TB) string {
-	return "../../playbooks/packs/premium-local"
+func repoExtraPackDir(_ testing.TB) string {
+	return "../../playbooks/packs/extra-local"
 }
 
-func requirePremiumPack(t testing.TB) string {
+func requireExtraPack(t testing.TB) string {
 	t.Helper()
 	for _, path := range []string{
-		repoPremiumPackDir(t),
-		"../../../faultline-premium",
-		"../../../faultline-premium-pack",
+		repoExtraPackDir(t),
+		"../../../faultline-extra-pack",
 	} {
 		if _, err := os.Stat(path); err != nil {
 			continue
@@ -200,6 +199,6 @@ func requirePremiumPack(t testing.TB) string {
 		}
 		return path
 	}
-	t.Skip("premium pack repository is not available locally")
+	t.Skip("extra pack repository is not available locally")
 	return ""
 }

@@ -20,7 +20,7 @@ Enter
 Sleep 400ms
 Type "./bin/faultline analyze examples/docker-auth.log --mode detailed"
 Enter
-Wait+Screen /TRIGGERED BY/
+Wait+Screen /EVIDENCE/
 Sleep 1400ms
 Screenshot docs/readme-assets/docker-auth-hero.png
 Sleep 1800ms

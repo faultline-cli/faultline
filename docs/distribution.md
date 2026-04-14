@@ -2,7 +2,7 @@
 
 Faultline is distributed as a public CLI with deterministic playbooks bundled into release artifacts.
 
-This document covers how the public binary, playbooks, Docker image, and validation workflow are packaged for launch.
+This document covers how the binary, bundled playbooks, Docker image, and validation workflow are packaged for release.
 
 ## Public Release Contents
 
@@ -13,7 +13,7 @@ This repository ships:
 - public release tarballs
 - public Docker build instructions
 
-Extra playbook packs can be composed on top when needed, but the default release should be useful on its own.
+Optional extra playbook packs can be composed on top when needed, but the default release should be useful on its own.
 
 ## Install Flow
 
@@ -63,4 +63,3 @@ Tagged releases should continue to run this sequence:
 6. publish release archives
 
 
-Internal validation and future pack-delivery notes are parked in `docs/monetisation.md` so the public launch path stays focused.

@@ -13,8 +13,8 @@ coverage.out
 *.swp
 *.swo
 
-# Local premium-pack convenience link
-playbooks/packs/premium-local
+# Local extra-pack convenience links
+playbooks/packs/*-local
 
 # Local staging fixture review queue
 fixtures/staging/*.yaml

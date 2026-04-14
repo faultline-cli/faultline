@@ -423,30 +423,25 @@ func TestPacksInstallAndAutoLoad(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(extra, ".git", "config"), []byte("[core]\nrepositoryformatversion = 0\n"), 0o600); err != nil {
 		t.Fatalf("write .git config: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(extra, "extra.yaml"), []byte(`
-id: premium-installed
-title: Premium Installed
-category: auth
-severity: high
-summary: |
-  Installed premium summary.
-diagnosis: |
-  ## Diagnosis
-
-  Installed premium diagnosis.
-fix: |
-  ## Fix steps
-
-  1. Installed premium fix.
-validation: |
-  ## Validation
-
-  - Installed premium validation.
-match:
-  any:
-    - "premium marker"
-`), 0o600); err != nil {
-		t.Fatalf("write premium pack: %v", err)
+	if err := os.WriteFile(filepath.Join(extra, "extra.yaml"), []byte("id: extra-installed\n"+
+		"title: Installed Pack\n"+
+		"category: auth\n"+
+		"severity: high\n"+
+		"summary: |\n"+
+		"  Installed pack summary.\n"+
+		"diagnosis: |\n"+
+		"  ## Diagnosis\n\n"+
+		"  Installed pack diagnosis.\n"+
+		"fix: |\n"+
+		"  ## Fix steps\n\n"+
+		"  1. Installed pack fix.\n"+
+		"validation: |\n"+
+		"  ## Validation\n\n"+
+		"  - Installed pack validation.\n"+
+		"match:\n"+
+		"  any:\n"+
+		"    - \"extra marker\"\n"), 0o600); err != nil {
+		t.Fatalf("write extra pack: %v", err)
 	}
 
 	install := newRootCommand()
@@ -476,8 +471,8 @@ match:
 	if err := list.Execute(); err != nil {
 		t.Fatalf("execute list after pack install: %v", err)
 	}
-	if !strings.Contains(listOut.String(), "premium-installed") {
-		t.Fatalf("expected installed premium playbook in list output, got %q", listOut.String())
+	if !strings.Contains(listOut.String(), "extra-installed") {
+		t.Fatalf("expected installed playbook in list output, got %q", listOut.String())
 	}
 	if !strings.Contains(listOut.String(), filepath.Base(extra)) {
 		t.Fatalf("expected installed pack name in list output, got %q", listOut.String())

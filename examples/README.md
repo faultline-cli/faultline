@@ -4,6 +4,8 @@ These examples are small, runnable inputs derived from real CI failures.
 
 Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result.
 
+They are intended for first-run checks, docs validation, and quick regression sanity checks.
+
 ## Included examples
 
 | Input | What it demonstrates | Expected output |
@@ -25,4 +27,10 @@ For a tighter remediation view:
 
 ```bash
 ./bin/faultline fix examples/docker-auth.log --format markdown
+```
+
+For the full playbook behind a diagnosis:
+
+```bash
+./bin/faultline explain docker-auth
 ```

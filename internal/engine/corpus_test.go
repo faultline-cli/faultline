@@ -177,10 +177,10 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 	}
 }
 
-func TestAnalyzeReaderPremiumPackCorpus(t *testing.T) {
-	premiumDir := requirePremiumPack(t)
+func TestAnalyzeReaderExtraPackCorpus(t *testing.T) {
+	extraDir := requireExtraPack(t)
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
-	e := New(Options{PlaybookPackDirs: []string{premiumDir}, NoHistory: true})
+	e := New(Options{PlaybookPackDirs: []string{extraDir}, NoHistory: true})
 
 	data, err := os.ReadFile(filepath.Join("testdata", "corpus", "terraform-state-lock-noisy.log"))
 	if err != nil {
@@ -192,12 +192,12 @@ func TestAnalyzeReaderPremiumPackCorpus(t *testing.T) {
 		t.Fatalf("analyze terraform-state-lock-noisy.log: %v", err)
 	}
 	if len(analysis.Results) == 0 {
-		t.Fatal("expected ranked results for premium corpus fixture")
+		t.Fatal("expected ranked results for extra-pack corpus fixture")
 	}
 	if got := analysis.Results[0].Playbook.ID; got != "terraform-state-lock" {
 		t.Fatalf("expected top match terraform-state-lock, got %s", got)
 	}
 	if analysis.Results[0].Playbook.Metadata.PackName == "" || analysis.Results[0].Playbook.Metadata.PackName == playbooks.BundledPackName {
-		t.Fatalf("expected premium pack metadata, got %#v", analysis.Results[0].Playbook.Metadata)
+		t.Fatalf("expected extra-pack metadata, got %#v", analysis.Results[0].Playbook.Metadata)
 	}
 }

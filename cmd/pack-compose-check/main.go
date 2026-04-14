@@ -27,7 +27,7 @@ func (s *stringSliceFlag) Set(value string) error {
 func main() {
 	var packs stringSliceFlag
 	var review bool
-	flag.Var(&packs, "pack", "external playbook pack directory to compose with the bundled starter catalog; repeatable")
+	flag.Var(&packs, "pack", "external playbook pack directory to compose with the bundled catalog; repeatable")
 	flag.BoolVar(&review, "review", false, "print deterministic overlap review for the composed catalog")
 	flag.Parse()
 

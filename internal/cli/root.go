@@ -359,12 +359,13 @@ func newWorkflowCommand() *cobra.Command {
 func newPacksCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "packs",
-		Short: "Manage local playbook packs",
+		Short: "Manage optional playbook packs",
 		Long: strings.Join([]string{
-			"Install and inspect playbook packs that should be loaded automatically.",
+			"Install and inspect optional playbook packs that should be loaded automatically.",
 			"",
 			"Installed packs live under ~/.faultline/packs so they persist across CLI updates",
 			"and can be mounted into Docker containers using the same path convention.",
+			"The bundled catalog works on its own; packs are for extra or team-specific coverage.",
 		}, "\n"),
 	}
 	cmd.AddCommand(newPacksInstallCommand())

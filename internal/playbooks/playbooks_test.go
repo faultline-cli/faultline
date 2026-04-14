@@ -202,7 +202,7 @@ match:
 
 	_, err := LoadPacks([]Pack{
 		{Name: "starter", Root: first},
-		{Name: "premium", Root: second},
+		{Name: "extra", Root: second},
 	})
 	if err == nil {
 		t.Fatal("expected duplicate ID error across packs")
@@ -224,14 +224,14 @@ match:
     - "primary error"
 `)
 
-	pbs, err := LoadPacks([]Pack{{Name: "premium-pack", Root: first}})
+	pbs, err := LoadPacks([]Pack{{Name: "team-pack", Root: first}})
 	if err != nil {
 		t.Fatalf("LoadPacks: %v", err)
 	}
 	if len(pbs) != 1 {
 		t.Fatalf("expected one playbook, got %d", len(pbs))
 	}
-	if pbs[0].Metadata.PackName != "premium-pack" {
+	if pbs[0].Metadata.PackName != "team-pack" {
 		t.Fatalf("expected pack name to be stamped, got %#v", pbs[0].Metadata)
 	}
 	if pbs[0].Metadata.PackRoot != first {

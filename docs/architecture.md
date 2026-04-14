@@ -36,19 +36,19 @@ That keeps today’s repo layout working while giving the repository a clean
 default and letting extra packs live in separate directories loaded through an
 external path.
 
-Additional packs can be composed on top of the bundled starter catalog through
+Additional packs can be composed on top of the bundled catalog through
 the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 `--playbook-pack` flags. Faultline also auto-loads any packs installed under
 `~/.faultline/packs/`, which is the persistent user-level install path for
 extra playbook packs. A full `--playbooks` override still resolves a single
 custom catalog root and does not combine with extra packs.
 
-For local validation against a sibling premium repository, the repository uses
+For local validation against an external pack checkout, the repository can use
 the ignored symlink at `playbooks/packs/extra-local` or an explicit
 `EXTRA_PACK_DIR` value. The corresponding deterministic checks are
 `make extra-pack-check` and `make extra-pack-review`.
 
-Starter pack composition should stay generous for adoption: broad coverage for
+Bundled catalog composition should stay generous for adoption: broad coverage for
 common CI failures across popular ecosystems, plus a minimal source-detector
 baseline so `inspect` is useful without an extra install. Extra packs can
 concentrate on provider-specific depth, advanced deployment or operations

@@ -27,9 +27,7 @@ help:
 		"  docker-build    Build the Docker image tagged $(IMAGE)" \
 		"  docker-analyze  Analyze a mounted log in Docker: make docker-analyze LOG=build.log" \
 		"  docker-smoke    Build the Docker image and verify an auth fixture end to end" \
-		"  WITH_DOCKER=1   Include docker-smoke when running release-check" \
-		"" \
-		"Internal pack-composition targets remain available but are intentionally omitted from the public help summary."
+		"  WITH_DOCKER=1   Include docker-smoke when running release-check"
 
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"

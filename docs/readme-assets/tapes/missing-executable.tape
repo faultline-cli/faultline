@@ -14,7 +14,7 @@ Set Theme {"black":"#24313d","red":"#cb4b5a","green":"#2f8f6b","yellow":"#b07d1a
 
 Type "./bin/faultline analyze examples/missing-executable.log --mode detailed"
 Enter
-Wait+Screen /TRIGGERED BY/
+Wait+Screen /EVIDENCE/
 Sleep 1400ms
 Screenshot docs/readme-assets/missing-executable.png
 Sleep 1800ms
