@@ -1,10 +1,102 @@
 # Faultline
 
-CI failed. Faultline gives you a deterministic diagnosis from the log, the exact evidence that matched, and concrete fix steps you can act on immediately.
+Deterministic CI failure analysis. No AI guessing.
+
+When CI fails, you do not need another vague suggestion. You need a diagnosis, evidence, and fix steps you can trust.
+
+Faultline analyzes CI logs and matches them against a deterministic library of real-world failure playbooks. Same input, same playbook set, same answer every time.
 
 It is built for the repetitive failures that waste engineering time: missing credentials, version drift, lockfile mistakes, missing executables, runner problems, flaky tests, network failures, and other known CI breakages. Faultline runs locally or in CI, makes no network calls during analysis, and keeps ML or LLM systems out of the product path.
 
 ![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
+
+## Example
+
+Input log:
+
+```text
+pull access denied for ghcr.io/org/image
+unauthorized: authentication required
+```
+
+Faultline diagnosis:
+
+```text
+Docker registry authentication failure (docker-auth) [33% confidence]
+Severity: high
+
+Summary
+-------
+
+CI could not authenticate to the container registry before an image pull or push.
+```
+
+Follow-up fix view:
+
+```text
+1. Verify the registry username, token, or password configured in CI secrets.
+2. Ensure the registry login step runs before any docker pull or docker push command.
+3. Confirm the token has the correct repository scope for the image being accessed.
+```
+
+This is the point of Faultline: take opaque CI output and turn it into a deterministic diagnosis you can act on immediately.
+
+## Try it in 10 seconds
+
+Pipe a failing log directly into the analyzer:
+
+```bash
+cat ci.log | faultline analyze
+```
+
+Or run the main flows directly:
+
+```bash
+faultline analyze ci.log
+faultline fix ci.log
+faultline inspect .
+```
+
+## Why Faultline
+
+Most tools try to guess what went wrong.
+
+Faultline does not guess.
+
+- Deterministic pattern matching
+- Ranked diagnoses with explicit evidence
+- Structured fix steps instead of vague advice
+- No LLMs or probabilistic output in the execution path
+
+That makes it reliable in CI, explainable to engineers, and safe to automate against.
+
+## Built on real failures
+
+- 67 bundled playbooks under `playbooks/bundled/`
+- 70 accepted real fixtures in the checked-in regression corpus
+- Deterministic ranking, conflict review, and regression gates
+- Stable terminal and JSON output for automation
+
+## What Faultline catches
+
+Faultline already detects a wide range of common CI and CD failures, including:
+
+- Docker registry auth failures and missing login steps
+- Image pull failures and registry access problems
+- Missing binaries and PATH or execution errors in CI images
+- Permission denied failures and runner file access issues
+- Node, Python, Ruby, and Go runtime version mismatches
+- npm, pnpm, yarn, pip, and Poetry install or lockfile failures
+- Cache corruption and dependency drift
+- DNS, TLS certificate, timeout, and connection-refused network failures
+- Missing environment variables, invalid secrets, and expired credentials
+- Incorrect working directories and missing build inputs
+- TypeScript, eslint, syntax, and compile failures
+- Flaky tests, timeout failures, data races, and snapshot mismatches
+- Artifact upload, pipeline timeout, and runner disk-full failures
+- ImagePullBackOff, CrashLoopBackOff, health-check, and deploy failures
+
+The goal is not to catch everything. It is to reliably catch what is already known and explain it clearly.
 
 ## Try it in 60 seconds
 
@@ -41,7 +133,7 @@ Tagged releases publish tarballs on the GitHub Releases page. If you are browsin
 
 ## Why it exists
 
-CI failures are often repetitive, noisy, and slower to diagnose than they should be.
+CI failures are often repetitive, noisy, opaque, and slower to diagnose than they should be.
 
 Faultline is built for engineers who want:
 
@@ -66,19 +158,6 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Inspect a repository for source-level failure risks.
 - Render concise terminal, markdown, or stable JSON output.
 - Generate deterministic follow-up workflows from the analysis result.
-
-## What it catches today
-
-Bundled playbooks currently cover 67 deterministic diagnoses across common CI failure categories, including:
-
-- Auth: Docker registry auth, Git auth, SSH key auth, missing environment variables, AWS credential failures.
-- Build: runtime mismatch, missing executable, dependency drift, lockfile drift, pip install failure, TypeScript compile failure, eslint failure, Go compile errors, missing build inputs, cache corruption.
-- Network: DNS resolution failures, TLS certificate errors, blocked egress, connection refused, network timeout, rate limiting.
-- Runtime: port already in use, permission denied, Docker daemon unavailable, disk full, OOM killed, resource limits.
-- Test: flaky tests, test timeouts, coverage gate failures, snapshot mismatches, data races, missing test fixtures, order dependency.
-- Deploy and CI: image pull backoff, CrashLoopBackOff, health-check failure, artifact upload failures, secrets unavailable, runner disk full, pipeline timeout.
-
-The repository ships three small runnable sample logs for quick smoke tests and 112 accepted real fixtures for regression coverage.
 
 ## Install options
 
@@ -177,7 +256,7 @@ The same input and playbook set should produce the same result every time.
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats` currently reports 112 accepted real fixtures.
+- `./bin/faultline fixtures stats --class real` currently reports 70 accepted real fixtures.
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
 - The bundled catalog currently ships 67 playbooks under `playbooks/bundled/`.
 - Release validation runs `make test`, `make review`, `make fixture-check`, release archive smoke tests, and Docker smoke tests.
