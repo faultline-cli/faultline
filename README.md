@@ -154,6 +154,12 @@ The highest-value contribution is a real failure that Faultline should explain b
 - Add or refine fixtures when a failure should be preserved in regression tests.
 - If Faultline misses a recurring CI failure, send that case. Those misses are the fastest way to improve the tool.
 
+Raw ingestion artifacts belong in `fixtures/staging/` as a local review queue only. Sanitize them first, then promote accepted cases into `fixtures/real/`.
+
+## License
+
+Faultline is licensed under Apache-2.0. See `LICENSE` for the full text.
+
 ## Development
 
 ```bash
@@ -170,4 +176,9 @@ Helpful references:
 - `docs/distribution.md` for release and Docker packaging
 - `docs/detectors.md` for detector expectations
 - `docs/adr/README.md` for architectural decisions
+- `CONTRIBUTING.md` for contribution and fixture-sanitization guidance
+- `SECURITY.md` for vulnerability reporting expectations
+- `CODE_OF_CONDUCT.md` for project participation expectations
+- `LICENSE` for the Apache-2.0 terms
+
 

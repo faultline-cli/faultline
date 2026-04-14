@@ -1,0 +1,4 @@
+# Keep raw ingestion artifacts local.
+*.yaml
+!.gitignore
+!README.md

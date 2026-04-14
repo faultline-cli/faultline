@@ -15,3 +15,6 @@ coverage.out
 
 # Local premium-pack convenience link
 playbooks/packs/premium-local
+
+# Local staging fixture review queue
+fixtures/staging/*.yaml

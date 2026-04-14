@@ -47,7 +47,7 @@ jobs:
 
       - name: Compose starter with premium pack
         if: vars.PREMIUM_PACK_REPO != '' && env.PREMIUM_PACK_REPO_TOKEN != ''
-        run: make premium-check PREMIUM_PACK_DIR=faultline-premium
+        run: make extra-pack-check EXTRA_PACK_DIR=faultline-premium
 
       - name: Build release archives
         run: make release-snapshot VERSION="$VERSION"
