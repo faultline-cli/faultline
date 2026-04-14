@@ -1,0 +1,22 @@
+id: reddit-r-docker-1lca4a9-0-0-s2-5fc536abf12d4c17
+title: Keep getting denied image pulls
+fixture_class: real
+normalized_log: 'However, when I try to pull other public images like [`docker.io/linuxserver/netboot.xyz:latest`](http://docker.io/linuxserver/netboot.xyz:latest), the command fails with the error: `pull access denied for linuxserver/netboot.xyz, repository does not exist or may require ''docker login'': denied: requested access to the resource is denied`.'
+expectation:
+    expected_playbook: docker-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/docker/comments/1lca4a9/
+    repository: r/docker
+    comment_id: "0"
+    title: Keep getting denied image pulls
+    author: Able_Biscotti_5491
+    snippet: 2
+    fetched_at: "2026-04-14T03:05:03Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:07:10Z"
+fingerprint: 5fc536abf12d4c17

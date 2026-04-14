@@ -1,0 +1,59 @@
+id: gitlab-gitlab-org-gitlab-runner-4660-s3-1f8d5ef715e6086e
+title: '[Docker runner] permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock'
+fixture_class: real
+normalized_log: |-
+    $ docker-compose up
+    Starting runner-pa ... done
+    Attaching to runner-pa
+    runner-pa | Runtime platform arch=amd64 os=linux pid=6 revision=a987417a version=12.2.0
+    runner-pa | Starting multi-runner from /etc/gitlab-runner/config.toml ... builds=0
+    runner-pa | Running in system-mode.
+    runner-pa |
+    runner-pa | Configuration loaded builds=0
+    runner-pa | Locking configuration file builds=0 file=/etc/gitlab-runner/config.toml pid=6
+    runner-pa | listen_address not defined, metrics & debug endpoints disabled builds=0
+    runner-pa | [session_server].listen_address not defined, session endpoints disabled builds=0
+    runner-pa | Checking for jobs... received job=281092443 repo_url=https://***repo-url*** runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | ERROR: Job failed (system failure): Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) duration=9.003770316s job=281092443 project=14008423 runner=5mFAgQQA
+    runner-pa | ERROR: Failed to process runner builds=0 error=Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) executor=docker runner=5mFAgQQA
+    runner-pa | Checking for jobs... received job=281092446 repo_url=https://***repo-url*** runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | WARNING: Preparation failed: Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | Will be retried in 3s ... job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | ERROR: Job failed (system failure): Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) duration=9.002893967s job=281092446 project=14008423 runner=5mFAgQQA
+    runner-pa | ERROR: Failed to process runner builds=0 error=Got permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get http://%2Fvar%2Frun%2Fdocker.sock/v1.25/info: dial unix /var/run/docker.sock: connect: permission denied (executor_docker.go:983:0s) executor=docker runner=5mFAgQQA
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4660
+    repository: gitlab-org/gitlab-runner
+    issue_number: 4660
+    title: '[Docker runner] permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock'
+    labels:
+        - Category:Runner Core
+        - devops::verify
+        - executor::docker
+        - group::runner core
+        - runner::core
+        - section::ops
+        - support request
+    author: andreas.rudolph
+    snippet: 3
+    fetched_at: "2026-04-14T03:05:56Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:07:10Z"
+fingerprint: 1f8d5ef715e6086e

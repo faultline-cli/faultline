@@ -1,0 +1,70 @@
+id: buildkit-session-lost
+title: Docker BuildKit session lost
+category: build
+severity: high
+base_score: 0.9
+tags: [docker, buildkit, build, session, timeout]
+stage_hints: [build]
+summary: |-
+  Docker BuildKit lost its session while loading the build definition or context, so the image build stopped before it could execute any build steps.
+diagnosis: |-
+  ## Diagnosis
+
+  Docker BuildKit lost its session while loading the build definition or context, so the image build stopped before it could execute any build steps.
+
+  This usually means the build frontend could not keep its session open long enough to read the Dockerfile or context files.
+fix: |-
+  ## Fix steps
+
+  1. Re-run the build with plain progress output so the failing phase is easier to see:
+
+     ```bash
+     docker build --progress=plain .
+     ```
+
+  2. Confirm the Dockerfile path and build context are correct.
+  3. Check whether the CI runner is terminating idle sessions or losing its Docker connection mid-build.
+  4. If you are using BuildKit or `buildx`, verify the builder instance is healthy:
+
+     ```bash
+     docker buildx ls
+     docker buildx inspect
+     ```
+
+validation: |-
+  ## Validation
+
+  - `docker build --progress=plain .` reaches the first build step without a session error.
+  - Re-run the failing job and confirm the build definition and context load successfully.
+why_it_matters: |-
+  ## Why it matters
+
+  When BuildKit loses its session, the image build fails before any real work starts, which wastes CI time and hides the actual build pipeline behind infrastructure noise.
+
+  ## Prevention
+
+  - Keep Docker build commands explicit and short-lived.
+  - Avoid fragile wrapper scripts that drop the BuildKit session before the build is complete.
+  - Add a small `docker build --progress=plain` smoke test to jobs that rely on BuildKit.
+workflow:
+  likely_files:
+    - Dockerfile
+    - .dockerignore
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - docker-compose*.yml
+  local_repro:
+    - docker build --progress=plain .
+  verify:
+    - docker build --progress=plain .
+match:
+  any:
+    - "no active session for"
+    - "load build definition from Dockerfile"
+    - "load .dockerignore"
+    - "no active session"
+  none:
+    - "pull access denied"
+    - "permission denied while trying to connect to the Docker daemon socket"
+    - "unauthorized: authentication required"
+    - "denied: requested access to the resource is denied"

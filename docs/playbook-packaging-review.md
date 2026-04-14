@@ -50,10 +50,10 @@ The main editorial issues were:
 - Kept the public starter catalog in `playbooks/bundled/`.
 - Moved premium candidates into the sister premium repository rooted at
   `../faultline-premium/`, which is exposed locally in this repo through the
-  ignored symlink `playbooks/packs/premium-local`.
+  ignored symlink `playbooks/packs/extra-local`.
 - Updated local pack-resolution helpers so repository validation prefers the
   symlinked premium repo and still supports an explicit external pack path
-  through `make premium-link` or `PREMIUM_PACK_DIR`.
+  through `make extra-pack-link` or `EXTRA_PACK_DIR`.
 
 ### Test coverage
 
@@ -87,7 +87,7 @@ Scoring principles used in practice:
 
 ## Exact Split
 
-### Bundled starter pack: 60 playbooks
+### Bundled starter pack: 67 playbooks
 
 These remain bundled because they create the strongest day-one experience:
 
@@ -116,7 +116,7 @@ These remain bundled because they create the strongest day-one experience:
 ### Premium additions moved in this pass: 17 playbooks
 
 These now live in the sister premium repository and are resolved locally through
-`playbooks/packs/premium-local` when that symlink is present. They are
+`playbooks/packs/extra-local` when that symlink is present. They are
 materially deeper and more specialized than the starter catalog:
 
 - Build ecosystems: `cargo-build`, `dotnet-build`, `gradle-build`,
@@ -129,7 +129,7 @@ materially deeper and more specialized than the starter catalog:
 - Test-runner specialization: `jest-worker-crash`, `pytest-fixture-error`,
   `rspec-failure`, `vitest-failure`
 
-The current sister premium repository now contains 83 playbooks in total after
+The current sister premium repository now contains 84 playbooks in total after
 this move. The 17 playbooks above are the specific additions moved out of the
 starter catalog during this pass.
 
@@ -155,9 +155,9 @@ The premium pack is materially better rather than just larger because it adds:
 
 Recommended count split for the starter repository itself:
 
-- Starter: 60 playbooks shipped publicly in this repo
+- Starter: 67 playbooks shipped publicly in this repo
 - Newly migrated premium additions from this pass: 17 playbooks
-- Current sister premium repository total: 83 playbooks
+- Current sister premium repository total: 84 playbooks
 
 Commercially this still lands near the target value split: the starter pack
 contains roughly two-thirds of the practical first-run user value, while the
@@ -167,8 +167,8 @@ where the long-tail catalog continues to accumulate.
 
 ## Current Review Baseline
 
-After the starter-versus-premium cleanup pass, `make premium-review` reports
-175 cross-pack pattern conflicts across the composed starter and premium
+After the starter-versus-premium cleanup pass, `EXTRA_PACK_DIR=/home/jake/workspace/faultline-premium make extra-pack-review`
+reports 186 cross-pack pattern conflicts across the composed starter and premium
 catalogs.
 
 This report should be treated as an inspection artifact, not as a zero-defect
@@ -213,8 +213,8 @@ Use these rules to keep the boundary clean:
   variant.
 - Keep generic fallback playbooks narrow and clearly subordinate to
   tool-specific rules.
-- Run `make review`, `make premium-check`, and `make test` after any future
+- Run `make review`, `make extra-pack-check`, and `make test` after any future
   boundary change so the starter and premium catalogs remain deterministic.
-- Treat `make premium-review` as a change-detection tool: new spikes or new
+- Treat `make extra-pack-review` as a change-detection tool: new spikes or new
   broad phrases deserve investigation, but some stable overlap between adjacent
   rule families is expected.

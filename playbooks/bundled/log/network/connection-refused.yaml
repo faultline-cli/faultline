@@ -50,6 +50,8 @@ match:
   any:
     - "connection refused"
     - "Connection refused"
+    - "could not connect to server"
+    - "connection was refused"
     - "ECONNREFUSED"
     - "connect: connection refused"
     - "no connection could be made"

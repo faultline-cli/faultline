@@ -1,0 +1,63 @@
+id: runner-update-permission-denied
+title: Self-hosted runner update permission failure
+category: ci
+severity: high
+base_score: 0.9
+tags: [github-actions, runner, update, permissions, ci]
+stage_hints: [build, test, deploy]
+summary: |-
+  A self-hosted runner tried to update itself or adjust worker process settings, but the environment denied access to the runner filesystem or proc entries.
+diagnosis: |-
+  ## Diagnosis
+
+  A self-hosted runner tried to update itself or adjust worker process settings, but the environment denied access to the runner filesystem or proc entries.
+
+  This usually happens when the runner is containerized with overly strict ownership or when the job environment blocks access to `_work` or `/proc/*/oom_score_adj`.
+fix: |-
+  ## Fix steps
+
+  1. Check the ownership and permissions on the runner root, work directory, and proc mount that the runner is trying to touch.
+  2. If the runner is containerized, ensure the container runs with the user and group expected by the runner image.
+  3. Confirm the runner can write to its working directory and update its own binaries or configuration.
+  4. If the failure only appears after an autoscaling or container-mode change, compare the pod or container security context with a known-good runner deployment.
+
+validation: |-
+  ## Validation
+
+  - The runner starts without `Access to the path is denied`.
+  - The update step completes and the job proceeds past runner startup.
+why_it_matters: |-
+  ## Why it matters
+
+  Runner update and startup failures block every job on that runner. If the runner cannot update or adjust its own process state, it can fail before it ever reaches the user workflow.
+
+  ## Prevention
+
+  - Bake the expected runner permissions into the image or deployment manifest.
+  - Keep autoscaling runner security contexts consistent across environments.
+  - Verify `_work` and runner root ownership after image or Helm chart changes.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - docker-compose*.yml
+    - k8s/**/*.yaml
+  local_repro:
+    - id
+    - ls -la /runner
+  verify:
+    - id
+match:
+  any:
+    - "Downloading runner update fails"
+    - "An error occurred: Access to the path is denied"
+    - "Access to the path '/proc/"
+    - "Failed to update oom_score_adj"
+    - "Runner update in progress, do not shutdown runner"
+    - "UnauthorizedAccessException"
+  none:
+    - "permission denied while trying to connect to the Docker daemon socket"
+    - "pull access denied"
+    - "connection refused"
+    - "context deadline exceeded"

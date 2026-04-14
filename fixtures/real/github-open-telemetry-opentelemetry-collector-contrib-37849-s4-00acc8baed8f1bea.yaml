@@ -1,0 +1,35 @@
+id: github-open-telemetry-opentelemetry-collector-contrib-37849-s4-00acc8baed8f1bea
+title: docker_stats issue with docker.sock permissions
+fixture_class: real
+normalized_log: |-
+    Without mapping docker.sock volume:
+    Error: cannot start pipelines: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+    <timestamp> collector server run finished with error: cannot start pipelines: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+    With Mapping the volume but providing no updates to the socket:
+    <timestamp>.010Z info service@v0.117.0/service.go:295 Starting shutdown...
+    <timestamp>.011Z info extensions/extensions.go:66 Stopping extensions...
+    <timestamp>.011Z info service@v0.117.0/service.go:309 Shutdown complete.
+    Error: cannot start pipelines: permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.44/containers/json?filters=%7B%22status%22%3A%7B%22running%22%3Atrue%7D%7D": dial unix /var/run/docker.sock: connect: permission denied
+    <timestamp> collector server run finished with error: cannot start pipelines: permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.44/containers/json?filters=%7B%22status%22%3A%7B%22running%22%3Atrue%7D%7D": dial unix /var/run/docker.sock: connect: permission denied
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/37849
+    repository: open-telemetry/opentelemetry-collector-contrib
+    issue_number: 37849
+    title: docker_stats issue with docker.sock permissions
+    labels:
+        - bug
+        - receiver/dockerstats
+        - waiting-for-code-owners
+    author: rhysmcn
+    snippet: 4
+    fetched_at: "2026-04-14T03:04:32Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:07:10Z"
+fingerprint: 00acc8baed8f1bea

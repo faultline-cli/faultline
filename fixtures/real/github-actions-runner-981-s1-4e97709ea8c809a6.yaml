@@ -1,0 +1,61 @@
+id: github-actions-runner-981-s1-4e97709ea8c809a6
+title: 'Downloading runner update fails: "An error occurred: Access to the path is denied"'
+fixture_class: real
+normalized_log: |-
+    +++ hostname
+    ++ ./config.sh --name actions-runner-1612996517-594b54548b-h8dqt --token ACD2A5V7C4TNQPYWFUVVPZDAERW36 --url https://github.com/redhat-actions --work _work --labels quay.io/redhat-github-actions/runner:v1.0.0, --unattended --replace
+    ldd: ./bin/libSystem.Security.Cryptography.Native.OpenSsl.so: No such file or directory
+    ldd: ./bin/libSystem.IO.Compression.Native.so: No such file or directory
+    --------------------------------------------------------------------------------
+    | ____ _ _ _ _ _ _ _ _ |
+    | / ___(_) |_| | | |_ _| |__ / \ ___| |_(_) ___ _ __ ___ |
+    | | | _| | __| |_| | | | | '_ \ / _ \ / __| __| |/ _ \| '_ \/ __| |
+    | | |_| | | |_| _ | |_| | |_) | / ___ \ (__| |_| | (_) | | | \__ \ |
+    | \____|_|\__|_| |_|\__,_|_.__/ /_/ \_\___|\__|_|\___/|_| |_|___/ |
+    | |
+    | Self-hosted runner registration |
+    | |
+    --------------------------------------------------------------------------------
+    # Authentication
+    √ Connected to GitHub
+    # Runner Registration
+    √ Runner successfully added
+    √ Runner connection is good
+    # Runner settings
+    √ Settings Saved.
+    ++ set +x
+    ++ svc_pid=68
+    ++ wait 68
+    ++ ./bin/runsvc.sh ''
+    .path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    Starting Runner listener with startup type: service
+    Started listener process
+    Started running service
+    √ Connected to GitHub
+    2021-02-10 22:35:42Z: Listening for Jobs
+    Runner update in progress, do not shutdown runner.
+    Downloading 2.277.1 runner
+    An error occurred: Access to the path is denied.
+    Runner listener exited with error code 2
+    Runner listener exit with retryable error, re-launch runner in 5 seconds.
+    Starting Runner listener with startup type: service
+    Started listener process
+    √ Connected to GitHub
+expectation:
+    expected_playbook: runner-update-permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/981
+    repository: actions/runner
+    issue_number: 981
+    title: 'Downloading runner update fails: "An error occurred: Access to the path is denied"'
+    author: tetchel
+    snippet: 1
+    fetched_at: "2026-04-14T02:39:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:16:56Z"
+fingerprint: 4e97709ea8c809a6

@@ -1,0 +1,40 @@
+id: stackexchange-stackoverflow-66758217-s1-66c5c2d3f370428f
+title: context deadline exceeded error when running Gitlab Runner on Windows/Docker
+fixture_class: real
+normalized_log: |-
+    I get this error when I run my CI using a Gitab-Runner installed on Windows or within Docker, precisely just after I do docker build:
+    1 [internal] load .dockerignore
+    #1 ERROR: no active session for deyvlborrpy89ibo2fvk9xxb9: context deadline exceeded
+    #2 [internal] load build definition from Dockerfile
+    #2 ERROR: no active session for deyvlborrpy89ibo2fvk9xxb9: context deadline exceeded
+    ------
+    > [internal] load build definition from Dockerfile:
+    ------
+    ------
+    > [internal] load .dockerignore:
+    ------
+    no active session for deyvlborrpy89ibo2fvk9xxb9: context deadline exceeded
+    I have read this might be related to certificates but in my CI file I have:
+    DOCKER_TLS_CERTDIR: ""
+    Which should disable TLS.
+    Anyone knows how to fix this? Or basically how to setup Gitlab runner to work with docker: 19-dind.
+    Thank you in advance and regards.
+expectation:
+    expected_playbook: buildkit-session-lost
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66758217
+    repository: stackoverflow
+    issue_number: 66758217
+    comment_id: "0"
+    title: context deadline exceeded error when running Gitlab Runner on Windows/Docker
+    author: Javier Guzm&#225;n
+    snippet: 1
+    fetched_at: "2026-04-14T03:04:39Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:10:54Z"
+fingerprint: 66c5c2d3f370428f

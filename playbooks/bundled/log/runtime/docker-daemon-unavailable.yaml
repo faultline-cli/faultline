@@ -1,0 +1,68 @@
+id: docker-daemon-unavailable
+title: Docker daemon unavailable
+category: runtime
+severity: high
+base_score: 1.0
+tags: [docker, daemon, socket, runtime, ci]
+stage_hints: [build, deploy]
+summary: |-
+  Docker could not reach the daemon socket or service, so the step failed before it could inspect containers or run a build.
+diagnosis: |-
+  ## Diagnosis
+
+  Docker could not reach the daemon socket or service, so the step failed before it could inspect containers or run a build.
+
+  This usually means the daemon is stopped, the socket path is wrong, or the environment does not expose Docker at all.
+fix: |-
+  ## Fix steps
+
+  1. Check whether the Docker daemon is actually running on the host or runner.
+  2. Verify the expected socket is mounted or the Docker service is available to the job.
+  3. If you are using Docker-in-Docker, confirm the sidecar or service container started before the job step.
+  4. Re-run a minimal probe from the same environment:
+
+     ```bash
+     docker info
+     docker ps
+     ```
+
+validation: |-
+  ## Validation
+
+  - `docker info` succeeds from the same job environment.
+  - Re-run the failing step and confirm the Docker daemon is reachable.
+why_it_matters: |-
+  ## Why it matters
+
+  If the daemon is unavailable, every downstream Docker action fails: image pulls, container starts, registry checks, and build steps.
+
+  ## Prevention
+
+  - Start the Docker service before the job tries to use it.
+  - Mount the socket or configure DinD explicitly instead of assuming a host daemon exists.
+  - Add a lightweight `docker info` probe at the top of jobs that depend on Docker.
+workflow:
+  likely_files:
+    - Dockerfile
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - docker-compose*.yml
+  local_repro:
+    - docker info
+  verify:
+    - docker info
+match:
+  any:
+    - "Cannot connect to the Docker daemon"
+    - "Cannot connect to the docker daemon"
+    - "Is the docker daemon running?"
+    - "Docker daemon is not running"
+    - "failed to connect to the Docker daemon"
+    - "failed to connect to docker daemon"
+    - "unable to connect to the Docker daemon"
+  none:
+    - "permission denied while trying to connect to the Docker daemon socket"
+    - "pull access denied"
+    - "unauthorized: authentication required"
+    - "denied: requested access to the resource is denied"

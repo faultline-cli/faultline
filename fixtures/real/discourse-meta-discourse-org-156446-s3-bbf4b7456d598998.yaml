@@ -1,0 +1,41 @@
+id: discourse-meta-discourse-org-156446-s3-bbf4b7456d598998
+title: Discourse Bad Gateway after reboot
+fixture_class: real
+normalized_log: |-
+    FAILED
+    --------------------
+    Pups::ExecError: su postgres -c 'psql discourse -c "alter schema public owner to discourse;"' failed with return #<Process::Status: pid 75 exit 2>
+    Location of failure: /pups/lib/pups/exec_command.rb:112:in `spawn'
+    exec failed with the params "su postgres -c 'psql $db_name -c \"alter schema public owner to $db_user;\"'"
+    eb41679f76cd749ccd8c84a7543365d093619b80df6fc6750b9349fb63565fa1
+    ** FAILED TO BOOTSTRAP ** please scroll up and look for earlier error messages, there may be more than one.
+    ./discourse-doctor may help diagnose the problem.
+    user@host:[17:19]:/var/discourse#
+    Strangely, in spite of the errors above, running ./launcher start app produces no errors:
+    starting up existing container
+    + /usr/bin/docker start app
+    app
+    With the instance running, I tried using ./launcher enter app to get into the container. (In my humble opinion the available tools in the container are very poor (yes I’m a nano user and like to have various aliases mapped; e.g. ll ). I’m not able to find the physical path to the folders within the docker instance (as I would like to download them using a FTP client).
+    In /var/log/nginx/error.log I have the following error entry for each time I refresh my browser:
+    <timestamp> [error] 646#646: *3 connect() failed (111: Connection refused) while connecting to upstream, client: xxx.xx.0.1, server: _, request: "GET / HTTP/1.1", upstream: "http://127.0.0.1:3000/", host: "discourse.myDomain.com"
+    What could be the cause of my problem? Why is Postgre suddenly not functioning?
+    (*) A week after installing Discourse, I upgraded my server with more CPUs and memory. I needed to do this to run a video conference I hosted. With the conference done, I’ve gone back to my normal configuration. Note that I did not change the disk sizes at any point during the specification changes.
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://meta.discourse.org/t/discourse-bad-gateway-after-reboot/156446
+    repository: meta.discourse.org
+    issue_number: 156446
+    comment_id: "776702"
+    title: Discourse Bad Gateway after reboot
+    author: nap
+    snippet: 3
+    fetched_at: "2026-04-14T03:04:39Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:07:13Z"
+fingerprint: bbf4b7456d598998

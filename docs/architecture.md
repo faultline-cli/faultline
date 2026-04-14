@@ -43,6 +43,11 @@ the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 extra playbook packs. A full `--playbooks` override still resolves a single
 custom catalog root and does not combine with extra packs.
 
+For local validation against a sibling premium repository, the repository uses
+the ignored symlink at `playbooks/packs/extra-local` or an explicit
+`EXTRA_PACK_DIR` value. The corresponding deterministic checks are
+`make extra-pack-check` and `make extra-pack-review`.
+
 Starter pack composition should stay generous for adoption: broad coverage for
 common CI failures across popular ecosystems, plus a minimal source-detector
 baseline so `inspect` is useful without an extra install. Extra packs can

@@ -1,0 +1,37 @@
+id: stackexchange-stackoverflow-27954546-s1-c5e0fac2c7e5b433
+title: x509 certificate signed by unknown authority on Docker 1.3.2 rhel 7 host
+fixture_class: real
+normalized_log: |-
+    I setup docker (1.3.2) on a rhel 7 host in AWS to run a registry and have nginx configured to proxy traffic to that container. On another rhel 7 host I have copied the ca.crt when I run
+    $ curl --cacert <tmp> https://user:test@repo.test
+    I am able to see the registry I get the below response.
+    "\"docker-registry server\""
+    However when I try to run
+    $ docker login repo.test:443
+    and put in the username password and email I get the following error.
+    <timestamp> Error response from daemon: Server Error: Post https://repo.test/v1/users/: x509: certificate signed by unknown authority.
+    I'm running the docker daemon with --insecure-registry repo.test:443
+    I've tried to import the ca.crt by placing the cert in /etc/pki/ca-trust/source/anchors/ and running
+    $ update-ca-trust enable
+    $ update-ca-trust extract
+    but I'm still getting the error.
+    It would be much appreciated if anyone can point me in the right direction.
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/27954546
+    repository: stackoverflow
+    issue_number: 27954546
+    comment_id: "0"
+    title: x509 certificate signed by unknown authority on Docker 1.3.2 rhel 7 host
+    author: cdub50
+    snippet: 1
+    fetched_at: "2026-04-14T03:05:56Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T03:07:13Z"
+fingerprint: c5e0fac2c7e5b433
