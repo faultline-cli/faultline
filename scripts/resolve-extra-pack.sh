@@ -29,4 +29,4 @@ do
 done
 
 printf '%s\n' "extra pack directory not found; set EXTRA_PACK_DIR, run 'make extra-pack-link', or set an explicit extra pack path" >&2
-	exit 1
+exit 1
