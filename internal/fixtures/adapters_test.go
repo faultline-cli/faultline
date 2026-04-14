@@ -166,3 +166,27 @@ func TestDiscourseTopicAdapterFetch(t *testing.T) {
 		t.Fatalf("expected forum host metadata, got %#v", fixtures[0].Source)
 	}
 }
+
+func TestRedditPostAdapterFetch(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/r/docker/comments/1fbi7v2/ssh_docker_daemon.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "[{\"data\":{\"children\":[{\"kind\":\"t3\",\"data\":{\"title\":\"SSH Docker Daemon\",\"selftext\":\"I tried to build images on a remote vps.\\n\\n```text\\nConnection refused\\n```\",\"author\":\"Pandoks_\",\"id\":\"1fbi7v2\",\"permalink\":\"/r/docker/comments/1fbi7v2/ssh_docker_daemon/\"}}]}},{\"data\":{\"children\":[{\"kind\":\"t1\",\"data\":{\"body\":\"Thanks for the help\",\"author\":\"alice\",\"id\":\"comment-1\",\"replies\":{\"data\":{\"children\":[{\"kind\":\"t1\",\"data\":{\"body\":\"```text\\ndocker: permission denied while trying to connect to the Docker daemon socket\\n```\",\"author\":\"bob\",\"id\":\"comment-2\",\"replies\":\"\"}}]}}}}]}}]")
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	adapter := RedditPostAdapter{APIBase: server.URL}
+	fixtures, err := adapter.Fetch(context.Background(), "https://www.reddit.com/r/docker/comments/1fbi7v2/ssh_docker_daemon/", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("fetch Reddit post fixtures: %v", err)
+	}
+	if len(fixtures) != 2 {
+		t.Fatalf("expected 2 extracted fixtures, got %d", len(fixtures))
+	}
+	if fixtures[0].Source.Provider != "reddit" {
+		t.Fatalf("expected reddit provider metadata, got %#v", fixtures[0].Source)
+	}
+	if fixtures[0].Source.Repository != "r/docker" {
+		t.Fatalf("expected subreddit repository metadata, got %#v", fixtures[0].Source)
+	}
+}

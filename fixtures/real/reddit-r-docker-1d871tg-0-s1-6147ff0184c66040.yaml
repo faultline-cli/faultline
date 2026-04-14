@@ -1,0 +1,24 @@
+id: reddit-r-docker-1d871tg-0-s1-6147ff0184c66040
+title: Docker windows 11 v4.30 bash terminal docker.exe not found in path however, its in the path.
+fixture_class: real
+normalized_log: |-
+    Wild issue going on with docker.
+    docker-compose build works in normal terminal but when I try to run the docker-compose build in a bash terminal I get "exec: "docker.exe": executable file not found in %PATH%" However, it proceeds to print out the path and docker.exe is in the path.
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/docker/comments/1d871tg/
+    repository: r/docker
+    comment_id: "0"
+    title: Docker windows 11 v4.30 bash terminal docker.exe not found in path however, its in the path.
+    author: thedangler
+    snippet: 1
+    fetched_at: "2026-04-14T02:54:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:26Z"
+fingerprint: 6147ff0184c66040

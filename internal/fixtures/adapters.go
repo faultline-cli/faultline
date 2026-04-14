@@ -24,6 +24,7 @@ func adapterByName(name string) (SourceAdapter, error) {
 		GitLabIssueAdapter{},
 		StackExchangeQuestionAdapter{},
 		DiscourseTopicAdapter{},
+		RedditPostAdapter{},
 	}
 	for _, adapter := range adapters {
 		if adapter.Name() == name {

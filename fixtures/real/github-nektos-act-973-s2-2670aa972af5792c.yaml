@@ -1,0 +1,26 @@
+id: github-nektos-act-973-s2-2670aa972af5792c
+title: 'Issue: exec: "node": executable file not found in $PATH: unknown'
+fixture_class: real
+normalized_log: "```\n[test.yaml/pytest-3] \U0001F433 docker exec cmd=[node /var/run/act/actions/actions-setup-python@v4/dist/cache-save/index.js] user= workdir=\n| OCI runtime exec failed: exec failed: unable to start container process: exec: \"node\": executable file not found in $PATH: unknown\n```"
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/nektos/act/issues/973
+    repository: nektos/act
+    issue_number: 973
+    comment_id: "1815780591"
+    title: 'Issue: exec: "node": executable file not found in $PATH: unknown'
+    labels:
+        - kind/bug
+        - area/runner
+    author: grahamb
+    snippet: 2
+    fetched_at: "2026-04-14T02:39:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:26Z"
+fingerprint: 2670aa972af5792c

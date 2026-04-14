@@ -1,0 +1,22 @@
+id: reddit-r-synology-190den3-0-s2-f5408e26b2e1ad44
+title: Docker permissions issue
+fixture_class: real
+normalized_log: 'unix:///var/run/docker.sock: Post "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/containers/create?name=jellyfin": dial unix /var/run/docker.sock: connect: permission denied."'
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/synology/comments/190den3/
+    repository: r/synology
+    comment_id: "0"
+    title: Docker permissions issue
+    author: DifferentSpecific
+    snippet: 2
+    fetched_at: "2026-04-14T02:54:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:34Z"
+fingerprint: f5408e26b2e1ad44

@@ -1,0 +1,28 @@
+id: github-testcontainers-testcontainers-python-558-s1-7914847158ac60e3
+title: 'Bug: `ConnectionRefusedError: [Errno 111] Connection refused` via docker-compose on Github Actions'
+fixture_class: real
+normalized_log: |-
+    for _ in range(50):
+    try:
+    Reaper._socket = socket()
+    > Reaper._socket.connect((container_host, container_port))
+    E ConnectionRefusedError: [Errno 111] Connection refused
+    /venv/lib/python3.11/site-packages/testcontainers/core/container.py:228: ConnectionRefusedError
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/testcontainers/testcontainers-python/issues/558
+    repository: testcontainers/testcontainers-python
+    issue_number: 558
+    title: 'Bug: `ConnectionRefusedError: [Errno 111] Connection refused` via docker-compose on Github Actions'
+    author: stv8
+    snippet: 1
+    fetched_at: "2026-04-14T02:39:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:32Z"
+fingerprint: 7914847158ac60e3

@@ -1,0 +1,32 @@
+id: github-1panel-dev-1panel-12257-s1-07b54c67c00c2954
+title: '[Bug] cmd.Start() failed with ''exec: "bash": executable file not found in $PATH'''
+fixture_class: real
+normalized_log: |-
+    <timestamp> 开始写入 1Panel 基本信息
+    <timestamp> 复制文件/目录 /usr/local/bin/1pctl 成功
+    <timestamp> 复制文件/目录 /usr/local/bin/1panel-core 成功
+    <timestamp> 复制文件/目录 /etc/systemd/system/1panel-core.service 成功
+    <timestamp> 复制文件/目录 /usr/local/bin/1panel-agent 成功
+    <timestamp> 复制文件/目录 /etc/systemd/system 失败 cmd.Start() failed with 'exec: "bash": executable file not found in $PATH'
+    <timestamp> 复制文件/目录 /etc/systemd/system/1panel-agent.service 失败 cmd.Start() failed with 'exec: "bash": executable file not found in $PATH'
+    <timestamp> 恢复基础数据及文件 失败: cmd.Start() failed with 'exec: "bash": executable file not found in $PATH'
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/1Panel-dev/1Panel/issues/12257
+    repository: 1Panel-dev/1Panel
+    issue_number: 12257
+    title: '[Bug] cmd.Start() failed with ''exec: "bash": executable file not found in $PATH'''
+    labels:
+        - 'type: question'
+    author: fengluo2
+    snippet: 1
+    fetched_at: "2026-04-13T13:01:58Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:26Z"
+fingerprint: 07b54c67c00c2954

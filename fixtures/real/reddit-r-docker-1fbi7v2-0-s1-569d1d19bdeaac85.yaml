@@ -1,0 +1,22 @@
+id: reddit-r-docker-1fbi7v2-0-s1-569d1d19bdeaac85
+title: SSH Docker Daemon
+fixture_class: real
+normalized_log: 'I tried adding a remote docker context: `docker context create remote-vps --docker "host=ssh://root@<ip>:22"` and then `docker context use remote-vps`. When I try to build, it says that `Connection refused`. I''m on macOS so I also setup my `ssh-agent` with `ssh-add` and when I do `ssh root@<ip>` it works. I''m able to get into the vps.'
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/docker/comments/1fbi7v2/
+    repository: r/docker
+    comment_id: "0"
+    title: SSH Docker Daemon
+    author: Pandoks_
+    snippet: 1
+    fetched_at: "2026-04-14T02:54:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:55:32Z"
+fingerprint: 569d1d19bdeaac85
