@@ -1,72 +1,57 @@
 # Faultline
 
-Faultline is a deterministic CLI that explains CI failures from logs and repository scans.
+Deterministic CI failure triage. No guessing. No rereading logs.
 
-It is built for engineers who own broken pipelines, release jobs, and deployment failures and need a fast first answer they can trust. CI failures are repetitive, noisy, and expensive to reread by hand; Faultline turns that first-pass triage into something consistent, local, and reviewable.
+Give it a failing log or repository checkout and it returns:
 
-## Why it is useful
+- the likeliest known failure pattern
+- the exact evidence behind that match
+- concrete fix and validation steps
 
-- Diagnose a CI log from a file or stdin.
-- Show the exact evidence lines behind the diagnosis.
-- Return concrete fix and validation steps instead of vague summaries.
-- Inspect a repository tree for source-level failure risks.
-- Emit stable text, markdown, and JSON for humans and automation.
-- Stay deterministic: same input, same playbooks, same result.
-- Avoid LLM drift, hosted analysis services, and hidden heuristics.
+Built on explicit playbooks, not probabilistic summaries.
 
-## Example
+- Analyze logs from a file or stdin.
+- Inspect a repository for source-level failure risks.
+- Return deterministic text, markdown, and JSON output.
+- Run locally with explicit, reviewable rules.
 
-Real CI log input:
+## Why use it
 
-```text
-> docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
-Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+Faultline is for repeatable CI failures. It is not for open-ended incident forensics.
 
-> docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
-Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
+Use it when:
 
-> docker --debug pull mcr.microsoft.com/mssql/server
-Using default tag: latest
-Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
-```
+- a job failed and you want the shortest path to a likely cause
+- the log is noisy enough that manual reading is slow
+- you want evidence-backed fix steps instead of a vague summary
+- repository layout or config drift may be part of the problem
 
-Command:
+Use raw log reading when the failure mode is genuinely new and there is no matching playbook yet.
+
+## Install and try it
+
+Install a release archive on Linux amd64:
 
 ```bash
-faultline analyze build.log --format markdown --mode detailed
+VERSION=v0.1.0
+curl -L "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
+tar -xzf faultline.tar.gz
+cd "faultline_${VERSION}_linux_amd64"
+./faultline analyze examples/docker-auth.log
 ```
 
-Output:
-
-```markdown
-# Docker registry authentication failure
-
-- ID: `docker-auth`
-- Confidence: 33%
-- Category: auth
-- Severity: high
-- Score: 2.00
-- Detector: log
-- Stage: test
-
-## Summary
-
-CI could not authenticate to the container registry before an image pull or push.
-
-## Evidence
-
-- Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
-```
-
-## Quick Start
-
-Build from source and run the bundled examples:
+Build from source:
 
 ```bash
 make build
 ./bin/faultline analyze examples/docker-auth.log
-./bin/faultline analyze examples/missing-executable.log
-./bin/faultline analyze examples/runtime-mismatch.log
+```
+
+Run with Docker:
+
+```bash
+docker build -t faultline .
+docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
 ```
 
 Minimal usage:
@@ -81,28 +66,85 @@ cat build.log | faultline analyze
 # Emit stable JSON for automation
 faultline analyze build.log --json
 
-# Show only the fix steps for the top diagnosis
+# Print only the fix steps for the top diagnosis
 faultline fix build.log --format markdown
 
 # Inspect a repository for source-level findings
 faultline inspect .
 ```
 
-Docker:
+## Example
 
-```bash
-docker build -t faultline .
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
+Input log excerpt:
+
+```text
+> docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
+
+> docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
+Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
 ```
 
-Release archive:
+Analyze it:
 
 ```bash
-curl -L <release-tarball-url> -o faultline.tar.gz
-tar -xzf faultline.tar.gz
-cd faultline_<version>_<os>_<arch>
-./faultline analyze examples/docker-auth.log
+faultline analyze examples/docker-auth.log --format markdown --mode detailed
 ```
+
+Output:
+
+```markdown
+# Docker registry authentication failure
+
+- ID: `docker-auth`
+- Confidence: 33%
+- Category: auth
+- Severity: high
+- Detector: log
+
+## Summary
+
+CI could not authenticate to the container registry before an image pull or push.
+
+## Evidence
+
+- Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
+```
+
+Get the fix steps from the same playbook:
+
+```bash
+faultline fix examples/docker-auth.log --format markdown
+```
+
+```markdown
+# Docker registry authentication failure
+
+## Fix steps
+
+1. Verify the registry username, token, or password configured in CI secrets.
+2. Ensure the registry login step runs before any `docker pull` or `docker push` command.
+3. Confirm the token has the correct repository scope for the image being accessed.
+4. Validate the same credential locally with `docker login <registry>`.
+```
+
+Inspect the full playbook and match rules:
+
+```bash
+faultline explain docker-auth
+```
+
+## Why Faultline is different
+
+Faultline does a small number of things on purpose.
+
+- Deterministic: the same input and playbook set produce the same result.
+- Evidence-backed: diagnoses point to matched log lines, not hidden reasoning.
+- Local-first: no hosted analysis service and no runtime network dependency.
+- Reviewable: playbooks are structured rules with operator-facing guidance.
+- Action-oriented: output includes fix and validation steps, not just labels.
+
+That tradeoff is intentional. Faultline is not trying to guess every failure. It is trying to be reliable on the failures it knows.
 
 ## Commands
 
@@ -111,9 +153,11 @@ cd faultline_<version>_<os>_<arch>
 | `analyze [file]` | Diagnose a CI log from a file or stdin |
 | `fix [file]` | Print the fix steps for the top diagnosis |
 | `inspect [path]` | Inspect a repository for source-level failure risks |
+| `explain <id>` | Show the full details for one playbook |
 | `workflow [file]` | Generate a deterministic follow-up workflow |
 | `list` | List available playbooks |
-| `explain <id>` | Show the details of one playbook |
+| `packs` | Install or inspect additional playbook coverage |
+| `completion` | Generate shell completion scripts |
 
 Common flags:
 
@@ -126,39 +170,74 @@ Common flags:
 | `--git` | Enrich analysis with recent local git context |
 | `--repo <path>` | Choose the repository path used by `--git` |
 
-## Playbooks
+## Playbooks and coverage
 
-Playbooks are deterministic rules plus operator-facing guidance.
+Faultline ships with a bundled catalog that is useful on first run.
 
-- Structured fields decide whether a log or repository state matches.
-- Evidence lines show why that playbook won.
-- Summary, diagnosis, fix, and validation fields turn the match into an actionable response.
+- common CI failure patterns are included in the default release
+- evidence, diagnosis, fix, and validation guidance ship with each playbook
+- `inspect` includes baseline source-level coverage without requiring extra installs
 
-This keeps the engine explicit and reviewable while still producing useful operator output.
+### Example playbooks
 
-Additional playbook packs with extended coverage are planned.
+A small sample of the bundled catalog:
 
-## Credibility
+**Auth and access**
 
-- Real regression corpus under `fixtures/real/` built from public CI failures.
-- Deterministic engine with stable ranking and evidence-first output.
-- Real-world example logs under `examples/` with checked-in expected output.
-- Source inspection support for repository-level failure risks.
-- Release and regression workflow that exercises tests, overlap review, and delivery paths.
+- `docker-auth` - Docker registry authentication failure
+- `aws-credentials` - AWS credentials missing or invalid
 
-## Feedback
+**Build and environment**
 
-The highest-value contribution is a real failure that Faultline should explain better.
+- `missing-executable` - Required executable or runtime binary missing
+- `runtime-mismatch` - Python, Ruby, or Go runtime version mismatch
+- `cache-corruption` - Corrupted or stale dependency cache
 
-- Open an issue with the failing log snippet, expected diagnosis, and relevant context.
-- Add or refine fixtures when a failure should be preserved in regression tests.
-- If Faultline misses a recurring CI failure, send that case. Those misses are the fastest way to improve the tool.
+**Runtime and infrastructure**
+
+- `permission-denied` - Permission denied
+- `oom-killed` - Process killed by OOM killer
+- `dns-resolution` - DNS resolution failure
+
+See the full list with:
+
+```bash
+faultline list
+```
+
+Faultline also supports installed playbook packs for extra coverage. That is the upgrade path for narrower or deeper failure modes without forking the CLI or replacing the bundled catalog.
+
+Right now that mainly means one optional premium playbook pack. It adds coverage in narrower areas such as provider-specific workflows, advanced operations paths, and deeper ecosystem-specific failures.
+
+Install an additional pack once and it will load automatically on future runs:
+
+```bash
+faultline packs install ./path/to/pack
+faultline packs list
+faultline list
+```
+
+The bundled catalog stands on its own. Packs are there if you need more coverage in a specific area.
+
+## Validation and credibility
+
+- `./bin/faultline fixtures stats` currently reports 112 accepted real fixtures.
+- Current regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
+- Bundled coverage currently ships with 67 playbook files under `playbooks/bundled/`.
+- Release validation runs `make test`, `make review`, `make fixture-check`, archive smoke tests, and Docker smoke tests in CI.
+
+These numbers describe the checked-in regression corpus, not the full space of CI failures.
+
+## Feedback and coverage requests
+
+The most useful feedback is a real failure Faultline should explain better.
+
+- Open an issue with a sanitized log excerpt, the expected diagnosis, and the relevant context.
+- Add or refine fixtures when a failure should stay covered in regression tests.
+- If Faultline missed a recurring failure in your stack, send that case.
+- If you need coverage beyond the bundled catalog, get in touch about the premium pack.
 
 Raw ingestion artifacts belong in `fixtures/staging/` as a local review queue only. Sanitize them first, then promote accepted cases into `fixtures/real/`.
-
-## License
-
-Faultline is licensed under Apache-2.0. See `LICENSE` for the full text.
 
 ## Development
 
@@ -179,6 +258,9 @@ Helpful references:
 - `CONTRIBUTING.md` for contribution and fixture-sanitization guidance
 - `SECURITY.md` for vulnerability reporting expectations
 - `CODE_OF_CONDUCT.md` for project participation expectations
-- `LICENSE` for the Apache-2.0 terms
+
+## License
+
+Faultline is licensed under MIT. See `LICENSE` for the full text.
 
 

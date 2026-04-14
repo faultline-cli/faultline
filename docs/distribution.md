@@ -20,9 +20,10 @@ Extra playbook packs can be composed on top when needed, but the default release
 The release archive flow is:
 
 ```bash
-curl -L <public-release-tarball-url> -o faultline.tar.gz
+VERSION=v0.1.0
+curl -L "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
-cd faultline_<version>_<os>_<arch>
+cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze build.log
 ```
 
