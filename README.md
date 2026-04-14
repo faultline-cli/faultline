@@ -10,14 +10,18 @@ Give it a failing log or repository checkout and it returns:
 
 Built on explicit playbooks, not probabilistic summaries.
 
+Works well for common failures like Docker auth issues, missing executables, runtime mismatches, and CI misconfigurations.
+
+![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
+
 - Analyze logs from a file or stdin.
 - Inspect a repository for source-level failure risks.
-- Return deterministic text, markdown, and JSON output.
+- Return deterministic terminal output and JSON output.
 - Run locally with explicit, reviewable rules.
 
 ## Why use it
 
-Faultline is for repeatable CI failures. It is not for open-ended incident forensics.
+Faultline is for repeatable CI failures, not open-ended debugging.
 
 Use it when:
 
@@ -30,7 +34,7 @@ Use raw log reading when the failure mode is genuinely new and there is no match
 
 ## Install and try it
 
-Install a release archive on Linux amd64:
+### Release archive
 
 ```bash
 VERSION=v0.1.0
@@ -40,21 +44,21 @@ cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze examples/docker-auth.log
 ```
 
-Build from source:
+### Build from source
 
 ```bash
 make build
 ./bin/faultline analyze examples/docker-auth.log
 ```
 
-Run with Docker:
+### Docker
 
 ```bash
 docker build -t faultline .
 docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
 ```
 
-Minimal usage:
+### Minimal usage
 
 ```bash
 # Analyze a log file
@@ -67,7 +71,7 @@ cat build.log | faultline analyze
 faultline analyze build.log --json
 
 # Print only the fix steps for the top diagnosis
-faultline fix build.log --format markdown
+faultline fix build.log
 
 # Inspect a repository for source-level findings
 faultline inspect .
@@ -75,60 +79,23 @@ faultline inspect .
 
 ## Example
 
-Input log excerpt:
-
-```text
-> docker pull mcr.microsoft.com/mssql/server:2017-latest-ubuntu
-Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden
-
-> docker --debug pull mcr/microsoft.com/mssql/server:2017-latest-ubuntu
-Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
-```
-
-Analyze it:
+The demo above shows the same Docker auth failure first with the default terminal output, then with the more detailed terminal view.
 
 ```bash
-faultline analyze examples/docker-auth.log --format markdown --mode detailed
+# Default terminal output
+faultline analyze examples/docker-auth.log
+
+# More detailed terminal output
+faultline analyze examples/docker-auth.log --mode detailed
 ```
 
-Output:
-
-```markdown
-# Docker registry authentication failure
-
-- ID: `docker-auth`
-- Confidence: 33%
-- Category: auth
-- Severity: high
-- Detector: log
-
-## Summary
-
-CI could not authenticate to the container registry before an image pull or push.
-
-## Evidence
-
-- Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'
-```
-
-Get the fix steps from the same playbook:
+When you want the remediation path directly:
 
 ```bash
-faultline fix examples/docker-auth.log --format markdown
+faultline fix examples/docker-auth.log
 ```
 
-```markdown
-# Docker registry authentication failure
-
-## Fix steps
-
-1. Verify the registry username, token, or password configured in CI secrets.
-2. Ensure the registry login step runs before any `docker pull` or `docker push` command.
-3. Confirm the token has the correct repository scope for the image being accessed.
-4. Validate the same credential locally with `docker login <registry>`.
-```
-
-Inspect the full playbook and match rules:
+When you want the full playbook behind the match:
 
 ```bash
 faultline explain docker-auth
@@ -159,12 +126,11 @@ That tradeoff is intentional. Faultline is not trying to guess every failure. It
 | `packs` | Install or inspect additional playbook coverage |
 | `completion` | Generate shell completion scripts |
 
-Common flags:
+### Common flags
 
 | Flag | Description |
 | --- | --- |
 | `--json` | Emit machine-readable JSON |
-| `--format raw\|markdown` | Select the human-readable output format |
 | `--mode quick\|detailed` | Control output detail for human-readable results |
 | `--top N` | Show the top N ranked results |
 | `--git` | Enrich analysis with recent local git context |
@@ -207,7 +173,7 @@ faultline list
 
 Faultline also supports installed playbook packs for extra coverage. That is the upgrade path for narrower or deeper failure modes without forking the CLI or replacing the bundled catalog.
 
-Right now that mainly means one optional premium playbook pack. It adds coverage in narrower areas such as provider-specific workflows, advanced operations paths, and deeper ecosystem-specific failures.
+Right now that mainly means one optional premium playbook pack. It adds coverage in narrower areas such as provider-specific workflows and deeper ecosystem coverage.
 
 Install an additional pack once and it will load automatically on future runs:
 
@@ -245,7 +211,10 @@ Raw ingestion artifacts belong in `fixtures/staging/` as a local review queue on
 make build
 make test
 make review
+make demo-assets
 ```
+
+`make demo-assets` regenerates the README terminal GIFs and screenshots from source-controlled VHS tapes under `docs/readme-assets/tapes/`. The canonical entrypoint is `tools/render-demo-assets.sh`; it prefers repo-local tools under `.tools/bin`, otherwise uses local `vhs`, and falls back to the official VHS Docker image when Docker is installed.
 
 Helpful references:
 

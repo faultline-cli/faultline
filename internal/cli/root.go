@@ -23,7 +23,8 @@ func NewRootCommand(version string) *cobra.Command {
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
 			"  cat build.log | faultline analyze --json",
-			"  faultline fix build.log --format markdown",
+			"  faultline fix build.log",
+			"  faultline analyze build.log --mode detailed",
 			"  faultline inspect .",
 		}, "\n"),
 		Version:       version,
@@ -41,15 +42,6 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newFixturesCommand())
 	return cmd
 }
-
-func validateOutputFormat(value string) error {
-	format := output.Format(value)
-	if !format.Valid() {
-		return fmt.Errorf("--format must be %q or %q", output.FormatRaw, output.FormatMarkdown)
-	}
-	return nil
-}
-
 func validateOutputMode(value string) error {
 	if value != string(output.ModeQuick) && value != string(output.ModeDetailed) {
 		return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
@@ -69,7 +61,6 @@ func newAnalyzeCommand() *cobra.Command {
 		jsonOut       bool
 		top           int
 		mode          string
-		format        string
 		playbookDir   string
 		playbookPacks []string
 		ciAnnotations bool
@@ -101,9 +92,6 @@ func newAnalyzeCommand() *cobra.Command {
 			if err := validateOutputMode(mode); err != nil {
 				return err
 			}
-			if err := validateOutputFormat(format); err != nil {
-				return err
-			}
 
 			input, err := ReadInput(args)
 			if err != nil {
@@ -114,7 +102,7 @@ func newAnalyzeCommand() *cobra.Command {
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:               top,
 				Mode:              output.Mode(mode),
-				Format:            output.Format(format),
+				Format:            output.FormatTerminal,
 				JSON:              jsonOut,
 				CIAnnotations:     ciAnnotations,
 				NoHistory:         noHistory,
@@ -130,7 +118,6 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
@@ -143,7 +130,6 @@ func newAnalyzeCommand() *cobra.Command {
 
 func newFixCommand() *cobra.Command {
 	var (
-		format        string
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
@@ -154,9 +140,6 @@ func newFixCommand() *cobra.Command {
 		Short: "Show fix steps for the top diagnosis",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateOutputFormat(format); err != nil {
-				return err
-			}
 			input, err := ReadInput(args)
 			if err != nil {
 				return err
@@ -165,7 +148,7 @@ func newFixCommand() *cobra.Command {
 
 			return app.NewService().Fix(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:              1,
-				Format:           output.Format(format),
+				Format:           output.FormatTerminal,
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
@@ -173,7 +156,6 @@ func newFixCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
@@ -185,7 +167,6 @@ func newInspectCommand() *cobra.Command {
 		jsonOut       bool
 		top           int
 		mode          string
-		format        string
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
@@ -199,9 +180,6 @@ func newInspectCommand() *cobra.Command {
 			if err := validateOutputMode(mode); err != nil {
 				return err
 			}
-			if err := validateOutputFormat(format); err != nil {
-				return err
-			}
 			root := "."
 			if len(args) == 1 {
 				root = args[0]
@@ -209,7 +187,7 @@ func newInspectCommand() *cobra.Command {
 			return app.NewService().Inspect(root, app.AnalyzeOptions{
 				Top:              top,
 				Mode:             output.Mode(mode),
-				Format:           output.Format(format),
+				Format:           output.FormatTerminal,
 				JSON:             jsonOut,
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
@@ -221,7 +199,6 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
@@ -252,7 +229,6 @@ func newListCommand() *cobra.Command {
 
 func newExplainCommand() *cobra.Command {
 	var (
-		format        string
 		playbookDir   string
 		playbookPacks []string
 	)
@@ -262,14 +238,10 @@ func newExplainCommand() *cobra.Command {
 		Short: "Show full details for a playbook",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := validateOutputFormat(format); err != nil {
-				return err
-			}
-			return app.NewService().Explain(args[0], playbookDir, playbookPacks, output.Format(format), cmd.OutOrStdout())
+			return app.NewService().Explain(args[0], playbookDir, playbookPacks, output.FormatTerminal, cmd.OutOrStdout())
 		},
 	}
 
-	cmd.Flags().StringVar(&format, "format", string(output.FormatRaw), "output format: raw|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	return cmd

@@ -3,6 +3,7 @@ package renderer
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 
 	glamour "charm.land/glamour/v2"
@@ -10,6 +11,8 @@ import (
 
 	"faultline/internal/model"
 )
+
+var leadingHeadingPattern = regexp.MustCompile(`\A(?s)#{1,6}[ \t]+([^\n]+)\n+`)
 
 type Renderer struct {
 	opts   Options
@@ -43,7 +46,7 @@ func (r Renderer) RenderAnalyze(a *model.Analysis, top int, detailed bool) strin
 	}
 	if detailed {
 		if repo := r.renderRepoContext(a.RepoContext); repo != "" {
-			parts = append(parts, r.renderSection("Repo Context", repo))
+			parts = append(parts, r.renderDetailPanel("Repo Context", repo, "repo"))
 		}
 	}
 	return strings.Join(parts, "\n\n")
@@ -55,7 +58,7 @@ func (r Renderer) RenderFix(a *model.Analysis) string {
 	}
 	result := a.Results[0]
 	header := r.renderHeader(result.Playbook, fmt.Sprintf("%d%% confidence", int(math.Round(result.Confidence*100))), "")
-	body := r.renderMarkdown(result.Playbook.Fix)
+	body := r.renderMarkdownSection("Fix Steps", result.Playbook.Fix)
 	if strings.TrimSpace(body) == "" {
 		body = "No fix steps defined for this playbook."
 	}
@@ -65,7 +68,7 @@ func (r Renderer) RenderFix(a *model.Analysis) string {
 			metaRow("ID", result.Playbook.ID),
 			metaRow("Category", result.Playbook.Category),
 		}),
-		body,
+		r.renderSection("Fix Steps", body),
 	}, "\n\n")) + "\n"
 }
 
@@ -81,19 +84,19 @@ func (r Renderer) RenderExplain(pb model.Playbook) string {
 		}),
 	}
 
-	if summary := r.renderMarkdown(pb.Summary); summary != "" {
+	if summary := r.renderMarkdownSection("Summary", pb.Summary); summary != "" {
 		sections = append(sections, r.renderSection("Summary", summary))
 	}
-	if diagnosis := r.renderMarkdown(pb.Diagnosis); diagnosis != "" {
+	if diagnosis := r.renderMarkdownSection("Diagnosis", pb.Diagnosis); diagnosis != "" {
 		sections = append(sections, r.renderSection("Diagnosis", diagnosis))
 	}
-	if why := r.renderMarkdown(pb.WhyItMatters); why != "" {
+	if why := r.renderMarkdownSection("Why It Matters", pb.WhyItMatters); why != "" {
 		sections = append(sections, r.renderSection("Why It Matters", why))
 	}
-	if fix := r.renderMarkdown(pb.Fix); fix != "" {
-		sections = append(sections, r.renderSection("Fix", fix))
+	if fix := r.renderMarkdownSection("Fix Steps", pb.Fix); fix != "" {
+		sections = append(sections, r.renderSection("Fix Steps", fix))
 	}
-	if validation := r.renderMarkdown(pb.Validation); validation != "" {
+	if validation := r.renderMarkdownSection("Validation", pb.Validation); validation != "" {
 		sections = append(sections, r.renderSection("Validation", validation))
 	}
 	sections = append(sections, r.renderCallout("Match rules decide; markdown explains.\n\n"+r.renderMatchSummary(pb)))
@@ -129,11 +132,11 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		}),
 	}
 
-	if summary := r.renderMarkdown(result.Playbook.Summary); summary != "" {
+	if summary := r.renderMarkdownSection("Summary", result.Playbook.Summary); summary != "" {
 		parts = append(parts, r.renderSection("Summary", summary))
 	}
 	if detailed && len(result.Evidence) > 0 {
-		parts = append(parts, r.renderSection("Evidence", r.renderBulletLines(result.Evidence)))
+		parts = append(parts, r.renderDetailPanel("Evidence", r.renderBulletLines(result.Evidence), "evidence"))
 	}
 	if detailed {
 		if triggered := r.renderExplanation("Triggered by", result.Explanation.TriggeredBy); triggered != "" {
@@ -146,7 +149,7 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 			parts = append(parts, mitigated)
 		}
 		if breakdown := r.renderScoreBreakdown(result.Breakdown); breakdown != "" {
-			parts = append(parts, r.renderSection("Score Breakdown", breakdown))
+			parts = append(parts, r.renderDetailPanel("Score Breakdown", breakdown, "score"))
 		}
 	}
 	return strings.TrimSpace(strings.Join(filterEmpty(parts), "\n\n"))
@@ -179,7 +182,7 @@ func (r Renderer) renderHeader(pb model.Playbook, subtitle, pack string) string 
 	if pack != "" {
 		meta = append(meta, r.styles.muted.Render(pack))
 	}
-	body := title + "\n" + lipgloss.JoinHorizontal(lipgloss.Left, meta...)
+	body := title + "\n" + joinHorizontalWithGap("  ", meta...)
 	return r.styles.card.Width(r.opts.Width - 2).Render(body)
 }
 
@@ -189,9 +192,9 @@ func (r Renderer) renderMetaRows(rows []string) string {
 		return ""
 	}
 	if r.opts.Plain {
-		return strings.Join(rows, "\n")
+		return r.renderMetaRowsPlain(rows)
 	}
-	return r.styles.muted.Render(strings.Join(rows, "\n"))
+	return r.renderMetaRowsStyled(rows)
 }
 
 func (r Renderer) renderSection(title, body string) string {
@@ -204,6 +207,22 @@ func (r Renderer) renderSection(title, body string) string {
 	header := r.styles.subtitle.Render(title)
 	divider := r.styles.divider.Render(strings.Repeat("─", min(r.opts.Width-2, 32)))
 	return header + "\n" + divider + "\n" + body
+}
+
+func (r Renderer) renderDetailPanel(title, body, tone string) string {
+	if strings.TrimSpace(body) == "" {
+		return ""
+	}
+	if r.opts.Plain {
+		return r.renderSection(title, body)
+	}
+
+	borderColor, badge := r.detailPanelStyles(title, tone)
+	panel := r.styles.panel.
+		BorderForeground(lipgloss.Color(borderColor)).
+		Width(r.opts.Width - 2)
+
+	return panel.Render(badge.Render(strings.ToUpper(title)) + "\n" + body)
 }
 
 func (r Renderer) renderCallout(body string) string {
@@ -221,15 +240,25 @@ func (r Renderer) renderMarkdown(markdown string) string {
 	if markdown == "" {
 		return ""
 	}
-	style := "notty"
-	if !r.opts.Plain {
-		style = "dark"
-		if !r.opts.DarkBackground {
-			style = "light"
+	if r.opts.Plain {
+		renderer, err := glamour.NewTermRenderer(
+			glamour.WithStandardStyle("notty"),
+			glamour.WithWordWrap(r.markdownWidth()),
+		)
+		if err != nil {
+			return markdown
 		}
+		defer renderer.Close()
+
+		out, err := renderer.Render(markdown)
+		if err != nil {
+			return markdown
+		}
+		return strings.TrimRight(out, "\n")
 	}
+
 	renderer, err := glamour.NewTermRenderer(
-		glamour.WithStandardStyle(style),
+		glamour.WithStyles(markdownStyles(r.opts.DarkBackground)),
 		glamour.WithWordWrap(r.markdownWidth()),
 	)
 	if err != nil {
@@ -242,6 +271,10 @@ func (r Renderer) renderMarkdown(markdown string) string {
 		return markdown
 	}
 	return strings.TrimRight(out, "\n")
+}
+
+func (r Renderer) renderMarkdownSection(title, markdown string) string {
+	return r.renderMarkdown(trimRedundantHeading(markdown, title))
 }
 
 func (r Renderer) renderMatchSummary(pb model.Playbook) string {
@@ -293,7 +326,7 @@ func (r Renderer) renderExplanation(title string, lines []string) string {
 	if len(lines) == 0 {
 		return ""
 	}
-	return r.renderSection(title, r.renderBulletLines(lines))
+	return r.renderDetailPanel(title, r.renderBulletLines(lines), "signal")
 }
 
 func (r Renderer) renderScoreBreakdown(breakdown model.ScoreBreakdown) string {
@@ -357,6 +390,27 @@ func (r Renderer) renderRepoContext(repo *model.RepoContext) string {
 	return strings.Join(lines, "\n")
 }
 
+func (r Renderer) detailPanelStyles(title, tone string) (string, lipgloss.Style) {
+	switch tone {
+	case "evidence":
+		return "#8B5A2B", panelTitleStyle("#8B5A2B", "#FFF7ED")
+	case "score":
+		return "#6D28D9", panelTitleStyle("#6D28D9", "#F5F3FF")
+	case "repo":
+		return "#0F766E", panelTitleStyle("#0F766E", "#ECFEFF")
+	case "signal":
+		switch strings.ToLower(strings.TrimSpace(title)) {
+		case "triggered by":
+			return "#0369A1", panelTitleStyle("#0369A1", "#E0F2FE")
+		case "amplified by":
+			return "#92400E", panelTitleStyle("#92400E", "#FEF3C7")
+		case "mitigated by":
+			return "#166534", panelTitleStyle("#166534", "#DCFCE7")
+		}
+	}
+	return "#7C8798", panelTitleStyle("#475569", "#E2E8F0")
+}
+
 func (r Renderer) renderListHeader() string {
 	if r.opts.Plain {
 		return "ID\tCATEGORY\tSEVERITY\tPACK\tTITLE"
@@ -401,6 +455,56 @@ func metaRow(label, value string) string {
 	return label + ": " + value
 }
 
+func (r Renderer) renderMetaRowsPlain(rows []string) string {
+	pairs := chunkStrings(rows, 2)
+	lines := make([]string, 0, len(pairs))
+	for _, pair := range pairs {
+		lines = append(lines, strings.Join(pair, "  |  "))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderMetaRowsStyled(rows []string) string {
+	columnWidth := (r.opts.Width - 6) / 2
+	if columnWidth < 24 {
+		columnWidth = 24
+	}
+	pairs := chunkStrings(rows, 2)
+	lines := make([]string, 0, len(pairs))
+	for _, pair := range pairs {
+		columns := make([]string, 0, len(pair))
+		for _, row := range pair {
+			columns = append(columns, r.renderMetaEntry(row, columnWidth))
+		}
+		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, columns...))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderMetaEntry(row string, width int) string {
+	label, value, ok := strings.Cut(row, ": ")
+	if !ok {
+		return r.styles.muted.Width(width).Render(row)
+	}
+	entry := r.styles.metaLabel.Render(strings.ToUpper(label)) + " " + r.styles.muted.Render(value)
+	return lipgloss.NewStyle().Width(width).Render(entry)
+}
+
+func chunkStrings(values []string, size int) [][]string {
+	if size <= 0 || len(values) == 0 {
+		return nil
+	}
+	out := make([][]string, 0, (len(values)+size-1)/size)
+	for start := 0; start < len(values); start += size {
+		end := start + size
+		if end > len(values) {
+			end = len(values)
+		}
+		out = append(out, values[start:end])
+	}
+	return out
+}
+
 func filterEmpty(values []string) []string {
 	out := values[:0]
 	for _, value := range values {
@@ -416,6 +520,62 @@ func fallback(value, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+func joinHorizontalWithGap(gap string, parts ...string) string {
+	parts = filterEmpty(parts)
+	if len(parts) == 0 {
+		return ""
+	}
+	joined := make([]string, 0, len(parts)*2-1)
+	for i, part := range parts {
+		if i > 0 {
+			joined = append(joined, gap)
+		}
+		joined = append(joined, part)
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Left, joined...)
+}
+
+func trimRedundantHeading(markdown, title string) string {
+	markdown = strings.TrimSpace(markdown)
+	if markdown == "" {
+		return ""
+	}
+	matches := leadingHeadingPattern.FindStringSubmatch(markdown)
+	if len(matches) < 2 {
+		return markdown
+	}
+	heading := normalizeHeading(matches[1])
+	target := normalizeHeading(title)
+	if heading == "" || target == "" {
+		return markdown
+	}
+	if heading == target || strings.Contains(heading, target) || strings.Contains(target, heading) {
+		return strings.TrimSpace(markdown[len(matches[0]):])
+	}
+	return markdown
+}
+
+func normalizeHeading(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" {
+		return ""
+	}
+	var b strings.Builder
+	lastSpace := false
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			lastSpace = false
+			continue
+		}
+		if !lastSpace {
+			b.WriteByte(' ')
+			lastSpace = true
+		}
+	}
+	return strings.TrimSpace(b.String())
 }
 
 func displayPackName(pb model.Playbook) string {

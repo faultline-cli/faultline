@@ -25,7 +25,7 @@ func baseOpts() AnalyzeOptions {
 	return AnalyzeOptions{
 		Top:         1,
 		Mode:        output.ModeQuick,
-		Format:      output.FormatRaw,
+		Format:      output.FormatTerminal,
 		NoHistory:   true,
 		PlaybookDir: repoPlaybookDir(),
 	}
@@ -158,7 +158,7 @@ func TestExplainKnownPlaybook(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.Explain("git-auth", repoPlaybookDir(), nil, output.FormatRaw, &buf)
+	err := svc.Explain("git-auth", repoPlaybookDir(), nil, output.FormatTerminal, &buf)
 	if err != nil {
 		t.Fatalf("Explain: %v", err)
 	}
@@ -171,7 +171,7 @@ func TestExplainUnknownPlaybookReturnsError(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.Explain("does-not-exist-abc123", repoPlaybookDir(), nil, output.FormatRaw, &buf)
+	err := svc.Explain("does-not-exist-abc123", repoPlaybookDir(), nil, output.FormatTerminal, &buf)
 	if err == nil {
 		t.Error("expected error for unknown playbook ID, got nil")
 	}

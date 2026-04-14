@@ -16,13 +16,13 @@ Each `.log` file has a matching `.expected.md` file so you can compare the curre
 
 ```bash
 make build
-./bin/faultline analyze examples/docker-auth.log --format markdown
-./bin/faultline analyze examples/missing-executable.log --format markdown
-./bin/faultline analyze examples/runtime-mismatch.log --format markdown
+./bin/faultline analyze examples/docker-auth.log
+./bin/faultline analyze examples/missing-executable.log
+./bin/faultline analyze examples/runtime-mismatch.log
 ```
 
 For a tighter remediation view:
 
 ```bash
-./bin/faultline fix examples/docker-auth.log --format markdown
+./bin/faultline fix examples/docker-auth.log
 ```

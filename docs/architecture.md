@@ -76,6 +76,6 @@ as `summary`, `diagnosis`, `fix`, and
 
 - markdown is presentation content only
 - structured playbook fields still drive matching and ranking
-- `--format markdown` emits markdown source from the same deterministic content model
+- CLI commands render the same deterministic content model to terminal output by default
 - `--json` bypasses terminal styling entirely
 - non-TTY and no-color environments fall back to plain output

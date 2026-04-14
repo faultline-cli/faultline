@@ -2,25 +2,6 @@ package cli
 
 import "testing"
 
-func TestValidateOutputFormat(t *testing.T) {
-	cases := []struct {
-		value   string
-		wantErr bool
-	}{
-		{"raw", false},
-		{"markdown", false},
-		{"json", true},
-		{"", true},
-		{"HTML", true},
-	}
-	for _, tc := range cases {
-		err := validateOutputFormat(tc.value)
-		if (err != nil) != tc.wantErr {
-			t.Errorf("validateOutputFormat(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
-		}
-	}
-}
-
 func TestValidateOutputMode(t *testing.T) {
 	cases := []struct {
 		value   string
