@@ -16,7 +16,7 @@ Works well for common failures like Docker auth issues, missing executables, run
 
 - Analyze logs from a file or stdin.
 - Inspect a repository for source-level failure risks.
-- Return deterministic terminal output and JSON output.
+- Return deterministic terminal, markdown, and JSON output.
 - Run locally with explicit, reviewable rules.
 
 ## Why use it
@@ -70,8 +70,11 @@ cat build.log | faultline analyze
 # Emit stable JSON for automation
 faultline analyze build.log --json
 
+# Render markdown instead of terminal output
+faultline analyze build.log --format markdown
+
 # Print only the fix steps for the top diagnosis
-faultline fix build.log
+faultline fix build.log --format markdown
 
 # Inspect a repository for source-level findings
 faultline inspect .
@@ -85,6 +88,9 @@ The demo above shows the same Docker auth failure first with the default termina
 # Default terminal output
 faultline analyze examples/docker-auth.log
 
+# Markdown output
+faultline analyze examples/docker-auth.log --format markdown
+
 # More detailed terminal output
 faultline analyze examples/docker-auth.log --mode detailed
 ```
@@ -92,7 +98,7 @@ faultline analyze examples/docker-auth.log --mode detailed
 When you want the remediation path directly:
 
 ```bash
-faultline fix examples/docker-auth.log
+faultline fix examples/docker-auth.log --format markdown
 ```
 
 When you want the full playbook behind the match:
@@ -131,6 +137,7 @@ That tradeoff is intentional. Faultline is not trying to guess every failure. It
 | Flag | Description |
 | --- | --- |
 | `--json` | Emit machine-readable JSON |
+| `--format terminal\|markdown\|json` | Select the output format |
 | `--mode quick\|detailed` | Control output detail for human-readable results |
 | `--top N` | Show the top N ranked results |
 | `--git` | Enrich analysis with recent local git context |

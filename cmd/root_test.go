@@ -191,22 +191,72 @@ func TestAnalyzeDetailedMode(t *testing.T) {
 	}
 }
 
-func TestAnalyzeRejectsRemovedFormatFlag(t *testing.T) {
+func TestAnalyzeMarkdownFormat(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
 
 	cmd := newRootCommand()
-	cmd.SetArgs([]string{"analyze", "--format", "markdown", "--no-history", logPath})
+	cmd.SetArgs([]string{"analyze", "--format", "markdown", "--mode", "detailed", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --format markdown: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "# Docker registry authentication failure") {
+		t.Fatalf("expected markdown heading, got %q", got)
+	}
+	if !strings.Contains(got, "- ID: `docker-auth`") {
+		t.Fatalf("expected markdown metadata, got %q", got)
+	}
+	if !strings.Contains(got, "## Triggered By") {
+		t.Fatalf("expected detailed markdown sections, got %q", got)
+	}
+}
+
+func TestAnalyzeFormatJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--format", "json", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --format json: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal JSON: %v", err)
+	}
+	if payload["matched"] != true {
+		t.Fatalf("expected matched=true, got %v", payload["matched"])
+	}
+}
+
+func TestAnalyzeRejectsInvalidFormat(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--format", "html", "--no-history", logPath})
 	cmd.SetOut(new(bytes.Buffer))
 	cmd.SetErr(new(bytes.Buffer))
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
 
 	err := cmd.Execute()
 	if err == nil {
-		t.Fatal("expected unknown format flag error")
+		t.Fatal("expected invalid format error")
 	}
-	if !strings.Contains(err.Error(), "unknown flag: --format") {
-		t.Fatalf("unexpected removed flag error: %v", err)
+	if !strings.Contains(err.Error(), "--format must be \"terminal\", \"markdown\", or \"json\"") {
+		t.Fatalf("unexpected invalid format error: %v", err)
 	}
 }
 
@@ -264,7 +314,7 @@ func TestFixCommand(t *testing.T) {
 	}
 }
 
-func TestFixRejectsRemovedFormatFlag(t *testing.T) {
+func TestFixCommandMarkdownFormat(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
 
@@ -275,12 +325,11 @@ func TestFixRejectsRemovedFormatFlag(t *testing.T) {
 	cmd.SetErr(new(bytes.Buffer))
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
 
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected unknown format flag error")
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fix --format markdown: %v", err)
 	}
-	if !strings.Contains(err.Error(), "unknown flag: --format") {
-		t.Fatalf("unexpected removed flag error: %v", err)
+	if !strings.Contains(out.String(), "## Fix") {
+		t.Fatalf("expected markdown fix heading, got %q", out.String())
 	}
 }
 
@@ -466,7 +515,7 @@ func TestExplainCommand(t *testing.T) {
 	}
 }
 
-func TestExplainRejectsRemovedFormatFlag(t *testing.T) {
+func TestExplainCommandMarkdownFormat(t *testing.T) {
 	cmd := newRootCommand()
 	cmd.SetArgs([]string{"explain", "--format", "markdown", "docker-auth"})
 	out := &bytes.Buffer{}
@@ -474,12 +523,15 @@ func TestExplainRejectsRemovedFormatFlag(t *testing.T) {
 	cmd.SetErr(new(bytes.Buffer))
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
 
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected unknown format flag error")
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute explain --format markdown: %v", err)
 	}
-	if !strings.Contains(err.Error(), "unknown flag: --format") {
-		t.Fatalf("unexpected removed flag error: %v", err)
+	got := out.String()
+	if !strings.Contains(got, "# Docker registry authentication failure") {
+		t.Fatalf("expected markdown explain heading, got %q", got)
+	}
+	if !strings.Contains(got, "## Diagnosis") {
+		t.Fatalf("expected markdown diagnosis section, got %q", got)
 	}
 }
 

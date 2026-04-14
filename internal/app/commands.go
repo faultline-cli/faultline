@@ -38,7 +38,7 @@ type AnalyzeOptions struct {
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.
 func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
-	if opts.JSON {
+	if opts.JSON || opts.Format == output.FormatJSON {
 		data, err := output.FormatAnalysisJSON(a, opts.Top)
 		if err != nil {
 			return err

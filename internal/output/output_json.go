@@ -133,6 +133,16 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 	return string(data) + "\n", nil
 }
 
+// FormatPlaybookDetailsJSON serialises a single playbook using the stable
+// model JSON tags.
+func FormatPlaybookDetailsJSON(pb model.Playbook) (string, error) {
+	data, err := json.MarshalIndent(pb, "", "  ")
+	if err != nil {
+		return "", fmt.Errorf("marshal playbook JSON: %w", err)
+	}
+	return string(data) + "\n", nil
+}
+
 func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {
 	if repoCtx == nil {
 		return nil

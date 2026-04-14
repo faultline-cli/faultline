@@ -31,13 +31,8 @@ type Format string
 
 const (
 	FormatTerminal Format = "terminal"
-	FormatRaw      Format = "raw"
 	FormatMarkdown Format = "markdown"
-)
-
-const (
-	legacyFormatMarkdownSource = "markdown-source"
-	legacyFormatMarkdownShort  = "md"
+	FormatJSON     Format = "json"
 )
 
 // Valid reports whether f is a recognised output format.
@@ -49,10 +44,12 @@ func (f Format) Valid() bool {
 // ParseFormat resolves a user-provided format string into the canonical format.
 func ParseFormat(value string) (Format, bool) {
 	switch strings.ToLower(strings.TrimSpace(value)) {
-	case string(FormatTerminal), string(FormatRaw):
+	case string(FormatTerminal):
 		return FormatTerminal, true
-	case string(FormatMarkdown), legacyFormatMarkdownSource, legacyFormatMarkdownShort:
+	case string(FormatMarkdown):
 		return FormatMarkdown, true
+	case string(FormatJSON):
+		return FormatJSON, true
 	default:
 		return "", false
 	}

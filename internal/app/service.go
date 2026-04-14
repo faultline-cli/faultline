@@ -48,6 +48,14 @@ func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer)
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
 	}
+	if opts.JSON || opts.Format == output.FormatJSON {
+		data, err := output.FormatAnalysisJSON(a, 1)
+		if err != nil {
+			return err
+		}
+		_, werr := fmt.Fprint(w, data)
+		return werr
+	}
 	if opts.Format == output.FormatMarkdown {
 		_, werr := fmt.Fprint(w, output.FormatFixMarkdown(a))
 		return werr
@@ -82,6 +90,14 @@ func (Service) Explain(id, playbookDir string, playbookPacks []string, format ou
 	}
 	if format == output.FormatMarkdown {
 		_, err = fmt.Fprint(w, output.FormatPlaybookDetailsMarkdown(pb))
+		return err
+	}
+	if format == output.FormatJSON {
+		data, err := output.FormatPlaybookDetailsJSON(pb)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
 		return err
 	}
 	_, err = fmt.Fprint(w, output.FormatPlaybookDetails(pb, renderer.DetectOptions(w)))
