@@ -202,11 +202,11 @@ func (r Renderer) renderSection(title, body string) string {
 		return ""
 	}
 	if r.opts.Plain {
-		return title + "\n" + strings.Repeat("-", len(title)) + "\n" + body
+		return title + "\n" + strings.Repeat("-", len(title)) + "\n\n" + body
 	}
 	header := r.styles.subtitle.Render(title)
 	divider := r.styles.divider.Render(strings.Repeat("─", min(r.opts.Width-2, 32)))
-	return header + "\n" + divider + "\n" + body
+	return header + "\n" + divider + "\n\n" + body
 }
 
 func (r Renderer) renderDetailPanel(title, body, tone string) string {
@@ -222,7 +222,7 @@ func (r Renderer) renderDetailPanel(title, body, tone string) string {
 		BorderForeground(lipgloss.Color(borderColor)).
 		Width(r.opts.Width - 2)
 
-	return panel.Render(badge.Render(strings.ToUpper(title)) + "\n" + body)
+	return panel.Render(badge.Render(strings.ToUpper(title)) + "\n\n" + body)
 }
 
 func (r Renderer) renderCallout(body string) string {

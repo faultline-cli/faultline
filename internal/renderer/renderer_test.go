@@ -67,3 +67,36 @@ func TestRenderFixUsesSectionStyling(t *testing.T) {
 		t.Fatalf("expected duplicate markdown heading to be removed, got:\n%s", out)
 	}
 }
+
+func TestRenderAnalyzeDetailedAddsSpacingUnderHeaders(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{{
+			Playbook:   samplePlaybook(),
+			Confidence: 0.82,
+			Score:      12.5,
+			Detector:   "log",
+			Evidence:   []string{"missing go.sum entry", "module checksum not found"},
+			Explanation: model.ResultExplanation{
+				TriggeredBy: []string{"missing go.sum entry"},
+			},
+			Breakdown: model.ScoreBreakdown{
+				BaseSignalScore: 10,
+				FinalScore:      12.5,
+			},
+		}},
+		Context: model.Context{Stage: "build"},
+	}
+
+	out := New(Options{Plain: true, Width: 88}).RenderAnalyze(a, 1, true)
+
+	for _, want := range []string{
+		"Summary\n-------\n\n",
+		"Evidence\n--------\n\n",
+		"Triggered by\n------------\n\n",
+		"Score Breakdown\n---------------\n\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("expected blank line under section header %q, got:\n%s", want, out)
+		}
+	}
+}
