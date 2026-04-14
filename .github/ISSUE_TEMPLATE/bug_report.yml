@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a CLI, packaging, documentation, or workflow bug.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for product bugs that are not primarily about a missed or incorrect diagnosis.
+
+        Do not include credentials, private repository data, signed URLs, or unsanitized logs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: A short description of the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Provide a deterministic sequence of steps.
+      placeholder: |
+        1. Run ...
+        2. Use ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: CLI version, OS, install method, and any other relevant context.
+      placeholder: |
+        Faultline version:
+        OS:
+        Install method:
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Relevant output
+      description: Paste sanitized output, stack traces, or screenshots if needed.
+      render: text

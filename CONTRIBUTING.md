@@ -24,3 +24,12 @@ Do not commit raw staging fixture YAML files.
 ## Pull Requests
 
 Pull requests should explain the failure mode being fixed, the expected behavior change, and the validation used.
+
+## Issues
+
+When opening an issue, prefer the repository templates.
+
+- Use the diagnosis-gap template when Faultline misses a CI failure or ranks the wrong playbook first.
+- Use the bug-report template for crashes, broken commands, packaging problems, or documentation defects.
+
+For diagnosis issues, include the smallest sanitized log snippet that still reproduces the problem, the expected playbook or explanation, and the actual result.

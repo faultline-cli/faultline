@@ -1,0 +1,63 @@
+name: Diagnosis gap
+description: Report a missed diagnosis, weak ranking, or false positive from Faultline.
+title: "diagnosis: "
+labels:
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for the highest-value feedback: when Faultline misses a real CI failure, chooses the wrong playbook, or returns weak evidence.
+
+        Sanitize logs before submitting them. Remove secrets, tokens, emails, signed URLs, internal hostnames, and customer-specific identifiers.
+  - type: textarea
+    id: log-snippet
+    attributes:
+      label: Sanitized failing log snippet
+      description: Include the smallest snippet that still reproduces the diagnosis problem.
+      render: text
+      placeholder: |
+        Paste 10-100 lines of sanitized log output here.
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Faultline command
+      description: The exact command you ran.
+      placeholder: faultline analyze build.log --format markdown --mode detailed
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: What playbook, diagnosis, or ranking should have happened?
+      placeholder: Expected top playbook, summary, or evidence behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: What Faultline returned instead?
+      placeholder: Include the top result, confidence, and why it was wrong.
+    validations:
+      required: true
+  - type: dropdown
+    id: failure-mode
+    attributes:
+      label: Failure mode
+      options:
+        - Missed diagnosis
+        - Wrong top playbook
+        - False positive from inspect
+        - Weak or missing evidence
+        - Output formatting problem
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Link a public issue or describe adjacent signals and confusable patterns.
