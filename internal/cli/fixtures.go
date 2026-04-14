@@ -37,6 +37,8 @@ func newFixturesIngestCommand() *cobra.Command {
 		Example: strings.Join([]string{
 			"  faultline fixtures ingest --adapter github-issue --url https://github.com/owner/repo/issues/123",
 			"  faultline fixtures ingest --adapter gitlab-issue --url https://gitlab.com/group/project/-/issues/456",
+			"  faultline fixtures ingest --adapter stackexchange-question --url https://stackoverflow.com/questions/12345/example",
+			"  faultline fixtures ingest --adapter discourse-topic --url https://meta.discourse.org/t/example/12345",
 		}, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if adapter == "" {
@@ -53,7 +55,7 @@ func newFixturesIngestCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
-	cmd.Flags().StringVar(&adapter, "adapter", "", "source adapter: github-issue|gitlab-issue")
+	cmd.Flags().StringVar(&adapter, "adapter", "", "source adapter: github-issue|gitlab-issue|stackexchange-question|discourse-topic")
 	cmd.Flags().StringSliceVar(&urls, "url", nil, "public issue URL to ingest; repeat for batches")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().BoolVar(&force, "force", false, "write fixtures even when an existing fingerprint matches")

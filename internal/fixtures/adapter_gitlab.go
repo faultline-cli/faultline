@@ -43,7 +43,7 @@ func (a GitLabIssueAdapter) Fetch(ctx context.Context, rawURL string, client *ht
 		return nil, err
 	}
 	var notes []gitlabIssueNote
-	if err := getJSON(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d/notes?per_page=100", apiBase, projectRef, issueNumber), &notes); err != nil {
+	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d/notes?per_page=100", apiBase, projectRef, issueNumber), &notes); err != nil {
 		return nil, err
 	}
 

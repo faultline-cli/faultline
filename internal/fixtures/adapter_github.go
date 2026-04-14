@@ -3,6 +3,7 @@ package fixtures
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,7 +46,7 @@ func (a GitHubIssueAdapter) Fetch(ctx context.Context, rawURL string, client *ht
 		return nil, err
 	}
 	var comments []githubIssueComment
-	if err := getJSON(ctx, client, fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments?per_page=100", apiBase, owner, repo, issueNumber), &comments); err != nil {
+	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/repos/%s/%s/issues/%d/comments?per_page=100", apiBase, owner, repo, issueNumber), &comments); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +141,38 @@ func getJSON(ctx context.Context, client *http.Client, rawURL string, target any
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return fmt.Errorf("fetch %s: %s %s", path.Base(rawURL), resp.Status, strings.TrimSpace(string(body)))
+		return &httpStatusError{
+			URL:        rawURL,
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			Body:       strings.TrimSpace(string(body)),
+		}
 	}
 	return json.NewDecoder(resp.Body).Decode(target)
+}
+
+func getJSONOptional(ctx context.Context, client *http.Client, rawURL string, target any) error {
+	err := getJSON(ctx, client, rawURL, target)
+	if err == nil {
+		return nil
+	}
+	var statusErr *httpStatusError
+	if errors.As(err, &statusErr) {
+		switch statusErr.StatusCode {
+		case http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+			return nil
+		}
+	}
+	return err
+}
+
+type httpStatusError struct {
+	URL        string
+	StatusCode int
+	Status     string
+	Body       string
+}
+
+func (e *httpStatusError) Error() string {
+	return fmt.Sprintf("fetch %s: %s %s", path.Base(e.URL), e.Status, e.Body)
 }

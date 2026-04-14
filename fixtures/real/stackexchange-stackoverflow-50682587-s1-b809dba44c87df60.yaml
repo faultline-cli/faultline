@@ -1,0 +1,29 @@
+id: stackexchange-stackoverflow-50682587-s1-b809dba44c87df60
+title: executable file not found in $PATH Dockerfile
+fixture_class: real
+normalized_log: |-
+    I am building a Dockerfile for an application. I want to execute a bash script with parameters when the container starts to run, so I have made it an entry point. However, Docker cannot find the directory in which my script is located. Thi script is located in the Intellij Idea project folder and the path practically looks like this: /home/user/Documents/folder1/folder2/folder3/Projectname/runapp.sh
+    I have tried to mount this directory as volume, but while running built image an error occurred:
+    docker: Error response from daemon: OCI runtime create failed: container_linux.go:348: starting container process caused "exec: \"runapp.sh\": executable file not found in $PATH": unknown.
+    What may be the reason of such behavior? How else can I reach this bash script from Dockerfile?
+    Here is how the Dockerfile looks like:
+    FROM java:8
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/50682587
+    repository: stackoverflow
+    issue_number: 50682587
+    comment_id: "0"
+    title: executable file not found in $PATH Dockerfile
+    author: Cassie
+    snippet: 1
+    fetched_at: "2026-04-14T02:47:05Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:41Z"
+fingerprint: b809dba44c87df60

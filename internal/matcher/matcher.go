@@ -34,6 +34,15 @@ func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []m
 		if a.Score != b.Score {
 			return a.Score > b.Score
 		}
+		return a.Playbook.ID < b.Playbook.ID
+	})
+	calibrateConfidence(results)
+
+	sort.Slice(results, func(i, j int) bool {
+		a, b := results[i], results[j]
+		if a.Score != b.Score {
+			return a.Score > b.Score
+		}
 		if a.Confidence != b.Confidence {
 			return a.Confidence > b.Confidence
 		}
@@ -52,8 +61,8 @@ func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []m
 //   - Stage hint matches ctx    → +0.75
 //   - Playbook base_score       → added unconditionally when patterns match
 //
-// Confidence reflects weighted pattern coverage only (stage bonus excluded)
-// and is rounded to two decimal places.
+// Confidence is calibrated from the matched score and competitive separation
+// after the full ranked result set is known.
 func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, weights map[string]float64) model.Result {
 	evidence := make([]string, 0)
 	seenEvidence := make(map[string]struct{})
@@ -67,7 +76,6 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 
 	// Score any-patterns (OR semantics, IDF-weighted).
 	anyScore := 0.0
-	anyMaxScore := 0.0
 	for _, pat := range pb.Match.Any {
 		norm := normalize(pat)
 		if norm == "" {
@@ -77,7 +85,6 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 		if w == 0 {
 			w = 1.0
 		}
-		anyMaxScore += w
 		for _, line := range lines {
 			if strings.Contains(line.Normalized, norm) {
 				anyScore += w
@@ -133,26 +140,11 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 	// Stage bonus (does not contribute to confidence calculation).
 	score += stageBonus(pb, ctx)
 
-	// Confidence: weighted pattern coverage, capped at 1.0.
-	// Computed without the situational stage bonus.
-	maxScore := pb.BaseScore + anyMaxScore + float64(len(pb.Match.All))*1.5
-	if len(pb.Match.All) > 0 {
-		maxScore += 2.0
-	}
-	if maxScore < 1.0 {
-		maxScore = 1.0
-	}
-	patternScore := pb.BaseScore + anyScore + float64(allHits)*1.5
-	if allComplete {
-		patternScore += compoundBonus(allComplete)
-	}
-	confidence := math.Round(math.Min(1.0, patternScore/maxScore)*100) / 100
-
 	return model.Result{
 		Playbook:   pb,
 		Detector:   "log",
 		Score:      math.Round(score*100) / 100,
-		Confidence: confidence,
+		Confidence: 0,
 		Evidence:   evidence,
 		EvidenceBy: model.EvidenceBundle{
 			Triggers: buildLogEvidence(evidence),
@@ -167,6 +159,46 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 			FinalScore:          math.Round(score*100) / 100,
 		},
 	}
+}
+
+func calibrateConfidence(results []model.Result) {
+	if len(results) == 0 {
+		return
+	}
+
+	topScore := results[0].Score
+	topScoreCount := 0
+	secondScore := 0.0
+	for _, result := range results {
+		if result.Score == topScore {
+			topScoreCount++
+			continue
+		}
+		secondScore = result.Score
+		break
+	}
+
+	for i := range results {
+		competitorScore := topScore
+		if results[i].Score == topScore && topScoreCount == 1 {
+			competitorScore = secondScore
+		}
+		results[i].Confidence = confidenceFromScores(results[i].Score, competitorScore)
+	}
+}
+
+func confidenceFromScores(score, competitorScore float64) float64 {
+	if score <= 0 {
+		return 0
+	}
+
+	coverage := score / (score + 1)
+	separation := 0.0
+	if competitorScore < score {
+		separation = 1 - (competitorScore / score)
+	}
+
+	return math.Round(((coverage+separation)/2)*100) / 100
 }
 
 func buildLogEvidence(lines []string) []model.Evidence {

@@ -31,7 +31,7 @@ func TestRankAnyPatternScoring(t *testing.T) {
 		t.Fatalf("expected 2 results, got %d", len(results))
 	}
 	if results[0].Playbook.ID != "alpha" {
-		t.Fatalf("expected alpha to rank first via confidence tie-break, got %s", results[0].Playbook.ID)
+		t.Fatalf("expected alpha to rank first, got %s", results[0].Playbook.ID)
 	}
 	// foo and bar are each shared by both playbooks → IDF weight 0.5 each.
 	// alpha hits both → score = 0 + 0.5 + 0.5 = 1.0.
@@ -60,8 +60,8 @@ func TestRankAllPatternBonus(t *testing.T) {
 	if results[0].Score != 5.0 {
 		t.Fatalf("expected score 5.0, got %v", results[0].Score)
 	}
-	if results[0].Confidence != 1.0 {
-		t.Fatalf("expected confidence 1.0, got %v", results[0].Confidence)
+	if results[0].Confidence != 0.92 {
+		t.Fatalf("expected confidence 0.92, got %v", results[0].Confidence)
 	}
 }
 
@@ -81,8 +81,8 @@ func TestRankStageHintBonus(t *testing.T) {
 	if results[0].Score != 1.75 {
 		t.Fatalf("expected score 1.75, got %v", results[0].Score)
 	}
-	if results[0].Confidence != 1.0 {
-		t.Fatalf("expected confidence 1.0, got %v", results[0].Confidence)
+	if results[0].Confidence != 0.82 {
+		t.Fatalf("expected confidence 0.82, got %v", results[0].Confidence)
 	}
 }
 

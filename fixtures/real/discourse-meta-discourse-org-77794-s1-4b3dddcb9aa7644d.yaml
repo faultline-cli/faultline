@@ -1,0 +1,26 @@
+id: discourse-meta-discourse-org-77794-s1-4b3dddcb9aa7644d
+title: 'Open /sys/kernel/security/apparmor/profiles: permission denied'
+fixture_class: real
+normalized_log: |-
+    I’m trying to install discourse into a subutai peer (it’s like a vps) but when i run
+    docker run --rm -i -a stdin -a stdout ubuntu echo 1
+    i’m getting this error: docker: Error response from daemon: Could not check if docker-default AppArmor profile was loaded: open /sys/kernel/security/apparmor/profiles: permission denied.
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://meta.discourse.org/t/open-sys-kernel-security-apparmor-profiles-permission-denied/77794
+    repository: meta.discourse.org
+    issue_number: 77794
+    comment_id: "370081"
+    title: 'Open /sys/kernel/security/apparmor/profiles: permission denied'
+    author: josealbertorodrigues
+    snippet: 1
+    fetched_at: "2026-04-14T02:47:44Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:44Z"
+fingerprint: 4b3dddcb9aa7644d

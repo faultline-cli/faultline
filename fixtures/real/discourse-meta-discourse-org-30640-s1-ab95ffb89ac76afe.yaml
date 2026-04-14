@@ -1,0 +1,39 @@
+id: discourse-meta-discourse-org-30640-s1-ab95ffb89ac76afe
+title: Discourse doesn't deliver webpages, fresh install on Linode Ubuntu 14.04
+fixture_class: real
+normalized_log: |-
+    Hi there. I’m new to Discourse and new to Docker.
+    I’ve got a Linode running Ubuntu 14.04 LTS. It functions as a basic webserver with Apache listening on port 80 and serving a handful of PHP+MySQL websites.
+    I have an existing site host.com and I’d like to get Discourse running at subdomain.host.com . Since Apache is listening on host.com:80 I’ve tried setting Discourse to run at subdomain.host.com:8080
+    Unfortunately when I point my browser at subdomain.host.com:8080 it produces a “connection refused” error.
+    DNS isn’t an issue, subdomain.host.com:80 delivers Apache’s default webpage.
+    Installation and config
+    To install Docker then Discourse I followed the installation instructions on GitHub .
+    I edited the file containers/app.yml thusly so traffic incoming on host port 8080 is redirected to container port 80:
+    templates:
+    - "templates/cron.template.yml"
+    - "templates/postgres.template.yml"
+    - "templates/redis.template.yml"
+    - "templates/sshd.template.yml"
+    - "templates/web.template.yml"
+    - "templates/web.ratelimited.template.yml"
+    - "templates/web.socketed.template.yml"
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://meta.discourse.org/t/discourse-doesnt-deliver-webpages-fresh-install-on-linode-ubuntu-14-04/30640
+    repository: meta.discourse.org
+    issue_number: 30640
+    comment_id: "128231"
+    title: Discourse doesn't deliver webpages, fresh install on Linode Ubuntu 14.04
+    author: austinjp
+    snippet: 1
+    fetched_at: "2026-04-14T02:47:44Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:48:14Z"
+fingerprint: ab95ffb89ac76afe

@@ -1,7 +1,7 @@
 # Required executable or runtime binary missing
 
 - ID: `missing-executable`
-- Confidence: 34%
+- Confidence: 84%
 - Category: build
 - Severity: high
 - Score: 2.10

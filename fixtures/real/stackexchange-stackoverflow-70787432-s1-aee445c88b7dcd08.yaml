@@ -1,0 +1,35 @@
+id: stackexchange-stackoverflow-70787432-s1-aee445c88b7dcd08
+title: Permission denied error in github actions
+fixture_class: real
+normalized_log: |-
+    jobs:
+    lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+    uses: actions/checkout@v2
+    - name: Install Python
+    uses: "actions/setup-python@v2"
+    with:
+    python-version: "3.7"
+    - name: install sqlfluff
+    run: "pip install sqlfluff"
+expectation:
+    expected_playbook: pip-install-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/70787432
+    repository: stackoverflow
+    issue_number: 70787432
+    comment_id: "0"
+    title: Permission denied error in github actions
+    author: R0bert
+    snippet: 1
+    fetched_at: "2026-04-14T02:47:05Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:42Z"
+fingerprint: aee445c88b7dcd08

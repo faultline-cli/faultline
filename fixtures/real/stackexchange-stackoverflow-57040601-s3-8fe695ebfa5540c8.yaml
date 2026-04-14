@@ -1,0 +1,31 @@
+id: stackexchange-stackoverflow-57040601-s3-8fe695ebfa5540c8
+title: 'How to fix: &#39;Psql: could not connect to server: Connection refused&#39; when using Postgres in a docker container in gitlab-ci'
+fixture_class: real
+normalized_log: |-
+    # builds fossology database from schema
+    docker exec fossdb psql -h $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fossdb) fossology < ./schema.sql -U postgres
+    createBlank.sql:
+    create user fossy with password 'fossy';
+    create database fossology;
+    grant all privileges on database fossology to fossy;
+    Expected results: runs createBlank.sql to create a blank database called fossology, then builds fossology database from schema
+    Actual results: psql: could not connect to server: Connection refused Is the server running on host "172.19.0.2" and accepting TCP/IP connections on port 5432?
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/57040601
+    repository: stackoverflow
+    issue_number: 57040601
+    comment_id: "0"
+    title: 'How to fix: &#39;Psql: could not connect to server: Connection refused&#39; when using Postgres in a docker container in gitlab-ci'
+    author: Abs
+    snippet: 3
+    fetched_at: "2026-04-14T02:47:05Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:20Z"
+fingerprint: 8fe695ebfa5540c8

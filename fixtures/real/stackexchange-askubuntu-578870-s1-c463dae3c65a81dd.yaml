@@ -1,0 +1,30 @@
+id: stackexchange-askubuntu-578870-s1-c463dae3c65a81dd
+title: Docker ubuntu image download test failed
+fixture_class: real
+normalized_log: |-
+    I am trying to install use docker as one of my applications depends on it. I followed the installation instructions for the latest docker from here for Ubuntu 14.04. After the installation, I performed the test as mentioned in the website
+    sudo docker run -i -t ubuntu /bin/bash
+    I get the following error:
+    Unable to find image 'ubuntu:latest' locally
+    Pulling repository ubuntu
+    FATA[0035] Get https://index.docker.io/v1/repositories/library/ubuntu/images: dial tcp 162.242.195.84:443: connection refused
+    Does this mean the docker is not functioning properly? Can you please tell me how I can fix this, if that's the case?
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://askubuntu.com/questions/578870
+    repository: askubuntu
+    issue_number: 578870
+    comment_id: "0"
+    title: Docker ubuntu image download test failed
+    author: Lakshmi Narayanan
+    snippet: 1
+    fetched_at: "2026-04-14T02:49:36Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:20Z"
+fingerprint: c463dae3c65a81dd

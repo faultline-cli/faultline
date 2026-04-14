@@ -22,6 +22,8 @@ func adapterByName(name string) (SourceAdapter, error) {
 	adapters := []SourceAdapter{
 		GitHubIssueAdapter{},
 		GitLabIssueAdapter{},
+		StackExchangeQuestionAdapter{},
+		DiscourseTopicAdapter{},
 	}
 	for _, adapter := range adapters {
 		if adapter.Name() == name {
@@ -83,9 +85,6 @@ func extractLogSnippets(text string) []string {
 
 func looksLikeCILog(block string) bool {
 	lines := strings.Split(strings.TrimSpace(block), "\n")
-	if len(lines) < 3 {
-		return false
-	}
 	hits := 0
 	lower := strings.ToLower(block)
 	for _, signal := range errorSignals {

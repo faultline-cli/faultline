@@ -1,0 +1,29 @@
+id: stackexchange-stackoverflow-66178922-s1-6b1e73bcdfff3a16
+title: 'could not connect to server: Connection refused Is the server running on host &quot;database&quot; (172.19.0.3) and accepting TCP/IP connections on port 5432?'
+fixture_class: real
+normalized_log: |-
+    I am trying to run Django tests on Gitlab CI but getting this error, Last week it was working perfectly but suddenly I am getting this error during test run
+    django.db.utils.OperationalError: could not connect to server: Connection refused Is the server running on host "database" (172.19.0.3) and accepting TCP/IP connections on port 5432?
+    My gitlab-ci file is like this
+    image: docker:latest
+    services:
+    - docker:dind
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66178922
+    repository: stackoverflow
+    issue_number: 66178922
+    comment_id: "0"
+    title: 'could not connect to server: Connection refused Is the server running on host &quot;database&quot; (172.19.0.3) and accepting TCP/IP connections on port 5432?'
+    author: Fatima Fahad
+    snippet: 1
+    fetched_at: "2026-04-14T02:47:05Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:20Z"
+fingerprint: 6b1e73bcdfff3a16

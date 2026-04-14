@@ -1,0 +1,28 @@
+id: github-pytorch-rl-736-s1-5b73eb3bf356752b
+title: No matching distribution found for torchrl
+fixture_class: real
+normalized_log: |-
+    ```
+    ERROR: Could not find a version that satisfies the requirement torchrl (from versions: none)
+    ERROR: No matching distribution found for torchrl
+expectation:
+    expected_playbook: install-failure
+    top_n: 3
+    min_confidence: 0.38
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/pytorch/rl/issues/736
+    repository: pytorch/rl
+    issue_number: 736
+    comment_id: "1363159614"
+    title: No matching distribution found for torchrl
+    labels:
+        - bug
+    author: thomashirtz
+    snippet: 1
+    fetched_at: "2026-04-14T02:39:54Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:40:57Z"
+fingerprint: 5b73eb3bf356752b

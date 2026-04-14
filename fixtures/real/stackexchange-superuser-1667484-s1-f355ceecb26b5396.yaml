@@ -1,0 +1,26 @@
+id: stackexchange-superuser-1667484-s1-f355ceecb26b5396
+title: Shell Script With Proper Permissions Gets &quot;Not Found&quot; When Attempting to Run
+fixture_class: real
+normalized_log: |-
+    I have a weird situation going on. I have created an Ubuntu-based Docker container and copied in a bash shell script that will be used in that container. I can go into the CLI for the container and see the script file, verify that the permissions are correct (755) and can view the contents of the script file. However, when I attempt to execute the script (using the fully qualified path), I get a "not found" error. Note that I don't get a "permission denied" error, I get a "not found" error.
+    I'm no rookie when it comes to Linux/UNIX, so this should be an easy issue to resolve that usually involves user error. I've never seen a situation where I can have the correct permissions and view the contents of a script file but have the system tell me that it's not found when trying to execute it. I actually create three different containers that do the same, two of them fail with this error and the third is fine. They are all created in the same manner.
+    This issue occurs with both sh and bash. Anyone have any idea what could be causing this?
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://superuser.com/questions/1667484
+    repository: superuser
+    issue_number: 1667484
+    comment_id: "0"
+    title: Shell Script With Proper Permissions Gets &quot;Not Found&quot; When Attempting to Run
+    author: ke4ktz
+    snippet: 1
+    fetched_at: "2026-04-14T02:49:36Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-14T02:50:44Z"
+fingerprint: f355ceecb26b5396
