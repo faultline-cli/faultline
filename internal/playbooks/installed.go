@@ -100,6 +100,9 @@ func InstallPack(srcDir, name string, force bool) (InstalledPack, error) {
 	if packName == "" {
 		return InstalledPack{}, fmt.Errorf("could not determine installed pack name for %q", root)
 	}
+	if packName == "." || packName == ".." || strings.ContainsAny(packName, `/\`) {
+		return InstalledPack{}, fmt.Errorf("invalid installed pack name %q", packName)
+	}
 	if packName != filepath.Base(packName) {
 		return InstalledPack{}, fmt.Errorf("invalid installed pack name %q", packName)
 	}
