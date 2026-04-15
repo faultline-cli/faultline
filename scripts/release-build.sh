@@ -25,7 +25,8 @@ for target in $TARGETS; do
 			-o "$stage_dir/faultline" \
 			./cmd
 
-	cp -R "$ROOT_DIR/playbooks" "$stage_dir/playbooks"
+	mkdir -p "$stage_dir/playbooks"
+	cp -R "$ROOT_DIR/playbooks/bundled" "$stage_dir/playbooks/bundled"
 	cp "$ROOT_DIR/README.md" "$stage_dir/README.md"
 
 	tar -C "$TMP_DIR" -czf "$archive_path" "$(basename "$stage_dir")"
