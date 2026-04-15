@@ -29,6 +29,13 @@ go build -o faultline ./cmd
 Once a tagged release exists, release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+```
+
+If you need a pinned version instead of the latest release:
+
+```bash
 VERSION=<published-tag>
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
@@ -36,7 +43,7 @@ cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze build.log
 ```
 
-If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FAULTLINE_PLAYBOOK_DIR`.
+The installer places bundled playbooks under the install prefix and configures `FAULTLINE_PLAYBOOK_DIR` for the wrapper it places on `PATH`.
 
 ## Docker Distribution
 

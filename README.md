@@ -4,19 +4,18 @@ Deterministic CLI for CI failure analysis. No AI guessing - ranked diagnoses wit
 
 ```text
 # CI log
-pull access denied for ghcr.io/org/image
-unauthorized: authentication required
+exec /__e/node20/bin/node: no such file or directory
 
 # Faultline
-[1] docker-auth (confidence: 33%)
+[1] missing-executable (confidence: 84%)
 
 Diagnosis:
-Docker registry authentication failure
+Required executable or runtime binary missing
 
 Fix:
-- Verify the registry username, token, or password configured in CI secrets
-- Run the registry login step before any docker pull or docker push command
-- Confirm the token has the correct repository scope for the image being accessed
+- Install the missing runtime or tool in the CI image
+- Pin the runner or action to an image that includes the expected binary
+- Verify the configured path still exists after recent runner or action upgrades
 ```
 
 Faultline analyzes CI logs against a deterministic library of real-world failure playbooks. Same input, same playbook set, same answer every time.
@@ -27,7 +26,13 @@ Works on any CI log, including GitHub Actions, GitLab CI, and similar systems.
 
 ## Try it now
 
-Until the first tagged GitHub release is published, the working install path is source or Docker. No release download is required.
+Today, the real install path is source or Docker. There is no published GitHub release yet.
+
+The one-line installer is ready for the first tagged release:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+```
 
 Requires Go 1.25+.
 
@@ -60,9 +65,7 @@ Faultline does not guess.
 
 That makes it reliable in CI, explainable to engineers, and safe to automate against.
 
-## What Faultline catches
-
-Faultline already detects a wide range of common CI and CD failures, including:
+## Handles
 
 - Docker and registry authentication failures
 - Missing executables, PATH problems, and command invocation errors
@@ -147,6 +150,15 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Generate deterministic follow-up workflows from the analysis result.
 
 ## Install options
+
+### One-command installer
+
+This becomes the default install path as soon as the first tagged GitHub release exists.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+```
 
 ### Build from source
 

@@ -4,7 +4,7 @@ set -eu
 
 VERSION="${VERSION:-dev}"
 OUTPUT_DIR="${OUTPUT_DIR:-dist/releases/$VERSION}"
-TARGETS="${TARGETS:-darwin/amd64 linux/amd64}"
+TARGETS="${TARGETS:-darwin/amd64 darwin/arm64 linux/amd64}"
 ROOT_DIR="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 TMP_DIR="$ROOT_DIR/dist/tmp/$VERSION"
 
