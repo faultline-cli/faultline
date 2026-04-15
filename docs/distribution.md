@@ -17,7 +17,16 @@ Optional extra playbook packs can be composed on top when needed, but the defaul
 
 ## Install Flow
 
-Tagged releases publish tarballs named `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
+If you are using the repository before the first tagged release is published, install from source:
+
+```bash
+git clone https://github.com/faultline-cli/faultline
+cd faultline
+go build -o faultline ./cmd
+./faultline analyze examples/docker-auth.log
+```
+
+Once a tagged release exists, release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
 VERSION=<published-tag>
@@ -28,8 +37,6 @@ cd "faultline_${VERSION}_linux_amd64"
 ```
 
 If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FAULTLINE_PLAYBOOK_DIR`.
-
-For day-zero repository use before a tagged release is published, prefer `make build` or the Docker flow from the root README.
 
 ## Docker Distribution
 

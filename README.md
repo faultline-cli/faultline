@@ -1,61 +1,51 @@
 # Faultline
 
-Deterministic CI failure analysis. No AI guessing.
-
-When CI fails, you do not need another vague suggestion. You need a diagnosis, evidence, and fix steps you can trust.
-
-Faultline analyzes CI logs and matches them against a deterministic library of real-world failure playbooks. Same input, same playbook set, same answer every time.
-
-It is built for the repetitive failures that waste engineering time: missing credentials, version drift, lockfile mistakes, missing executables, runner problems, flaky tests, network failures, and other known CI breakages. Faultline runs locally or in CI, makes no network calls during analysis, and keeps ML or LLM systems out of the product path.
-
-![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
-
-## Example
-
-Input log:
+Deterministic CLI for CI failure analysis. No AI guessing - ranked diagnoses with evidence and fix steps.
 
 ```text
+# CI log
 pull access denied for ghcr.io/org/image
 unauthorized: authentication required
+
+# Faultline
+[1] docker-auth (confidence: 33%)
+
+Diagnosis:
+Docker registry authentication failure
+
+Fix:
+- Verify the registry username, token, or password configured in CI secrets
+- Run the registry login step before any docker pull or docker push command
+- Confirm the token has the correct repository scope for the image being accessed
 ```
 
-Faultline diagnosis:
+Faultline analyzes CI logs against a deterministic library of real-world failure playbooks. Same input, same playbook set, same answer every time.
 
-```text
-Docker registry authentication failure (docker-auth) [33% confidence]
-Severity: high
+It is built for repetitive failures that waste engineering time: missing credentials, version drift, lockfile mistakes, missing executables, runner problems, flaky tests, network failures, and other known CI breakages. Faultline runs locally or in CI, makes no network calls during analysis, and keeps ML or LLM systems out of the product path.
 
-Summary
--------
+Works on any CI log, including GitHub Actions, GitLab CI, and similar systems.
 
-CI could not authenticate to the container registry before an image pull or push.
-```
+## Try it now
 
-Follow-up fix view:
+Until the first tagged GitHub release is published, the working install path is source or Docker. No release download is required.
 
-```text
-1. Verify the registry username, token, or password configured in CI secrets.
-2. Ensure the registry login step runs before any docker pull or docker push command.
-3. Confirm the token has the correct repository scope for the image being accessed.
-```
-
-This is the point of Faultline: take opaque CI output and turn it into a deterministic diagnosis you can act on immediately.
-
-## Try it in 10 seconds
-
-Pipe a failing log directly into the analyzer:
+Requires Go 1.25+.
 
 ```bash
-cat ci.log | faultline analyze
+git clone https://github.com/faultline-cli/faultline
+cd faultline
+go build -o faultline ./cmd
+./faultline analyze examples/docker-auth.log
 ```
 
-Or run the main flows directly:
+Pipe any failing log directly into the analyzer:
 
 ```bash
-faultline analyze ci.log
-faultline fix ci.log
-faultline inspect .
+cat failing-ci.log | ./faultline analyze
+cat failing-ci.log | ./faultline analyze --json
 ```
+
+![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
 
 ## Why Faultline
 
@@ -70,33 +60,30 @@ Faultline does not guess.
 
 That makes it reliable in CI, explainable to engineers, and safe to automate against.
 
+## What Faultline catches
+
+Faultline already detects a wide range of common CI and CD failures, including:
+
+- Docker and registry authentication failures
+- Missing executables, PATH problems, and command invocation errors
+- Runtime version mismatches across Node, Python, Ruby, and Go
+- Dependency install, resolver, and lockfile failures
+- Cache corruption and dependency drift
+- Permission issues and filesystem access failures
+- CI config errors, bad working directories, and missing build inputs
+- Git checkout and runner failures
+- Environment variable problems, invalid secrets, and expired credentials
+- DNS, TLS, timeout, and connection failures
+- Compile, lint, test, and deploy failures
+
+The goal is not to catch everything. It is to reliably catch what is already known and explain it clearly.
+
 ## Built on real failures
 
 - 67 bundled playbooks under `playbooks/bundled/`
 - 70 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal and JSON output for automation
-
-## What Faultline catches
-
-Faultline already detects a wide range of common CI and CD failures, including:
-
-- Docker registry auth failures and missing login steps
-- Image pull failures and registry access problems
-- Missing binaries and PATH or execution errors in CI images
-- Permission denied failures and runner file access issues
-- Node, Python, Ruby, and Go runtime version mismatches
-- npm, pnpm, yarn, pip, and Poetry install or lockfile failures
-- Cache corruption and dependency drift
-- DNS, TLS certificate, timeout, and connection-refused network failures
-- Missing environment variables, invalid secrets, and expired credentials
-- Incorrect working directories and missing build inputs
-- TypeScript, eslint, syntax, and compile failures
-- Flaky tests, timeout failures, data races, and snapshot mismatches
-- Artifact upload, pipeline timeout, and runner disk-full failures
-- ImagePullBackOff, CrashLoopBackOff, health-check, and deploy failures
-
-The goal is not to catch everything. It is to reliably catch what is already known and explain it clearly.
 
 ## Try it in 60 seconds
 
@@ -129,7 +116,7 @@ What you get back is a ranked diagnosis with evidence, not a generic summary. Th
 CI could not authenticate to the container registry before an image pull or push.
 ```
 
-Tagged releases publish tarballs on the GitHub Releases page. If you are browsing the repository before a new release is cut, use `make build` or Docker for the fastest first run.
+Once tagged releases are published, release archives will be attached on the GitHub Releases page. Until then, use the source or Docker flows above.
 
 ## Why it exists
 
@@ -166,8 +153,10 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 Requires Go 1.25+.
 
 ```bash
-make build
-./bin/faultline analyze examples/docker-auth.log
+git clone https://github.com/faultline-cli/faultline
+cd faultline
+go build -o faultline ./cmd
+./faultline analyze examples/docker-auth.log
 ```
 
 ### Docker
@@ -179,7 +168,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/doc
 
 ### Release archive
 
-Tagged releases publish tarballs named `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page.
+Release archives are published only after a tagged GitHub release exists. If no release has been published yet, use the source or Docker install paths above.
 
 ```bash
 VERSION=<published-tag>
@@ -266,8 +255,6 @@ These numbers describe the checked-in regression corpus, not the full space of C
 ## Repository guide
 
 - `examples/README.md` shows runnable sample logs and expected output.
-- `docs/product-spec.md` describes user-facing product behavior and positioning.
-- `docs/implementation-status.md` captures the current CLI-only repository status.
 - `docs/architecture.md` explains package boundaries and runtime flow.
 - `docs/playbooks.md` documents playbook authoring and pack composition.
 - `docs/distribution.md` covers release and Docker packaging.

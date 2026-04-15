@@ -1,7 +1,7 @@
 # Faultline Product Spec
 
 > **AGENTS: Do not derive architecture, module boundaries, or data models from this document.**
-> For implementation decisions, [`SYSTEM.md`](../SYSTEM.md) is the single authoritative source.
+> For implementation decisions, [`SYSTEM.md`](../../SYSTEM.md) is the single authoritative source.
 > This document describes product positioning and user-facing behavior only.
 
 ## Positioning
