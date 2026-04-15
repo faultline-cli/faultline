@@ -17,16 +17,7 @@ Optional extra playbook packs can be composed on top when needed, but the defaul
 
 ## Install Flow
 
-If you are using the repository before the first tagged release is published, install from source:
-
-```bash
-git clone https://github.com/faultline-cli/faultline
-cd faultline
-go build -o faultline ./cmd
-./faultline analyze examples/docker-auth.log
-```
-
-Once a tagged release exists, release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
+The default install path is the release installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
@@ -36,7 +27,23 @@ faultline analyze ci.log
 If you need a pinned version instead of the latest release:
 
 ```bash
-VERSION=<published-tag>
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+```
+
+If you are working from the repository directly, install from source:
+
+```bash
+git clone https://github.com/faultline-cli/faultline
+cd faultline
+go build -o faultline ./cmd
+./faultline analyze examples/docker-auth.log
+```
+
+Release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
+
+```bash
+VERSION=v0.1.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

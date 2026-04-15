@@ -10,7 +10,7 @@ exec /__e/node20/bin/node: no such file or directory
 [1] missing-executable (confidence: 84%)
 
 Diagnosis:
-Required executable or runtime binary missing
+Required executable or runtime binary missing.
 
 Fix:
 - Install the missing runtime or tool in the CI image
@@ -26,21 +26,33 @@ Works on any CI log, including GitHub Actions, GitLab CI, and similar systems.
 
 ## Try it now
 
-Today, the real install path is source or Docker. There is no published GitHub release yet.
-
-The one-line installer is ready for the first tagged release:
+Install the latest release:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
 ```
 
-Requires Go 1.25+.
+Prefer a pinned release instead of latest:
+
+```bash
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+```
+
+For automation, use JSON output:
+
+```bash
+faultline analyze ci.log --json
+```
+
+Build from source if you want to work from the repo directly. Requires Go 1.25+.
 
 ```bash
 git clone https://github.com/faultline-cli/faultline
 cd faultline
 go build -o faultline ./cmd
-./faultline analyze examples/docker-auth.log
+./faultline analyze examples/missing-executable.log
 ```
 
 Pipe any failing log directly into the analyzer:
@@ -50,7 +62,7 @@ cat failing-ci.log | ./faultline analyze
 cat failing-ci.log | ./faultline analyze --json
 ```
 
-![Faultline terminal modes demo](docs/readme-assets/docker-auth-modes.gif)
+![Faultline missing executable demo](docs/readme-assets/missing-executable.gif)
 
 ## Why Faultline
 
@@ -62,6 +74,7 @@ Faultline does not guess.
 - Ranked diagnoses with explicit evidence
 - Structured fix steps instead of vague advice
 - No LLMs or probabilistic output in the execution path
+- Faultline only emits a diagnosis when the match clears its confidence threshold
 
 That makes it reliable in CI, explainable to engineers, and safe to automate against.
 
@@ -94,32 +107,30 @@ Build the CLI and run it on a checked-in sample log:
 
 ```bash
 make build
-./bin/faultline analyze examples/docker-auth.log
+./bin/faultline analyze examples/missing-executable.log
 ```
 
 Or use Docker without installing Go:
 
 ```bash
 docker build -t faultline .
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
+docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/missing-executable.log
 ```
 
-What you get back is a ranked diagnosis with evidence, not a generic summary. The bundled Docker auth example starts like this:
+What you get back is a ranked diagnosis with evidence, not a generic summary. Designed to run inside CI pipelines, the bundled missing-executable example starts like this:
 
 ```md
-# Docker registry authentication failure
+# Required executable or runtime binary missing
 
-- ID: `docker-auth`
-- Confidence: 33%
-- Category: auth
+- ID: `missing-executable`
+- Confidence: 84%
+- Category: build
 - Severity: high
 
 ## Summary
 
-CI could not authenticate to the container registry before an image pull or push.
+The job tried to launch a required tool or runtime binary, but that executable was missing from the image, runner, or expected path.
 ```
-
-Once tagged releases are published, release archives will be attached on the GitHub Releases page. Until then, use the source or Docker flows above.
 
 ## Why it exists
 
@@ -132,7 +143,7 @@ Faultline is built for engineers who want:
 - fast local diagnosis without uploading build data
 - stable terminal and JSON output for automation
 
-It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows.
+It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows. Designed to minimise false positives: better no result than a wrong one.
 
 ## Why trust it
 
@@ -153,7 +164,7 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 
 ### One-command installer
 
-This becomes the default install path as soon as the first tagged GitHub release exists.
+This is the default install path.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
@@ -168,22 +179,22 @@ Requires Go 1.25+.
 git clone https://github.com/faultline-cli/faultline
 cd faultline
 go build -o faultline ./cmd
-./faultline analyze examples/docker-auth.log
+./faultline analyze examples/missing-executable.log
 ```
 
 ### Docker
 
 ```bash
 docker build -t faultline .
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/docker-auth.log
+docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/missing-executable.log
 ```
 
 ### Release archive
 
-Release archives are published only after a tagged GitHub release exists. If no release has been published yet, use the source or Docker install paths above.
+Release archives are published on the GitHub Releases page.
 
 ```bash
-VERSION=<published-tag>
+VERSION=v0.1.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
@@ -197,12 +208,12 @@ If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FA
 The repository includes runnable sample logs and expected markdown output.
 
 ```bash
-./bin/faultline analyze examples/docker-auth.log
 ./bin/faultline analyze examples/missing-executable.log
 ./bin/faultline analyze examples/runtime-mismatch.log
-./bin/faultline analyze examples/docker-auth.log --format markdown
-./bin/faultline fix examples/docker-auth.log --format markdown
-./bin/faultline explain docker-auth
+./bin/faultline analyze examples/docker-auth.log
+./bin/faultline analyze examples/missing-executable.log --format markdown
+./bin/faultline fix examples/missing-executable.log --format markdown
+./bin/faultline explain missing-executable
 ```
 
 More runnable examples and output snapshots are documented in `examples/README.md`.
@@ -267,6 +278,7 @@ These numbers describe the checked-in regression corpus, not the full space of C
 ## Repository guide
 
 - `examples/README.md` shows runnable sample logs and expected output.
+- `docs/failures/README.md` indexes search-targeted CI failure pages tied to Faultline diagnoses.
 - `docs/architecture.md` explains package boundaries and runtime flow.
 - `docs/playbooks.md` documents playbook authoring and pack composition.
 - `docs/distribution.md` covers release and Docker packaging.
@@ -287,12 +299,10 @@ make demo-assets
 
 ## Feedback
 
-The most useful issue is a sanitized CI failure that Faultline should diagnose better. Include the smallest log excerpt that reproduces the problem, the expected diagnosis, and what Faultline returned instead.
+The most useful issue is a sanitized CI failure that Faultline should diagnose better. Have a failure this doesn't catch? Open an issue with the log. Include the smallest log excerpt that reproduces the problem, the expected diagnosis, and what Faultline returned instead.
 
 Raw ingestion artifacts belong in `fixtures/staging/` only as a local review queue. Sanitize them before promotion into `fixtures/real/`.
 
 ## License
 
 Faultline is licensed under MIT. See `LICENSE`.
-
-
