@@ -10,10 +10,12 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 - Single-purpose CLI.
 - Local-first, but easy to run inside any CI system.
-- Deterministic pattern matching only.
+- Deterministic pattern matching for authoritative detection.
+- Optional deterministic Bayesian-inspired reranking for evidence fusion.
 - Text output for humans.
 - JSON output for agents and automation.
 - Optional workflow output for local and agentic follow-up.
+- Optional quiet guard output for high-confidence local prevention checks.
 - Docker-first distribution for portable CI usage.
 
 ## Main Workflow
@@ -23,7 +25,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 3. Load bundled YAML playbooks.
 4. Validate playbook structure and review overlap conflicts before matching.
 5. Match deterministic patterns against the normalized log.
-6. Score and rank matches using explicit, stable rules.
+6. Score and rank matches using explicit, stable rules, with optional deterministic evidence-fusion reranking when enabled.
 7. Optionally enrich the likely diagnosis with recent local git repository context.
 8. Return the result as formatted text or JSON.
 
@@ -33,11 +35,14 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline inspect <path>`
 - `cat build.log | faultline analyze`
 - `faultline analyze <logfile> --json`
+- `faultline analyze <logfile> --bayes`
 - `faultline analyze <logfile> --git`
 - `faultline analyze <logfile> --git --since 30d --repo .`
 - `faultline list`
 - `faultline explain <failure-id>`
 - `faultline workflow <logfile>`
+- `faultline workflow <logfile> --bayes`
+- `faultline guard <path>`
 - `faultline fixtures ingest`
 - `faultline fixtures review`
 - `faultline fixtures promote`
@@ -50,6 +55,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `internal/detectors` owns detector module interfaces and target contracts.
 - `internal/playbooks` owns pack resolution, YAML loading, validation, and deterministic playbook ordering.
 - `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
+- `internal/scoring` owns optional Bayesian-inspired evidence fusion, additive ranking explanations, and delta diagnosis.
 - `internal/output` owns text formatting and JSON serialization.
 - `internal/workflow` owns deterministic next-step planning for local and agentic workflows.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
@@ -102,7 +108,8 @@ type Result struct {
 - No ML or LLM dependence in product logic.
 - Same log input must yield the same result every time.
 - Playbook loading order must be stable.
-- Matching and ranking must use explicit rules, never probabilistic inference.
+- Deterministic detectors stay authoritative for matching.
+- Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.

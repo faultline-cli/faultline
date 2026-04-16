@@ -9,6 +9,7 @@ The recommended surfaces for a separate `faultline-action` repository are:
 - human summary: `faultline analyze <logfile> --format markdown`
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
+- optional evidence-fusion metadata: `faultline analyze <logfile> --json --bayes`
 
 These contracts already exist in the CLI and should remain the integration boundary.
 
@@ -24,8 +25,9 @@ These contracts already exist in the CLI and should remain the integration bound
 
 1. Capture the failing log into a file inside the workflow job.
 2. Run `faultline analyze` to produce markdown and JSON artifacts.
-3. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
-4. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
+3. Optionally run `faultline analyze --json --bayes` when the action wants additive ranking or delta payloads.
+4. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
+5. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
 
 ## Example Commands
 
@@ -34,6 +36,7 @@ Using a local binary:
 ```bash
 faultline analyze build.log --format markdown > faultline-summary.md
 faultline analyze build.log --json > faultline-analysis.json
+faultline analyze build.log --json --bayes > faultline-analysis-bayes.json
 faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
@@ -42,6 +45,7 @@ Using Docker:
 ```bash
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --format markdown > faultline-summary.md
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --json > faultline-analysis.json
+docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --json --bayes > faultline-analysis-bayes.json
 docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --json --mode agent > faultline-workflow.json
 ```
 
@@ -49,4 +53,5 @@ docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --j
 
 - Keep `workflow.v1` stable unless an explicit breaking version is introduced.
 - Additive JSON fields are acceptable; silent field removals or renames are not.
+- `--bayes` must stay additive and explainable; it is a ranking aid, not a second matcher.
 - If GitHub summaries or annotations need policy thresholds, keep those decisions in the action repository rather than the core CLI.

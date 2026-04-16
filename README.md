@@ -29,11 +29,13 @@ Run it when CI fails:
 ```bash
 faultline analyze ci.log
 faultline workflow ci.log
+faultline analyze ci.log --bayes
 faultline analyze ci.log --json
 faultline workflow ci.log --json --mode agent
+faultline guard .
 ```
 
-`analyze` gives you a ranked diagnosis with evidence. `workflow` turns the same result into a deterministic next-step artifact that engineers, scripts, and agents can follow without inventing their own glue.
+`analyze` gives you a ranked diagnosis with evidence. `workflow` turns the same result into a deterministic next-step artifact that engineers, scripts, and agents can follow without inventing their own glue. `guard` uses the same evidence model for quiet, high-confidence local checks before CI.
 
 ## Try it now
 
@@ -80,13 +82,15 @@ cat failing-ci.log | ./faultline analyze --json
 
 Most tools try to guess what went wrong.
 
-Faultline does not guess.
+Faultline does not guess at detection.
 
 - Deterministic pattern matching
 - Ranked diagnoses with explicit evidence
+- Optional `--bayes` reranking that stays deterministic, explainable, and additive
 - Deterministic workflow artifacts for local follow-through and agent handoff
+- Quiet `guard` checks for high-confidence local prevention
 - Structured fix steps instead of vague advice
-- No LLMs or probabilistic output in the execution path
+- No LLMs, no opaque ranking, and no non-reproducible output
 - Audit-friendly output with evidence pulled directly from the log
 - Faultline only emits a diagnosis when the match clears its confidence threshold
 
@@ -184,14 +188,17 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Same input and playbook set produce the same result every time.
 - Evidence is pulled directly from matched log lines.
 - Fix steps come from checked-in playbooks, not probabilistic generation.
+- `--bayes` never creates new matches; it only reranks already-detected candidates and explains why.
 - JSON and workflow output stay stable for automation and agent workflows.
 - Analysis runs locally without shipping build logs to a hosted service.
 
 ## What it does
 
 - Analyze CI logs from a file or stdin.
+- Rerank close calls and surface likely drift causes with `--bayes`.
 - Turn the top diagnosis into a deterministic workflow handoff.
 - Inspect a repository for source-level failure risks.
+- Run quiet, high-confidence local checks with `guard`.
 - Render concise terminal, markdown, or stable JSON output.
 - Use checked-in playbooks and real-fixture regression gates as the trust boundary.
 
@@ -247,7 +254,10 @@ The repository includes runnable sample logs and expected markdown output.
 ./bin/faultline analyze examples/runtime-mismatch.log
 ./bin/faultline analyze examples/docker-auth.log
 ./bin/faultline analyze examples/missing-executable.log --format markdown
+./bin/faultline analyze examples/missing-executable.log --json --bayes
 cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes --no-history
+./bin/faultline guard .
 cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
 ./bin/faultline fix examples/missing-executable.log --format markdown
 ./bin/faultline explain missing-executable
@@ -262,6 +272,7 @@ More runnable examples and output snapshots are documented in `examples/README.m
 | `analyze [file]` | Diagnose a CI log from a file or stdin |
 | `fix [file]` | Print fix steps for the top diagnosis |
 | `inspect [path]` | Scan a repository for source-level findings |
+| `guard [path]` | Emit only high-confidence local prevention findings |
 | `explain <id>` | Show the full playbook for one diagnosis |
 | `list` | List bundled and installed playbooks |
 | `workflow [file]` | Generate a deterministic follow-up workflow |
@@ -275,6 +286,7 @@ Useful flags:
 | `--format terminal\|markdown\|json` | Choose the output format |
 | `--mode quick\|detailed` | Control human-readable output detail |
 | `--top N` | Show the top N ranked diagnoses |
+| `--bayes` | Apply deterministic Bayesian-inspired reranking and delta diagnosis |
 | `--git` | Enrich analysis with recent local git context |
 | `--repo <path>` | Choose the repository used by `--git` |
 
@@ -286,8 +298,9 @@ Advanced usage:
 
 1. Faultline normalizes the input log into stable lines.
 2. It loads deterministic YAML playbooks from the bundled catalog and any optional installed packs.
-3. It matches explicit patterns, ranks results with stable rules, and extracts supporting evidence.
-4. It returns a diagnosis, evidence, fix steps, and validation guidance.
+3. It matches explicit patterns, extracts supporting evidence, and ranks results with stable rules.
+4. When `--bayes` is enabled, it reranks only the already-matched candidates and adds explainable ranking and delta hints.
+5. It returns a diagnosis, evidence, fix steps, workflow hints, and validation guidance.
 
 The same input and playbook set should produce the same result every time.
 
@@ -301,6 +314,7 @@ The same input and playbook set should produce the same result every time.
 | Docker usage | Yes |
 | CI usage | Yes |
 | Local repo inspection | Yes |
+| Local guard checks | Yes |
 | Network calls during analysis | No |
 
 ## Credibility checks

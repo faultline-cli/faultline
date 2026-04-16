@@ -228,14 +228,14 @@ type RankingContribution struct {
 }
 
 type Ranking struct {
-	Mode             string                `json:"mode,omitempty"`
-	Version          string                `json:"version,omitempty"`
-	BaselineScore    float64               `json:"baseline_score,omitempty"`
-	Prior            float64               `json:"prior,omitempty"`
-	FinalScore       float64               `json:"final_score,omitempty"`
-	Contributions    []RankingContribution `json:"contributions,omitempty"`
-	StrongestPositive []string             `json:"strongest_positive,omitempty"`
-	StrongestNegative []string             `json:"strongest_negative,omitempty"`
+	Mode              string                `json:"mode,omitempty"`
+	Version           string                `json:"version,omitempty"`
+	BaselineScore     float64               `json:"baseline_score,omitempty"`
+	Prior             float64               `json:"prior,omitempty"`
+	FinalScore        float64               `json:"final_score,omitempty"`
+	Contributions     []RankingContribution `json:"contributions,omitempty"`
+	StrongestPositive []string              `json:"strongest_positive,omitempty"`
+	StrongestNegative []string              `json:"strongest_negative,omitempty"`
 }
 
 type DeltaCause struct {
@@ -245,7 +245,7 @@ type DeltaCause struct {
 }
 
 type Delta struct {
-	Version string      `json:"version,omitempty"`
+	Version string       `json:"version,omitempty"`
 	Causes  []DeltaCause `json:"causes,omitempty"`
 }
 

@@ -36,6 +36,13 @@ cat examples/missing-executable.log | ./bin/faultline workflow --no-history
 cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
 ```
 
+For the optional deterministic evidence-fusion layer:
+
+```bash
+./bin/faultline analyze examples/missing-executable.log --json --bayes
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes --no-history
+```
+
 Those commands correspond to these checked-in snapshots:
 
 - `examples/missing-executable.workflow.local.txt`
@@ -45,6 +52,12 @@ For the full playbook behind a diagnosis:
 
 ```bash
 ./bin/faultline explain docker-auth
+```
+
+For a quiet high-confidence local prevention check in a repository:
+
+```bash
+./bin/faultline guard .
 ```
 
 ## Coverage snapshot

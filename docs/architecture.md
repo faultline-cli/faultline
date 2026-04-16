@@ -6,7 +6,7 @@ explicit deterministic layers:
 - `internal/cli` owns Cobra command definitions, flags, stdin/file handling,
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
-  explain, workflow, and fixture-corpus operations.
+  explain, workflow, guard, and fixture-corpus operations.
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, history persistence,
   source loading, and git enrichment.
@@ -17,6 +17,8 @@ explicit deterministic layers:
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and
   deterministic review helpers.
+- `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
+  used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
   serialization.
 - `internal/renderer` owns terminal-aware human rendering, including plain
@@ -67,6 +69,22 @@ Detectors stay explicit and separate:
 
 Both emit the shared `model.Result` shape so ranking, output, workflow, and
 history remain stable across command surfaces.
+
+## Scoring boundary
+
+Faultline now has an explicit three-layer ranking model:
+
+1. detectors decide which playbooks matched
+2. `internal/scoring` may rerank those already-matched candidates when
+   `--bayes` is enabled
+3. output, workflow, and guard consume the final deterministic ordering
+
+That boundary matters:
+
+- detectors remain authoritative
+- scoring is assistive, not a second matcher
+- same input and same repo snapshot still produce the same output
+- ranking and delta payloads are additive and explainable
 
 ## Rendering boundary
 

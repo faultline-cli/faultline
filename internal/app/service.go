@@ -15,8 +15,8 @@ import (
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/playbooks"
-	"faultline/internal/repo"
 	"faultline/internal/renderer"
+	"faultline/internal/repo"
 	"faultline/internal/workflow"
 )
 
@@ -247,7 +247,7 @@ func guardFindings(a *model.Analysis, top int) *model.Analysis {
 	}
 	filtered := make([]model.Result, 0, len(a.Results))
 	for _, result := range a.Results {
-		if result.Confidence < 0.85 {
+		if result.Confidence < 0.75 {
 			continue
 		}
 		if result.Score < 3.5 {

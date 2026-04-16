@@ -110,14 +110,14 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 			CommandHint: plan.Context.CommandHint,
 			Step:        plan.Context.Step,
 		},
-		Evidence:    plan.Evidence,
-		Files:       plan.Files,
-		LocalRepro:  plan.LocalRepro,
-		Verify:      plan.Verify,
+		Evidence:     plan.Evidence,
+		Files:        plan.Files,
+		LocalRepro:   plan.LocalRepro,
+		Verify:       plan.Verify,
 		RankingHints: plan.RankingHints,
 		DeltaHints:   plan.DeltaHints,
-		Steps:       plan.Steps,
-		AgentPrompt: plan.AgentPrompt,
+		Steps:        plan.Steps,
+		AgentPrompt:  plan.AgentPrompt,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {

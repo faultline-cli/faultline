@@ -706,6 +706,29 @@ func TestGuardCommandQuietOnCleanRepo(t *testing.T) {
 	}
 }
 
+func TestGuardCommandJSONNoFindings(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	repoDir := writeTempRepo(t)
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"guard", "--json", repoDir})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute guard --json on clean repo: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal guard json: %v", err)
+	}
+	if payload["matched"] != false {
+		t.Fatalf("expected matched=false, got %v", payload["matched"])
+	}
+}
+
 func TestGuardCommandReturnsNonZeroOnFindings(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	repoDir := writeTempGuardRepo(t)

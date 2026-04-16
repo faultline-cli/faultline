@@ -354,7 +354,8 @@ func playbookLikelyClasses(pb model.Playbook) []string {
 		classes = append(classes, "environment")
 	case "test":
 		classes = append(classes, "test_data")
-	case "build":
+	}
+	if strings.EqualFold(pb.Detector, "source") {
 		classes = append(classes, "source_code")
 	}
 	for _, file := range pb.Workflow.LikelyFiles {
