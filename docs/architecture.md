@@ -76,7 +76,8 @@ Faultline now has an explicit three-layer ranking model:
 
 1. detectors decide which playbooks matched
 2. `internal/scoring` may rerank those already-matched candidates when
-   `--bayes` is enabled
+   `--bayes` is enabled, and it only emits delta hints when repo-aware context
+   is explicit
 3. output, workflow, and guard consume the final deterministic ordering
 
 That boundary matters:
@@ -85,6 +86,7 @@ That boundary matters:
 - scoring is assistive, not a second matcher
 - same input and same repo snapshot still produce the same output
 - ranking and delta payloads are additive and explainable
+- changed files are suspicious context, not proof on their own
 
 ## Rendering boundary
 

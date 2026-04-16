@@ -142,8 +142,18 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		parts = append(parts, r.renderDetailPanel("Evidence", r.renderBulletLines(result.Evidence), "evidence"))
 	}
 	if detailed {
-		if triggered := r.renderExplanation("Triggered by", result.Explanation.TriggeredBy); triggered != "" {
-			parts = append(parts, triggered)
+		if rank == 0 {
+			if differential := r.renderDifferential(a.Results); differential != "" {
+				parts = append(parts, r.renderDetailPanel("Differential Diagnosis", differential, "signal"))
+			}
+			if confidence := r.renderConfidenceBreakdown(a.Results, result); confidence != "" {
+				parts = append(parts, r.renderDetailPanel("Confidence Breakdown", confidence, "score"))
+			}
+		}
+		if !sameTrimmedLines(result.Explanation.TriggeredBy, result.Evidence) {
+			if triggered := r.renderExplanation("Triggered by", result.Explanation.TriggeredBy); triggered != "" {
+				parts = append(parts, triggered)
+			}
 		}
 		if amplified := r.renderExplanation("Amplified by", result.Explanation.AmplifiedBy); amplified != "" {
 			parts = append(parts, amplified)
@@ -151,11 +161,13 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		if mitigated := r.renderExplanation("Mitigated by", result.Explanation.MitigatedBy); mitigated != "" {
 			parts = append(parts, mitigated)
 		}
-		if ranking := r.renderRanking(result.Ranking); ranking != "" {
-			parts = append(parts, r.renderDetailPanel("Ranking", ranking, "signal"))
-		}
 		if breakdown := r.renderScoreBreakdown(result.Breakdown); breakdown != "" {
 			parts = append(parts, r.renderDetailPanel("Score Breakdown", breakdown, "score"))
+		}
+		if rank == 0 {
+			if fix := r.renderMarkdownSection("Suggested Fix", result.Playbook.Fix); fix != "" {
+				parts = append(parts, r.renderSection("Suggested Fix", fix))
+			}
 		}
 	}
 	return strings.TrimSpace(strings.Join(filterEmpty(parts), "\n\n"))
@@ -335,8 +347,189 @@ func (r Renderer) renderExplanation(title string, lines []string) string {
 	return r.renderDetailPanel(title, r.renderBulletLines(lines), "signal")
 }
 
+func (r Renderer) renderDifferential(results []model.Result) string {
+	if len(results) < 2 {
+		return ""
+	}
+	top := results[0]
+	runnerUp := results[1]
+	lines := []string{
+		fmt.Sprintf("- Top candidate: %s (%s)", top.Playbook.ID, top.Playbook.Title),
+		fmt.Sprintf("- Runner-up: %s (%s)", runnerUp.Playbook.ID, runnerUp.Playbook.Title),
+	}
+	gap := roundScore(top.Score - runnerUp.Score)
+	if gap <= 0 {
+		lines = append(lines, "- Score gap: tied on score; stable ordering kept the top candidate first.")
+	} else {
+		lines = append(lines, fmt.Sprintf("- Score gap: +%.2f over the runner-up", gap))
+	}
+	if reason := higherRankedReason(top, runnerUp); reason != "" {
+		lines = append(lines, "- Higher-ranked because: "+reason)
+	}
+	if reason := alternateReason(top, runnerUp); reason != "" {
+		lines = append(lines, "- Alternate remains plausible because: "+reason)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderConfidenceBreakdown(results []model.Result, result model.Result) string {
+	lines := []string{
+		fmt.Sprintf("- Reported confidence: %d%%", int(math.Round(result.Confidence*100))),
+	}
+	if result.Ranking == nil {
+		lines = append(lines, fmt.Sprintf("- Detector score: %.2f", result.Score))
+		return strings.Join(lines, "\n")
+	}
+
+	lines = append(lines,
+		fmt.Sprintf("- Detector baseline: %.2f", result.Ranking.BaselineScore),
+		fmt.Sprintf("- Final reranked score: %.2f", result.Ranking.FinalScore),
+	)
+	if result.Ranking.Prior != 0 {
+		lines = append(lines, fmt.Sprintf("- Conservative prior: %+.2f", result.Ranking.Prior))
+	}
+	for _, item := range topSignalContributions(result.Ranking, 3) {
+		lines = append(lines, fmt.Sprintf("- %+.2f %s", item.Contribution, fallback(item.Reason, item.Feature)))
+	}
+	if len(results) > 1 {
+		gap := roundScore(result.Score - results[1].Score)
+		if gap > 0 {
+			lines = append(lines, fmt.Sprintf("- Margin over #2: +%.2f", gap))
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func topSignalContributions(ranking *model.Ranking, limit int) []model.RankingContribution {
+	if ranking == nil || limit <= 0 {
+		return nil
+	}
+	out := make([]model.RankingContribution, 0, limit)
+	for _, item := range ranking.Contributions {
+		if contributionIsMetadata(item.Feature) {
+			continue
+		}
+		out = append(out, item)
+		if len(out) >= limit {
+			break
+		}
+	}
+	return out
+}
+
+func higherRankedReason(top, runnerUp model.Result) string {
+	for _, item := range contributionDelta(top.Ranking, runnerUp.Ranking) {
+		if item.Contribution <= 0 {
+			continue
+		}
+		if contributionIsMetadata(item.Feature) {
+			continue
+		}
+		reason := strings.TrimSpace(item.Reason)
+		if reason == "" {
+			reason = item.Feature
+		}
+		return reason
+	}
+	return ""
+}
+
+func alternateReason(top, runnerUp model.Result) string {
+	if sharedEvidence(top.Evidence, runnerUp.Evidence) {
+		return "it matched the same failing evidence line"
+	}
+	if len(trimLines(runnerUp.Evidence)) > 0 {
+		return "it still matched explicit evidence from the input"
+	}
+	return ""
+}
+
+func contributionDelta(top, runnerUp *model.Ranking) []model.RankingContribution {
+	if top == nil {
+		return nil
+	}
+	runnerMap := map[string]model.RankingContribution{}
+	if runnerUp != nil {
+		for _, item := range runnerUp.Contributions {
+			runnerMap[item.Feature] = item
+		}
+	}
+	out := make([]model.RankingContribution, 0, len(top.Contributions))
+	for _, item := range top.Contributions {
+		if item.Feature == "detector_score" {
+			continue
+		}
+		delta := roundScore(item.Contribution - runnerMap[item.Feature].Contribution)
+		if delta == 0 {
+			continue
+		}
+		item.Contribution = delta
+		out = append(out, item)
+	}
+	return out
+}
+
+func contributionIsMetadata(feature string) bool {
+	switch feature {
+	case "detector_score", "historical_fixture_support", "candidate_separation":
+		return true
+	default:
+		return false
+	}
+}
+
+func sharedEvidence(left, right []string) bool {
+	for _, l := range trimLines(left) {
+		for _, r := range trimLines(right) {
+			if l == r {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func sameTrimmedLines(left, right []string) bool {
+	left = trimLines(left)
+	right = trimLines(right)
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func trimLines(lines []string) []string {
+	out := make([]string, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		out = append(out, line)
+	}
+	return out
+}
+
+func roundScore(value float64) float64 {
+	return math.Round(value*100) / 100
+}
+
 func (r Renderer) renderScoreBreakdown(breakdown model.ScoreBreakdown) string {
 	if breakdown.FinalScore == 0 {
+		return ""
+	}
+	if breakdown.CompoundSignalBonus == 0 &&
+		breakdown.BlastRadiusMultiplier == 0 &&
+		breakdown.HotPathMultiplier == 0 &&
+		breakdown.ChangeIntroducedBonus == 0 &&
+		breakdown.MitigatingEvidenceDiscount == 0 &&
+		breakdown.ExplicitExceptionDiscount == 0 &&
+		breakdown.SafeContextDiscount == 0 {
 		return ""
 	}
 	lines := []string{
@@ -353,7 +546,7 @@ func (r Renderer) renderScoreBreakdown(breakdown model.ScoreBreakdown) string {
 		lines = append(lines, fmt.Sprintf("- hot path: +%.2f", breakdown.HotPathMultiplier))
 	}
 	if breakdown.ChangeIntroducedBonus != 0 {
-		lines = append(lines, fmt.Sprintf("- change bonus: %.2f", breakdown.ChangeIntroducedBonus))
+		lines = append(lines, fmt.Sprintf("- change bonus: %+.2f", breakdown.ChangeIntroducedBonus))
 	}
 	if breakdown.MitigatingEvidenceDiscount != 0 {
 		lines = append(lines, fmt.Sprintf("- mitigations: -%.2f", breakdown.MitigatingEvidenceDiscount))

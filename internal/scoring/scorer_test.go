@@ -105,3 +105,24 @@ func TestRankingContributionOrderingPrefersLargestAbsoluteContribution(t *testin
 		t.Fatalf("expected largest contribution first, got %#v", ranking.Contributions)
 	}
 }
+
+func TestBaselineCandidateSeparationOnlyRewardsUniqueLeader(t *testing.T) {
+	baseline := []model.Result{
+		{Playbook: model.Playbook{ID: "top"}, Score: 4},
+		{Playbook: model.Playbook{ID: "runner-up"}, Score: 3},
+		{Playbook: model.Playbook{ID: "third"}, Score: 2},
+	}
+
+	if got := baselineCandidateSeparation(baseline, 0); got <= 0 {
+		t.Fatalf("expected positive separation for unique leader, got %.2f", got)
+	}
+	if got := baselineCandidateSeparation(baseline, 1); got != 0 {
+		t.Fatalf("expected no separation bonus for runner-up, got %.2f", got)
+	}
+	if got := baselineCandidateSeparation([]model.Result{
+		{Playbook: model.Playbook{ID: "a"}, Score: 2},
+		{Playbook: model.Playbook{ID: "b"}, Score: 2},
+	}, 0); got != 0 {
+		t.Fatalf("expected tied leader to get no separation bonus, got %.2f", got)
+	}
+}

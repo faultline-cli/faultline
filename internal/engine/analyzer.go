@@ -130,7 +130,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		snapshot *repoSnapshot
 		delta    *model.Delta
 	)
-	if e.opts.BayesEnabled || e.opts.GitContextEnabled {
+	if e.opts.GitContextEnabled {
 		snapshot = e.loadRepoSnapshot()
 	}
 	if e.opts.BayesEnabled {
@@ -212,7 +212,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		snapshot *repoSnapshot
 		delta    *model.Delta
 	)
-	if e.opts.BayesEnabled || e.opts.GitContextEnabled {
+	if len(changeSet.ChangedFiles) > 0 || e.opts.GitContextEnabled {
 		snapshot = e.loadRepoSnapshotFromPath(root, changeSet)
 	}
 	if e.opts.BayesEnabled {

@@ -131,15 +131,40 @@ func TestFormatAnalysisMarkdownDetailed(t *testing.T) {
 	a.Results[0].Explanation = model.ResultExplanation{
 		TriggeredBy: []string{"registry rejected credentials"},
 	}
+	a.Results[0].Ranking = &model.Ranking{
+		BaselineScore: 2.0,
+		FinalScore:    2.4,
+		Prior:         0.1,
+		Contributions: []model.RankingContribution{
+			{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+			{Feature: "tool_or_stack_match", Contribution: 0.2, Reason: "tool or stack tokens align with the evidence"},
+		},
+	}
 	a.Results[0].Breakdown = model.ScoreBreakdown{
 		BaseSignalScore:     0.91,
 		FinalScore:          1.11,
 		CompoundSignalBonus: 0.20,
 	}
+	a.Results = append(a.Results, model.Result{
+		Playbook: model.Playbook{
+			ID:      "image-pull-backoff",
+			Title:   "Image pull backoff",
+			Summary: "Alternative summary",
+		},
+		Score:    1.95,
+		Evidence: []string{"authentication required"},
+		Ranking: &model.Ranking{
+			BaselineScore: 2.0,
+			FinalScore:    1.95,
+			Contributions: []model.RankingContribution{
+				{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+			},
+		},
+	})
 	a.RepoContext = &model.RepoContext{RepoRoot: "/repo", RecentFiles: []string{"Dockerfile"}}
 
 	text := FormatAnalysisMarkdown(a, 1, ModeDetailed)
-	for _, want := range []string{"# Docker auth", "- ID: `docker-auth`", "## Summary", "## Evidence", "## Triggered By", "## Score Breakdown", "## Repo Context"} {
+	for _, want := range []string{"# Docker auth", "- ID: `docker-auth`", "## Summary", "## Evidence", "## Differential Diagnosis", "## Confidence Breakdown", "## Triggered By", "## Score Breakdown", "## Suggested Fix", "## Repo Context"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in markdown output, got:\n%s", want, text)
 		}
@@ -173,6 +198,27 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 		[]string{"pull access denied"})
 	a.Context = model.Context{Stage: "deploy", CommandHint: "docker push"}
 	a.Results[0].Playbook.Summary = "Service failed readiness checks."
+	a.Results[0].Ranking = &model.Ranking{
+		BaselineScore: 2.0,
+		FinalScore:    2.4,
+		Prior:         0.1,
+		Contributions: []model.RankingContribution{
+			{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+			{Feature: "tool_or_stack_match", Contribution: 0.2, Reason: "tool or stack tokens align with the evidence"},
+		},
+	}
+	a.Results = append(a.Results, model.Result{
+		Playbook: model.Playbook{ID: "image-pull-backoff", Title: "Image pull backoff"},
+		Score:    1.8,
+		Evidence: []string{"pull access denied"},
+		Ranking: &model.Ranking{
+			BaselineScore: 2.0,
+			FinalScore:    1.8,
+			Contributions: []model.RankingContribution{
+				{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+			},
+		},
+	})
 	a.RepoContext = &model.RepoContext{
 		RepoRoot:           "/repo",
 		RecentFiles:        []string{"Dockerfile"},
@@ -184,7 +230,7 @@ func TestFormatAnalysisTextDetailed(t *testing.T) {
 	}
 	text := FormatAnalysisText(a, 1, ModeDetailed, renderer.Options{Plain: true, Width: 88})
 
-	checks := []string{"Summary", "Category:", "Stage:", "Evidence", "Triggered by", "Score Breakdown", "Repo Context", "Related commit:", "Hotfix signal:"}
+	checks := []string{"Summary", "Category:", "Stage:", "Evidence", "Differential Diagnosis", "Confidence Breakdown", "Triggered by", "Suggested Fix", "Repo Context", "Related commit:", "Hotfix signal:"}
 	for _, want := range checks {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in detailed output, got:\n%s", want, text)

@@ -240,7 +240,7 @@ func TestAnalyzeMarkdownFormat(t *testing.T) {
 	if !strings.Contains(got, "- ID: `docker-auth`") {
 		t.Fatalf("expected markdown metadata, got %q", got)
 	}
-	if !strings.Contains(got, "## Triggered By") {
+	if !strings.Contains(got, "## Differential Diagnosis") || !strings.Contains(got, "## Confidence Breakdown") || !strings.Contains(got, "## Suggested Fix") {
 		t.Fatalf("expected detailed markdown sections, got %q", got)
 	}
 }

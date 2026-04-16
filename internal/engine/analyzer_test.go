@@ -46,6 +46,55 @@ func TestAnalyzeReaderMultipleResults(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReaderDockerAuthDoesNotMatchGenericPermissionDenied(t *testing.T) {
+	e := New(Options{
+		PlaybookDir:  repoPlaybookDir(t),
+		NoHistory:    true,
+		BayesEnabled: true,
+		GitSince:     "30d",
+		RepoPath:     t.TempDir(),
+	})
+
+	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	if a.Results[0].Playbook.ID != "docker-auth" {
+		t.Fatalf("expected docker-auth, got %s", a.Results[0].Playbook.ID)
+	}
+	for _, result := range a.Results {
+		if result.Playbook.ID == "permission-denied" {
+			t.Fatalf("permission-denied should be excluded for registry auth failures: %#v", a.Results)
+		}
+	}
+}
+
+func TestAnalyzeReaderBayesDoesNotAttachDeltaWithoutGitContext(t *testing.T) {
+	e := New(Options{
+		PlaybookDir:  repoPlaybookDir(t),
+		NoHistory:    true,
+		BayesEnabled: true,
+	})
+
+	a, err := e.AnalyzeReader(strings.NewReader("Go Version: go1.26.0\n"))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if a.Delta != nil {
+		t.Fatalf("expected no delta without git context, got %#v", a.Delta)
+	}
+	if a.RepoContext != nil {
+		t.Fatalf("expected no repo context without git context, got %#v", a.RepoContext)
+	}
+	if len(a.Results) == 0 || a.Results[0].Ranking == nil {
+		t.Fatalf("expected bayes ranking without git context, got %#v", a.Results)
+	}
+}
+
 func TestAnalyzeReaderOOMKilled(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
 

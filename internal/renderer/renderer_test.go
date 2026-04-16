@@ -146,20 +146,43 @@ func TestRenderFixEmptyResults(t *testing.T) {
 
 func TestRenderAnalyzeDetailedAddsSpacingUnderHeaders(t *testing.T) {
 	a := &model.Analysis{
-		Results: []model.Result{{
-			Playbook:   samplePlaybook(),
-			Confidence: 0.82,
-			Score:      12.5,
-			Detector:   "log",
-			Evidence:   []string{"missing go.sum entry", "module checksum not found"},
-			Explanation: model.ResultExplanation{
-				TriggeredBy: []string{"missing go.sum entry"},
+		Results: []model.Result{
+			{
+				Playbook:   samplePlaybook(),
+				Confidence: 0.82,
+				Score:      12.5,
+				Detector:   "log",
+				Evidence:   []string{"missing go.sum entry", "module checksum not found"},
+				Explanation: model.ResultExplanation{
+					TriggeredBy: []string{"missing go.sum entry"},
+				},
+				Ranking: &model.Ranking{
+					BaselineScore: 10,
+					FinalScore:    12.5,
+					Contributions: []model.RankingContribution{
+						{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+						{Feature: "tool_or_stack_match", Contribution: 0.4, Reason: "tool or stack tokens align with the evidence"},
+					},
+				},
+				Breakdown: model.ScoreBreakdown{
+					BaseSignalScore:     10,
+					FinalScore:          12.5,
+					CompoundSignalBonus: 2.5,
+				},
 			},
-			Breakdown: model.ScoreBreakdown{
-				BaseSignalScore: 10,
-				FinalScore:      12.5,
+			{
+				Playbook: model.Playbook{ID: "runner-up", Title: "Runner Up"},
+				Score:    11.8,
+				Evidence: []string{"missing go.sum entry"},
+				Ranking: &model.Ranking{
+					BaselineScore: 10,
+					FinalScore:    11.8,
+					Contributions: []model.RankingContribution{
+						{Feature: "detector_score", Contribution: 1.6, Reason: "baseline detector score remains the anchor"},
+					},
+				},
 			},
-		}},
+		},
 		Context: model.Context{Stage: "build"},
 	}
 
@@ -168,8 +191,11 @@ func TestRenderAnalyzeDetailedAddsSpacingUnderHeaders(t *testing.T) {
 	for _, want := range []string{
 		"Summary\n-------\n\n",
 		"Evidence\n--------\n\n",
+		"Differential Diagnosis\n----------------------\n\n",
+		"Confidence Breakdown\n--------------------\n\n",
 		"Triggered by\n------------\n\n",
 		"Score Breakdown\n---------------\n\n",
+		"Suggested Fix\n-------------\n\n",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("expected blank line under section header %q, got:\n%s", want, out)

@@ -113,7 +113,7 @@ type Analysis struct {
     Source      string
     Fingerprint string
     RepoContext *RepoContext     // Populated when --git is enabled
-    Delta       *Delta           // Populated when --bayes is enabled
+    Delta       *Delta           // Populated when repo-aware scoring has explicit change or git context
 }
 ```
 
@@ -140,6 +140,7 @@ type Ranking struct {
 - Playbook loading order must be stable.
 - Deterministic detectors stay authoritative for matching.
 - Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
+- Delta hints require explicit repo-aware context such as `--git` or changed-file analysis.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.

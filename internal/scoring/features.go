@@ -11,15 +11,11 @@ import (
 
 func featureSet(weights weightsFile, inputs Inputs, result model.Result, baseline []model.Result, index int, delta *model.Delta) []feature {
 	topScore := baseline[0].Score
-	nextScore := 0.0
-	if index+1 < len(baseline) {
-		nextScore = baseline[index+1].Score
-	}
 
 	features := []feature{
 		scalarFeature(weights, "detector_score", normalizeAgainst(result.Score, topScore), "baseline detector score remains the anchor", nil),
 		scalarFeature(weights, "detector_confidence", clamp01(result.Confidence), "detector confidence supports the candidate", nil),
-		scalarFeature(weights, "candidate_separation", candidateSeparation(result.Score, nextScore), "competitive separation from the next candidate", nil),
+		scalarFeature(weights, "candidate_separation", baselineCandidateSeparation(baseline, index), "competitive separation supports only the baseline leader", nil),
 		scalarFeature(weights, "log_match_coverage", logMatchCoverage(inputs, result), "broader explicit signal coverage supports the candidate", nil),
 		scalarFeature(weights, "error_exact_match", errorExactMatch(inputs, result), "exact log-pattern overlap is present", result.Evidence),
 		scalarFeature(weights, "error_fuzzy_overlap", errorFuzzyOverlap(inputs, result), "token overlap between evidence and playbook patterns supports the candidate", result.Evidence),
@@ -79,6 +75,29 @@ func candidateSeparation(score, next float64) float64 {
 		return 0
 	}
 	return clamp01((score - next) / score)
+}
+
+func baselineCandidateSeparation(baseline []model.Result, index int) float64 {
+	if len(baseline) == 0 || index < 0 || index >= len(baseline) {
+		return 0
+	}
+	score := baseline[index].Score
+	if score <= 0 {
+		return 0
+	}
+	// Separation is only trustworthy for the unique detector leader. Trailing
+	// or tied candidates should not gain a reranking boost simply because they
+	// appear later in the baseline order.
+	if index != 0 {
+		return 0
+	}
+	if len(baseline) == 1 {
+		return 1
+	}
+	if baseline[1].Score >= score {
+		return 0
+	}
+	return candidateSeparation(score, baseline[1].Score)
 }
 
 func logMatchCoverage(inputs Inputs, result model.Result) float64 {

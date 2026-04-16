@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"faultline/internal/model"
@@ -124,8 +125,18 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 		if evidence := markdownListSection("## Evidence", result.Evidence); evidence != "" {
 			sections = append(sections, "", evidence)
 		}
-		if triggered := markdownListSection("## Triggered By", result.Explanation.TriggeredBy); triggered != "" {
-			sections = append(sections, "", triggered)
+		if rank == 0 {
+			if differential := markdownListSection("## Differential Diagnosis", differentialLines(a.Results)); differential != "" {
+				sections = append(sections, "", differential)
+			}
+			if confidence := markdownListSection("## Confidence Breakdown", confidenceBreakdownLines(a.Results, result)); confidence != "" {
+				sections = append(sections, "", confidence)
+			}
+		}
+		if !sameLines(result.Explanation.TriggeredBy, result.Evidence) {
+			if triggered := markdownListSection("## Triggered By", result.Explanation.TriggeredBy); triggered != "" {
+				sections = append(sections, "", triggered)
+			}
 		}
 		if amplified := markdownListSection("## Amplified By", result.Explanation.AmplifiedBy); amplified != "" {
 			sections = append(sections, "", amplified)
@@ -133,11 +144,13 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 		if mitigated := markdownListSection("## Mitigated By", result.Explanation.MitigatedBy); mitigated != "" {
 			sections = append(sections, "", mitigated)
 		}
-		if ranking := markdownListSection("## Ranking", rankingLines(result.Ranking)); ranking != "" {
-			sections = append(sections, "", ranking)
-		}
 		if breakdown := markdownListSection("## Score Breakdown", scoreBreakdownLines(result.Breakdown)); breakdown != "" {
 			sections = append(sections, "", breakdown)
+		}
+		if rank == 0 {
+			if fix := strings.TrimSpace(result.Playbook.Fix); fix != "" {
+				sections = append(sections, "", "## Suggested Fix", "", fix)
+			}
 		}
 	}
 	return strings.TrimSpace(strings.Join(sections, "\n"))
@@ -187,8 +200,151 @@ func trimmedLines(lines []string) []string {
 	return out
 }
 
+func sameLines(left, right []string) bool {
+	left = filterEmpty(trimmedLines(left))
+	right = filterEmpty(trimmedLines(right))
+	if len(left) != len(right) {
+		return false
+	}
+	for i := range left {
+		if left[i] != right[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func sharesLine(left, right []string) bool {
+	left = filterEmpty(trimmedLines(left))
+	right = filterEmpty(trimmedLines(right))
+	for _, l := range left {
+		for _, r := range right {
+			if l == r {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func differentialLines(results []model.Result) []string {
+	if len(results) < 2 {
+		return nil
+	}
+	top := results[0]
+	runnerUp := results[1]
+	lines := []string{
+		fmt.Sprintf("top candidate: %s (%s)", top.Playbook.ID, top.Playbook.Title),
+		fmt.Sprintf("runner-up: %s (%s)", runnerUp.Playbook.ID, runnerUp.Playbook.Title),
+	}
+	gap := roundMarkdownScore(top.Score - runnerUp.Score)
+	if gap <= 0 {
+		lines = append(lines, "score gap: tied on score; stable ordering kept the top candidate first")
+	} else {
+		lines = append(lines, fmt.Sprintf("score gap: +%.2f over the runner-up", gap))
+	}
+	if reason := higherRankedMarkdownReason(top, runnerUp); reason != "" {
+		lines = append(lines, "higher-ranked because: "+reason)
+	}
+	if sharesLine(top.Evidence, runnerUp.Evidence) {
+		lines = append(lines, "alternate remains plausible because: it matched the same failing evidence line")
+	} else if len(filterEmpty(trimmedLines(runnerUp.Evidence))) > 0 {
+		lines = append(lines, "alternate remains plausible because: it still matched explicit evidence from the input")
+	}
+	return lines
+}
+
+func confidenceBreakdownLines(results []model.Result, result model.Result) []string {
+	lines := []string{
+		fmt.Sprintf("reported confidence: %d%%", int(result.Confidence*100+0.5)),
+	}
+	if result.Ranking == nil {
+		lines = append(lines, fmt.Sprintf("detector score: %.2f", result.Score))
+		return lines
+	}
+	lines = append(lines,
+		fmt.Sprintf("detector baseline: %.2f", result.Ranking.BaselineScore),
+		fmt.Sprintf("final reranked score: %.2f", result.Ranking.FinalScore),
+	)
+	if result.Ranking.Prior != 0 {
+		lines = append(lines, fmt.Sprintf("conservative prior: %+.2f", result.Ranking.Prior))
+	}
+	for _, item := range rankingContributionLines(result.Ranking, 3) {
+		lines = append(lines, item)
+	}
+	if len(results) > 1 {
+		gap := roundMarkdownScore(result.Score - results[1].Score)
+		if gap > 0 {
+			lines = append(lines, fmt.Sprintf("margin over #2: +%.2f", gap))
+		}
+	}
+	return lines
+}
+
+func higherRankedMarkdownReason(top, runnerUp model.Result) string {
+	if top.Ranking == nil || runnerUp.Ranking == nil {
+		return ""
+	}
+	runnerMap := map[string]model.RankingContribution{}
+	for _, item := range runnerUp.Ranking.Contributions {
+		runnerMap[item.Feature] = item
+	}
+	for _, item := range top.Ranking.Contributions {
+		if contributionIsMetadata(item.Feature) {
+			continue
+		}
+		if roundMarkdownScore(item.Contribution-runnerMap[item.Feature].Contribution) <= 0 {
+			continue
+		}
+		if strings.TrimSpace(item.Reason) != "" {
+			return item.Reason
+		}
+		return item.Feature
+	}
+	return ""
+}
+
+func rankingContributionLines(ranking *model.Ranking, limit int) []string {
+	if ranking == nil || limit <= 0 {
+		return nil
+	}
+	lines := make([]string, 0, limit)
+	for _, item := range ranking.Contributions {
+		if contributionIsMetadata(item.Feature) {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%+.2f %s", item.Contribution, fallback(item.Reason, item.Feature)))
+		if len(lines) >= limit {
+			break
+		}
+	}
+	return lines
+}
+
+func roundMarkdownScore(value float64) float64 {
+	return math.Round(value*100) / 100
+}
+
+func contributionIsMetadata(feature string) bool {
+	switch feature {
+	case "detector_score", "historical_fixture_support", "candidate_separation":
+		return true
+	default:
+		return false
+	}
+}
+
 func scoreBreakdownLines(breakdown model.ScoreBreakdown) []string {
 	if breakdown.FinalScore == 0 {
+		return nil
+	}
+	if breakdown.CompoundSignalBonus == 0 &&
+		breakdown.BlastRadiusMultiplier == 0 &&
+		breakdown.HotPathMultiplier == 0 &&
+		breakdown.ChangeIntroducedBonus == 0 &&
+		breakdown.MitigatingEvidenceDiscount == 0 &&
+		breakdown.ExplicitExceptionDiscount == 0 &&
+		breakdown.SafeContextDiscount == 0 {
 		return nil
 	}
 	lines := []string{
@@ -205,7 +361,7 @@ func scoreBreakdownLines(breakdown model.ScoreBreakdown) []string {
 		lines = append(lines, fmt.Sprintf("hot path: +%.2f", breakdown.HotPathMultiplier))
 	}
 	if breakdown.ChangeIntroducedBonus != 0 {
-		lines = append(lines, fmt.Sprintf("change bonus: %.2f", breakdown.ChangeIntroducedBonus))
+		lines = append(lines, fmt.Sprintf("change bonus: %+.2f", breakdown.ChangeIntroducedBonus))
 	}
 	if breakdown.MitigatingEvidenceDiscount != 0 {
 		lines = append(lines, fmt.Sprintf("mitigations: -%.2f", breakdown.MitigatingEvidenceDiscount))
@@ -244,26 +400,6 @@ func repoContextLines(repo *model.RepoContext) []string {
 	}
 	for _, item := range repo.DriftSignals {
 		lines = append(lines, "Drift hint: "+item)
-	}
-	return lines
-}
-
-func rankingLines(ranking *model.Ranking) []string {
-	if ranking == nil {
-		return nil
-	}
-	lines := []string{
-		fmt.Sprintf("mode: %s", ranking.Mode),
-		fmt.Sprintf("version: %s", ranking.Version),
-		fmt.Sprintf("baseline: %.2f", ranking.BaselineScore),
-		fmt.Sprintf("prior: %.2f", ranking.Prior),
-		fmt.Sprintf("final: %.2f", ranking.FinalScore),
-	}
-	for _, item := range ranking.StrongestPositive {
-		lines = append(lines, "positive: "+item)
-	}
-	for _, item := range ranking.StrongestNegative {
-		lines = append(lines, "negative: "+item)
 	}
 	return lines
 }
