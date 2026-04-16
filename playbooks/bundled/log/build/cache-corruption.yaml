@@ -30,12 +30,15 @@ diagnosis: |-
 fix: |-
   ## Fix steps
 
-  1. Delete the CI cache and allow it to rebuild from scratch.
+  1. Delete the CI cache entry that backs the failing step and allow it to
+     rebuild from scratch.
   2. Invalidate the cache by changing the cache key, for example by appending a
-     version suffix.
+     version suffix or toolchain hash.
   3. For GitHub Actions, clear the cache via Settings > Actions > Caches.
   4. If the cache stores platform-specific artifacts, verify the key includes
      OS, architecture, and toolchain version before restoring it again.
+  5. If the failure is local to one package manager, clear only that tool's
+     cache rather than wiping the entire home cache directory.
 validation: |-
   ## Validation
 
@@ -64,6 +67,6 @@ workflow:
     - Dockerfile
     - package-lock.json
   local_repro:
-    - rm -rf ~/.cache
+    - du -sh <cache-dir>
   verify:
-    - rm -rf ~/.cache
+    - du -sh <cache-dir>

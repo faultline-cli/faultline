@@ -23,8 +23,9 @@ fix: |-
   1. Retrieve the logs from the previous crashed container: `kubectl logs <pod> --previous`.
   2. Check the exit code with `kubectl describe pod <pod>` — look for the Last State block.
   3. If exit 137, increase the memory limit in the container spec or profile memory usage.
-  4. If exit 1, search the log output for `FATAL`, `panic`, or unhandled exception traces.
-  5. Reproduce the failure locally with `docker run` using the same image and environment variables.
+  4. If exit 139, inspect the logs for segfaults or crashes in native extensions.
+  5. If exit 1, search the log output for `FATAL`, `panic`, or unhandled exception traces.
+  6. Reproduce the failure locally with `docker run` using the same image and environment variables.
 validation: |-
   ## Validation
 

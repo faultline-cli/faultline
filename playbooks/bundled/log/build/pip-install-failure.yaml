@@ -14,7 +14,9 @@ diagnosis: |-
 fix: |-
   ## Fix steps
 
-  1. Run `pip install -r requirements.txt -v` locally for full resolver output.
+  1. Run `python -m pip install -r requirements.txt -v` in the same
+     interpreter or virtual environment that CI uses, so the resolver output
+     matches the failing job.
   2. For `ResolutionImpossible`: relax or align version constraints in `requirements.txt`.
   3. For `Failed building wheel`: install the required system libraries (e.g. `libpq-dev`, `build-essential`).
   4. For private indexes: set `PIP_EXTRA_INDEX_URL` or add `--extra-index-url` to the install command.
@@ -23,7 +25,8 @@ validation: |-
   ## Validation
 
   - Re-run the local reproduction command after the fix.
-  - pip install -r requirements.txt
+  - `python -m pip check` passes in the same environment.
+  - `python -m pip install -r requirements.txt` completes successfully.
 match:
   any:
     - "ERROR: Could not find a version that satisfies the requirement"
@@ -52,7 +55,7 @@ workflow:
     - pyproject.toml
     - Pipfile
   local_repro:
-    - pip install -r requirements.txt
+    - python -m pip install -r requirements.txt -v
 why_it_matters: |-
   ## Why it matters
 

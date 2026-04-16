@@ -22,10 +22,13 @@ diagnosis: |-
 fix: |-
   ## Fix steps
 
-  1. Re-run the exact install command locally with verbose logging so you can
-     see which package name, version, or index URL failed.
+  1. Re-run the exact install command locally with verbose logging from the
+     same package manager, so you can see which package name, version, or
+     index URL failed.
   2. Check that the package name and requested version actually exist in the
-     configured registry or package index.
+     configured registry or package index using that package manager's own
+     metadata lookup command, such as `npm view`, `pip index versions`, or
+     `apt-cache policy`.
   3. If the package is private, verify the registry configuration files are
      present before the install step runs, for example `.npmrc`, `pip.conf`,
      or the apt sources list used by the job.

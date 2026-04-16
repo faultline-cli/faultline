@@ -31,8 +31,9 @@ fix: |-
      a private resolver. CI runners on cloud providers may not have access to
      private DNS zones by default.
   4. Retry the job once to rule out a transient resolver outage.
-  5. If the hostname comes from configuration, trace the resolved value in CI
-     logs to confirm the job is not using the wrong environment or secret.
+  5. If the hostname comes from configuration, print the resolved value in the
+     same job or container and confirm it matches the expected environment or
+     secret before retrying.
 validation: |-
   ## Validation
 

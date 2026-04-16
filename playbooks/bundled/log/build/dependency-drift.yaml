@@ -75,5 +75,11 @@ workflow:
     - go.mod
   local_repro:
     - npm ls
+    - pipdeptree
+    - bundle viz
+    - go mod graph
   verify:
     - npm ls
+    - pipdeptree
+    - bundle viz
+    - go mod graph

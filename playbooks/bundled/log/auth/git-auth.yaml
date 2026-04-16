@@ -14,14 +14,10 @@ diagnosis: |-
 fix: |-
   ## Fix steps
 
-  1. For HTTPS: configure Git to inject the token automatically:
-
-     ```bash
-     git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
-     ```
-
-     Or use the `actions/checkout` step with `token: ${{ secrets.GITHUB_TOKEN }}`
-     which handles credential injection automatically.
+  1. For HTTPS, prefer the CI provider's checkout or credential helper instead
+     of embedding a token in a global URL rewrite. In GitHub Actions, use the
+     `actions/checkout` step with `token: ${{ secrets.GITHUB_TOKEN }}` so the
+     credential is injected for the job only.
 
   2. For SSH: add the deploy key or SSH key as a CI secret, then load it:
 

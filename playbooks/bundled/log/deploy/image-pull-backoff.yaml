@@ -18,6 +18,7 @@ fix: |-
   2. Confirm the cluster or runner has registry credentials for the target repository.
   3. Inspect the imagePullSecrets or runtime credential configuration used by the deployment.
   4. Check the latest successful build or release job to confirm the image was pushed before deploy started.
+  5. Inspect the pod events and confirm the failure is an image reference or credential issue rather than a broader scheduling problem.
 validation: |-
   ## Validation
 

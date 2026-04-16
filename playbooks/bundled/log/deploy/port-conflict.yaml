@@ -22,8 +22,8 @@ fix: |-
   ## Fix steps
 
   1. Find the process occupying the port: `lsof -i :<port>` or `ss -tlnp | grep <port>`.
-  2. In Kubernetes with host ports: ensure old pods are fully terminated before the new ones start (`kubectl delete pod <old-pod>`).
-  3. Check for Ghost containers: `docker ps -a | grep <image>` and remove stopped containers with `docker rm`.
+  2. In Kubernetes with host ports: ensure the old pod is fully terminated before the new one starts, or adjust the rollout strategy so the hand-off is serial.
+  3. Check for stopped containers: `docker ps -a | grep <image>` and remove obsolete containers with `docker rm`.
   4. If using NodePort or HostPort in Kubernetes, verify no two pods on the same node request the same port.
 validation: |-
   ## Validation

@@ -48,10 +48,16 @@ fix: |-
      kubectl logs <pod> --previous
      ```
 
-  2. Verify the health check path and port match what the application actually serves.
-  3. Confirm all required environment variables and secrets are present in the deployment.
-  4. Check that dependent services such as databases and caches are reachable from the new pod.
-  5. If liveness is `200` while readiness is `503`, inspect startup tasks and dependency checks that gate the ready endpoint.
+  2. Inspect the pod description for the probe configuration and recent events:
+
+     ```bash
+     kubectl describe pod <pod>
+     ```
+
+  3. Verify the health check path and port match what the application actually serves.
+  4. Confirm all required environment variables and secrets are present in the deployment.
+  5. Check that dependent services such as databases and caches are reachable from the new pod.
+  6. If liveness is `200` while readiness is `503`, inspect startup tasks and dependency checks that gate the ready endpoint.
 validation: |-
   ## Validation
 

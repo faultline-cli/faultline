@@ -19,14 +19,16 @@ diagnosis: |-
 fix: |-
   ## Fix steps
 
-  1. Check how much space remains and which paths are largest:
+  1. Check how much space remains on the filesystem that contains the failing
+     path, and identify which paths are largest:
 
      ```bash
      df -h
      du -sh /* 2>/dev/null | sort -rh | head -20
      ```
 
-  2. Prune Docker images, containers, and build cache in one pass:
+  2. If Docker is part of the job, prune images, containers, and build cache in
+     one pass:
 
      ```bash
      docker system prune -af --volumes

@@ -18,7 +18,8 @@ fix: |-
      issuer:
 
      ```bash
-     openssl s_client -connect <host>:443 </dev/null 2>/dev/null        | openssl x509 -noout -dates -subject -issuer
+     openssl s_client -servername <host> -connect <host>:443 </dev/null 2>/dev/null \
+       | openssl x509 -noout -dates -subject -issuer
      ```
 
   2. Verify the system clock on the CI runner is accurate — even a few minutes
@@ -38,7 +39,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - `openssl s_client -connect <host>:443 </dev/null 2>/dev/null | openssl x509 -noout -dates`
+  - `openssl s_client -servername <host> -connect <host>:443 </dev/null 2>/dev/null | openssl x509 -noout -dates`
     shows a `notAfter` date in the future.
   - `date -u` confirms the system clock is accurate.
   - Re-run the failing step and confirm the TLS handshake succeeds.

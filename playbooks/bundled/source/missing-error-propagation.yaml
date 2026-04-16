@@ -107,7 +107,8 @@ fix: |-
 
   1. Propagate the error to the caller — wrap it with context: `return fmt.Errorf("context: %w", err)`.
   2. If the error genuinely cannot affect correctness, document why with a comment and log it at WARN level.
-  3. Use errcheck (or staticcheck SA9003) in CI to catch ignored error returns statically.
+  3. Use `errcheck` in CI to catch ignored error returns statically.
+  4. If you already run Staticcheck, treat `SA4006` as a companion signal for overwritten values, but do not rely on it as the primary ignored-error check.
 validation: |-
   ## Validation
 
