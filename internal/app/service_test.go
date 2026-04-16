@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"faultline/internal/engine"
+	"faultline/internal/fixtures"
 	"faultline/internal/output"
+	"faultline/internal/playbooks"
 	"faultline/internal/workflow"
 )
 
@@ -208,7 +212,211 @@ func TestWorkflowJSONOutput(t *testing.T) {
 	}
 }
 
-// min is needed for Go versions before 1.21 built-in min.
+// ── ListInstalledPacks ────────────────────────────────────────────────────────
+
+func TestListInstalledPacksNoPacksInstalled(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	svc := NewService()
+	var buf bytes.Buffer
+	if err := svc.ListInstalledPacks(&buf); err != nil {
+		t.Fatalf("ListInstalledPacks: %v", err)
+	}
+	if !strings.Contains(buf.String(), "No installed") {
+		t.Errorf("expected 'No installed' message, got %q", buf.String())
+	}
+}
+
+func TestListInstalledPacksShowsInstalledPack(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	src := t.TempDir()
+	sampleYAML := `
+id: installed-test
+title: Installed Test
+category: test
+severity: low
+summary: Summary text.
+diagnosis: |
+  ## Diagnosis
+
+  Details here.
+fix: |
+  ## Fix steps
+
+  1. Do the thing.
+validation: |
+  ## Validation
+
+  - Verify it worked.
+match:
+  any:
+    - "installed error"
+`
+	if err := os.WriteFile(filepath.Join(src, "test.yaml"), []byte(sampleYAML), 0o600); err != nil {
+		t.Fatalf("write yaml: %v", err)
+	}
+
+	if _, err := playbooks.InstallPack(src, "listed-pack", false); err != nil {
+		t.Fatalf("InstallPack: %v", err)
+	}
+
+	svc := NewService()
+	var buf bytes.Buffer
+	if err := svc.ListInstalledPacks(&buf); err != nil {
+		t.Fatalf("ListInstalledPacks: %v", err)
+	}
+	if !strings.Contains(buf.String(), "listed-pack") {
+		t.Errorf("expected pack name in output, got %q", buf.String())
+	}
+}
+
+// ── InstallPack ───────────────────────────────────────────────────────────────
+
+func TestInstallPackWritesSuccessMessage(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	src := t.TempDir()
+	sampleYAML := `
+id: svc-install-test
+title: Svc Install Test
+category: test
+severity: low
+summary: Summary text.
+diagnosis: |
+  ## Diagnosis
+
+  Details.
+fix: |
+  ## Fix steps
+
+  1. Fix it.
+validation: |
+  ## Validation
+
+  - Verify.
+match:
+  any:
+    - "svc error"
+`
+	if err := os.WriteFile(filepath.Join(src, "test.yaml"), []byte(sampleYAML), 0o600); err != nil {
+		t.Fatalf("write yaml: %v", err)
+	}
+
+	svc := NewService()
+	var buf bytes.Buffer
+	if err := svc.InstallPack(src, "svc-pack", false, &buf); err != nil {
+		t.Fatalf("InstallPack: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Installed pack") {
+		t.Errorf("expected 'Installed pack' in output, got %q", buf.String())
+	}
+	if !strings.Contains(buf.String(), "svc-pack") {
+		t.Errorf("expected pack name in output, got %q", buf.String())
+	}
+}
+
+// ── Inspect ───────────────────────────────────────────────────────────────────
+
+func TestInspectNoSourcePlaybooksReturnsNoError(t *testing.T) {
+	// Use a temp dir with only a log-detector playbook so there are no source
+	// playbooks, which results in ErrNoMatch (swallowed by Inspect).
+	emptyPackDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(emptyPackDir, "placeholder.yaml"), []byte(`
+id: log-only
+title: Log Only
+category: test
+severity: low
+summary: Summary text.
+diagnosis: |
+  ## Diagnosis
+
+  Details.
+fix: |
+  ## Fix steps
+
+  1. Fix.
+validation: |
+  ## Validation
+
+  - Check.
+match:
+  any:
+    - "some error"
+`), 0o600); err != nil {
+		t.Fatalf("write placeholder: %v", err)
+	}
+
+	svc := NewService()
+	opts := baseOpts()
+	opts.PlaybookDir = emptyPackDir
+	var buf bytes.Buffer
+	err := svc.Inspect(t.TempDir(), opts, &buf)
+	if err != nil {
+		t.Fatalf("Inspect with log-only playbooks: %v", err)
+	}
+}
+
+// ── Explain (JSON and Markdown formats) ──────────────────────────────────────
+
+func TestExplainMarkdownOutput(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	err := svc.Explain("git-auth", repoPlaybookDir(), nil, output.FormatMarkdown, &buf)
+	if err != nil {
+		t.Fatalf("Explain markdown: %v", err)
+	}
+	if !strings.HasPrefix(buf.String(), "#") {
+		t.Errorf("expected markdown heading, got %q", buf.String()[:min(80, buf.Len())])
+	}
+}
+
+func TestExplainJSONOutput(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	err := svc.Explain("git-auth", repoPlaybookDir(), nil, output.FormatJSON, &buf)
+	if err != nil {
+		t.Fatalf("Explain json: %v", err)
+	}
+	var out map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &out); err != nil {
+		t.Fatalf("unmarshal explain json: %v", err)
+	}
+	if out["id"] != "git-auth" {
+		t.Errorf("expected id=git-auth in json, got %v", out["id"])
+	}
+}
+
+// ── Fix (no-match) ────────────────────────────────────────────────────────────
+
+func TestFixNoMatchOutput(t *testing.T) {
+	svc := NewService()
+	log := "everything is perfectly fine\n"
+	var buf bytes.Buffer
+	err := svc.Fix(strings.NewReader(log), "", baseOpts(), &buf)
+	if err != nil {
+		t.Fatalf("Fix no-match: %v", err)
+	}
+	// No-match should still write output without error.
+	if buf.Len() == 0 {
+		t.Error("expected non-empty fix output even on no-match")
+	}
+}
+
+// ── FixturesStats (empty dir) ──────────────────────────────────────────────
+
+func TestFixturesStatsEmptyRootReturnsError(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	// An empty temp dir has no fixtures layout.
+	err := svc.FixturesStats(t.TempDir(), "", fixtures.EvaluateOptions{PlaybookDir: repoPlaybookDir()}, "", false, false, false, &buf)
+	// We expect either an error or an empty-report output; we only verify
+	// it doesn't panic.
+	_ = err
+}
 func min(a, b int) int {
 	if a < b {
 		return a

@@ -174,6 +174,157 @@ match:
 	}
 }
 
+func TestAnalyzePathFindsBestMatch(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "test-*.log")
+	if err != nil {
+		t.Fatalf("create temp file: %v", err)
+	}
+	if _, err := f.WriteString("fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatalf("close: %v", err)
+	}
+
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	a, err := e.AnalyzePath(f.Name())
+	if err != nil {
+		t.Fatalf("AnalyzePath: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	if a.Results[0].Playbook.ID != "git-auth" {
+		t.Fatalf("expected git-auth, got %s", a.Results[0].Playbook.ID)
+	}
+	if a.Source != f.Name() {
+		t.Errorf("expected source=%s, got %s", f.Name(), a.Source)
+	}
+}
+
+func TestAnalyzePathMissingFileReturnsError(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	_, err := e.AnalyzePath("/nonexistent/does-not-exist.log")
+	if err == nil {
+		t.Fatal("expected error for missing file, got nil")
+	}
+}
+
+func TestEngineListReturnsPlaybooks(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	pbs, err := e.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(pbs) == 0 {
+		t.Fatal("expected non-empty playbook list")
+	}
+}
+
+func TestEngineExplainKnownPlaybook(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	pb, err := e.Explain("git-auth")
+	if err != nil {
+		t.Fatalf("Explain: %v", err)
+	}
+	if pb.ID != "git-auth" {
+		t.Errorf("expected git-auth, got %s", pb.ID)
+	}
+}
+
+func TestEngineExplainUnknownReturnsError(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	_, err := e.Explain("totally-unknown-playbook-xyz")
+	if err == nil {
+		t.Fatal("expected error for unknown playbook ID")
+	}
+}
+
+func TestLooksLikeSourceFile(t *testing.T) {
+	wantTrue := []string{
+		"main.go", "app.js", "component.jsx", "types.ts", "page.tsx",
+		"script.py", "Main.java", "helper.rb", "controller.php",
+		"service.cs", "activity.kt", "config.yaml", "config.yml",
+	}
+	for _, path := range wantTrue {
+		if !looksLikeSourceFile(path) {
+			t.Errorf("looksLikeSourceFile(%q) = false, want true", path)
+		}
+	}
+	wantFalse := []string{
+		"README.md", "binary.exe", "archive.zip", "image.png",
+		"Makefile", ".gitignore", "data.json", "notes.txt",
+	}
+	for _, path := range wantFalse {
+		if looksLikeSourceFile(path) {
+			t.Errorf("looksLikeSourceFile(%q) = true, want false", path)
+		}
+	}
+}
+
+func TestLoadSourceFilesScansDirectory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("write main.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte("# Readme\n"), 0o644); err != nil {
+		t.Fatalf("write README.md: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "app.ts"), []byte("const x = 1;\n"), 0o644); err != nil {
+		t.Fatalf("write app.ts: %v", err)
+	}
+
+	files, err := loadSourceFiles(dir)
+	if err != nil {
+		t.Fatalf("loadSourceFiles: %v", err)
+	}
+	paths := make(map[string]struct{}, len(files))
+	for _, f := range files {
+		paths[f.Path] = struct{}{}
+	}
+	if _, ok := paths["main.go"]; !ok {
+		t.Error("expected main.go in source files")
+	}
+	if _, ok := paths["app.ts"]; !ok {
+		t.Error("expected app.ts in source files")
+	}
+	if _, ok := paths["README.md"]; ok {
+		t.Error("README.md should not be in source files")
+	}
+}
+
+func TestLoadSourceFilesSkipsGitDir(t *testing.T) {
+	dir := t.TempDir()
+	gitDir := filepath.Join(dir, ".git")
+	if err := os.MkdirAll(gitDir, 0o755); err != nil {
+		t.Fatalf("mkdir .git: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(gitDir, "config.go"), []byte("package git\n"), 0o644); err != nil {
+		t.Fatalf("write config.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "app.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("write app.go: %v", err)
+	}
+
+	files, err := loadSourceFiles(dir)
+	if err != nil {
+		t.Fatalf("loadSourceFiles: %v", err)
+	}
+	for _, f := range files {
+		if strings.Contains(f.Path, ".git") {
+			t.Errorf("expected .git directory to be skipped, got %q", f.Path)
+		}
+	}
+}
+
+func TestAnalyzeReaderEmptyInput(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	_, err := e.AnalyzeReader(strings.NewReader(""))
+	if err != ErrNoInput {
+		t.Fatalf("expected ErrNoInput, got %v", err)
+	}
+}
+
 func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks/bundled"
 }

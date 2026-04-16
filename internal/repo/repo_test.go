@@ -221,3 +221,121 @@ func contains(items []string, want string) bool {
 	}
 	return false
 }
+
+func TestMatchesAnyBasicGlob(t *testing.T) {
+	patterns := []string{"Dockerfile", "*.yaml", ".github*"}
+	tests := []struct {
+		file string
+		want bool
+	}{
+		{"Dockerfile", true},
+		{"config.yaml", true},
+		{"deploy.yml", false},
+		{".github/workflows/ci.yml", true},
+		{"main.go", false},
+		{"deep/path/config.yaml", true},
+	}
+	for _, tt := range tests {
+		got := matchesAny(tt.file, patterns)
+		if got != tt.want {
+			t.Errorf("matchesAny(%q, %v) = %v, want %v", tt.file, patterns, got, tt.want)
+		}
+	}
+}
+
+func TestMatchesAnyNoPatterns(t *testing.T) {
+	if matchesAny("Dockerfile", nil) {
+		t.Error("matchesAny with no patterns should return false")
+	}
+}
+
+func TestFailurePatternsKnownPlaybookIDs(t *testing.T) {
+	knownCases := []struct {
+		playbookID string
+		wantFile   string
+	}{
+		{"docker-auth", "Dockerfile"},
+		{"git-auth", ".gitconfig"},
+		{"go-sum-missing", "go.sum"},
+		{"npm-ci-lockfile", "package.json"},
+		{"github-actions-syntax", ".github/workflows/ci.yml"},
+		{"terraform-state-lock", "main.tf"},
+	}
+	for _, tt := range knownCases {
+		patterns := failurePatterns(tt.playbookID, tt.playbookID)
+		if !matchesAny(tt.wantFile, patterns) {
+			t.Errorf("failurePatterns(%q) should match %q, patterns: %v", tt.playbookID, tt.wantFile, patterns)
+		}
+	}
+}
+
+func TestFailurePatternsUnknownFallsBackToCategory(t *testing.T) {
+	patterns := failurePatterns("auth", "some-unknown-auth-failure")
+	if len(patterns) == 0 {
+		t.Error("expected non-empty patterns for auth category fallback")
+	}
+}
+
+func TestFailurePatternsUnknownCategoryAndID(t *testing.T) {
+	patterns := failurePatterns("completely-unknown", "no-such-id")
+	if len(patterns) == 0 {
+		t.Error("expected default patterns for completely unknown category/id")
+	}
+}
+
+func TestCorrelateReturnsEmptyContextNoCommits(t *testing.T) {
+	t.Parallel()
+
+	ctx := Correlate("/repo", "build", "go-sum-missing", nil, Signals{})
+	if ctx.RepoRoot != "/repo" {
+		t.Errorf("expected /repo, got %q", ctx.RepoRoot)
+	}
+	if len(ctx.RecentFiles) != 0 {
+		t.Errorf("expected no recent files with no commits, got %v", ctx.RecentFiles)
+	}
+}
+
+func TestCorrelateUsesHotspotFallback(t *testing.T) {
+	t.Parallel()
+
+	sigs := Signals{
+		HotspotFiles: []FileChurn{
+			{File: "go.sum", Count: 5},
+			{File: "go.mod", Count: 3},
+		},
+	}
+	ctx := Correlate("/repo", "build", "go-sum-missing", nil, sigs)
+	if len(ctx.RecentFiles) == 0 {
+		t.Error("expected fallback to hotspot files when no matching commits")
+	}
+}
+
+func TestDriftSignalsReturnsRevertSubjects(t *testing.T) {
+	t.Parallel()
+
+	commits := []Commit{
+		{Hash: "aaa", Subject: "revert: bad deploy", Files: []string{"deploy/config.yaml"}},
+	}
+	sigs := DeriveSignals(commits)
+	spec := correlationSpec{Patterns: failurePatterns("deploy", "argocd-sync-failed")}
+	hints := driftSignals(spec, commits, sigs)
+	if len(hints) == 0 {
+		t.Error("expected drift signal for matching revert commit")
+	}
+}
+
+func TestHotfixSignalsNoMatchFallsBack(t *testing.T) {
+	t.Parallel()
+
+	commits := []Commit{
+		{Hash: "bbb", Subject: "hotfix: reduce timeout", Files: []string{"unrelated_file.rb"}},
+	}
+	sigs := DeriveSignals(commits)
+	spec := correlationSpec{Patterns: failurePatterns("deploy", "ecs-deployment-failed")}
+	hints := hotfixSignals(spec, commits, sigs)
+	// Even without file match, hotfix commits that exist should eventually
+	// appear in the fallback.
+	if len(hints) == 0 {
+		t.Error("expected at least one hotfix signal in fallback")
+	}
+}

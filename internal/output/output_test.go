@@ -351,6 +351,142 @@ func TestFormatWorkflowText(t *testing.T) {
 	}
 }
 
+// ── ParseFormat / Valid ───────────────────────────────────────────────────────
+
+func TestParseFormatKnownValues(t *testing.T) {
+	tests := []struct {
+		input string
+		want  Format
+	}{
+		{"terminal", FormatTerminal},
+		{"Terminal", FormatTerminal},
+		{"TERMINAL", FormatTerminal},
+		{"  terminal  ", FormatTerminal},
+		{"markdown", FormatMarkdown},
+		{"Markdown", FormatMarkdown},
+		{"json", FormatJSON},
+		{"JSON", FormatJSON},
+	}
+	for _, tt := range tests {
+		got, ok := ParseFormat(tt.input)
+		if !ok {
+			t.Errorf("ParseFormat(%q) ok=false, want true", tt.input)
+		}
+		if got != tt.want {
+			t.Errorf("ParseFormat(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestParseFormatUnknown(t *testing.T) {
+	for _, bad := range []string{"", "text", "html", "xml", "plain"} {
+		_, ok := ParseFormat(bad)
+		if ok {
+			t.Errorf("ParseFormat(%q) ok=true, want false", bad)
+		}
+	}
+}
+
+func TestFormatValid(t *testing.T) {
+	if !FormatTerminal.Valid() {
+		t.Error("FormatTerminal.Valid() = false, want true")
+	}
+	if !FormatMarkdown.Valid() {
+		t.Error("FormatMarkdown.Valid() = false, want true")
+	}
+	if !FormatJSON.Valid() {
+		t.Error("FormatJSON.Valid() = false, want true")
+	}
+}
+
+func TestFormatInvalidNotValid(t *testing.T) {
+	for _, bad := range []Format{"", "html", "plain", "text"} {
+		if bad.Valid() {
+			t.Errorf("Format(%q).Valid() = true, want false", bad)
+		}
+	}
+}
+
+// ── FormatFix ─────────────────────────────────────────────────────────────────
+
+func TestFormatFix(t *testing.T) {
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, []string{"terminal prompts disabled"})
+	a.Results[0].Playbook.Fix = "1. Export GH_TOKEN\n2. Retry the push"
+	out := FormatFix(a, renderer.Options{Plain: true, Width: 88})
+	if out == "" {
+		t.Fatal("expected non-empty fix output")
+	}
+	if !strings.Contains(out, "git-auth") {
+		t.Errorf("expected playbook ID in fix output, got %q", out)
+	}
+}
+
+func TestFormatFixNilAnalysis(t *testing.T) {
+	out := FormatFix(nil, renderer.Options{Plain: true, Width: 88})
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("expected no-match message for nil analysis, got %q", out)
+	}
+}
+
+// ── FormatPlaybookDetailsJSON ─────────────────────────────────────────────────
+
+func TestFormatPlaybookDetailsJSON(t *testing.T) {
+	pb := model.Playbook{
+		ID:       "docker-auth",
+		Title:    "Docker Registry Auth",
+		Category: "auth",
+		Severity: "high",
+		Fix:      "1. docker login",
+		Match:    model.MatchSpec{Any: []string{"pull access denied"}},
+	}
+	data, err := FormatPlaybookDetailsJSON(pb)
+	if err != nil {
+		t.Fatalf("FormatPlaybookDetailsJSON: %v", err)
+	}
+	if !strings.Contains(data, `"docker-auth"`) {
+		t.Errorf("expected playbook ID in JSON, got %q", data)
+	}
+	if !strings.Contains(data, `"Docker Registry Auth"`) {
+		t.Errorf("expected playbook title in JSON, got %q", data)
+	}
+	if !strings.Contains(data, "\n") {
+		t.Error("expected JSON to end with newline")
+	}
+}
+
+// ── topN helper ──────────────────────────────────────────────────────────────
+
+func TestTopNZeroReturnsAll(t *testing.T) {
+	results := []model.Result{
+		{Playbook: model.Playbook{ID: "a"}},
+		{Playbook: model.Playbook{ID: "b"}},
+	}
+	got := topN(results, 0)
+	if len(got) != 2 {
+		t.Errorf("topN(results, 0) = %d items, want 2", len(got))
+	}
+}
+
+func TestTopNNegativeReturnsAll(t *testing.T) {
+	results := []model.Result{
+		{Playbook: model.Playbook{ID: "a"}},
+		{Playbook: model.Playbook{ID: "b"}},
+		{Playbook: model.Playbook{ID: "c"}},
+	}
+	got := topN(results, -1)
+	if len(got) != 3 {
+		t.Errorf("topN(results, -1) = %d items, want 3", len(got))
+	}
+}
+
+func TestTopNExceedsLengthReturnsAll(t *testing.T) {
+	results := []model.Result{{Playbook: model.Playbook{ID: "a"}}}
+	got := topN(results, 10)
+	if len(got) != 1 {
+		t.Errorf("topN(results, 10) = %d items, want 1", len(got))
+	}
+}
+
 func TestFormatWorkflowJSON(t *testing.T) {
 	plan := workflow.Plan{
 		SchemaVersion: "workflow.v1",

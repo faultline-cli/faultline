@@ -68,6 +68,82 @@ func TestRenderFixUsesSectionStyling(t *testing.T) {
 	}
 }
 
+func TestRenderNoMatch(t *testing.T) {
+	out := New(Options{Plain: true, Width: 88}).RenderNoMatch()
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("RenderNoMatch missing main message, got %q", out)
+	}
+	if !strings.Contains(out, "faultline list") {
+		t.Errorf("RenderNoMatch missing list hint, got %q", out)
+	}
+}
+
+func TestRenderAnalyzeNilAnalysisCallsRenderNoMatch(t *testing.T) {
+	out := New(Options{Plain: true, Width: 88}).RenderAnalyze(nil, 1, false)
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("RenderAnalyze(nil) should return no-match message, got %q", out)
+	}
+}
+
+func TestRenderAnalyzeEmptyResultsCallsRenderNoMatch(t *testing.T) {
+	a := &model.Analysis{Results: []model.Result{}}
+	out := New(Options{Plain: true, Width: 88}).RenderAnalyze(a, 1, false)
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("RenderAnalyze with empty results should return no-match message, got %q", out)
+	}
+}
+
+func TestRenderListPlain(t *testing.T) {
+	pbs := []model.Playbook{
+		{ID: "docker-auth", Category: "auth", Severity: "high", Title: "Docker Auth"},
+		{ID: "oom-killed", Category: "runtime", Severity: "critical", Title: "OOM Killed"},
+	}
+	out := New(Options{Plain: true, Width: 100}).RenderList(pbs, "")
+	if !strings.Contains(out, "docker-auth") {
+		t.Errorf("RenderList missing docker-auth, got %q", out)
+	}
+	if !strings.Contains(out, "oom-killed") {
+		t.Errorf("RenderList missing oom-killed, got %q", out)
+	}
+}
+
+func TestRenderListFiltersByCategory(t *testing.T) {
+	pbs := []model.Playbook{
+		{ID: "docker-auth", Category: "auth", Severity: "high", Title: "Docker Auth"},
+		{ID: "oom-killed", Category: "runtime", Severity: "critical", Title: "OOM Killed"},
+	}
+	out := New(Options{Plain: true, Width: 100}).RenderList(pbs, "auth")
+	if !strings.Contains(out, "docker-auth") {
+		t.Errorf("filtered list should contain docker-auth, got %q", out)
+	}
+	if strings.Contains(out, "oom-killed") {
+		t.Errorf("filtered list should not contain oom-killed, got %q", out)
+	}
+}
+
+func TestRenderListPlainIncludesHeader(t *testing.T) {
+	pbs := []model.Playbook{{ID: "a", Category: "test", Severity: "low", Title: "A"}}
+	out := New(Options{Plain: true, Width: 100}).RenderList(pbs, "")
+	if !strings.Contains(out, "ID") || !strings.Contains(out, "CATEGORY") {
+		t.Errorf("RenderList header missing columns, got %q", out)
+	}
+}
+
+func TestRenderFixNilAnalysis(t *testing.T) {
+	out := New(Options{Plain: true, Width: 88}).RenderFix(nil)
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("RenderFix(nil) should return no-match, got %q", out)
+	}
+}
+
+func TestRenderFixEmptyResults(t *testing.T) {
+	a := &model.Analysis{Results: []model.Result{}}
+	out := New(Options{Plain: true, Width: 88}).RenderFix(a)
+	if !strings.Contains(out, "No known playbook matched") {
+		t.Errorf("RenderFix(empty) should return no-match, got %q", out)
+	}
+}
+
 func TestRenderAnalyzeDetailedAddsSpacingUnderHeaders(t *testing.T) {
 	a := &model.Analysis{
 		Results: []model.Result{{
