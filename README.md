@@ -1,6 +1,6 @@
 # Faultline
 
-Deterministic CLI for CI failure analysis. No AI guessing - ranked diagnoses with evidence and fix steps.
+Deterministic, audit-friendly CI automation for known failures. No AI guessing - ranked diagnoses, workflow handoffs, and checked-in fix steps.
 
 ```text
 # CI log
@@ -24,6 +24,17 @@ It is built for repetitive failures that waste engineering time: missing credent
 
 Works on any CI log, including GitHub Actions, GitLab CI, and similar systems.
 
+Run it when CI fails:
+
+```bash
+faultline analyze ci.log
+faultline workflow ci.log
+faultline analyze ci.log --json
+faultline workflow ci.log --json --mode agent
+```
+
+`analyze` gives you a ranked diagnosis with evidence. `workflow` turns the same result into a deterministic next-step artifact that engineers, scripts, and agents can follow without inventing their own glue.
+
 ## Try it now
 
 Install the latest release:
@@ -44,6 +55,7 @@ For automation, use JSON output:
 
 ```bash
 faultline analyze ci.log --json
+faultline workflow ci.log --json --mode agent
 ```
 
 Build from source if you want to work from the repo directly. Requires Go 1.25+.
@@ -72,8 +84,10 @@ Faultline does not guess.
 
 - Deterministic pattern matching
 - Ranked diagnoses with explicit evidence
+- Deterministic workflow artifacts for local follow-through and agent handoff
 - Structured fix steps instead of vague advice
 - No LLMs or probabilistic output in the execution path
+- Audit-friendly output with evidence pulled directly from the log
 - Faultline only emits a diagnosis when the match clears its confidence threshold
 
 That makes it reliable in CI, explainable to engineers, and safe to automate against.
@@ -99,7 +113,9 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 - 67 bundled playbooks under `playbooks/bundled/`
 - 70 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
-- Stable terminal and JSON output for automation
+- Stable terminal, JSON, and workflow output for automation
+
+The current corpus snapshot and validation commands are published in [`docs/fixture-corpus.md`](docs/fixture-corpus.md).
 
 ## Try it in 60 seconds
 
@@ -108,6 +124,7 @@ Build the CLI and run it on a checked-in sample log:
 ```bash
 make build
 ./bin/faultline analyze examples/missing-executable.log
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history
 ```
 
 Or use Docker without installing Go:
@@ -117,7 +134,24 @@ docker build -t faultline .
 docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/missing-executable.log
 ```
 
-What you get back is a ranked diagnosis with evidence, not a generic summary. Designed to run inside CI pipelines, the bundled missing-executable example starts like this:
+What you get back is a ranked diagnosis with evidence, not a generic summary. When you want the follow-through artifact as well, the same example also produces a deterministic workflow plan:
+
+```text
+WORKFLOW  missing-executable · Required executable or runtime binary missing  [local · workflow.v1]
+Source: stdin
+Evidence:
+  - exec /__e/node20/bin/node: no such file or directory
+Focus files:
+  - Dockerfile
+  - .github/workflows/ci.yml
+```
+
+The full checked-in snapshots live in:
+
+- `examples/missing-executable.workflow.local.txt`
+- `examples/missing-executable.workflow.agent.json`
+
+Designed to run inside CI pipelines, the bundled missing-executable diagnosis example starts like this:
 
 ```md
 # Required executable or runtime binary missing
@@ -141,7 +175,7 @@ Faultline is built for engineers who want:
 - deterministic results from explicit rules
 - evidence pulled directly from the log
 - fast local diagnosis without uploading build data
-- stable terminal and JSON output for automation
+- stable terminal, JSON, and workflow output for automation
 
 It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows. Designed to minimise false positives: better no result than a wrong one.
 
@@ -150,15 +184,16 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Same input and playbook set produce the same result every time.
 - Evidence is pulled directly from matched log lines.
 - Fix steps come from checked-in playbooks, not probabilistic generation.
-- JSON output stays stable for automation and agent workflows.
+- JSON and workflow output stay stable for automation and agent workflows.
 - Analysis runs locally without shipping build logs to a hosted service.
 
 ## What it does
 
 - Analyze CI logs from a file or stdin.
+- Turn the top diagnosis into a deterministic workflow handoff.
 - Inspect a repository for source-level failure risks.
 - Render concise terminal, markdown, or stable JSON output.
-- Generate deterministic follow-up workflows from the analysis result.
+- Use checked-in playbooks and real-fixture regression gates as the trust boundary.
 
 ## Install options
 
@@ -212,6 +247,8 @@ The repository includes runnable sample logs and expected markdown output.
 ./bin/faultline analyze examples/runtime-mismatch.log
 ./bin/faultline analyze examples/docker-auth.log
 ./bin/faultline analyze examples/missing-executable.log --format markdown
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
 ./bin/faultline fix examples/missing-executable.log --format markdown
 ./bin/faultline explain missing-executable
 ```
@@ -278,10 +315,13 @@ These numbers describe the checked-in regression corpus, not the full space of C
 ## Repository guide
 
 - `examples/README.md` shows runnable sample logs and expected output.
+- `docs/fixture-corpus.md` publishes the checked-in regression snapshot and regeneration commands.
 - `docs/failures/README.md` indexes search-targeted CI failure pages tied to Faultline diagnoses.
 - `docs/architecture.md` explains package boundaries and runtime flow.
+- `docs/github-action-contract.md` documents the provider-agnostic CLI contract for a thin GitHub Action wrapper.
 - `docs/playbooks.md` documents playbook authoring and pack composition.
 - `docs/distribution.md` covers release and Docker packaging.
+- `docs/releases/v0.2.0-preview.md` drafts the v0.2.0 positioning and release notes.
 - `docs/detectors.md` describes detector behavior.
 - `docs/adr/README.md` indexes architectural decisions.
 - `CONTRIBUTING.md` covers contribution and fixture-sanitization rules.

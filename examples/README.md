@@ -2,7 +2,7 @@
 
 These examples are small, runnable inputs derived from real CI failures.
 
-Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result.
+Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result. The missing-executable example also includes checked-in `workflow` snapshots for local and agent handoff flows.
 
 They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog covers 67 diagnoses.
 
@@ -11,7 +11,7 @@ They are intended for first-run checks, docs validation, and quick regression sa
 | Input | What it demonstrates | Expected output |
 | --- | --- | --- |
 | `examples/docker-auth.log` | Registry authentication or missing login during image pull | `examples/docker-auth.expected.md` |
-| `examples/missing-executable.log` | Required runtime or executable missing from the job image | `examples/missing-executable.expected.md` |
+| `examples/missing-executable.log` | Required runtime or executable missing from the job image | `examples/missing-executable.expected.md`, `examples/missing-executable.workflow.local.txt`, `examples/missing-executable.workflow.agent.json` |
 | `examples/runtime-mismatch.log` | Language runtime version mismatch between the job and the project | `examples/runtime-mismatch.expected.md` |
 
 ## Run them
@@ -28,6 +28,18 @@ For a tighter remediation view:
 ```bash
 ./bin/faultline fix examples/docker-auth.log --format markdown
 ```
+
+For the deterministic follow-up workflow:
+
+```bash
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
+```
+
+Those commands correspond to these checked-in snapshots:
+
+- `examples/missing-executable.workflow.local.txt`
+- `examples/missing-executable.workflow.agent.json`
 
 For the full playbook behind a diagnosis:
 

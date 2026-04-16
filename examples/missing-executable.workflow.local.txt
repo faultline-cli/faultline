@@ -1,0 +1,30 @@
+WORKFLOW  missing-executable · Required executable or runtime binary missing  [local · workflow.v1]
+Source: stdin
+Evidence:
+  - exec /__e/node20/bin/node: no such file or directory
+Focus files:
+  - Dockerfile
+  - .github/workflows/ci.yml
+  - .github/workflows/release.yml
+  - scripts/docker-smoke.sh
+  - scripts/release-build.sh
+  - scripts/resolve-extra-pack.sh
+  - scripts/smoke-release.sh
+Local repro:
+  - command -v <tool>
+  - ls -l <expected-path>
+Verify:
+  - command -v <tool>
+Next steps:
+  1. Confirm the top diagnosis `missing-executable` by reproducing the failure from the same command or CI step if possible.
+  2. Use the matched evidence lines as the starting point for triage: exec /__e/node20/bin/node: no such file or directory.
+  3. Inspect the most relevant local files first: Dockerfile, .github/workflows/ci.yml, .github/workflows/release.yml, scripts/docker-smoke.sh, scripts/release-build.sh, scripts/resolve-extra-pack.sh, scripts/smoke-release.sh.
+  4. Local repro: `command -v <tool>`.
+  5. Local repro: `ls -l <expected-path>`.
+  6. Identify which command or runtime path the failing step expects to execute.
+  7. Confirm the binary exists in the active runner or container image:
+  8. Install the missing package in the job image or switch to an image that already contains the required runtime.
+  9. If the path is hard-coded, update the workflow or wrapper script to use the actual installed location.
+  10. If the failure happens only inside a containerized CI step, make sure the container image includes the same runtime that the host-based workflow expects.
+  11. Verify with `command -v <tool>` after the fix.
+  12. After the immediate fix, harden the workflow with: Standardize runner or container images for each workflow family.

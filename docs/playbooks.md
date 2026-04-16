@@ -98,3 +98,21 @@ There are three supported ways to add extra packs:
 Use `--playbooks <dir>` only for full catalog overrides such as testing a pack in isolation.
 
 For installed extra packs, prefer `faultline packs install` as the long-lived path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.
+
+## Minimal Example Pack
+
+A small example pack lives under `examples/packs/minimal/`.
+
+It is intentionally outside `playbooks/bundled/` so it does not affect the default catalog or fixture gates. Use it as a starting point for pack structure, field naming, and local validation:
+
+```bash
+./bin/faultline list --playbook-pack examples/packs/minimal
+./bin/faultline explain example-cache-prime-missing --playbook-pack examples/packs/minimal
+```
+
+When you are ready to install a real pack persistently:
+
+```bash
+./bin/faultline packs install ./examples/packs/minimal --name example-pack
+./bin/faultline packs list
+```

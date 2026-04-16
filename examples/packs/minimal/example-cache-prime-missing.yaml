@@ -1,0 +1,41 @@
+id: example-cache-prime-missing
+title: Example pack cache prime step missing
+category: build
+severity: medium
+base_score: 1
+tags: [example, cache, build]
+stage_hints: [build]
+match:
+  any:
+    - example cache prime missing
+summary: |-
+  This example playbook shows the minimum shape of an extra pack rule.
+diagnosis: |-
+  ## Diagnosis
+
+  The build log included the synthetic phrase `example cache prime missing`, which this example pack treats as a cache bootstrap problem.
+fix: |-
+  ## Fix steps
+
+  1. Add or restore the cache priming step before the main build command.
+  2. Verify the workflow restores the expected cache key before the install or compile phase.
+validation: |-
+  ## Validation
+
+  - Re-run the same build path and confirm the synthetic cache-prime error is gone.
+why_it_matters: |-
+  ## Why it matters
+
+  Example packs should keep the same deterministic structure as bundled playbooks.
+
+  ## Prevention
+
+  - Keep pack-specific rules focused on root causes your team actually sees.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - rg -n "cache" .github/workflows .gitlab-ci.yml
+  verify:
+    - echo "verify the cache priming step exists"

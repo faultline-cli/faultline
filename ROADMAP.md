@@ -1,48 +1,300 @@
 # Faultline Roadmap
 
-## Current Position
+## Roadmap Review
 
-- V1 is shipped as a deterministic CI failure analysis CLI
-- the repository now contains only the CLI-focused code and bundled playbooks
-- future work should extend the CLI directly rather than reintroducing service-side components
+The existing roadmap got the V1 foundations right:
 
-## Next Up
+- keep the CLI deterministic and fast
+- preserve stable JSON and CI-friendly Docker delivery
+- grow coverage through playbooks and fixture-driven validation
+- keep Bayesian-inspired reranking optional and downstream of detection
 
-### 1. Core CLI
+The gap is not the foundation. The gap is what the roadmap makes primary.
 
-- keep `analyze`, `list`, and `explain` stable as the public interface
-- preserve deterministic file and stdin behavior
-- keep startup and analysis latency low as playbook coverage grows
-- track bundled playbook load and representative-corpus analysis cost with benchmarks
+Today the repository already contains several pieces that point beyond "log analyzer":
 
-### 2. Playbook Coverage
+- `faultline workflow` already turns a diagnosis into a deterministic follow-up plan
+- repo context and drift signals already exist under `internal/repo`
+- pack installation and pack composition already exist
+- fixture ingestion, review, promotion, and baseline checks already exist
+- stable machine-readable JSON already exists for automation
 
-- expand the bundled playbook set based on high-frequency CI failures
-- prioritize common auth, dependency, test, and environment failures
-- keep every playbook explicit and easy to audit
+That means v0.2.0 should not be framed as more of the same. It should prove that Faultline belongs in real workflows as a deterministic prevention, diagnosis, and remediation layer for CI/CD.
 
-### 3. Output Quality
+## v0.2.0 Theme
 
-- keep text output short and fix-oriented
-- support stable JSON for agent usage
-- keep confidence and evidence grounded in exact matches
+**From diagnosis to prevention**
 
-### 4. Docker Delivery
+Faultline v0.2.0 should make five things obvious:
 
-- keep the image small and fast-starting
-- keep mounted-log analysis the default CI workflow
-- document GitHub Actions and generic CI usage
+- it is safe to automate against
+- it produces deterministic next-step artifacts, not just diagnoses
+- it can explain likely drift between green and red runs
+- it is backed by a visible, growing real-world fixture corpus
+- it fits naturally into CI and local developer workflows
 
-### 5. Validation
+## v0.2.0 Pillars
 
-- add fixture-driven tests for all bundled playbooks
-- verify stable ranking and deterministic output
-- keep a deterministic overlap review for shared patterns and `match.none` exclusions
-- add container smoke tests
+### 1. Reposition Around Deterministic, Audit-Friendly Automation
 
-## Not On The Roadmap
+Current foundation:
 
-- hosted webhook ingestion
-- provider-specific PR comment flows
-- frontend UI
-- probabilistic or AI-based diagnosis
+- the product is already deterministic, local-first, and explainable
+- README copy already gestures at trust, reproducibility, and automation safety
+
+v0.2.0 work:
+
+- rewrite top-level messaging around deterministic, explainable, reproducible analysis
+- make "safe to automate against" a first-class promise in README, docs, and release notes
+- explicitly frame output as audit-friendly and procurement-friendly for security-conscious teams
+- keep user-facing language focused on guarantees rather than implementation trivia
+
+Impact on developer and user experience:
+
+- engineers understand faster when Faultline should be trusted in CI loops
+- automation consumers get a clearer contract for when results are stable enough to drive actions
+- the product feels more like infrastructure and less like a helper utility
+
+Impact on product:
+
+- sharpens the commercial wedge against probabilistic CI assistants
+- improves category clarity for teams that care about traceability and repeatability
+- makes future enterprise and policy packaging easier to explain
+
+Impact on technical architecture:
+
+- no large runtime change is required
+- stable schemas, deterministic tie-breaks, and evidence provenance become even more important because they are now part of the product promise, not just implementation quality
+- the Bayesian-inspired layer should expose explainability and automation-safety signals without changing match semantics
+
+### 2. Make Workflow a First-Class Surface
+
+Current foundation:
+
+- `faultline workflow` already exists
+- deterministic workflow text and JSON output already exist
+- playbooks already carry workflow hints such as likely files, local repro commands, and verification commands
+
+v0.2.0 work:
+
+- promote workflow alongside `analyze` in README and examples
+- add examples that show actionable artifacts instead of diagnosis-only output
+- tighten the workflow schema so it is easier for scripts, agents, and CI steps to consume
+- let workflow output incorporate ranking and delta context when available
+
+Impact on developer and user experience:
+
+- the user gets a next-step plan, not just a label
+- teams can wire workflow JSON into scripts or agent prompts without inventing their own glue
+- the CLI feels useful even when the user already understands the raw log
+
+Impact on product:
+
+- this is the bridge from diagnosis to remediation
+- it makes Faultline operationally valuable instead of merely informative
+- it sets up future deterministic patch suggestions or policy-guided remediation without requiring AI in the core path
+
+Impact on technical architecture:
+
+- `internal/workflow` should remain deterministic and consume analysis results rather than owning diagnosis logic
+- the scoring layer can provide stable explanation and prioritization signals that workflow consumes
+- any new workflow artifact types should be derived from playbook content, repo context, and checked-in rules only
+
+### 3. Add Delta-Differential Diagnosis as a Core Capability
+
+Current foundation:
+
+- repo history loading and drift correlation already exist
+- the Bayesian-inspired design already includes delta-oriented scoring concepts
+- the engine already has a natural post-detection integration point for reranking
+
+v0.2.0 work:
+
+- pilot a deterministic Bayesian-inspired reranking layer behind `--bayes`
+- add delta-oriented scoring that answers "what changed between green and red?"
+- start with a minimal scope: dependency files, runtime files, CI workflow files, environment/config files, and deploy/infra files
+- expose ranked drift signals and clear reasons in human output and JSON
+
+Impact on developer and user experience:
+
+- users get a much better first answer than "this failed"
+- triage starts from likely drift, not a cold read of a long log
+- repeated failures feel less opaque because Faultline can point at the most relevant recent changes
+
+Impact on product:
+
+- this is the most valuable intelligence upgrade that still fits the deterministic product identity
+- it moves Faultline closer to prevention and faster remediation without turning it into a generic assistant
+- it creates a strong release headline for v0.2.0
+
+Impact on technical architecture:
+
+- add a small `internal/scoring` package behind the engine, after detection and before workflow/output consumption
+- keep detection, playbook matching, and fix content unchanged
+- persist only minimal, explicit snapshot data when success-state comparison is introduced
+- keep tie-breaks, rounding, and explanation ordering fully deterministic
+
+### 4. Ship a GitHub Action as the Main Distribution Surface
+
+Current foundation:
+
+- Faultline already runs well in Docker and from the CLI
+- JSON output is already stable enough to act as an external integration contract
+- README already documents manual GitHub Actions usage
+
+v0.2.0 work:
+
+- ship a dedicated `faultline-action` repository
+- support file input, stdin-like capture, markdown summary output, and JSON artifacts
+- make the action a thin integration layer over the CLI rather than a provider-specific branch of the product
+- document thresholds and failure behavior clearly so teams can adopt it safely
+
+Impact on developer and user experience:
+
+- integration becomes copy-paste simple
+- users see Faultline where the failure already happens instead of having to reproduce setup manually
+- CI maintainers get an easy path to structured artifacts and workflow follow-up
+
+Impact on product:
+
+- this is the highest-leverage distribution step
+- it creates a natural funnel for external logs, issue reports, fixtures, and credibility
+- it gives the product a real workflow foothold without requiring a hosted service
+
+Impact on technical architecture:
+
+- keep provider-specific code out of the core CLI
+- treat CLI JSON and markdown output as the stable integration contract
+- use the scoring and workflow layers to control summary quality, artifact richness, and automation safety without adding provider logic to `internal/`
+
+### 5. Expose the Fixture Corpus as the Moat
+
+Current foundation:
+
+- the repository already has accepted real fixtures, baseline checks, and stats support
+- the regression corpus already acts as the quality gate for ranking behavior
+
+v0.2.0 work:
+
+- publish a fixture stats document and link it from README
+- show category coverage, fixture counts, and release-over-release growth
+- document the contribution path for new real-world failures
+- use the checked-in corpus as the source of conservative priors for the Bayesian-inspired reranker
+
+Impact on developer and user experience:
+
+- contributors understand where new evidence fits
+- users can see that coverage is grounded in real failures, not just hand-written demos
+- ranking behavior becomes easier to trust because it is visibly regression-tested
+
+Impact on product:
+
+- the corpus becomes an external trust signal, not just an internal engineering asset
+- it strengthens the moat around empirical coverage and repeatability
+- it supports future commercial packaging around premium and policy packs
+
+Impact on technical architecture:
+
+- keep fixture evaluation deterministic and checked in
+- derive priors and weights offline from accepted fixtures, never at runtime
+- preserve simple, reviewable data artifacts such as baseline files and versioned scoring weights
+
+## Supporting Tracks for v0.2.0
+
+### Pack Foundations Now, Registry Later
+
+Current foundation:
+
+- pack composition, installation, and auto-discovery already exist
+
+v0.2.0 work:
+
+- document the pack contract more clearly
+- add example packs and install/versioning guidance
+- make it obvious that packs are the extension and monetization boundary
+
+Impact on developer and user experience:
+
+- teams can extend coverage without forking core
+- the extensibility model becomes easier to understand and test locally
+
+Impact on product:
+
+- packs become the clean path to ecosystem depth and future commercial packaging
+- the roadmap stays focused on ecosystem readiness rather than registry theater
+
+Impact on technical architecture:
+
+- keep pack metadata simple and deterministic
+- avoid registry, signing, or pack-specific runtime weight overrides in v0.2.0
+
+### Pre-Commit and Pre-Push Guard
+
+Current foundation:
+
+- `inspect`, source detection, repo scanning, and workflow generation already exist
+
+v0.2.0 work:
+
+- add a lightweight `faultline guard` path for high-confidence local checks
+- focus on known deterministic failure classes that are cheap to detect before CI
+- use the same evidence and workflow model rather than inventing a separate subsystem
+
+Impact on developer and user experience:
+
+- catches some failures before cloud CI time is spent
+- reinforces the shift-left story without requiring a heavy IDE integration first
+
+Impact on product:
+
+- strengthens the prevention narrative
+- increases usage frequency and habit formation
+
+Impact on technical architecture:
+
+- reuse source detector and scoring primitives
+- keep the scope narrow and high-confidence to avoid noisy local checks
+
+## Suggested Build Order
+
+### Slice 1: Messaging and Proof
+
+- rewrite README and launch framing around deterministic, audit-friendly automation
+- promote workflow with real examples
+- publish fixture corpus stats
+
+### Slice 2: Distribution and Extensibility
+
+- ship the GitHub Action
+- tighten workflow JSON and examples
+- publish pack examples and pack authoring guidance
+
+### Slice 3: Deterministic Intelligence
+
+- land the Bayesian-inspired reranking layer behind `--bayes`
+- add delta-differential diagnosis and explanation payloads
+- compare legacy and Bayes modes across the fixture corpus before promotion
+
+### Slice 4: Shift-Left Follow-Through
+
+- add a lightweight guard command
+- polish docs, examples, thresholds, and automation handoff contracts
+
+## Later, Not v0.2.0
+
+- deep IDE or LSP integration
+- hosted pack registry
+- premium pack delivery infrastructure
+- AI-generated fixes in the core execution path
+- signed packs and enterprise governance layers
+- cryptographic or ZK-style attestations
+
+## Roadmap Standard
+
+Changes on this roadmap should keep the same core invariants:
+
+- deterministic detection stays authoritative
+- same input and same checked-in rule set produce the same output
+- scoring only reranks explicit candidates and remains explainable
+- workflow and automation output stay stable and auditable
+- fixture-backed evaluation gates any ranking change before it becomes the default
