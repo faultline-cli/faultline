@@ -45,6 +45,9 @@ func (r Renderer) RenderAnalyze(a *model.Analysis, top int, detailed bool) strin
 		parts = append(parts, r.renderAnalyzeResult(a, result, i, len(results), detailed))
 	}
 	if detailed {
+		if delta := r.renderDelta(a.Delta); delta != "" {
+			parts = append(parts, r.renderDetailPanel("Delta Diagnosis", delta, "repo"))
+		}
 		if repo := r.renderRepoContext(a.RepoContext); repo != "" {
 			parts = append(parts, r.renderDetailPanel("Repo Context", repo, "repo"))
 		}
@@ -147,6 +150,9 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		}
 		if mitigated := r.renderExplanation("Mitigated by", result.Explanation.MitigatedBy); mitigated != "" {
 			parts = append(parts, mitigated)
+		}
+		if ranking := r.renderRanking(result.Ranking); ranking != "" {
+			parts = append(parts, r.renderDetailPanel("Ranking", ranking, "signal"))
 		}
 		if breakdown := r.renderScoreBreakdown(result.Breakdown); breakdown != "" {
 			parts = append(parts, r.renderDetailPanel("Score Breakdown", breakdown, "score"))
@@ -386,6 +392,39 @@ func (r Renderer) renderRepoContext(repo *model.RepoContext) string {
 	}
 	for _, item := range repo.DriftSignals {
 		lines = append(lines, "- Drift hint: "+item)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderRanking(ranking *model.Ranking) string {
+	if ranking == nil {
+		return ""
+	}
+	var lines []string
+	lines = append(lines, fmt.Sprintf("- mode: %s", ranking.Mode))
+	lines = append(lines, fmt.Sprintf("- version: %s", ranking.Version))
+	lines = append(lines, fmt.Sprintf("- baseline: %.2f", ranking.BaselineScore))
+	lines = append(lines, fmt.Sprintf("- prior: %.2f", ranking.Prior))
+	lines = append(lines, fmt.Sprintf("- final: %.2f", ranking.FinalScore))
+	for _, item := range ranking.StrongestPositive {
+		lines = append(lines, "- positive: "+item)
+	}
+	for _, item := range ranking.StrongestNegative {
+		lines = append(lines, "- negative: "+item)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderDelta(delta *model.Delta) string {
+	if delta == nil {
+		return ""
+	}
+	var lines []string
+	for _, cause := range delta.Causes {
+		lines = append(lines, fmt.Sprintf("- %s: %.2f", cause.Kind, cause.Score))
+		for _, reason := range cause.Reasons {
+			lines = append(lines, "  - "+reason)
+		}
 	}
 	return strings.Join(lines, "\n")
 }

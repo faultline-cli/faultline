@@ -34,6 +34,8 @@ type AnalyzeOptions struct {
 	GitSince string
 	// RepoPath overrides the repository path used for git context scanning.
 	RepoPath string
+	// BayesEnabled enables deterministic Bayesian-inspired reranking.
+	BayesEnabled bool
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

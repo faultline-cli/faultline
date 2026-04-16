@@ -28,6 +28,9 @@ func FormatAnalysisMarkdown(a *model.Analysis, top int, mode Mode) string {
 		sections = append(sections, formatAnalysisMarkdownResult(a, result, i, len(results), mode == ModeDetailed))
 	}
 	if mode == ModeDetailed {
+		if delta := markdownListSection("## Delta Diagnosis", deltaLines(a.Delta)); delta != "" {
+			sections = append(sections, delta)
+		}
 		if repo := markdownListSection("## Repo Context", repoContextLines(a.RepoContext)); repo != "" {
 			sections = append(sections, repo)
 		}
@@ -129,6 +132,9 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 		}
 		if mitigated := markdownListSection("## Mitigated By", result.Explanation.MitigatedBy); mitigated != "" {
 			sections = append(sections, "", mitigated)
+		}
+		if ranking := markdownListSection("## Ranking", rankingLines(result.Ranking)); ranking != "" {
+			sections = append(sections, "", ranking)
 		}
 		if breakdown := markdownListSection("## Score Breakdown", scoreBreakdownLines(result.Breakdown)); breakdown != "" {
 			sections = append(sections, "", breakdown)
@@ -238,6 +244,40 @@ func repoContextLines(repo *model.RepoContext) []string {
 	}
 	for _, item := range repo.DriftSignals {
 		lines = append(lines, "Drift hint: "+item)
+	}
+	return lines
+}
+
+func rankingLines(ranking *model.Ranking) []string {
+	if ranking == nil {
+		return nil
+	}
+	lines := []string{
+		fmt.Sprintf("mode: %s", ranking.Mode),
+		fmt.Sprintf("version: %s", ranking.Version),
+		fmt.Sprintf("baseline: %.2f", ranking.BaselineScore),
+		fmt.Sprintf("prior: %.2f", ranking.Prior),
+		fmt.Sprintf("final: %.2f", ranking.FinalScore),
+	}
+	for _, item := range ranking.StrongestPositive {
+		lines = append(lines, "positive: "+item)
+	}
+	for _, item := range ranking.StrongestNegative {
+		lines = append(lines, "negative: "+item)
+	}
+	return lines
+}
+
+func deltaLines(delta *model.Delta) []string {
+	if delta == nil {
+		return nil
+	}
+	var lines []string
+	for _, cause := range delta.Causes {
+		lines = append(lines, fmt.Sprintf("%s: %.2f", cause.Kind, cause.Score))
+		for _, reason := range cause.Reasons {
+			lines = append(lines, cause.Kind+" reason: "+reason)
+		}
 	}
 	return lines
 }

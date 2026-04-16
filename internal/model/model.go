@@ -217,6 +217,38 @@ type ResultExplanation struct {
 	ChangeStatus   string   `json:"change_status,omitempty"`
 }
 
+type RankingContribution struct {
+	Feature      string   `json:"feature"`
+	Value        float64  `json:"value"`
+	Weight       float64  `json:"weight"`
+	Contribution float64  `json:"contribution"`
+	Direction    string   `json:"direction,omitempty"`
+	Reason       string   `json:"reason,omitempty"`
+	EvidenceRefs []string `json:"evidence_refs,omitempty"`
+}
+
+type Ranking struct {
+	Mode             string                `json:"mode,omitempty"`
+	Version          string                `json:"version,omitempty"`
+	BaselineScore    float64               `json:"baseline_score,omitempty"`
+	Prior            float64               `json:"prior,omitempty"`
+	FinalScore       float64               `json:"final_score,omitempty"`
+	Contributions    []RankingContribution `json:"contributions,omitempty"`
+	StrongestPositive []string             `json:"strongest_positive,omitempty"`
+	StrongestNegative []string             `json:"strongest_negative,omitempty"`
+}
+
+type DeltaCause struct {
+	Kind    string   `json:"kind"`
+	Score   float64  `json:"score"`
+	Reasons []string `json:"reasons,omitempty"`
+}
+
+type Delta struct {
+	Version string      `json:"version,omitempty"`
+	Causes  []DeltaCause `json:"causes,omitempty"`
+}
+
 // Result is a single ranked playbook match with its scoring detail.
 type Result struct {
 	Playbook     Playbook          `json:"playbook"`
@@ -229,6 +261,7 @@ type Result struct {
 	Breakdown    ScoreBreakdown    `json:"breakdown,omitempty"`
 	ChangeStatus string            `json:"change_status,omitempty"`
 	SeenCount    int               `json:"seen_count"`
+	Ranking      *Ranking          `json:"ranking,omitempty"`
 }
 
 // RepoContext holds git repository context enrichment from a recent commit window.
@@ -258,4 +291,5 @@ type Analysis struct {
 	Fingerprint string       `json:"fingerprint,omitempty"`
 	Source      string       `json:"source,omitempty"`
 	RepoContext *RepoContext `json:"repo_context,omitempty"`
+	Delta       *Delta       `json:"delta,omitempty"`
 }

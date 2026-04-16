@@ -39,6 +39,8 @@ type Plan struct {
 	Files         []string      `json:"files,omitempty"`
 	LocalRepro    []string      `json:"local_repro,omitempty"`
 	Verify        []string      `json:"verify,omitempty"`
+	RankingHints  []string      `json:"ranking_hints,omitempty"`
+	DeltaHints    []string      `json:"delta_hints,omitempty"`
 	Steps         []string      `json:"steps"`
 	AgentPrompt   string        `json:"agent_prompt,omitempty"`
 }
@@ -82,6 +84,23 @@ func BuildWithOptions(a *model.Analysis, mode Mode, opts BuildOptions) Plan {
 	plan.Evidence = append(plan.Evidence, top.Evidence...)
 	plan.LocalRepro = append(plan.LocalRepro, top.Playbook.Workflow.LocalRepro...)
 	plan.Verify = append(plan.Verify, top.Playbook.Workflow.Verify...)
+	if top.Ranking != nil {
+		plan.RankingHints = append(plan.RankingHints, top.Ranking.StrongestPositive...)
+	}
+	if a.Delta != nil {
+		for _, cause := range a.Delta.Causes {
+			for _, reason := range cause.Reasons {
+				plan.DeltaHints = append(plan.DeltaHints, reason)
+			}
+			if len(plan.DeltaHints) >= 3 {
+				break
+			}
+		}
+		plan.DeltaHints = dedupeKeepOrder(nil, plan.DeltaHints)
+		if len(plan.DeltaHints) > 3 {
+			plan.DeltaHints = plan.DeltaHints[:3]
+		}
+	}
 	plan.Files = resolveFiles(a, top, opts)
 	plan.Steps = append(plan.Steps, baseSteps(a, top, plan)...)
 	if mode == ModeAgent {
@@ -116,6 +135,18 @@ func baseSteps(a *model.Analysis, top model.Result, plan Plan) []string {
 	if len(plan.Files) > 0 {
 		steps = append(steps,
 			fmt.Sprintf("Inspect the most relevant local files first: %s.", strings.Join(plan.Files, ", ")),
+		)
+	}
+
+	if len(plan.RankingHints) > 0 {
+		steps = append(steps,
+			fmt.Sprintf("Ranking evidence favored this diagnosis because: %s.", strings.Join(plan.RankingHints, "; ")),
+		)
+	}
+
+	if len(plan.DeltaHints) > 0 {
+		steps = append(steps,
+			fmt.Sprintf("Recent change drift points at: %s.", strings.Join(plan.DeltaHints, "; ")),
 		)
 	}
 
@@ -176,6 +207,18 @@ func buildAgentPrompt(a *model.Analysis, top model.Result, plan Plan) string {
 		lines = append(lines, "Local repro commands:")
 		for _, cmd := range plan.LocalRepro {
 			lines = append(lines, fmt.Sprintf("- %s", cmd))
+		}
+	}
+	if len(plan.RankingHints) > 0 {
+		lines = append(lines, "Ranking hints:")
+		for _, item := range plan.RankingHints {
+			lines = append(lines, fmt.Sprintf("- %s", item))
+		}
+	}
+	if len(plan.DeltaHints) > 0 {
+		lines = append(lines, "Delta hints:")
+		for _, item := range plan.DeltaHints {
+			lines = append(lines, fmt.Sprintf("- %s", item))
 		}
 	}
 	lines = append(lines, "Recommended fix steps:")

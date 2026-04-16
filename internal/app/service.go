@@ -168,6 +168,9 @@ func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
 		NoHistory:        opts.NoHistory,
+		GitSince:         opts.GitSince,
+		RepoPath:         opts.RepoPath,
+		BayesEnabled:     opts.BayesEnabled,
 	}).AnalyzeRepository(root, detectors.ChangeSet{})
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
@@ -186,6 +189,7 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysi
 		GitContextEnabled: opts.GitContextEnabled,
 		GitSince:          opts.GitSince,
 		RepoPath:          opts.RepoPath,
+		BayesEnabled:      opts.BayesEnabled,
 	}).AnalyzeReader(r)
 	if a != nil {
 		a.Source = source

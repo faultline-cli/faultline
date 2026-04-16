@@ -20,6 +20,8 @@ type workflowJSON struct {
 	Files         []string `json:"files,omitempty"`
 	LocalRepro    []string `json:"local_repro,omitempty"`
 	Verify        []string `json:"verify,omitempty"`
+	RankingHints  []string `json:"ranking_hints,omitempty"`
+	DeltaHints    []string `json:"delta_hints,omitempty"`
 	Steps         []string `json:"steps"`
 	AgentPrompt   string   `json:"agent_prompt,omitempty"`
 }
@@ -72,6 +74,18 @@ func FormatWorkflowText(plan workflow.Plan) string {
 			fmt.Fprintf(&b, "  - %s\n", cmd)
 		}
 	}
+	if len(plan.RankingHints) > 0 {
+		fmt.Fprintln(&b, "Ranking hints:")
+		for _, item := range plan.RankingHints {
+			fmt.Fprintf(&b, "  - %s\n", item)
+		}
+	}
+	if len(plan.DeltaHints) > 0 {
+		fmt.Fprintln(&b, "Delta hints:")
+		for _, item := range plan.DeltaHints {
+			fmt.Fprintf(&b, "  - %s\n", item)
+		}
+	}
 	fmt.Fprintln(&b, "Next steps:")
 	for i, step := range plan.Steps {
 		fmt.Fprintf(&b, "  %d. %s\n", i+1, step)
@@ -100,6 +114,8 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 		Files:       plan.Files,
 		LocalRepro:  plan.LocalRepro,
 		Verify:      plan.Verify,
+		RankingHints: plan.RankingHints,
+		DeltaHints:   plan.DeltaHints,
 		Steps:       plan.Steps,
 		AgentPrompt: plan.AgentPrompt,
 	}

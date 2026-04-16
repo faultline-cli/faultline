@@ -17,6 +17,7 @@ type analysisJSON struct {
 	Context     ctxJSON      `json:"context"`
 	Results     []resultJSON `json:"results"`
 	RepoContext *repoCtxJSON `json:"repo_context,omitempty"`
+	Delta       *model.Delta `json:"delta,omitempty"`
 	Message     string       `json:"message,omitempty"`
 }
 
@@ -49,6 +50,7 @@ type resultJSON struct {
 	Breakdown    model.ScoreBreakdown    `json:"breakdown,omitempty"`
 	ChangeStatus string                  `json:"change_status,omitempty"`
 	SeenCount    int                     `json:"seen_count"`
+	Ranking      *model.Ranking          `json:"ranking,omitempty"`
 }
 
 type repoCtxJSON struct {
@@ -93,6 +95,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 		Step:        a.Context.Step,
 	}
 	payload.RepoContext = repoContextJSON(a.RepoContext)
+	payload.Delta = a.Delta
 
 	if !payload.Matched {
 		payload.Message = "No known playbook matched this input."
@@ -122,6 +125,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 				Breakdown:    r.Breakdown,
 				ChangeStatus: r.ChangeStatus,
 				SeenCount:    r.SeenCount,
+				Ranking:      r.Ranking,
 			}
 		}
 	}

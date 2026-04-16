@@ -17,6 +17,7 @@ import (
 	"faultline/internal/detectors/sourcedetector"
 	"faultline/internal/model"
 	"faultline/internal/repo"
+	"faultline/internal/scoring"
 )
 
 var (
@@ -41,6 +42,8 @@ type Options struct {
 	GitSince string
 	// RepoPath is the path to the local git repository root.  Defaults to ".".
 	RepoPath string
+	// BayesEnabled enables deterministic Bayesian-inspired reranking over matches.
+	BayesEnabled bool
 }
 
 // Engine orchestrates log analysis against loaded playbooks.
@@ -51,6 +54,13 @@ type Engine struct {
 	history         historyRecorder
 	repoEnricher    repoEnricher
 	sourceFileStore sourceLoader
+}
+
+type repoSnapshot struct {
+	root    string
+	commits []repo.Commit
+	signals repo.Signals
+	state   *scoring.RepoState
 }
 
 // New returns a new Engine configured with opts.
@@ -116,6 +126,27 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		}, ErrNoMatch
 	}
 
+	var (
+		snapshot *repoSnapshot
+		delta    *model.Delta
+	)
+	if e.opts.BayesEnabled || e.opts.GitContextEnabled {
+		snapshot = e.loadRepoSnapshot()
+	}
+	if e.opts.BayesEnabled {
+		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
+			Context:   ctx,
+			Lines:     lines,
+			Results:   results,
+			RepoState: repoStateFromSnapshot(snapshot),
+		})
+		if scoreErr != nil {
+			return nil, scoreErr
+		}
+		results = reranked
+		delta = scoredDelta
+	}
+
 	// Enrich results with history seen-counts (best-effort; never blocks analysis).
 	if !e.opts.NoHistory {
 		for i := range results {
@@ -128,6 +159,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		Results:     results,
 		Context:     ctx,
 		Fingerprint: fp,
+		Delta:       delta,
 	}
 
 	// Persist the top result so future runs can report recurrence.
@@ -137,7 +169,9 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	// Enrich with git repo context when requested (best-effort; never blocks).
 	if e.opts.GitContextEnabled && len(results) > 0 {
-		if rc := e.repoEnricher.Enrich(results[0]); rc != nil {
+		if rc := correlateSnapshot(snapshot, results[0]); rc != nil {
+			analysis.RepoContext = rc
+		} else if rc := e.repoEnricher.Enrich(results[0]); rc != nil {
 			analysis.RepoContext = rc
 		}
 	}
@@ -174,6 +208,25 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 	if len(results) == 0 {
 		return &model.Analysis{Results: []model.Result{}}, ErrNoMatch
 	}
+	var (
+		snapshot *repoSnapshot
+		delta    *model.Delta
+	)
+	if e.opts.BayesEnabled || e.opts.GitContextEnabled {
+		snapshot = e.loadRepoSnapshotFromPath(root, changeSet)
+	}
+	if e.opts.BayesEnabled {
+		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
+			Results:   results,
+			RepoState: repoStateFromSnapshot(snapshot),
+			ChangeSet: changeSet,
+		})
+		if scoreErr != nil {
+			return nil, scoreErr
+		}
+		results = reranked
+		delta = scoredDelta
+	}
 	if !e.opts.NoHistory {
 		for i := range results {
 			results[i].SeenCount = e.history.CountSeen(results[i].Playbook.ID)
@@ -184,6 +237,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		Results:     results,
 		Fingerprint: fingerprint(results[0]),
 		Source:      root,
+		Delta:       delta,
 	}, nil
 }
 
@@ -223,6 +277,151 @@ func (e localRepoEnricher) Enrich(result model.Result) *model.RepoContext {
 		sigs,
 	)
 	return &repoCtx
+}
+
+func (e *Engine) loadRepoSnapshot() *repoSnapshot {
+	repoPath := e.opts.RepoPath
+	if repoPath == "" {
+		repoPath = "."
+	}
+	return e.loadRepoSnapshotFromPath(repoPath, detectors.ChangeSet{})
+}
+
+func (e *Engine) loadRepoSnapshotFromPath(repoPath string, changeSet detectors.ChangeSet) *repoSnapshot {
+	if repoPath == "" {
+		repoPath = "."
+	}
+	sinceStr := e.opts.GitSince
+	if sinceStr == "" {
+		sinceStr = "30d"
+	}
+	scanner, err := repo.NewScanner(repoPath)
+	if err != nil {
+		return &repoSnapshot{state: stateFromChangeSet(repoPath, changeSet)}
+	}
+	commits, err := repo.LoadHistory(scanner, sinceStr)
+	if err != nil {
+		return &repoSnapshot{state: stateFromChangeSet(scanner.Root, changeSet)}
+	}
+	sigs := repo.DeriveSignals(commits)
+	state := &scoring.RepoState{
+		Root:          scanner.Root,
+		RecentFiles:   recentFilesFromCommits(commits, 10),
+		ChangedFiles:  changedFilesFromChangeSet(changeSet),
+		HotspotDirs:   hotspotDirsFromSignals(sigs, 5),
+		HotfixSignals: hotfixSignalsFromSignals(sigs, 5),
+		DriftSignals:  driftSignalsFromSignals(sigs, 5),
+	}
+	if len(state.ChangedFiles) == 0 {
+		state.ChangedFiles = append([]string(nil), state.RecentFiles...)
+	}
+	return &repoSnapshot{
+		root:    scanner.Root,
+		commits: commits,
+		signals: sigs,
+		state:   state,
+	}
+}
+
+func repoStateFromSnapshot(snapshot *repoSnapshot) *scoring.RepoState {
+	if snapshot == nil {
+		return nil
+	}
+	return snapshot.state
+}
+
+func correlateSnapshot(snapshot *repoSnapshot, result model.Result) *model.RepoContext {
+	if snapshot == nil || snapshot.root == "" || len(snapshot.commits) == 0 {
+		return nil
+	}
+	repoCtx := repo.Correlate(snapshot.root, result.Playbook.Category, result.Playbook.ID, snapshot.commits, snapshot.signals)
+	return &repoCtx
+}
+
+func stateFromChangeSet(root string, changeSet detectors.ChangeSet) *scoring.RepoState {
+	files := changedFilesFromChangeSet(changeSet)
+	if root == "" && len(files) == 0 {
+		return nil
+	}
+	return &scoring.RepoState{
+		Root:         root,
+		ChangedFiles: files,
+	}
+}
+
+func changedFilesFromChangeSet(changeSet detectors.ChangeSet) []string {
+	if len(changeSet.ChangedFiles) == 0 {
+		return nil
+	}
+	files := make([]string, 0, len(changeSet.ChangedFiles))
+	for file := range changeSet.ChangedFiles {
+		files = append(files, filepath.ToSlash(file))
+	}
+	sort.Strings(files)
+	return files
+}
+
+func recentFilesFromCommits(commits []repo.Commit, max int) []string {
+	seen := map[string]struct{}{}
+	var files []string
+	for _, commit := range commits {
+		for _, file := range commit.Files {
+			if _, ok := seen[file]; ok {
+				continue
+			}
+			seen[file] = struct{}{}
+			files = append(files, file)
+			if len(files) >= max {
+				return files
+			}
+		}
+	}
+	return files
+}
+
+func hotspotDirsFromSignals(sigs repo.Signals, max int) []string {
+	var dirs []string
+	for _, item := range sigs.HotspotDirs {
+		if item.Dir == "" {
+			continue
+		}
+		dirs = append(dirs, item.Dir)
+		if len(dirs) >= max {
+			break
+		}
+	}
+	return dirs
+}
+
+func hotfixSignalsFromSignals(sigs repo.Signals, max int) []string {
+	var hints []string
+	for _, commit := range sigs.HotfixCommits {
+		hints = append(hints, commit.Subject)
+		if len(hints) >= max {
+			break
+		}
+	}
+	return hints
+}
+
+func driftSignalsFromSignals(sigs repo.Signals, max int) []string {
+	var hints []string
+	for _, commit := range sigs.RevertCommits {
+		hints = append(hints, commit.Subject)
+		if len(hints) >= max {
+			return hints
+		}
+	}
+	for _, dir := range sigs.RepeatedDirs {
+		if dir.Dir == "" {
+			continue
+		}
+		hints = append(hints, "Repeated edits in "+dir.Dir)
+		if len(hints) >= max {
+			break
+		}
+	}
+	return hints
 }
 
 // List returns all playbooks available in the configured directory.

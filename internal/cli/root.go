@@ -92,6 +92,7 @@ func newAnalyzeCommand() *cobra.Command {
 		gitContext    bool
 		gitSince      string
 		repoPath      string
+		bayes         bool
 	)
 
 	cmd := &cobra.Command{
@@ -139,6 +140,7 @@ func newAnalyzeCommand() *cobra.Command {
 				GitContextEnabled: gitContext,
 				GitSince:          gitSince,
 				RepoPath:          repoPath,
+				BayesEnabled:      bayes,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -154,6 +156,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
+	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
 	return cmd
 }
 
@@ -163,6 +166,7 @@ func newFixCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		bayes         bool
 	)
 
 	cmd := &cobra.Command{
@@ -186,6 +190,7 @@ func newFixCommand() *cobra.Command {
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
+				BayesEnabled:     bayes,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -194,6 +199,7 @@ func newFixCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
 	return cmd
 }
 
@@ -206,6 +212,7 @@ func newInspectCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		bayes         bool
 	)
 
 	cmd := &cobra.Command{
@@ -232,6 +239,7 @@ func newInspectCommand() *cobra.Command {
 				NoHistory:        noHistory,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
+				BayesEnabled:     bayes,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -243,6 +251,7 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic findings with the Bayesian-inspired scoring layer")
 	return cmd
 }
 
@@ -304,6 +313,7 @@ func newWorkflowCommand() *cobra.Command {
 		repoPath      string
 		mode          string
 		jsonOut       bool
+		bayes         bool
 	)
 
 	cmd := &cobra.Command{
@@ -341,6 +351,7 @@ func newWorkflowCommand() *cobra.Command {
 				GitContextEnabled: gitContext,
 				GitSince:          gitSince,
 				RepoPath:          repoPath,
+				BayesEnabled:      bayes,
 			}, workflow.Mode(mode), jsonOut, cmd.OutOrStdout())
 		},
 	}
@@ -353,6 +364,7 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich the workflow with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
+	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")
 	return cmd
 }
 
