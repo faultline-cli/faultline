@@ -26,6 +26,7 @@ func NewRootCommand(version string) *cobra.Command {
 			"  faultline fix build.log",
 			"  faultline analyze build.log --mode detailed",
 			"  faultline inspect .",
+			"  faultline guard .",
 		}, "\n"),
 		Version:       version,
 		SilenceUsage:  true,
@@ -34,6 +35,7 @@ func NewRootCommand(version string) *cobra.Command {
 
 	cmd.AddCommand(newAnalyzeCommand())
 	cmd.AddCommand(newInspectCommand())
+	cmd.AddCommand(newGuardCommand())
 	cmd.AddCommand(newFixCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newExplainCommand())
@@ -252,6 +254,61 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic findings with the Bayesian-inspired scoring layer")
+	return cmd
+}
+
+func newGuardCommand() *cobra.Command {
+	var (
+		jsonOut       bool
+		top           int
+		mode          string
+		format        string
+		playbookDir   string
+		playbookPacks []string
+		gitSince      string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "guard [path]",
+		Short: "Run quiet high-confidence local prevention checks on changed files",
+		Long: strings.Join([]string{
+			"Inspect changed repository files and emit only high-confidence deterministic findings.",
+			"",
+			"Guard stays quiet when the worktree is clean or when no strong preventive signal is present.",
+		}, "\n"),
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputMode(mode); err != nil {
+				return err
+			}
+			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
+			if err != nil {
+				return err
+			}
+			root := "."
+			if len(args) == 1 {
+				root = args[0]
+			}
+			return app.NewService().Guard(root, app.AnalyzeOptions{
+				Top:              top,
+				Mode:             output.Mode(mode),
+				Format:           resolvedFormat,
+				JSON:             resolvedJSON,
+				NoHistory:        true,
+				PlaybookDir:      playbookDir,
+				PlaybookPackDirs: playbookPacks,
+				GitSince:         gitSince,
+			}, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
+	cmd.Flags().IntVar(&top, "top", 3, "show up to N guard findings")
+	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
+	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window used for deterministic drift hints")
 	return cmd
 }
 

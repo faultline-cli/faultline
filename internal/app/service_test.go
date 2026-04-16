@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -212,6 +213,29 @@ func TestWorkflowJSONOutput(t *testing.T) {
 	}
 }
 
+func TestWorkflowBayesJSONIncludesHints(t *testing.T) {
+	svc := NewService()
+	repoDir := writeServiceTempRepo(t)
+	log := "exec /__e/node20/bin/node: no such file or directory\n"
+	opts := baseOpts()
+	opts.BayesEnabled = true
+	opts.GitContextEnabled = true
+	opts.RepoPath = repoDir
+	var buf bytes.Buffer
+
+	err := svc.Workflow(strings.NewReader(log), "", opts, workflow.ModeAgent, true, &buf)
+	if err != nil {
+		t.Fatalf("Workflow bayes JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if jsonErr := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); jsonErr != nil {
+		t.Fatalf("unmarshal workflow JSON: %v", jsonErr)
+	}
+	if payload["ranking_hints"] == nil {
+		t.Fatalf("expected ranking_hints, got %v", payload)
+	}
+}
+
 // ── ListInstalledPacks ────────────────────────────────────────────────────────
 
 func TestListInstalledPacksNoPacksInstalled(t *testing.T) {
@@ -360,6 +384,36 @@ match:
 	}
 }
 
+func TestGuardQuietOnCleanRepo(t *testing.T) {
+	svc := NewService()
+	repoDir := writeServiceTempRepo(t)
+	opts := baseOpts()
+	var buf bytes.Buffer
+
+	err := svc.Guard(repoDir, opts, &buf)
+	if err != nil {
+		t.Fatalf("Guard clean repo: %v", err)
+	}
+	if buf.Len() != 0 {
+		t.Fatalf("expected quiet guard output, got %q", buf.String())
+	}
+}
+
+func TestGuardReturnsFindingsError(t *testing.T) {
+	svc := NewService()
+	repoDir := writeServiceGuardRepo(t)
+	opts := baseOpts()
+	var buf bytes.Buffer
+
+	err := svc.Guard(repoDir, opts, &buf)
+	if !errors.Is(err, ErrGuardFindings) {
+		t.Fatalf("expected ErrGuardFindings, got %v", err)
+	}
+	if !strings.Contains(buf.String(), "panic-in-http-handler") {
+		t.Fatalf("expected guard finding in output, got %q", buf.String())
+	}
+}
+
 // ── Explain (JSON and Markdown formats) ──────────────────────────────────────
 
 func TestExplainMarkdownOutput(t *testing.T) {
@@ -417,6 +471,59 @@ func TestFixturesStatsEmptyRootReturnsError(t *testing.T) {
 	// it doesn't panic.
 	_ = err
 }
+
+func writeServiceTempRepo(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	runServiceGit(t, dir, "init")
+	runServiceGit(t, dir, "config", "user.name", "Faultline Test")
+	runServiceGit(t, dir, "config", "user.email", "faultline@example.com")
+	if err := os.WriteFile(filepath.Join(dir, "Dockerfile"), []byte("FROM alpine\n"), 0o644); err != nil {
+		t.Fatalf("write Dockerfile: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "deploy"), 0o755); err != nil {
+		t.Fatalf("mkdir deploy: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "deploy", "healthcheck.yaml"), []byte("path: /healthz\n"), 0o644); err != nil {
+		t.Fatalf("write healthcheck: %v", err)
+	}
+	runServiceGit(t, dir, "add", ".")
+	runServiceGitEnv(t, dir, []string{
+		"GIT_AUTHOR_DATE=2026-04-10T10:00:00Z",
+		"GIT_COMMITTER_DATE=2026-04-10T10:00:00Z",
+	}, "commit", "--quiet", "-m", "baseline: add deploy files")
+	return dir
+}
+
+func writeServiceGuardRepo(t *testing.T) string {
+	t.Helper()
+	dir := writeServiceTempRepo(t)
+	handlerPath := filepath.Join(dir, "api", "handler.go")
+	if err := os.MkdirAll(filepath.Dir(handlerPath), 0o755); err != nil {
+		t.Fatalf("mkdir handler: %v", err)
+	}
+	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string {\n\tpanic(\"boom\")\n}\n"), 0o644); err != nil {
+		t.Fatalf("write handler: %v", err)
+	}
+	return dir
+}
+
+func runServiceGit(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	runServiceGitEnv(t, dir, nil, args...)
+}
+
+func runServiceGitEnv(t *testing.T, dir string, env []string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), env...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, string(out))
+	}
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a

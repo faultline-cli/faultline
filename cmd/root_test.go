@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"faultline/internal/app"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -51,6 +53,32 @@ func writeTempRepo(t *testing.T) string {
 		"GIT_AUTHOR_DATE=2026-04-10T10:00:00Z",
 		"GIT_COMMITTER_DATE=2026-04-10T10:00:00Z",
 	}, "commit", "--quiet", "-m", "hotfix: adjust healthcheck config")
+	return dir
+}
+
+func writeTempGuardRepo(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	runGit(t, dir, nil, "init")
+	runGit(t, dir, nil, "config", "user.name", "Faultline Test")
+	runGit(t, dir, nil, "config", "user.email", "faultline@example.com")
+
+	handlerPath := filepath.Join(dir, "api", "handler.go")
+	if err := os.MkdirAll(filepath.Dir(handlerPath), 0o755); err != nil {
+		t.Fatalf("mkdir handler dir: %v", err)
+	}
+	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string { return \"ok\" }\n"), 0o644); err != nil {
+		t.Fatalf("write handler file: %v", err)
+	}
+	runGit(t, dir, nil, "add", ".")
+	runGit(t, dir, []string{
+		"GIT_AUTHOR_DATE=2026-04-10T10:00:00Z",
+		"GIT_COMMITTER_DATE=2026-04-10T10:00:00Z",
+	}, "commit", "--quiet", "-m", "baseline: add handler")
+
+	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string {\n\tpanic(\"boom\")\n}\n"), 0o644); err != nil {
+		t.Fatalf("rewrite handler file: %v", err)
+	}
 	return dir
 }
 
@@ -238,6 +266,39 @@ func TestAnalyzeFormatJSON(t *testing.T) {
 	}
 	if payload["matched"] != true {
 		t.Fatalf("expected matched=true, got %v", payload["matched"])
+	}
+}
+
+func TestAnalyzeBayesJSONIncludesRankingAndDelta(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	repoDir := writeTempRepo(t)
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--json", "--bayes", "--git", "--repo", repoDir, "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --bayes --json: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal JSON: %v", err)
+	}
+	results, ok := payload["results"].([]interface{})
+	if !ok || len(results) == 0 {
+		t.Fatalf("expected results, got %v", payload["results"])
+	}
+	first := results[0].(map[string]interface{})
+	if first["ranking"] == nil {
+		t.Fatalf("expected ranking payload, got %v", first)
+	}
+	if payload["delta"] == nil {
+		t.Fatalf("expected delta payload, got %v", payload)
 	}
 }
 
@@ -598,6 +659,73 @@ func TestWorkflowCommandAgentJSON(t *testing.T) {
 	}
 	if payload["agent_prompt"] == "" {
 		t.Fatalf("expected agent_prompt, got %v", payload["agent_prompt"])
+	}
+}
+
+func TestWorkflowCommandBayesJSONIncludesHints(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	repoDir := writeTempRepo(t)
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"workflow", "--json", "--mode", "agent", "--bayes", "--git", "--repo", repoDir, "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute workflow --bayes --json: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal workflow JSON: %v", err)
+	}
+	if payload["ranking_hints"] == nil {
+		t.Fatalf("expected ranking_hints, got %v", payload)
+	}
+}
+
+func TestGuardCommandQuietOnCleanRepo(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	repoDir := writeTempRepo(t)
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"guard", repoDir})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute guard on clean repo: %v", err)
+	}
+	if out.Len() != 0 {
+		t.Fatalf("expected quiet guard output on clean repo, got %q", out.String())
+	}
+}
+
+func TestGuardCommandReturnsNonZeroOnFindings(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	repoDir := writeTempGuardRepo(t)
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"guard", repoDir})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected guard findings error")
+	}
+	if err != app.ErrGuardFindings {
+		t.Fatalf("expected ErrGuardFindings, got %v", err)
+	}
+	if !strings.Contains(out.String(), "panic-in-http-handler") {
+		t.Fatalf("expected guard finding in output, got %q", out.String())
 	}
 }
 

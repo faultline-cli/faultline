@@ -15,12 +15,15 @@ import (
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/playbooks"
+	"faultline/internal/repo"
 	"faultline/internal/renderer"
 	"faultline/internal/workflow"
 )
 
 // Service owns app-level orchestration for CLI commands.
 type Service struct{}
+
+var ErrGuardFindings = errors.New("guard findings emitted")
 
 // NewService returns the default CLI application service.
 func NewService() Service {
@@ -181,6 +184,47 @@ func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
 	return writeAnalysis(a, opts, w)
 }
 
+// Guard inspects changed repository files and only emits high-confidence findings.
+func (Service) Guard(root string, opts AnalyzeOptions, w io.Writer) error {
+	scanner, err := repo.NewScanner(root)
+	if err != nil {
+		return writeGuardNoFindings(root, opts, w)
+	}
+	changeSet, err := repo.LoadWorktreeChangeSet(scanner)
+	if err != nil {
+		return err
+	}
+	if len(changeSet.ChangedFiles) == 0 {
+		return writeGuardNoFindings(scanner.Root, opts, w)
+	}
+
+	opts.BayesEnabled = true
+	opts.RepoPath = scanner.Root
+	a, err := engine.New(engine.Options{
+		PlaybookDir:      opts.PlaybookDir,
+		PlaybookPackDirs: opts.PlaybookPackDirs,
+		NoHistory:        true,
+		GitSince:         opts.GitSince,
+		RepoPath:         scanner.Root,
+		BayesEnabled:     true,
+	}).AnalyzeRepository(scanner.Root, changeSet)
+	if errors.Is(err, engine.ErrNoInput) || errors.Is(err, engine.ErrNoMatch) {
+		return writeGuardNoFindings(scanner.Root, opts, w)
+	}
+	if err != nil {
+		return err
+	}
+
+	filtered := guardFindings(a, opts.Top)
+	if len(filtered.Results) == 0 {
+		return writeGuardNoFindings(scanner.Root, opts, w)
+	}
+	if err := writeAnalysis(filtered, opts, w); err != nil {
+		return err
+	}
+	return ErrGuardFindings
+}
+
 func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysis, error) {
 	a, err := engine.New(engine.Options{
 		PlaybookDir:       opts.PlaybookDir,
@@ -195,6 +239,43 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysi
 		a.Source = source
 	}
 	return a, err
+}
+
+func guardFindings(a *model.Analysis, top int) *model.Analysis {
+	if a == nil {
+		return &model.Analysis{Results: []model.Result{}}
+	}
+	filtered := make([]model.Result, 0, len(a.Results))
+	for _, result := range a.Results {
+		if result.Confidence < 0.85 {
+			continue
+		}
+		if result.Score < 3.5 {
+			continue
+		}
+		filtered = append(filtered, result)
+	}
+	if top > 0 && len(filtered) > top {
+		filtered = filtered[:top]
+	}
+	return &model.Analysis{
+		Results:     filtered,
+		Context:     a.Context,
+		Fingerprint: a.Fingerprint,
+		Source:      a.Source,
+		RepoContext: a.RepoContext,
+		Delta:       a.Delta,
+	}
+}
+
+func writeGuardNoFindings(root string, opts AnalyzeOptions, w io.Writer) error {
+	if opts.JSON || opts.Format == output.FormatJSON {
+		return writeAnalysis(&model.Analysis{
+			Results: []model.Result{},
+			Source:  root,
+		}, opts, w)
+	}
+	return nil
 }
 
 func (Service) FixturesIngest(root string, opts fixtures.IngestOptions, jsonOut bool, w io.Writer) error {
