@@ -35,7 +35,7 @@ func TestFormatIngestResultTextAndJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatIngestResult(json): %v", err)
 	}
-	if !strings.Contains(jsonText, "\"fixture-1\"") || !strings.Contains(jsonText, "\"skipped\"") {
+	if !strings.Contains(jsonText, "\"fixture-1\"") || !strings.Contains(jsonText, "\"Skipped\"") {
 		t.Fatalf("unexpected JSON output: %q", jsonText)
 	}
 }
@@ -130,7 +130,7 @@ func TestFormatStatsReportTextAndJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatStatsReport(json): %v", err)
 	}
-	if !strings.Contains(jsonText, "\"fixture_count\": 4") || !strings.Contains(jsonText, "\"class\": \"real\"") {
+	if !strings.Contains(jsonText, "\"FixtureCount\": 4") || !strings.Contains(jsonText, "\"Class\": \"real\"") {
 		t.Fatalf("unexpected JSON output: %q", jsonText)
 	}
 }
