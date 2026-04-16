@@ -28,7 +28,17 @@ func isCIFile(base, file string) bool {
 
 func isEnvironmentFile(base, file string) bool {
 	switch {
-	case strings.HasPrefix(base, ".env"), strings.HasSuffix(base, ".env"), strings.Contains(base, "config"), strings.Contains(base, "secret"), strings.Contains(base, "vault"):
+	case strings.HasPrefix(base, ".env"), strings.HasSuffix(base, ".env"),
+		strings.Contains(base, "secret"), strings.Contains(base, "vault"):
+		return true
+	}
+	// Known config file suffixes only — avoid matching arbitrary source files that
+	// happen to contain the word "config" (e.g. appconfig.go, configparser.py).
+	switch {
+	case strings.HasSuffix(base, ".toml"), strings.HasSuffix(base, ".ini"),
+		strings.HasSuffix(base, ".cfg"), strings.HasSuffix(base, ".conf"),
+		base == "config.yaml", base == "config.yml", base == "config.json",
+		base == ".config", strings.HasPrefix(base, "config."):
 		return true
 	}
 	return strings.Contains(file, "/config/") || strings.Contains(file, "/secrets/")

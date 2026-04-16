@@ -3,6 +3,7 @@ package scoring
 import (
 	"math"
 	"sort"
+	"strings"
 
 	"faultline/internal/model"
 )
@@ -51,15 +52,24 @@ func rankingFromFeatures(version string, baselineScore, prior float64, features 
 }
 
 func strongestReasons(contributions []model.RankingContribution, direction string) []string {
+	seen := map[string]struct{}{}
 	var out []string
 	for _, item := range contributions {
 		if item.Direction != direction {
 			continue
 		}
-		out = append(out, item.Reason)
+		r := strings.TrimSpace(item.Reason)
+		if r == "" {
+			continue
+		}
+		if _, ok := seen[r]; ok {
+			continue
+		}
+		seen[r] = struct{}{}
+		out = append(out, r)
 		if len(out) >= 3 {
 			break
 		}
 	}
-	return dedupeStrings(out)
+	return out
 }

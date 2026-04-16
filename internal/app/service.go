@@ -25,6 +25,14 @@ type Service struct{}
 
 var ErrGuardFindings = errors.New("guard findings emitted")
 
+// guardMinConfidence and guardMinScore are the thresholds used by the guard
+// command to filter source-detector results down to high-confidence findings
+// only. Lower values increase noise; higher values reduce recall.
+const (
+	guardMinConfidence = 0.75
+	guardMinScore      = 3.5
+)
+
 // NewService returns the default CLI application service.
 func NewService() Service {
 	return Service{}
@@ -198,8 +206,6 @@ func (Service) Guard(root string, opts AnalyzeOptions, w io.Writer) error {
 		return writeGuardNoFindings(scanner.Root, opts, w)
 	}
 
-	opts.BayesEnabled = true
-	opts.RepoPath = scanner.Root
 	a, err := engine.New(engine.Options{
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
@@ -247,10 +253,10 @@ func guardFindings(a *model.Analysis, top int) *model.Analysis {
 	}
 	filtered := make([]model.Result, 0, len(a.Results))
 	for _, result := range a.Results {
-		if result.Confidence < 0.75 {
+		if result.Confidence < guardMinConfidence {
 			continue
 		}
-		if result.Score < 3.5 {
+		if result.Score < guardMinScore {
 			continue
 		}
 		filtered = append(filtered, result)

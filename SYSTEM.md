@@ -69,23 +69,23 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 ```go
 type Playbook struct {
-    ID       string
-    Title    string
-    Category string
-    Detector string
-
-    Match struct {
-        Any []string
-    }
-
-    Source struct {
-        Triggers    []SignalMatcher
-        Amplifiers  []SignalMatcher
-        Mitigations []SignalMatcher
-    }
-
-    Explanation string
-    Fix         []string
+    ID         string
+    Title      string
+    Category   string
+    Severity   string
+    Detector   string
+    BaseScore  float64
+    Tags       []string
+    StageHints []string
+    Match      MatchSpec     // Any (OR), All (AND), None (exclusion)
+    Source     SourceSpec    // Trigger/amplifier/mitigation signal matchers
+    Summary    string
+    Diagnosis  string
+    Fix        string
+    Validation string
+    Workflow   WorkflowSpec  // LikelyFiles, LocalRepro, Verify steps
+    Scoring    ScoringConfig
+    Contextual ContextPolicy
 }
 ```
 
@@ -94,11 +94,41 @@ type Playbook struct {
 ```go
 type Result struct {
     Playbook   Playbook
+    Detector   string
     Evidence   []string
-    EvidenceBy EvidenceBundle
-    Breakdown  ScoreBreakdown
-    Score      int
+    EvidenceBy EvidenceBundle  // Triggers, Amplifiers, Mitigations, Suppressions
+    Score      float64
     Confidence float64
+    SeenCount  int
+    Ranking    *Ranking  // Populated when --bayes is enabled
+}
+```
+
+### Analysis
+
+```go
+type Analysis struct {
+    Results     []Result
+    Context     Context          // Stage, CommandHint, Step
+    Source      string
+    Fingerprint string
+    RepoContext *RepoContext     // Populated when --git is enabled
+    Delta       *Delta           // Populated when --bayes is enabled
+}
+```
+
+### Ranking (--bayes only)
+
+```go
+type Ranking struct {
+    Mode              string   // always "bayes"
+    Version           string
+    BaselineScore     float64
+    Prior             float64
+    FinalScore        float64
+    Contributions     []RankingContribution
+    StrongestPositive []string
+    StrongestNegative []string
 }
 ```
 

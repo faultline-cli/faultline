@@ -523,10 +523,3 @@ func runServiceGitEnv(t *testing.T, dir string, env []string, args ...string) {
 		t.Fatalf("git %s: %v\n%s", strings.Join(args, " "), err, string(out))
 	}
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
