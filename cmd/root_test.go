@@ -28,6 +28,16 @@ func writeTempLog(t *testing.T, content string) string {
 	return path
 }
 
+func writeTempAnalysisArtifact(t *testing.T, content string) string {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "analysis.json")
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatalf("write temp analysis artifact: %v", err)
+	}
+	return path
+}
+
 func writeTempRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -391,6 +401,71 @@ func TestFixCommandMarkdownFormat(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "## Fix") {
 		t.Fatalf("expected markdown fix heading, got %q", out.String())
+	}
+}
+
+func TestReplayCommandMarkdown(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
+		Top:         1,
+		Mode:        "quick",
+		Format:      "json",
+		JSON:        true,
+		NoHistory:   true,
+		PlaybookDir: playbookDir,
+	}, &artifact); err != nil {
+		t.Fatalf("build analysis artifact: %v", err)
+	}
+	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"replay", "--format", "markdown", "--mode", "detailed", artifactPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute replay: %v", err)
+	}
+	if !strings.Contains(out.String(), "# Docker registry authentication failure") {
+		t.Fatalf("expected replay markdown heading, got %q", out.String())
+	}
+}
+
+func TestReplayCommandJSONSelect(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
+		Top:         2,
+		Mode:        "quick",
+		Format:      "json",
+		JSON:        true,
+		NoHistory:   true,
+		PlaybookDir: playbookDir,
+	}, &artifact); err != nil {
+		t.Fatalf("build analysis artifact: %v", err)
+	}
+	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"replay", "--json", "--select", "2", artifactPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute replay --select: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal replay JSON: %v", err)
+	}
+	results, ok := payload["results"].([]interface{})
+	if !ok || len(results) != 1 {
+		t.Fatalf("expected one replay-selected result, got %v", payload["results"])
 	}
 }
 

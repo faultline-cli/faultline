@@ -24,6 +24,8 @@ Everything else should either be a bounded companion surface with explicit verif
 ### Complete Now
 
 - `fix` as a narrow remediation view over the top diagnosis
+- `trace` as an advanced deterministic companion for rule-by-rule evaluation and rejection context
+- `replay` as a deterministic companion for re-rendering saved analysis artifacts
 - `inspect` and `guard` as advanced local-prevention companions
 - `packs install` and `packs list` for optional extra catalog composition
 - hidden `fixtures` commands for corpus curation and maintainer workflows

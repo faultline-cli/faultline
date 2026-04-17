@@ -154,6 +154,61 @@ func FormatPlaybookDetailsJSON(pb model.Playbook) (string, error) {
 	return string(data) + "\n", nil
 }
 
+// ParseAnalysisJSON deserializes the stable analysis JSON schema back into an
+// in-memory Analysis so saved artifacts can be deterministically replayed.
+func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
+	var payload analysisJSON
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return nil, fmt.Errorf("parse analysis JSON: %w", err)
+	}
+
+	a := &model.Analysis{
+		Results:      make([]model.Result, 0, len(payload.Results)),
+		Source:       payload.Source,
+		Fingerprint:  payload.Fingerprint,
+		Context:      model.Context(payload.Context),
+		Delta:        payload.Delta,
+		Differential: payload.Differential,
+	}
+	a.RepoContext = parseRepoContextJSON(payload.RepoContext)
+
+	for _, item := range payload.Results {
+		a.Results = append(a.Results, model.Result{
+			Playbook: model.Playbook{
+				ID:           item.FailureID,
+				Title:        item.Title,
+				Category:     item.Category,
+				Severity:     item.Severity,
+				Summary:      item.Summary,
+				Diagnosis:    item.Diagnosis,
+				WhyItMatters: item.WhyItMatters,
+				Fix:          item.Fix,
+				Validation:   item.Validation,
+				Metadata: model.PlaybookMeta{
+					PackName: item.Pack,
+				},
+			},
+			Detector:     item.Detector,
+			Score:        item.Score,
+			Confidence:   item.Confidence,
+			Evidence:     item.Evidence,
+			EvidenceBy:   item.EvidenceBy,
+			Explanation:  item.Explanation,
+			Breakdown:    item.Breakdown,
+			ChangeStatus: item.ChangeStatus,
+			SeenCount:    item.SeenCount,
+			Ranking:      item.Ranking,
+			Hypothesis:   item.Hypothesis,
+		})
+	}
+
+	if !payload.Matched && len(a.Results) == 0 {
+		a.Results = []model.Result{}
+	}
+
+	return a, nil
+}
+
 func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {
 	if repoCtx == nil {
 		return nil
@@ -173,6 +228,34 @@ func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {
 		out.RelatedCommits = make([]repoCommitJSON, len(repoCtx.RelatedCommits))
 		for i, commit := range repoCtx.RelatedCommits {
 			out.RelatedCommits[i] = repoCommitJSON{
+				Hash:    commit.Hash,
+				Subject: commit.Subject,
+				Date:    commit.Date,
+			}
+		}
+	}
+	return out
+}
+
+func parseRepoContextJSON(repoCtx *repoCtxJSON) *model.RepoContext {
+	if repoCtx == nil {
+		return nil
+	}
+	out := &model.RepoContext{
+		RepoRoot:           repoCtx.RepoRoot,
+		RecentFiles:        repoCtx.RecentFiles,
+		HotspotDirectories: repoCtx.HotspotDirectories,
+		CoChangeHints:      repoCtx.CoChangeHints,
+		HotfixSignals:      repoCtx.HotfixSignals,
+		DriftSignals:       repoCtx.DriftSignals,
+		ConfigDriftSignals: repoCtx.ConfigDriftSignals,
+		CIChangeSignals:    repoCtx.CIChangeSignals,
+		LargeCommitSignals: repoCtx.LargeCommitSignals,
+	}
+	if len(repoCtx.RelatedCommits) > 0 {
+		out.RelatedCommits = make([]model.RepoCommit, len(repoCtx.RelatedCommits))
+		for i, commit := range repoCtx.RelatedCommits {
+			out.RelatedCommits[i] = model.RepoCommit{
 				Hash:    commit.Hash,
 				Subject: commit.Subject,
 				Date:    commit.Date,

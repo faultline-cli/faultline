@@ -73,6 +73,49 @@ func TestAnalyzeMatchedJSONOutput(t *testing.T) {
 	}
 }
 
+func TestAnalyzeSelectChoosesRequestedResult(t *testing.T) {
+	svc := NewService()
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	allOpts := baseOpts()
+	allOpts.Top = 3
+	allOpts.JSON = true
+	var all bytes.Buffer
+
+	if err := svc.Analyze(strings.NewReader(log), "test.log", allOpts, &all); err != nil {
+		t.Fatalf("Analyze all results: %v", err)
+	}
+	var allPayload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(all.String())), &allPayload); err != nil {
+		t.Fatalf("unmarshal full analysis JSON: %v", err)
+	}
+	allResults, ok := allPayload["results"].([]interface{})
+	if !ok || len(allResults) < 2 {
+		t.Fatalf("expected at least two ranked results, got %v", allPayload["results"])
+	}
+	expectedID := allResults[1].(map[string]interface{})["failure_id"]
+
+	opts := baseOpts()
+	opts.Select = 2
+	opts.JSON = true
+	var buf bytes.Buffer
+
+	if err := svc.Analyze(strings.NewReader(log), "test.log", opts, &buf); err != nil {
+		t.Fatalf("Analyze with --select: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
+		t.Fatalf("unmarshal selected analysis JSON: %v", err)
+	}
+	results, ok := payload["results"].([]interface{})
+	if !ok || len(results) != 1 {
+		t.Fatalf("expected one selected result, got %v", payload["results"])
+	}
+	result := results[0].(map[string]interface{})
+	if result["failure_id"] != expectedID {
+		t.Fatalf("expected --select to choose %v, got %v", expectedID, result["failure_id"])
+	}
+}
+
 func TestAnalyzeNoMatchReturnsNoError(t *testing.T) {
 	svc := NewService()
 	log := "everything is fine, all checks passed\n"
@@ -82,6 +125,82 @@ func TestAnalyzeNoMatchReturnsNoError(t *testing.T) {
 	err := svc.Analyze(strings.NewReader(log), "", baseOpts(), &buf)
 	if err != nil {
 		t.Fatalf("expected no error on no-match, got %v", err)
+	}
+}
+
+func TestAnalyzeTraceOutput(t *testing.T) {
+	svc := NewService()
+	log := "exec /__e/node20/bin/node: no such file or directory\n"
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	opts.ShowScoring = true
+	var buf bytes.Buffer
+
+	err := svc.Analyze(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Analyze trace: %v", err)
+	}
+	for _, want := range []string{"TRACE", "missing-executable", "Rule Evaluation", "Score"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Fatalf("expected %q in trace output, got:\n%s", want, buf.String())
+		}
+	}
+}
+
+func TestTraceSpecificPlaybookWithoutWinningMatch(t *testing.T) {
+	svc := NewService()
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	opts.TracePlaybook = "missing-executable"
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Trace specific playbook: %v", err)
+	}
+	for _, want := range []string{"TRACE  missing-executable", "Outcome: not matched", "Rule Evaluation"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Fatalf("expected %q in specific trace output, got:\n%s", want, buf.String())
+		}
+	}
+}
+
+func TestReplayRendersSavedAnalysis(t *testing.T) {
+	svc := NewService()
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	artifactOpts := baseOpts()
+	artifactOpts.JSON = true
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
+		t.Fatalf("Analyze to artifact: %v", err)
+	}
+
+	replayOpts := baseOpts()
+	replayOpts.Format = output.FormatMarkdown
+	replayOpts.Mode = output.ModeDetailed
+	var replay bytes.Buffer
+	if err := svc.Replay(strings.NewReader(artifact.String()), replayOpts, &replay); err != nil {
+		t.Fatalf("Replay: %v", err)
+	}
+	if !strings.Contains(replay.String(), "# Docker registry authentication failure") {
+		t.Fatalf("expected replay markdown heading, got:\n%s", replay.String())
+	}
+}
+
+func TestReplayRejectsTraceForAnalysisArtifact(t *testing.T) {
+	svc := NewService()
+	artifact := `{"matched":true,"results":[{"rank":1,"failure_id":"docker-auth","title":"Docker auth","category":"auth","score":1,"confidence":1,"evidence":["authentication required"]}]}`
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	var buf bytes.Buffer
+
+	err := svc.Replay(strings.NewReader(artifact), opts, &buf)
+	if err == nil {
+		t.Fatal("expected replay trace error")
+	}
+	if !strings.Contains(err.Error(), "replay trace is not supported") {
+		t.Fatalf("unexpected replay trace error: %v", err)
 	}
 }
 

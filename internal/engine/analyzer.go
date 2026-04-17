@@ -631,6 +631,11 @@ func (e *Engine) Explain(id string) (model.Playbook, error) {
 	return e.catalog.Explain(id)
 }
 
+// ReadLines reads log input into canonicalized line values used by the matcher.
+func ReadLines(r io.Reader) ([]model.Line, error) {
+	return readLines(r)
+}
+
 func (e *Engine) loadPlaybooks() ([]model.Playbook, error) {
 	return e.catalog.Load()
 }

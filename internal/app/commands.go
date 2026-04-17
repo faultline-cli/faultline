@@ -14,6 +14,8 @@ import (
 type AnalyzeOptions struct {
 	// Top is the maximum number of ranked results to show (0 = all).
 	Top int
+	// Select chooses a single ranked result by 1-based position.
+	Select int
 	// Mode selects quick or detailed human-readable output.
 	Mode output.Mode
 	// Format selects the human-readable output shape.
@@ -36,6 +38,16 @@ type AnalyzeOptions struct {
 	RepoPath string
 	// BayesEnabled enables deterministic Bayesian-inspired reranking.
 	BayesEnabled bool
+	// TraceEnabled renders a deterministic playbook trace instead of the normal report.
+	TraceEnabled bool
+	// TracePlaybook renders a deterministic trace for the named playbook.
+	TracePlaybook string
+	// ShowRejected includes competing candidates and rejection context in trace output.
+	ShowRejected bool
+	// ShowEvidence includes a raw evidence appendix when supported by the selected view.
+	ShowEvidence bool
+	// ShowScoring includes scoring detail when supported by the selected view.
+	ShowScoring bool
 	// DeltaProvider enables provider-backed failure delta resolution.
 	DeltaProvider string
 	// GitHubRepository identifies the GitHub repository for provider-backed delta resolution.
@@ -50,8 +62,13 @@ type AnalyzeOptions struct {
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.
 func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
+	selected, err := selectAnalysisResults(a, opts)
+	if err != nil {
+		return err
+	}
+
 	if opts.JSON || opts.Format == output.FormatJSON {
-		data, err := output.FormatAnalysisJSON(a, opts.Top)
+		data, err := output.FormatAnalysisJSON(selected, selectedTop(opts))
 		if err != nil {
 			return err
 		}
@@ -60,15 +77,49 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 	}
 
 	if opts.CIAnnotations {
-		_, err := fmt.Fprint(w, output.FormatCIAnnotations(a, opts.Top))
+		_, err := fmt.Fprint(w, output.FormatCIAnnotations(selected, selectedTop(opts)))
 		return err
+	}
+
+	mode := opts.Mode
+	if mode != output.ModeDetailed && (opts.ShowEvidence || opts.ShowScoring || opts.ShowRejected) {
+		mode = output.ModeDetailed
 	}
 
 	renderOpts := renderer.DetectOptions(w)
 	if opts.Format == output.FormatMarkdown {
-		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(a, opts.Top, opts.Mode))
+		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode))
 		return err
 	}
-	_, err := fmt.Fprint(w, output.FormatAnalysisText(a, opts.Top, opts.Mode, renderOpts))
+	_, err = fmt.Fprint(w, output.FormatAnalysisText(selected, selectedTop(opts), mode, renderOpts))
 	return err
+}
+
+func selectedTop(opts AnalyzeOptions) int {
+	if opts.Select > 0 {
+		return 1
+	}
+	return opts.Top
+}
+
+func selectAnalysisResults(a *model.Analysis, opts AnalyzeOptions) (*model.Analysis, error) {
+	if a == nil {
+		return nil, nil
+	}
+	clone := *a
+	if len(a.Results) == 0 {
+		clone.Results = []model.Result{}
+		return &clone, nil
+	}
+	if opts.Select <= 0 {
+		return &clone, nil
+	}
+	if opts.Select > len(a.Results) {
+		return nil, fmt.Errorf("--select %d is out of range; only %d result(s) available", opts.Select, len(a.Results))
+	}
+	clone.Results = []model.Result{a.Results[opts.Select-1]}
+	if opts.Select != 1 {
+		clone.Differential = nil
+	}
+	return &clone, nil
 }

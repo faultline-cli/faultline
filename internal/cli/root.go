@@ -44,6 +44,8 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newExplainCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newFixCommand())
+	cmd.AddCommand(newReplayCommand())
+	cmd.AddCommand(newTraceCommand())
 	cmd.AddCommand(newInspectCommand())
 	cmd.AddCommand(newGuardCommand())
 	cmd.AddCommand(newPacksCommand())
@@ -62,6 +64,13 @@ func validateOutputFormat(value string) (output.Format, error) {
 func validateOutputMode(value string) error {
 	if value != string(output.ModeQuick) && value != string(output.ModeDetailed) {
 		return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
+	}
+	return nil
+}
+
+func validateSelect(value int) error {
+	if value < 0 {
+		return fmt.Errorf("--select must be 1 or greater")
 	}
 	return nil
 }
@@ -112,6 +121,12 @@ func newAnalyzeCommand() *cobra.Command {
 		gitSince      string
 		repoPath      string
 		bayes         bool
+		traceEnabled  bool
+		tracePlaybook string
+		selectRank    int
+		showRejected  bool
+		showEvidence  bool
+		showScoring   bool
 		deltaProvider string
 		githubRepo    string
 		githubBranch  string
@@ -138,6 +153,9 @@ func newAnalyzeCommand() *cobra.Command {
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateOutputMode(mode); err != nil {
+				return err
+			}
+			if err := validateSelect(selectRank); err != nil {
 				return err
 			}
 			if err := validateExperimentalDeltaProvider(deltaProvider); err != nil {
@@ -167,6 +185,12 @@ func newAnalyzeCommand() *cobra.Command {
 				GitSince:          gitSince,
 				RepoPath:          repoPath,
 				BayesEnabled:      bayes,
+				TraceEnabled:      traceEnabled,
+				TracePlaybook:     tracePlaybook,
+				Select:            selectRank,
+				ShowRejected:      showRejected,
+				ShowEvidence:      showEvidence,
+				ShowScoring:       showScoring,
 				DeltaProvider:     deltaProvider,
 				GitHubRepository:  firstNonEmpty(githubRepo, os.Getenv("GITHUB_REPOSITORY")),
 				GitHubBranch:      firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
@@ -188,6 +212,12 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	cmd.Flags().BoolVar(&traceEnabled, "trace", false, "render a deterministic trace for the selected playbook")
+	cmd.Flags().StringVar(&tracePlaybook, "trace-playbook", "", "render a deterministic trace for the named playbook")
+	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
+	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context in trace output")
+	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix when supported")
+	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail when supported")
 	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions)")
 	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
 	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
@@ -269,6 +299,129 @@ func newFixCommand() *cobra.Command {
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	return cmd
+}
+
+func newReplayCommand() *cobra.Command {
+	var (
+		jsonOut    bool
+		top        int
+		selectRank int
+		mode       string
+		format     string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "replay <analysis.json>",
+		Short: "Re-render a saved analysis artifact",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateOutputMode(mode); err != nil {
+				return err
+			}
+			if err := validateSelect(selectRank); err != nil {
+				return err
+			}
+			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
+			if err != nil {
+				return err
+			}
+
+			input, err := ReadInput(args)
+			if err != nil {
+				return err
+			}
+			defer input.Close()
+
+			return app.NewService().Replay(input.Reader, app.AnalyzeOptions{
+				Top:    top,
+				Select: selectRank,
+				Mode:   output.Mode(mode),
+				Format: resolvedFormat,
+				JSON:   resolvedJSON,
+			}, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
+	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
+	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
+	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	return cmd
+}
+
+func newTraceCommand() *cobra.Command {
+	var (
+		jsonOut       bool
+		format        string
+		playbookDir   string
+		playbookPacks []string
+		noHistory     bool
+		gitContext    bool
+		gitSince      string
+		repoPath      string
+		bayes         bool
+		playbookID    string
+		selectRank    int
+		showRejected  bool
+		showEvidence  bool
+		showScoring   bool
+	)
+
+	cmd := &cobra.Command{
+		Use:   "trace [file]",
+		Short: "Show deterministic rule-by-rule evaluation for a playbook",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateSelect(selectRank); err != nil {
+				return err
+			}
+			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
+			if err != nil {
+				return err
+			}
+			input, err := ReadInput(args)
+			if err != nil {
+				return err
+			}
+			defer input.Close()
+
+			return app.NewService().Trace(input.Reader, input.Source, app.AnalyzeOptions{
+				Top:               1,
+				Select:            selectRank,
+				Format:            resolvedFormat,
+				JSON:              resolvedJSON,
+				NoHistory:         noHistory,
+				PlaybookDir:       playbookDir,
+				PlaybookPackDirs:  playbookPacks,
+				GitContextEnabled: gitContext,
+				GitSince:          gitSince,
+				RepoPath:          repoPath,
+				BayesEnabled:      bayes,
+				TraceEnabled:      true,
+				TracePlaybook:     playbookID,
+				ShowRejected:      showRejected,
+				ShowEvidence:      showEvidence,
+				ShowScoring:       showScoring,
+			}, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
+	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
+	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
+	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
+	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	cmd.Flags().StringVar(&playbookID, "playbook", "", "trace the named playbook even if it did not win the ranking")
+	cmd.Flags().IntVar(&selectRank, "select", 0, "trace the Nth ranked result instead of the winner (1-based)")
+	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context")
+	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix")
+	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail")
 	return cmd
 }
 

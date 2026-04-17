@@ -7,6 +7,7 @@ import (
 
 	"faultline/internal/model"
 	"faultline/internal/renderer"
+	tracereport "faultline/internal/trace"
 	"faultline/internal/workflow"
 )
 
@@ -132,6 +133,36 @@ func TestFormatAnalysisJSONEmptyResults(t *testing.T) {
 	}
 }
 
+func TestParseAnalysisJSONRoundTrip(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.67, []string{"authentication required"})
+	a.Source = "stdin"
+	a.Fingerprint = "abc123"
+	a.Context = model.Context{Stage: "deploy", CommandHint: "docker push"}
+	a.RepoContext = &model.RepoContext{
+		RepoRoot:           "/repo",
+		RecentFiles:        []string{"Dockerfile"},
+		HotspotDirectories: []string{"deploy"},
+	}
+
+	data, err := FormatAnalysisJSON(a, 1)
+	if err != nil {
+		t.Fatalf("FormatAnalysisJSON: %v", err)
+	}
+	parsed, err := ParseAnalysisJSON([]byte(data))
+	if err != nil {
+		t.Fatalf("ParseAnalysisJSON: %v", err)
+	}
+	if parsed.Source != a.Source || parsed.Fingerprint != a.Fingerprint {
+		t.Fatalf("round-trip metadata mismatch: got %#v", parsed)
+	}
+	if len(parsed.Results) != 1 || parsed.Results[0].Playbook.ID != "docker-auth" {
+		t.Fatalf("round-trip result mismatch: got %#v", parsed.Results)
+	}
+	if parsed.RepoContext == nil || parsed.RepoContext.RepoRoot != "/repo" {
+		t.Fatalf("expected repo context to survive round trip, got %#v", parsed.RepoContext)
+	}
+}
+
 // ── Quick text ────────────────────────────────────────────────────────────────
 
 func TestFormatAnalysisTextQuickSingleMatch(t *testing.T) {
@@ -208,6 +239,72 @@ func TestFormatAnalysisTextQuickTopN(t *testing.T) {
 	}
 	if strings.Contains(text, "#3") {
 		t.Errorf("should not include #3 (top=2), got %q", text)
+	}
+}
+
+func TestFormatTraceTextIncludesRulesAndCompeting(t *testing.T) {
+	report := tracereport.Report{
+		Source: "stdin",
+		Playbook: model.Playbook{
+			ID:    "missing-executable",
+			Title: "Required executable or runtime binary missing",
+		},
+		Matched:    true,
+		Rank:       1,
+		Score:      2.10,
+		Confidence: 0.84,
+		Detector:   "log",
+		Rules: []tracereport.Rule{
+			{
+				Group:       "match.any",
+				Index:       0,
+				Pattern:     "no such file or directory",
+				Status:      tracereport.StatusMatched,
+				LineMatches: []tracereport.LineMatch{{Number: 12, Text: "exec /__e/node20/bin/node: no such file or directory"}},
+			},
+		},
+		Why: []string{"1 trigger rule matched explicit log evidence"},
+		Competing: []tracereport.Candidate{
+			{Status: "alternative", FailureID: "runtime-mismatch", Title: "Runtime mismatch", Reasons: []string{"version conflict wording was absent"}},
+		},
+	}
+
+	text := FormatTraceText(report, true, true, true)
+	for _, want := range []string{"TRACE  missing-executable", "Rule Evaluation", "MATCHED", "line 12", "Why This Result", "Competing Matches"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in trace text, got:\n%s", want, text)
+		}
+	}
+}
+
+func TestFormatTraceJSONIncludesRules(t *testing.T) {
+	report := tracereport.Report{
+		Source: "stdin",
+		Playbook: model.Playbook{
+			ID:    "docker-auth",
+			Title: "Docker auth",
+		},
+		Matched: true,
+		Rules: []tracereport.Rule{
+			{Group: "match.any", Index: 0, Pattern: "authentication required", Status: tracereport.StatusMatched},
+		},
+	}
+
+	data, err := FormatTraceJSON(report, false, false, false)
+	if err != nil {
+		t.Fatalf("FormatTraceJSON: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &payload); err != nil {
+		t.Fatalf("unmarshal trace JSON: %v", err)
+	}
+	if payload["playbook_id"] != "docker-auth" {
+		t.Fatalf("expected playbook_id docker-auth, got %v", payload["playbook_id"])
+	}
+	rules, ok := payload["rules"].([]interface{})
+	if !ok || len(rules) != 1 {
+		t.Fatalf("expected one rule in trace JSON, got %v", payload["rules"])
 	}
 }
 

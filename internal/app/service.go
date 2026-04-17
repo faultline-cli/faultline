@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"faultline/internal/playbooks"
 	"faultline/internal/renderer"
 	"faultline/internal/repo"
+	tracereport "faultline/internal/trace"
 	"faultline/internal/workflow"
 )
 
@@ -40,12 +42,81 @@ func NewService() Service {
 
 // Analyze performs log analysis and writes formatted output to w.
 func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+	if opts.TraceEnabled || opts.TracePlaybook != "" {
+		return Service{}.Trace(r, source, opts, w)
+	}
 	a, err := analyzeLog(r, source, opts)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
+	}
+	return writeAnalysis(a, opts, w)
+}
+
+// Trace performs log analysis and renders a deterministic playbook trace.
+func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+	loaded, err := loadAnalysisInput(r, source, opts)
+	if errors.Is(err, engine.ErrNoInput) {
+		return err
+	}
+	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
+		return err
+	}
+
+	playbooks, err := engine.New(engine.Options{
+		PlaybookDir:      opts.PlaybookDir,
+		PlaybookPackDirs: opts.PlaybookPackDirs,
+		NoHistory:        true,
+	}).List()
+	if err != nil {
+		return err
+	}
+
+	playbookID, err := tracePlaybookID(loaded.Analysis, opts)
+	if err != nil {
+		return err
+	}
+	if playbookID == "" {
+		return writeAnalysis(loaded.Analysis, AnalyzeOptions{Top: 1, Mode: output.ModeQuick, Format: opts.Format, JSON: opts.JSON}, w)
+	}
+
+	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, playbooks, playbookID, opts.ShowRejected)
+	if err != nil {
+		return err
+	}
+
+	switch {
+	case opts.JSON || opts.Format == output.FormatJSON:
+		data, err := output.FormatTraceJSON(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
+		return err
+	case opts.Format == output.FormatMarkdown:
+		_, err := fmt.Fprint(w, output.FormatTraceMarkdown(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected))
+		return err
+	default:
+		_, err := fmt.Fprint(w, output.FormatTraceText(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected))
+		return err
+	}
+}
+
+// Replay re-renders a saved analysis artifact using the current deterministic
+// output surfaces. Replay currently supports the stable analysis JSON schema.
+func (Service) Replay(r io.Reader, opts AnalyzeOptions, w io.Writer) error {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("read analysis artifact: %w", err)
+	}
+	a, err := output.ParseAnalysisJSON(data)
+	if err != nil {
+		return err
+	}
+	if opts.TraceEnabled || opts.TracePlaybook != "" {
+		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
 	}
 	return writeAnalysis(a, opts, w)
 }
@@ -250,6 +321,46 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysi
 		a.Source = source
 	}
 	return a, err
+}
+
+type loadedAnalysisInput struct {
+	Analysis *model.Analysis
+	Lines    []model.Line
+}
+
+func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedAnalysisInput, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return loadedAnalysisInput{}, fmt.Errorf("read log input: %w", err)
+	}
+	lines, err := engine.ReadLines(bytes.NewReader(data))
+	if err != nil {
+		return loadedAnalysisInput{}, err
+	}
+	analysis, err := analyzeLog(bytes.NewReader(data), source, opts)
+	return loadedAnalysisInput{
+		Analysis: analysis,
+		Lines:    lines,
+	}, err
+}
+
+func tracePlaybookID(a *model.Analysis, opts AnalyzeOptions) (string, error) {
+	if opts.TracePlaybook != "" {
+		return opts.TracePlaybook, nil
+	}
+	if opts.Select > 0 {
+		if a == nil || len(a.Results) == 0 {
+			return "", fmt.Errorf("--select requires at least one matched result")
+		}
+		if opts.Select > len(a.Results) {
+			return "", fmt.Errorf("--select %d is out of range; only %d result(s) available", opts.Select, len(a.Results))
+		}
+		return a.Results[opts.Select-1].Playbook.ID, nil
+	}
+	if a != nil && len(a.Results) > 0 {
+		return a.Results[0].Playbook.ID, nil
+	}
+	return "", nil
 }
 
 func guardFindings(a *model.Analysis, top int) *model.Analysis {
