@@ -6,7 +6,10 @@ explicit deterministic layers:
 - `internal/cli` owns Cobra command definitions, flags, stdin/file handling,
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
-  explain, workflow, guard, and fixture-corpus operations.
+  explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+- `internal/compare` owns deterministic diffing of two saved analysis artifacts
+  into a structured `Report` (diagnosis change, evidence delta, repo-context
+  delta, and delta-signal changes).
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, history persistence,
   source loading, and git enrichment.
@@ -23,9 +26,13 @@ explicit deterministic layers:
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
-  serialization.
-- `internal/renderer` owns terminal-aware human rendering, including plain
-  fallback, markdown rendering, and restrained ANSI styling.
+  serialization, focused views (`--view summary|evidence|fix|raw`), compare
+  formatting, and evidence-only views.
+- `internal/renderer` owns terminal-aware human rendering, including quick
+  (default) and detailed modes, plain fallback, markdown rendering, and
+  restrained ANSI styling.
+- `internal/trace` owns per-playbook rule-by-rule trace payloads used by
+  `faultline trace` and `faultline analyze --trace`.
 
 ## Playbook boundary
 
@@ -116,4 +123,19 @@ as `summary`, `diagnosis`, `fix`, and
 - structured playbook fields still drive matching and ranking
 - CLI commands render the same deterministic content model to terminal or markdown output
 - `--format json` and `--json` emit the structured machine-readable form
+- `--view summary|evidence|fix|raw` selects a focused slice of the human-readable output
+  without changing the underlying analysis; `summary` and `raw` map to quick and
+  detailed rendering modes respectively; `evidence` and `fix` emit narrow single-purpose
+  slices of the top result
 - non-TTY and no-color environments fall back to plain output
+
+## Compare boundary
+
+`faultline compare` is a deterministic companion for diffing two saved analysis
+artifacts (produced by `faultline analyze --json` or `faultline replay --json`).
+It does not re-run analysis; it only compares the stored payloads.
+
+- diagnosis change is detected by comparing the top `failure_id` across both artifacts
+- evidence, repo context, and delta-signal fields are diffed as ordered string sets
+- output is stable and machine-readable with `--json`, or human-readable via terminal and markdown format
+- the compare report is intentionally narrow: it surfaces what changed, not why

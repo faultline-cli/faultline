@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	analysiscompare "faultline/internal/compare"
 	"faultline/internal/model"
 	"faultline/internal/renderer"
 	tracereport "faultline/internal/trace"
@@ -168,11 +169,41 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 func TestFormatAnalysisTextQuickSingleMatch(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker auth", "auth", 1.0, []string{"authentication required"})
 	text := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
-	if !strings.Contains(text, "docker-auth") {
-		t.Errorf("expected playbook ID in quick output, got %q", text)
+	for _, want := range []string{"Most Likely Diagnosis", "docker-auth", "Matched Evidence", "Recommended Action"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("expected %q in quick output, got %q", want, text)
+		}
 	}
 	if !strings.Contains(text, "Summary") {
 		t.Errorf("expected Summary section in quick output, got %q", text)
+	}
+}
+
+func TestFormatAnalysisTextQuickShowsConfidenceLabel(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.84, []string{"authentication required"})
+	text := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
+	if !strings.Contains(text, "Confidence: high (84%)") {
+		t.Errorf("expected confidence label in quick output, got %q", text)
+	}
+}
+
+func TestFormatAnalysisTextQuickTopN(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{
+			{Playbook: model.Playbook{ID: "a", Title: "A", Summary: "A", Fix: "1. Fix A"}, Confidence: 1.0, Score: 2},
+			{Playbook: model.Playbook{ID: "b", Title: "B", Summary: "B", Fix: "1. Fix B"}, Confidence: 0.5, Score: 1},
+			{Playbook: model.Playbook{ID: "c", Title: "C", Summary: "C", Fix: "1. Fix C"}, Confidence: 0.3, Score: 0.5},
+		},
+	}
+	text := FormatAnalysisText(a, 2, ModeQuick, renderer.Options{Plain: true, Width: 88})
+	if !strings.Contains(text, "Other Likely Matches") {
+		t.Errorf("expected alternatives section, got %q", text)
+	}
+	if !strings.Contains(text, "#2 b (50%)") {
+		t.Errorf("expected #2 candidate in quick output, got %q", text)
+	}
+	if strings.Contains(text, "#3") {
+		t.Errorf("should not include #3 (top=2), got %q", text)
 	}
 }
 
@@ -219,26 +250,6 @@ func TestFormatAnalysisMarkdownDetailed(t *testing.T) {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in markdown output, got:\n%s", want, text)
 		}
-	}
-}
-
-func TestFormatAnalysisTextQuickTopN(t *testing.T) {
-	a := &model.Analysis{
-		Results: []model.Result{
-			{Playbook: model.Playbook{ID: "a", Title: "A", Summary: "A"}, Confidence: 1.0, Score: 2},
-			{Playbook: model.Playbook{ID: "b", Title: "B", Summary: "B"}, Confidence: 0.5, Score: 1},
-			{Playbook: model.Playbook{ID: "c", Title: "C", Summary: "C"}, Confidence: 0.3, Score: 0.5},
-		},
-	}
-	text := FormatAnalysisText(a, 2, ModeQuick, renderer.Options{Plain: true, Width: 88})
-	if !strings.Contains(text, "#1") {
-		t.Errorf("expected rank header #1, got %q", text)
-	}
-	if !strings.Contains(text, "#2") {
-		t.Errorf("expected rank header #2, got %q", text)
-	}
-	if strings.Contains(text, "#3") {
-		t.Errorf("should not include #3 (top=2), got %q", text)
 	}
 }
 
@@ -305,6 +316,67 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 	rules, ok := payload["rules"].([]interface{})
 	if !ok || len(rules) != 1 {
 		t.Fatalf("expected one rule in trace JSON, got %v", payload["rules"])
+	}
+}
+
+func TestFormatCompareMarkdownIncludesDiagnosisAndEvidence(t *testing.T) {
+	report := analysiscompare.Report{
+		LeftSource:       "previous.json",
+		RightSource:      "current.json",
+		Changed:          true,
+		DiagnosisChanged: true,
+		Previous:         &analysiscompare.Candidate{FailureID: "docker-auth", Title: "Docker auth", Confidence: 0.67},
+		Current:          &analysiscompare.Candidate{FailureID: "permission-denied", Title: "Permission denied", Confidence: 0.33},
+		Summary:          []string{"top diagnosis changed from docker-auth to permission-denied"},
+		Evidence:         analysiscompare.StringDelta{Added: []string{"permission denied"}, Removed: []string{"authentication required"}},
+	}
+
+	text := FormatCompareMarkdown(report)
+	for _, want := range []string{"# Faultline Compare", "## Diagnosis", "`docker-auth`", "`permission-denied`", "## Evidence Changes"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in compare markdown, got:\n%s", want, text)
+		}
+	}
+}
+
+func TestFormatCompareJSON(t *testing.T) {
+	report := analysiscompare.Report{
+		Changed:          true,
+		DiagnosisChanged: true,
+		Summary:          []string{"top diagnosis changed"},
+	}
+	data, err := FormatCompareJSON(report)
+	if err != nil {
+		t.Fatalf("FormatCompareJSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &payload); err != nil {
+		t.Fatalf("unmarshal compare JSON: %v", err)
+	}
+	if payload["changed"] != true {
+		t.Fatalf("expected changed=true, got %v", payload["changed"])
+	}
+}
+
+func TestFormatAnalysisEvidenceText(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.67, []string{"authentication required"})
+	a.Source = "stdin"
+	text := FormatAnalysisEvidenceText(a)
+	for _, want := range []string{"EVIDENCE  docker-auth", "Source: stdin", "Matched evidence:", "authentication required"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in evidence text, got:\n%s", want, text)
+		}
+	}
+}
+
+func TestFormatAnalysisEvidenceMarkdown(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.67, []string{"authentication required"})
+	a.Source = "stdin"
+	text := FormatAnalysisEvidenceMarkdown(a)
+	for _, want := range []string{"# Faultline Evidence", "- ID: `docker-auth`", "## Matched Evidence", "```text"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in evidence markdown, got:\n%s", want, text)
+		}
 	}
 }
 
@@ -515,6 +587,131 @@ func TestFormatWorkflowText(t *testing.T) {
 }
 
 // ── ParseFormat / Valid ───────────────────────────────────────────────────────
+
+// ── View ──────────────────────────────────────────────────────────────────────
+
+func TestParseViewKnownValues(t *testing.T) {
+	tests := []struct {
+		input string
+		want  View
+	}{
+		{"", ViewDefault},
+		{"summary", ViewSummary},
+		{"Summary", ViewSummary},
+		{"SUMMARY", ViewSummary},
+		{"  summary  ", ViewSummary},
+		{"evidence", ViewEvidence},
+		{"fix", ViewFix},
+		{"raw", ViewRaw},
+	}
+	for _, tt := range tests {
+		got, ok := ParseView(tt.input)
+		if !ok {
+			t.Errorf("ParseView(%q) ok=false, want true", tt.input)
+		}
+		if got != tt.want {
+			t.Errorf("ParseView(%q) = %q, want %q", tt.input, got, tt.want)
+		}
+	}
+}
+
+func TestParseViewUnknown(t *testing.T) {
+	for _, bad := range []string{"detail", "html", "full", "short"} {
+		_, ok := ParseView(bad)
+		if ok {
+			t.Errorf("ParseView(%q) ok=true, want false", bad)
+		}
+	}
+}
+
+func TestViewValid(t *testing.T) {
+	for _, v := range []View{ViewDefault, ViewSummary, ViewEvidence, ViewFix, ViewRaw} {
+		if !v.Valid() {
+			t.Errorf("View(%q).Valid() = false, want true", v)
+		}
+	}
+}
+
+func TestViewInvalidNotValid(t *testing.T) {
+	for _, bad := range []View{"detail", "html", "plain"} {
+		if bad.Valid() {
+			t.Errorf("View(%q).Valid() = true, want false", bad)
+		}
+	}
+}
+
+// ── FormatCompareText ─────────────────────────────────────────────────────────
+
+func TestFormatCompareTextIncludesDiagnosis(t *testing.T) {
+	report := analysiscompare.Report{
+		LeftSource:       "prev.json",
+		RightSource:      "curr.json",
+		Changed:          true,
+		DiagnosisChanged: true,
+		Previous:         &analysiscompare.Candidate{FailureID: "docker-auth", Title: "Docker auth", Confidence: 0.9},
+		Current:          &analysiscompare.Candidate{FailureID: "permission-denied", Title: "Permission denied", Confidence: 0.6},
+		Summary:          []string{"top diagnosis changed from docker-auth to permission-denied"},
+		Evidence:         analysiscompare.StringDelta{Added: []string{"permission denied"}, Removed: []string{"authentication required"}},
+	}
+	text := FormatCompareText(report)
+	for _, want := range []string{"COMPARE", "Previous: prev.json", "Current: curr.json", "docker-auth", "permission-denied", "permission denied"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("expected %q in compare text, got:\n%s", want, text)
+		}
+	}
+}
+
+func TestFormatCompareTextNoDiagnosis(t *testing.T) {
+	report := analysiscompare.Report{
+		Summary: []string{"neither artifact contains a matched diagnosis"},
+	}
+	text := FormatCompareText(report)
+	if !strings.Contains(text, "COMPARE") {
+		t.Errorf("expected COMPARE header in text, got:\n%s", text)
+	}
+}
+
+func TestFormatCompareTextHasNewline(t *testing.T) {
+	report := analysiscompare.Report{
+		Summary: []string{"same diagnosis"},
+	}
+	text := FormatCompareText(report)
+	if !strings.HasSuffix(text, "\n") {
+		t.Error("expected trailing newline in FormatCompareText")
+	}
+}
+
+// ── FormatAnalysisEvidenceText nil/empty ──────────────────────────────────────
+
+func TestFormatAnalysisEvidenceTextNilAnalysis(t *testing.T) {
+	text := FormatAnalysisEvidenceText(nil)
+	if !strings.Contains(text, "No known playbook matched") {
+		t.Errorf("expected no-match message for nil analysis, got: %q", text)
+	}
+}
+
+func TestFormatAnalysisEvidenceTextNoEvidence(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+	text := FormatAnalysisEvidenceText(a)
+	if !strings.Contains(text, "No extracted evidence") {
+		t.Errorf("expected no-evidence message, got: %q", text)
+	}
+}
+
+func TestFormatAnalysisEvidenceMarkdownNilAnalysis(t *testing.T) {
+	text := FormatAnalysisEvidenceMarkdown(nil)
+	if !strings.Contains(text, "# No Match") {
+		t.Errorf("expected no-match heading for nil analysis, got: %q", text)
+	}
+}
+
+func TestFormatAnalysisEvidenceMarkdownNoEvidence(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+	text := FormatAnalysisEvidenceMarkdown(a)
+	if !strings.Contains(text, "No extracted evidence") {
+		t.Errorf("expected no-evidence message, got: %q", text)
+	}
+}
 
 func TestParseFormatKnownValues(t *testing.T) {
 	tests := []struct {

@@ -205,8 +205,8 @@ func TestAnalyzeTopNText(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute analyze --top: %v", err)
 	}
-	if !strings.Contains(out.String(), "#1") {
-		t.Fatalf("expected ranked output with #1, got %q", out.String())
+	if !strings.Contains(out.String(), "Other Likely Matches") || !strings.Contains(out.String(), "#2") {
+		t.Fatalf("expected ranked alternatives output, got %q", out.String())
 	}
 }
 
@@ -226,6 +226,44 @@ func TestAnalyzeDetailedMode(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "Summary") {
 		t.Fatalf("expected detailed summary section, got %q", out.String())
+	}
+}
+
+func TestAnalyzeEvidenceView(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--view", "evidence", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --view evidence: %v", err)
+	}
+	if !strings.Contains(out.String(), "EVIDENCE  docker-auth") {
+		t.Fatalf("expected evidence view output, got %q", out.String())
+	}
+}
+
+func TestAnalyzeRejectsViewWithJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--json", "--view", "fix", "--no-history", logPath})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected invalid --view/--json combination")
+	}
+	if !strings.Contains(err.Error(), "--view cannot be combined with --json") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
@@ -466,6 +504,112 @@ func TestReplayCommandJSONSelect(t *testing.T) {
 	results, ok := payload["results"].([]interface{})
 	if !ok || len(results) != 1 {
 		t.Fatalf("expected one replay-selected result, got %v", payload["results"])
+	}
+}
+
+func TestReplayCommandFixView(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
+		Top:         1,
+		Mode:        "quick",
+		Format:      "json",
+		JSON:        true,
+		NoHistory:   true,
+		PlaybookDir: playbookDir,
+	}, &artifact); err != nil {
+		t.Fatalf("build analysis artifact: %v", err)
+	}
+	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"replay", "--view", "fix", artifactPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute replay --view fix: %v", err)
+	}
+	if !strings.Contains(out.String(), "Fix Steps") {
+		t.Fatalf("expected fix view output, got %q", out.String())
+	}
+}
+
+func TestCompareCommandMarkdown(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+
+	makeArtifact := func(log string) string {
+		var artifact bytes.Buffer
+		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{
+			Top:         1,
+			Mode:        "quick",
+			Format:      "json",
+			JSON:        true,
+			NoHistory:   true,
+			PlaybookDir: playbookDir,
+		}, &artifact); err != nil {
+			t.Fatalf("build analysis artifact: %v", err)
+		}
+		return writeTempAnalysisArtifact(t, artifact.String())
+	}
+
+	left := makeArtifact("pull access denied\nError response from daemon: authentication required\n")
+	right := makeArtifact("pull access denied\npermission denied\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"compare", "--format", "markdown", left, right})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute compare: %v", err)
+	}
+	if !strings.Contains(out.String(), "# Faultline Compare") || !strings.Contains(out.String(), "## Diagnosis") {
+		t.Fatalf("expected compare markdown output, got %q", out.String())
+	}
+}
+
+func TestCompareCommandJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+
+	makeArtifact := func(log string) string {
+		var artifact bytes.Buffer
+		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{
+			Top:         1,
+			Mode:        "quick",
+			Format:      "json",
+			JSON:        true,
+			NoHistory:   true,
+			PlaybookDir: playbookDir,
+		}, &artifact); err != nil {
+			t.Fatalf("build analysis artifact: %v", err)
+		}
+		return writeTempAnalysisArtifact(t, artifact.String())
+	}
+
+	left := makeArtifact("pull access denied\nError response from daemon: authentication required\n")
+	right := makeArtifact("pull access denied\npermission denied\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"compare", "--json", left, right})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute compare --json: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal compare JSON: %v", err)
+	}
+	if payload["changed"] != true {
+		t.Fatalf("expected changed=true, got %v", payload["changed"])
 	}
 }
 

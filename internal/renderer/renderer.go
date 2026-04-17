@@ -39,6 +39,9 @@ func (r Renderer) RenderAnalyze(a *model.Analysis, top int, detailed bool) strin
 	if a == nil || len(a.Results) == 0 {
 		return r.RenderNoMatch()
 	}
+	if !detailed {
+		return r.renderAnalyzeQuick(a, top)
+	}
 	results := topN(a.Results, top)
 	var parts []string
 	for i, result := range results {
@@ -53,6 +56,34 @@ func (r Renderer) RenderAnalyze(a *model.Analysis, top int, detailed bool) strin
 		}
 	}
 	return strings.Join(parts, "\n\n")
+}
+
+func (r Renderer) renderAnalyzeQuick(a *model.Analysis, top int) string {
+	results := topN(a.Results, top)
+	if len(results) == 0 {
+		return r.RenderNoMatch()
+	}
+	topResult := results[0]
+	sections := []string{
+		r.renderQuickDiagnosis(topResult),
+	}
+
+	if summary := r.renderMarkdownSection("Summary", topResult.Playbook.Summary); summary != "" {
+		sections = append(sections, r.renderSection("Summary", summary))
+	}
+	if evidence := r.renderQuickEvidence(topResult.Evidence); evidence != "" {
+		sections = append(sections, r.renderSection("Matched Evidence", evidence))
+	}
+	if actions := r.renderQuickActions(topResult); actions != "" {
+		sections = append(sections, r.renderSection("Recommended Action", actions))
+	}
+	if alternatives := r.renderQuickAlternatives(results); alternatives != "" {
+		sections = append(sections, r.renderSection("Other Likely Matches", alternatives))
+	}
+	if next := r.renderQuickNextSteps(len(results) > 1); next != "" {
+		sections = append(sections, r.renderSection("More", next))
+	}
+	return strings.TrimSpace(strings.Join(filterEmpty(sections), "\n\n")) + "\n"
 }
 
 func (r Renderer) RenderFix(a *model.Analysis) string {
@@ -171,6 +202,85 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		}
 	}
 	return strings.TrimSpace(strings.Join(filterEmpty(parts), "\n\n"))
+}
+
+func (r Renderer) renderQuickDiagnosis(result model.Result) string {
+	meta := []string{
+		fmt.Sprintf("Confidence: %s (%d%%)", confidenceLabel(result.Confidence), int(math.Round(result.Confidence*100))),
+		metaRow("Category", result.Playbook.Category),
+		metaRow("Severity", fallback(result.Playbook.Severity, "unknown")),
+	}
+	body := strings.Join(filterEmpty([]string{
+		result.Playbook.ID + "  " + result.Playbook.Title,
+		metaRow("Pack", displayPackName(result.Playbook)),
+		joinMetaInline(filterEmpty(meta)...),
+	}), "\n")
+	return r.renderSection("Most Likely Diagnosis", body)
+}
+
+func (r Renderer) renderQuickEvidence(lines []string) string {
+	lines = trimLines(lines)
+	if len(lines) == 0 {
+		return ""
+	}
+	if len(lines) > 3 {
+		lines = lines[:3]
+	}
+	if r.opts.Plain {
+		var out []string
+		for i, line := range lines {
+			out = append(out, fmt.Sprintf("%d. %s", i+1, line))
+		}
+		return strings.Join(out, "\n")
+	}
+	return r.renderBulletLines(lines)
+}
+
+func (r Renderer) renderQuickActions(result model.Result) string {
+	items := markdownListItems(result.Playbook.Fix)
+	if len(items) == 0 {
+		return "Use `faultline fix` to show the playbook remediation steps."
+	}
+	if len(items) > 2 {
+		items = items[:2]
+	}
+	if r.opts.Plain {
+		var out []string
+		for i, item := range items {
+			out = append(out, fmt.Sprintf("%d. %s", i+1, trimTerminalPunctuation(item)))
+		}
+		return strings.Join(out, "\n")
+	}
+	return r.renderBulletLines(items)
+}
+
+func (r Renderer) renderQuickAlternatives(results []model.Result) string {
+	if len(results) < 2 {
+		return ""
+	}
+	var lines []string
+	for i, result := range results[1:] {
+		lines = append(lines, fmt.Sprintf("#%d %s (%d%%)", i+2, result.Playbook.ID, int(math.Round(result.Confidence*100))))
+	}
+	if r.opts.Plain {
+		return strings.Join(lines, "\n")
+	}
+	return r.renderBulletLines(lines)
+}
+
+func (r Renderer) renderQuickNextSteps(hasAlternatives bool) string {
+	lines := []string{
+		"Use `faultline fix` for remediation-only output.",
+		"Use `faultline workflow` for deterministic follow-through steps.",
+		"Use `faultline analyze --mode detailed` for full reasoning and scoring detail.",
+	}
+	if hasAlternatives {
+		lines = append(lines, "Use `faultline analyze --select <n>` to inspect another ranked candidate.")
+	}
+	if r.opts.Plain {
+		return strings.Join(lines, "\n")
+	}
+	return r.renderBulletLines(lines)
 }
 
 func (r Renderer) renderHeader(pb model.Playbook, subtitle, pack string) string {
@@ -746,6 +856,11 @@ func metaRow(label, value string) string {
 	return label + ": " + value
 }
 
+func joinMetaInline(parts ...string) string {
+	parts = filterEmpty(parts)
+	return strings.Join(parts, "  ")
+}
+
 func (r Renderer) renderMetaRowsPlain(rows []string) string {
 	pairs := chunkStrings(rows, 2)
 	lines := make([]string, 0, len(pairs))
@@ -846,6 +961,38 @@ func trimRedundantHeading(markdown, title string) string {
 		return strings.TrimSpace(markdown[len(matches[0]):])
 	}
 	return markdown
+}
+
+func confidenceLabel(confidence float64) string {
+	switch {
+	case confidence >= 0.8:
+		return "high"
+	case confidence >= 0.5:
+		return "medium"
+	case confidence > 0:
+		return "low"
+	default:
+		return "unknown"
+	}
+}
+
+func markdownListItems(markdown string) []string {
+	lines := strings.Split(markdown, "\n")
+	items := make([]string, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "- "):
+			items = append(items, strings.TrimSpace(strings.TrimPrefix(line, "- ")))
+		case len(line) > 3 && line[1] == '.' && line[2] == ' ' && line[0] >= '0' && line[0] <= '9':
+			items = append(items, strings.TrimSpace(line[3:]))
+		}
+	}
+	return items
+}
+
+func trimTerminalPunctuation(value string) string {
+	return strings.TrimSpace(strings.TrimSuffix(value, "."))
 }
 
 func normalizeHeading(value string) string {

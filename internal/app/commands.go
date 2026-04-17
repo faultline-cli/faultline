@@ -20,6 +20,8 @@ type AnalyzeOptions struct {
 	Mode output.Mode
 	// Format selects the human-readable output shape.
 	Format output.Format
+	// View selects a focused slice of human-readable output.
+	View output.View
 	// JSON overrides Mode and emits machine-readable JSON.
 	JSON bool
 	// CIAnnotations emits GitHub Actions-style ::warning:: lines.
@@ -87,6 +89,28 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 	}
 
 	renderOpts := renderer.DetectOptions(w)
+	if opts.View == output.ViewFix {
+		if opts.Format == output.FormatMarkdown {
+			_, err := fmt.Fprint(w, output.FormatFixMarkdown(selected))
+			return err
+		}
+		_, err := fmt.Fprint(w, output.FormatFix(selected, renderOpts))
+		return err
+	}
+	if opts.View == output.ViewEvidence {
+		if opts.Format == output.FormatMarkdown {
+			_, err := fmt.Fprint(w, output.FormatAnalysisEvidenceMarkdown(selected))
+			return err
+		}
+		_, err := fmt.Fprint(w, output.FormatAnalysisEvidenceText(selected))
+		return err
+	}
+	if opts.View == output.ViewSummary {
+		mode = output.ModeQuick
+	}
+	if opts.View == output.ViewRaw {
+		mode = output.ModeDetailed
+	}
 	if opts.Format == output.FormatMarkdown {
 		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode))
 		return err

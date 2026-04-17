@@ -35,6 +35,17 @@ const (
 	FormatJSON     Format = "json"
 )
 
+// View selects a focused slice of human-readable analysis output.
+type View string
+
+const (
+	ViewDefault  View = ""
+	ViewSummary  View = "summary"
+	ViewEvidence View = "evidence"
+	ViewFix      View = "fix"
+	ViewRaw      View = "raw"
+)
+
 // Valid reports whether f is a recognised output format.
 func (f Format) Valid() bool {
 	_, ok := ParseFormat(string(f))
@@ -50,6 +61,30 @@ func ParseFormat(value string) (Format, bool) {
 		return FormatMarkdown, true
 	case string(FormatJSON):
 		return FormatJSON, true
+	default:
+		return "", false
+	}
+}
+
+// Valid reports whether v is a recognised output view.
+func (v View) Valid() bool {
+	_, ok := ParseView(string(v))
+	return ok
+}
+
+// ParseView resolves a user-provided view string into the canonical view.
+func ParseView(value string) (View, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "":
+		return ViewDefault, true
+	case string(ViewSummary):
+		return ViewSummary, true
+	case string(ViewEvidence):
+		return ViewEvidence, true
+	case string(ViewFix):
+		return ViewFix, true
+	case string(ViewRaw):
+		return ViewRaw, true
 	default:
 		return "", false
 	}

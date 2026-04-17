@@ -204,6 +204,73 @@ func TestReplayRejectsTraceForAnalysisArtifact(t *testing.T) {
 	}
 }
 
+func TestCompareArtifacts(t *testing.T) {
+	svc := NewService()
+	leftLog := "pull access denied\nError response from daemon: authentication required\n"
+	rightLog := "pull access denied\npermission denied\n"
+
+	makeArtifact := func(log string) string {
+		var buf bytes.Buffer
+		opts := baseOpts()
+		opts.JSON = true
+		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+			t.Fatalf("Analyze to artifact: %v", err)
+		}
+		return buf.String()
+	}
+
+	var out bytes.Buffer
+	err := svc.Compare(strings.NewReader(makeArtifact(leftLog)), strings.NewReader(makeArtifact(rightLog)), AnalyzeOptions{
+		Format: output.FormatMarkdown,
+	}, &out)
+	if err != nil {
+		t.Fatalf("Compare: %v", err)
+	}
+	for _, want := range []string{"# Faultline Compare", "## Diagnosis", "## Evidence Changes"} {
+		if !strings.Contains(out.String(), want) {
+			t.Fatalf("expected %q in compare output, got:\n%s", want, out.String())
+		}
+	}
+}
+
+func TestAnalyzeEvidenceView(t *testing.T) {
+	svc := NewService()
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	opts := baseOpts()
+	opts.View = output.ViewEvidence
+	var buf bytes.Buffer
+
+	if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+		t.Fatalf("Analyze evidence view: %v", err)
+	}
+	for _, want := range []string{"EVIDENCE  docker-auth", "Matched evidence:", "pull access denied"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Fatalf("expected %q in evidence view, got:\n%s", want, buf.String())
+		}
+	}
+}
+
+func TestReplayFixView(t *testing.T) {
+	svc := NewService()
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	artifactOpts := baseOpts()
+	artifactOpts.JSON = true
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
+		t.Fatalf("Analyze to artifact: %v", err)
+	}
+
+	replayOpts := baseOpts()
+	replayOpts.View = output.ViewFix
+	var replay bytes.Buffer
+	if err := svc.Replay(strings.NewReader(artifact.String()), replayOpts, &replay); err != nil {
+		t.Fatalf("Replay fix view: %v", err)
+	}
+	if !strings.Contains(replay.String(), "Fix Steps") {
+		t.Fatalf("expected fix-only replay output, got:\n%s", replay.String())
+	}
+}
+
 func TestAnalyzeEmptyInputReturnsErrNoInput(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer

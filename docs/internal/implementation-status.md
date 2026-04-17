@@ -10,6 +10,9 @@ Faultline V1 is now implemented as a CLI-only product.
 - CLI-first build and container workflow in [`Makefile`](../../Makefile) and [`Dockerfile`](../../Dockerfile)
 - tests covering command behavior, loading, ranking, formatting, and checked-in example snapshots
 - release smoke validation via `make cli-smoke` and `make release-check`
+- `faultline compare` for deterministic diffing of two saved analysis artifacts ([`internal/compare/`](../../internal/compare))
+- `--view summary|evidence|fix|raw` focused output flag on `analyze` and `replay`
+- quick rendering mode (default) vs detailed mode (`--mode detailed`) with explicit section layout
 
 ## Repository State
 

@@ -31,6 +31,8 @@ faultline analyze ci.log
 faultline workflow ci.log
 faultline trace ci.log
 faultline replay analysis.json
+faultline compare previous.analysis.json current.analysis.json
+faultline analyze ci.log --view evidence
 faultline analyze ci.log --bayes
 faultline analyze ci.log --json
 faultline workflow ci.log --json --mode agent
@@ -216,6 +218,8 @@ The default release story is intentionally small:
 - Explain why the winning diagnosis beat nearby alternatives.
 - Trace rule-by-rule playbook evaluation with `faultline trace` or `faultline analyze --trace`.
 - Replay saved analysis artifacts with `faultline replay analysis.json`.
+- Compare saved analysis artifacts with `faultline compare previous.analysis.json current.analysis.json`.
+- Focus the live or replayed report with `--view summary|evidence|fix|raw`.
 - Surface likely drift causes only when repo context is explicit: config file changes, CI pipeline edits, large blast-radius commits, and hotspot patterns from recent history.
 - Turn the top diagnosis into a deterministic workflow handoff.
 - Optionally inspect a repository for source-level failure risks.

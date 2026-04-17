@@ -44,6 +44,7 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newExplainCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newFixCommand())
+	cmd.AddCommand(newCompareCommand())
 	cmd.AddCommand(newReplayCommand())
 	cmd.AddCommand(newTraceCommand())
 	cmd.AddCommand(newInspectCommand())
@@ -66,6 +67,14 @@ func validateOutputMode(value string) error {
 		return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
 	}
 	return nil
+}
+
+func validateView(value string) (output.View, error) {
+	view, ok := output.ParseView(value)
+	if !ok {
+		return "", fmt.Errorf("--view must be %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw)
+	}
+	return view, nil
 }
 
 func validateSelect(value int) error {
@@ -113,6 +122,7 @@ func newAnalyzeCommand() *cobra.Command {
 		top           int
 		mode          string
 		format        string
+		view          string
 		playbookDir   string
 		playbookPacks []string
 		ciAnnotations bool
@@ -155,6 +165,10 @@ func newAnalyzeCommand() *cobra.Command {
 			if err := validateOutputMode(mode); err != nil {
 				return err
 			}
+			resolvedView, err := validateView(view)
+			if err != nil {
+				return err
+			}
 			if err := validateSelect(selectRank); err != nil {
 				return err
 			}
@@ -164,6 +178,9 @@ func newAnalyzeCommand() *cobra.Command {
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
 			if err != nil {
 				return err
+			}
+			if resolvedJSON && resolvedView != output.ViewDefault {
+				return fmt.Errorf("--view cannot be combined with --json")
 			}
 
 			input, err := ReadInput(args)
@@ -176,6 +193,7 @@ func newAnalyzeCommand() *cobra.Command {
 				Top:               top,
 				Mode:              output.Mode(mode),
 				Format:            resolvedFormat,
+				View:              resolvedView,
 				JSON:              resolvedJSON,
 				CIAnnotations:     ciAnnotations,
 				NoHistory:         noHistory,
@@ -204,6 +222,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
@@ -302,6 +321,45 @@ func newFixCommand() *cobra.Command {
 	return cmd
 }
 
+func newCompareCommand() *cobra.Command {
+	var (
+		jsonOut bool
+		format  string
+	)
+
+	cmd := &cobra.Command{
+		Use:   "compare <left-analysis.json> <right-analysis.json>",
+		Short: "Compare two saved analysis artifacts",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
+			if err != nil {
+				return err
+			}
+
+			left, err := ReadInput(args[:1])
+			if err != nil {
+				return err
+			}
+			defer left.Close()
+			right, err := ReadInput(args[1:])
+			if err != nil {
+				return err
+			}
+			defer right.Close()
+
+			return app.NewService().Compare(left.Reader, right.Reader, app.AnalyzeOptions{
+				Format: resolvedFormat,
+				JSON:   resolvedJSON,
+			}, cmd.OutOrStdout())
+		},
+	}
+
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	return cmd
+}
+
 func newReplayCommand() *cobra.Command {
 	var (
 		jsonOut    bool
@@ -309,6 +367,7 @@ func newReplayCommand() *cobra.Command {
 		selectRank int
 		mode       string
 		format     string
+		view       string
 	)
 
 	cmd := &cobra.Command{
@@ -319,12 +378,19 @@ func newReplayCommand() *cobra.Command {
 			if err := validateOutputMode(mode); err != nil {
 				return err
 			}
+			resolvedView, err := validateView(view)
+			if err != nil {
+				return err
+			}
 			if err := validateSelect(selectRank); err != nil {
 				return err
 			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
 			if err != nil {
 				return err
+			}
+			if resolvedJSON && resolvedView != output.ViewDefault {
+				return fmt.Errorf("--view cannot be combined with --json")
 			}
 
 			input, err := ReadInput(args)
@@ -338,6 +404,7 @@ func newReplayCommand() *cobra.Command {
 				Select: selectRank,
 				Mode:   output.Mode(mode),
 				Format: resolvedFormat,
+				View:   resolvedView,
 				JSON:   resolvedJSON,
 			}, cmd.OutOrStdout())
 		},
@@ -348,6 +415,7 @@ func newReplayCommand() *cobra.Command {
 	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
+	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw")
 	return cmd
 }
 

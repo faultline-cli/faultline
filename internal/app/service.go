@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	analysiscompare "faultline/internal/compare"
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
@@ -119,6 +120,43 @@ func (Service) Replay(r io.Reader, opts AnalyzeOptions, w io.Writer) error {
 		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
 	}
 	return writeAnalysis(a, opts, w)
+}
+
+// Compare renders a deterministic comparison between two saved analysis artifacts.
+func (Service) Compare(left, right io.Reader, opts AnalyzeOptions, w io.Writer) error {
+	leftData, err := io.ReadAll(left)
+	if err != nil {
+		return fmt.Errorf("read left analysis artifact: %w", err)
+	}
+	rightData, err := io.ReadAll(right)
+	if err != nil {
+		return fmt.Errorf("read right analysis artifact: %w", err)
+	}
+	leftAnalysis, err := output.ParseAnalysisJSON(leftData)
+	if err != nil {
+		return err
+	}
+	rightAnalysis, err := output.ParseAnalysisJSON(rightData)
+	if err != nil {
+		return err
+	}
+
+	report := analysiscompare.Build(leftAnalysis, rightAnalysis)
+	switch {
+	case opts.JSON || opts.Format == output.FormatJSON:
+		data, err := output.FormatCompareJSON(report)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
+		return err
+	case opts.Format == output.FormatMarkdown:
+		_, err := fmt.Fprint(w, output.FormatCompareMarkdown(report))
+		return err
+	default:
+		_, err := fmt.Fprint(w, output.FormatCompareText(report))
+		return err
+	}
 }
 
 // Fix performs log analysis and writes only the ranked fix steps to w.
