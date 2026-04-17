@@ -1,0 +1,33 @@
+id: stackexchange-stackoverflow-73310631-s1-2f693a95b9032ac2
+title: actions/upload-pages-artifact fails at actions/upload-artifact with &quot;No files were found with the provided path&quot;
+fixture_class: real
+normalized_log: |-
+    - uses: actions/configure-pages@v1
+    - uses: actions/upload-pages-artifact@v1
+    with:
+    path: $GITHUB_WORKSPACE/build
+    - id: deployment
+    uses: actions/deploy-pages@v1
+    upload-pages-artifact runs tar and lists all the files to be deployed in the log. When running upload-artifact the log reads Warning: No files were found with the provided path: /__w/_temp/artifact.tar. No artifacts will be uploaded. .
+    Note that the path in the warning is different from the one provided as a parameter to upload-artifact ( path: <tmp> ).
+    upload-pages-artifact works as expected when running without the emscripten container.
+    I would have to either get upload-pages-artifact working inside the container, or somehow share the build with a second job running outside the container.
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/73310631
+    repository: stackoverflow
+    issue_number: 73310631
+    comment_id: "0"
+    title: actions/upload-pages-artifact fails at actions/upload-artifact with &quot;No files were found with the provided path&quot;
+    author: relgukxilef
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T21:24:46Z"
+fingerprint: 2f693a95b9032ac2

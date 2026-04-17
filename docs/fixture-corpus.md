@@ -4,13 +4,13 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 74
-- Accepted real fixtures: 84
-- Top-1 match rate: 100% (84/84)
-- Top-3 match rate: 100% (84/84)
+- Bundled playbooks: 77
+- Accepted real fixtures: 87
+- Top-1 match rate: 100% (87/87)
+- Top-3 match rate: 100% (87/87)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 9 (10.7%)
+- Weak matches: 10 (11.5%)
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 

@@ -1,0 +1,23 @@
+id: github-actions-checkout-1681-s1-617d9d88758b4303
+title: 'exec /__e/node20/bin/node: no such file or directory'
+fixture_class: real
+normalized_log: 'exec /__e/node20/bin/node: no such file or directory'
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/checkout/issues/1681
+    repository: actions/checkout
+    issue_number: 1681
+    comment_id: "2192629384"
+    title: 'exec /__e/node20/bin/node: no such file or directory'
+    author: twmht
+    snippet: 1
+    fetched_at: "2026-04-17T09:11:37Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T21:23:04Z"
+fingerprint: 617d9d88758b4303

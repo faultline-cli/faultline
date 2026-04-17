@@ -63,12 +63,17 @@ match:
     - "undefined:"
     - "ImportError:"
     - "cannot find module"
-    - "no such file or directory"
     - "package .* is not in GOROOT"
     - "Module not found:"
     - "does not implement"
     - "has no exported field or method"
     - "cannot use .* as type"
+  none:
+    - "exec /"
+    - "exec: \""
+    - "executable file not found in $PATH"
+    - "command not found"
+    - "cannot stat"
 workflow:
   likely_files:
     - CODEOWNERS
