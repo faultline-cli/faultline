@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bench review demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test fixture-check bench review cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -19,6 +19,7 @@ help:
 		"  test            Run all Go tests" \
 		"  demo-assets     Rebuild README GIFs and screenshots from VHS tapes" \
 		"  fixture-check   Run the accepted real-fixture regression gate" \
+		"  cli-smoke       Build the CLI and validate shipped examples plus core commands" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
@@ -46,6 +47,9 @@ test:
 
 fixture-check:
 	$(GO) run ./cmd fixtures stats --class real --check-baseline
+
+cli-smoke: build
+	sh ./scripts/cli-smoke.sh
 
 bench:
 	$(GO) test ./internal/engine -run '^$$' -bench 'Benchmark(LoadBundledPlaybooks|AnalyzeRepresentativeCorpus)' -benchmem
@@ -75,7 +79,7 @@ smoke-release:
 release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
-release-check: test fixture-check review release-snapshot smoke-release
+release-check: test fixture-check review cli-smoke release-snapshot smoke-release
 	@if EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh >/dev/null 2>&1; then \
 		$(MAKE) extra-pack-check EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)"; \
 	else \

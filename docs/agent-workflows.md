@@ -14,6 +14,8 @@ The useful workflows in Faultline are grounded in the shipped CLI, fixture corpu
 - author a new playbook only after a gap has been explicitly justified
 - investigate and resolve a failing baseline gate without weakening it
 
+The current shipping boundary is documented in [`docs/release-boundary.md`](./release-boundary.md). Agents should treat that boundary as the default product scope and keep experimental or maintainer-only surfaces out of the main user narrative unless the task explicitly targets them.
+
 ## Current Direction
 
 The repository now treats the prompt files under [`prompts/`](../prompts/) as task-specific operating procedures, not generic coding templates.
@@ -156,6 +158,7 @@ Use this before considering a repository change complete.
 ```bash
 make test
 make review
+make cli-smoke
 ```
 
 Add this when corpus behavior changed:
@@ -194,8 +197,9 @@ The next useful upgrades should stay small and repo-native.
 2. Keep fixture ingestion and review as the only path for adding real-world evidence.
 3. Bias ingestion runs toward source diversity across GitHub, GitLab, Stack Exchange, Discourse, and Reddit when useful evidence is available.
 4. Keep playbook growth biased toward refinement over catalog expansion.
-5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 74 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
+5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 77 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
 6. Add new agent workflows only when they map cleanly to an existing deterministic command or checked-in regression gate.
+7. Keep new product surfaces hidden, flagged, or non-default until they are covered by deterministic tests, fixture gates when relevant, and `make cli-smoke` if they change shipped output.
 
 ## What Not To Add
 

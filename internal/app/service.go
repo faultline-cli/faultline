@@ -359,7 +359,7 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 		report.AppliedBaselinePath = baselinePath
 	}
 	if updateBaseline {
-		thresholds := fixtures.Thresholds{MinTop1: 0.65, MinTop3: 0.85, MaxUnmatched: 0.15, MaxFalsePositive: 0.35}
+		thresholds := fixtures.Thresholds{MinTop1: 0.65, MinTop3: 0.85, MaxUnmatched: 0.15, MaxFalsePositive: 0.35, MaxWeakMatch: 0.15}
 		if err := fixtures.WriteBaseline(baselinePath, report.Baseline(thresholds)); err != nil {
 			return err
 		}

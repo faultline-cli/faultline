@@ -13,22 +13,26 @@ import (
 	"faultline/internal/workflow"
 )
 
+const experimentalGitHubDeltaEnv = "FAULTLINE_EXPERIMENTAL_GITHUB_DELTA"
+
 // NewRootCommand builds the Faultline CLI command tree.
 func NewRootCommand(version string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "faultline",
-		Short: "Deterministic CI failure diagnosis from logs and repository scans",
+		Short: "Deterministic CI failure diagnosis from logs",
 		Long: strings.Join([]string{
-			"Faultline turns CI logs and repository scans into deterministic diagnoses.",
+			"Faultline turns CI logs into deterministic diagnoses.",
 			"It returns evidence-backed explanations, concrete fixes, and stable output for automation.",
+			"",
+			"The core release flow is: analyze a failing log, inspect the top playbook,",
+			"and generate a deterministic follow-up workflow when you need handoff-ready output.",
 		}, "\n\n"),
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
 			"  cat build.log | faultline analyze --json",
-			"  faultline fix build.log",
-			"  faultline analyze build.log --mode detailed",
-			"  faultline inspect .",
-			"  faultline guard .",
+			"  faultline workflow build.log --json --mode agent",
+			"  faultline explain docker-auth",
+			"  faultline list --category auth",
 		}, "\n"),
 		Version:       version,
 		SilenceUsage:  true,
@@ -36,12 +40,12 @@ func NewRootCommand(version string) *cobra.Command {
 	}
 
 	cmd.AddCommand(newAnalyzeCommand())
+	cmd.AddCommand(newWorkflowCommand())
+	cmd.AddCommand(newExplainCommand())
+	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newFixCommand())
 	cmd.AddCommand(newInspectCommand())
 	cmd.AddCommand(newGuardCommand())
-	cmd.AddCommand(newFixCommand())
-	cmd.AddCommand(newListCommand())
-	cmd.AddCommand(newExplainCommand())
-	cmd.AddCommand(newWorkflowCommand())
 	cmd.AddCommand(newPacksCommand())
 	cmd.AddCommand(newFixturesCommand())
 	return cmd
@@ -79,6 +83,17 @@ func resolveOutputSelection(formatValue string, jsonOut bool) (output.Format, bo
 func validateWorkflowMode(value string) error {
 	if value != string(workflow.ModeLocal) && value != string(workflow.ModeAgent) {
 		return fmt.Errorf("--mode must be %q or %q", workflow.ModeLocal, workflow.ModeAgent)
+	}
+	return nil
+}
+
+func validateExperimentalDeltaProvider(provider string) error {
+	provider = strings.TrimSpace(provider)
+	if provider == "" {
+		return nil
+	}
+	if strings.TrimSpace(os.Getenv(experimentalGitHubDeltaEnv)) != "1" {
+		return fmt.Errorf("--delta-provider is experimental; set %s=1 to enable it explicitly", experimentalGitHubDeltaEnv)
 	}
 	return nil
 }
@@ -123,6 +138,9 @@ func newAnalyzeCommand() *cobra.Command {
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateOutputMode(mode); err != nil {
+				return err
+			}
+			if err := validateExperimentalDeltaProvider(deltaProvider); err != nil {
 				return err
 			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
@@ -174,6 +192,10 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
 	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
 	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
+	_ = cmd.Flags().MarkHidden("delta-provider")
+	_ = cmd.Flags().MarkHidden("github-repo")
+	_ = cmd.Flags().MarkHidden("github-branch")
+	_ = cmd.Flags().MarkHidden("github-run-id")
 	return cmd
 }
 

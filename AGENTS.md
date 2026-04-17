@@ -28,6 +28,14 @@ This repository is built for deterministic, iterative agentic development. Treat
 - Confirm the output is deterministic and stable under repeated runs.
 - Confirm the repository structure still makes sense to the next agent.
 
+## Scope Safety
+
+- Preserve the default release boundary documented in [`docs/release-boundary.md`](./docs/release-boundary.md).
+- Keep the default user narrative centered on `analyze`, `workflow`, `list`, `explain`, and `fix`.
+- Treat `inspect`, `guard`, and `packs` as companion surfaces: supported, but not the first-run story.
+- Keep maintainer workflows such as `faultline fixtures ...` hidden and out of general-user docs unless the task explicitly targets them.
+- Any new or weakly integrated user-facing capability must start hidden, experimental, or non-default until it has deterministic tests, release-grade verification, and docs that match the shipped reality.
+
 ## Engineering Rules
 
 - Determinism first: same input must produce the same output.
@@ -43,6 +51,7 @@ A task is not done until:
 
 - The code is implemented.
 - `make test` passes, or any build gap is explicitly documented.
+- `make cli-smoke` passes when user-facing output, examples, packaging, or release paths changed.
 - `make review` is run after any playbook addition or pattern change.
 - The behavior has been checked for completeness.
 - Any new architecture or convention is reflected in docs.

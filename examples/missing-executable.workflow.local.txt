@@ -6,6 +6,7 @@ Focus files:
   - Dockerfile
   - .github/workflows/ci.yml
   - .github/workflows/release.yml
+  - scripts/cli-smoke.sh
   - scripts/docker-smoke.sh
   - scripts/release-build.sh
   - scripts/resolve-extra-pack.sh
@@ -18,7 +19,7 @@ Verify:
 Next steps:
   1. Confirm the top diagnosis `missing-executable` by reproducing the failure from the same command or CI step if possible.
   2. Use the matched evidence lines as the starting point for triage: exec /__e/node20/bin/node: no such file or directory.
-  3. Inspect the most relevant local files first: Dockerfile, .github/workflows/ci.yml, .github/workflows/release.yml, scripts/docker-smoke.sh, scripts/release-build.sh, scripts/resolve-extra-pack.sh, scripts/smoke-release.sh.
+  3. Inspect the most relevant local files first: Dockerfile, .github/workflows/ci.yml, .github/workflows/release.yml, scripts/cli-smoke.sh, scripts/docker-smoke.sh, scripts/release-build.sh, scripts/resolve-extra-pack.sh, scripts/smoke-release.sh.
   4. Local repro: `command -v <tool>`.
   5. Local repro: `ls -l <expected-path>`.
   6. Identify which command or runtime path the failing step expects to execute.

@@ -147,7 +147,7 @@ type Ranking struct {
 - Deterministic detectors stay authoritative for matching.
 - Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
 - Delta hints require explicit repo-aware context such as `--git` or changed-file analysis.
-- Provider-backed CI delta requires explicit opt-in and may call the provider API only when enabled.
+- Provider-backed CI delta is experimental, requires explicit opt-in, and may call the provider API only when enabled.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.

@@ -8,7 +8,8 @@ Faultline V1 is now implemented as a CLI-only product.
 - deterministic analyzer modules in [`internal/engine/`](../../internal/engine), [`internal/playbooks/`](../../internal/playbooks), [`internal/matcher/`](../../internal/matcher), and [`internal/output/`](../../internal/output)
 - bundled YAML playbooks in [`playbooks/`](../../playbooks)
 - CLI-first build and container workflow in [`Makefile`](../../Makefile) and [`Dockerfile`](../../Dockerfile)
-- tests covering command behavior, loading, ranking, and formatting
+- tests covering command behavior, loading, ranking, formatting, and checked-in example snapshots
+- release smoke validation via `make cli-smoke` and `make release-check`
 
 ## Repository State
 
@@ -21,6 +22,7 @@ Faultline V1 is now implemented as a CLI-only product.
 The repository currently satisfies the V1 migration goal when these remain true:
 
 - `faultline analyze`, `faultline list`, and `faultline explain` work end to end
+- `faultline workflow` and `faultline fix` stay part of the default user path
 - playbooks load deterministically from disk
 - playbook overlap conflicts can be reviewed deterministically before rule changes
 - matching, ranking, and output remain deterministic across repeated runs

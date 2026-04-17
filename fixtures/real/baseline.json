@@ -10,8 +10,9 @@
     "min_top_1": 0.65,
     "min_top_3": 0.85,
     "max_unmatched": 0.15,
-    "max_false_positive": 0.35
+    "max_false_positive": 0.35,
+    "max_weak_match": 0.15
   },
-  "generated_at": "2026-04-17T21:34:21Z",
-  "fingerprint": "1d697b611d94cff5"
+  "generated_at": "2026-04-17T21:55:51Z",
+  "fingerprint": "b269df6b58b9c750"
 }

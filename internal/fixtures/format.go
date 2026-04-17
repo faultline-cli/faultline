@@ -94,6 +94,22 @@ func FormatStatsReport(report Report, jsonOut bool) (string, error) {
 		}
 		lines = append(lines, "patterns: "+strings.Join(patterns, ", "))
 	}
+	if len(report.Providers) > 0 {
+		keys := sortedKeys(report.Providers)
+		providers := make([]string, 0, len(keys))
+		for _, key := range keys {
+			providers = append(providers, fmt.Sprintf("%s=%d", key, report.Providers[key]))
+		}
+		lines = append(lines, "providers: "+strings.Join(providers, ", "))
+	}
+	if len(report.Adapters) > 0 {
+		keys := sortedKeys(report.Adapters)
+		adapters := make([]string, 0, len(keys))
+		for _, key := range keys {
+			adapters = append(adapters, fmt.Sprintf("%s=%d", key, report.Adapters[key]))
+		}
+		lines = append(lines, "adapters: "+strings.Join(adapters, ", "))
+	}
 	if len(report.ThresholdViolations) > 0 {
 		sorted := append([]string(nil), report.ThresholdViolations...)
 		sort.Strings(sorted)

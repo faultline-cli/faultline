@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -17,11 +16,10 @@ func TestGitHubIssueAdapterFetch(t *testing.T) {
 	mux.HandleFunc("/repos/acme/widgets/issues/12/comments", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "[{\"id\":91,\"body\":\"A second failing block\\n\\n```text\\nError: Cannot find module 'yaml'\\nRequire stack:\\n- /home/runner/work/index.js\\n```\",\"user\":{\"login\":\"bob\"}}]")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := GitHubIssueAdapter{APIBase: server.URL}
-	fixtures, err := adapter.Fetch(context.Background(), "https://github.com/acme/widgets/issues/12", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := GitHubIssueAdapter{APIBase: "https://github.test"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://github.com/acme/widgets/issues/12", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch GitHub issue fixtures: %v", err)
 	}
@@ -48,11 +46,10 @@ func TestGitHubIssueAdapterIgnoresCommentAuthFailures(t *testing.T) {
 		w.WriteHeader(http.StatusForbidden)
 		fmt.Fprint(w, "{\"message\":\"forbidden\"}")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := GitHubIssueAdapter{APIBase: server.URL}
-	fixtures, err := adapter.Fetch(context.Background(), "https://github.com/acme/widgets/issues/13", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := GitHubIssueAdapter{APIBase: "https://github.test"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://github.com/acme/widgets/issues/13", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch GitHub issue fixtures: %v", err)
 	}
@@ -69,11 +66,10 @@ func TestGitLabIssueAdapterFetch(t *testing.T) {
 	mux.HandleFunc("/api/v4/projects/group%2Fwidgets/issues/34/notes", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "[{\"id\":7,\"body\":\"```text\\nlookup registry-1.docker.io: temporary failure in name resolution\\nError response from daemon\\npull access denied\\n```\",\"author\":{\"username\":\"dave\"}}]")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := GitLabIssueAdapter{APIBase: server.URL + "/api/v4"}
-	fixtures, err := adapter.Fetch(context.Background(), "https://gitlab.com/group/widgets/-/issues/34", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := GitLabIssueAdapter{APIBase: "https://gitlab.test/api/v4"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://gitlab.com/group/widgets/-/issues/34", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch GitLab issue fixtures: %v", err)
 	}
@@ -100,11 +96,10 @@ func TestGitLabIssueAdapterIgnoresNoteAuthFailures(t *testing.T) {
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "{\"message\":\"unauthorized\"}")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := GitLabIssueAdapter{APIBase: server.URL + "/api/v4"}
-	fixtures, err := adapter.Fetch(context.Background(), "https://gitlab.com/group/widgets/-/issues/35", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := GitLabIssueAdapter{APIBase: "https://gitlab.test/api/v4"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://gitlab.com/group/widgets/-/issues/35", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch GitLab issue fixtures: %v", err)
 	}
@@ -121,11 +116,10 @@ func TestStackExchangeQuestionAdapterFetch(t *testing.T) {
 	mux.HandleFunc("/2.3/questions/12345/answers", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "{\"items\":[{\"answer_id\":67890,\"body\":\"<p>Use an absolute path.</p><pre><code>permission denied while starting container</code></pre>\",\"owner\":{\"display_name\":\"bob\"}}]}")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := StackExchangeQuestionAdapter{APIBase: server.URL + "/2.3"}
-	fixtures, err := adapter.Fetch(context.Background(), "https://stackoverflow.com/questions/12345/docker-executable-file-not-found", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := StackExchangeQuestionAdapter{APIBase: "https://stackexchange.test/2.3"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://stackoverflow.com/questions/12345/docker-executable-file-not-found", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch Stack Exchange question fixtures: %v", err)
 	}
@@ -148,11 +142,9 @@ func TestDiscourseTopicAdapterFetch(t *testing.T) {
 	mux.HandleFunc("/t/discourse-doesnt-deliver-webpages-fresh-install-on-linode-ubuntu-14-04/30640.json", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "{\"title\":\"Discourse doesn't deliver webpages\",\"post_stream\":{\"posts\":[{\"id\":101,\"username\":\"alice\",\"cooked\":\"<p>connection refused</p><pre><code>curl: (7) Failed to connect to localhost port 8080: Connection refused</code></pre>\",\"raw\":\"\"},{\"id\":102,\"username\":\"bob\",\"cooked\":\"<p>permission denied</p><pre><code>docker: permission denied while trying to connect to the Docker daemon socket</code></pre>\",\"raw\":\"\"}]}}")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
-
 	adapter := DiscourseTopicAdapter{}
-	fixtures, err := adapter.Fetch(context.Background(), server.URL+"/t/discourse-doesnt-deliver-webpages-fresh-install-on-linode-ubuntu-14-04/30640", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	client := newHandlerClient(mux)
+	fixtures, err := adapter.Fetch(context.Background(), "https://discourse.test/t/discourse-doesnt-deliver-webpages-fresh-install-on-linode-ubuntu-14-04/30640", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch Discourse topic fixtures: %v", err)
 	}
@@ -172,11 +164,10 @@ func TestRedditPostAdapterFetch(t *testing.T) {
 	mux.HandleFunc("/r/docker/comments/1fbi7v2/ssh_docker_daemon.json", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "[{\"data\":{\"children\":[{\"kind\":\"t3\",\"data\":{\"title\":\"SSH Docker Daemon\",\"selftext\":\"I tried to build images on a remote vps.\\n\\n```text\\nConnection refused\\n```\",\"author\":\"Pandoks_\",\"id\":\"1fbi7v2\",\"permalink\":\"/r/docker/comments/1fbi7v2/ssh_docker_daemon/\"}}]}},{\"data\":{\"children\":[{\"kind\":\"t1\",\"data\":{\"body\":\"Thanks for the help\",\"author\":\"alice\",\"id\":\"comment-1\",\"replies\":{\"data\":{\"children\":[{\"kind\":\"t1\",\"data\":{\"body\":\"```text\\ndocker: permission denied while trying to connect to the Docker daemon socket\\n```\",\"author\":\"bob\",\"id\":\"comment-2\",\"replies\":\"\"}}]}}}}]}}]")
 	})
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	client := newHandlerClient(mux)
 
-	adapter := RedditPostAdapter{APIBase: server.URL}
-	fixtures, err := adapter.Fetch(context.Background(), "https://www.reddit.com/r/docker/comments/1fbi7v2/ssh_docker_daemon/", server.Client(), time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
+	adapter := RedditPostAdapter{APIBase: "https://reddit.test"}
+	fixtures, err := adapter.Fetch(context.Background(), "https://www.reddit.com/r/docker/comments/1fbi7v2/ssh_docker_daemon/", client, time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("fetch Reddit post fixtures: %v", err)
 	}

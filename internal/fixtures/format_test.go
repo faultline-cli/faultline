@@ -101,6 +101,14 @@ func TestFormatStatsReportTextAndJSON(t *testing.T) {
 			"b-pattern": 1,
 			"a-pattern": 2,
 		},
+		Providers: map[string]int{
+			"gitlab": 1,
+			"github": 3,
+		},
+		Adapters: map[string]int{
+			"gitlab-issue": 1,
+			"github-issue": 3,
+		},
 		ThresholdViolations: []string{"z-last", "a-first"},
 	}
 
@@ -119,6 +127,8 @@ func TestFormatStatsReportTextAndJSON(t *testing.T) {
 		"unmatched_ids: fixture-unmatched",
 		"weak_ids: fixture-weak",
 		"patterns: a-pattern=2, b-pattern=1",
+		"providers: github=3, gitlab=1",
+		"adapters: github-issue=3, gitlab-issue=1",
 		"violations: a-first | z-last",
 	} {
 		if !strings.Contains(text, want) {

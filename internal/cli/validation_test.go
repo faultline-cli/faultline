@@ -1,6 +1,9 @@
 package cli
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestValidateOutputFormat(t *testing.T) {
 	cases := []struct {
@@ -61,4 +64,28 @@ func TestValidateWorkflowMode(t *testing.T) {
 			t.Errorf("validateWorkflowMode(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
 		}
 	}
+}
+
+func TestValidateExperimentalDeltaProvider(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		t.Setenv(experimentalGitHubDeltaEnv, "")
+		err := validateExperimentalDeltaProvider("github-actions")
+		if err == nil || !strings.Contains(err.Error(), experimentalGitHubDeltaEnv) {
+			t.Fatalf("expected experimental env error, got %v", err)
+		}
+	})
+
+	t.Run("enabled explicitly", func(t *testing.T) {
+		t.Setenv(experimentalGitHubDeltaEnv, "1")
+		if err := validateExperimentalDeltaProvider("github-actions"); err != nil {
+			t.Fatalf("expected provider to be allowed, got %v", err)
+		}
+	})
+
+	t.Run("empty provider passes", func(t *testing.T) {
+		t.Setenv(experimentalGitHubDeltaEnv, "")
+		if err := validateExperimentalDeltaProvider(""); err != nil {
+			t.Fatalf("expected empty provider to pass, got %v", err)
+		}
+	})
 }

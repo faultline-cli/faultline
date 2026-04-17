@@ -174,6 +174,7 @@ type Thresholds struct {
 	MinTop3          float64 `json:"min_top_3"`
 	MaxUnmatched     float64 `json:"max_unmatched"`
 	MaxFalsePositive float64 `json:"max_false_positive"`
+	MaxWeakMatch     float64 `json:"max_weak_match,omitempty"`
 }
 
 func sortedKeys(m map[string]int) []string {

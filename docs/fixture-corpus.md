@@ -11,6 +11,8 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Unmatched fixtures: 0
 - False positives: 0
 - Weak matches: 10 (11.5%)
+- Fixture metadata validation: required for real and staging corpora
+- Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 
@@ -33,6 +35,12 @@ Re-run the real-fixture regression gate:
 
 ```bash
 ./bin/faultline fixtures stats --class real --check-baseline
+```
+
+Run the shipped CLI smoke checks against the checked-in examples:
+
+```bash
+make cli-smoke
 ```
 
 Inspect the same report as JSON:
@@ -59,3 +67,4 @@ Verify the bundled catalog size exposed by the CLI:
 - Accepted real fixtures live under `fixtures/real/`.
 - The checked-in regression baseline is `fixtures/real/baseline.json`.
 - The fixture commands are wired through `faultline fixtures stats`.
+- Source provenance and adapter counts are included in `faultline fixtures stats` output.

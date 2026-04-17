@@ -32,10 +32,9 @@ faultline workflow ci.log
 faultline analyze ci.log --bayes
 faultline analyze ci.log --json
 faultline workflow ci.log --json --mode agent
-faultline guard .
 ```
 
-`analyze` gives you a ranked diagnosis with evidence. `workflow` turns the same result into a deterministic next-step artifact that engineers, scripts, and agents can follow without inventing their own glue. `guard` uses the same evidence model for quiet, high-confidence local checks before CI.
+`analyze` gives you a ranked diagnosis with evidence. `workflow` turns the same result into a deterministic next-step artifact that engineers, scripts, and agents can follow without inventing their own glue.
 
 ## Try it now
 
@@ -116,12 +115,13 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 ## Built on real failures
 
 - 77 bundled playbooks under `playbooks/bundled/`
-- 84 accepted real fixtures in the checked-in regression corpus
+- 87 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal, JSON, and workflow output for automation
 
 The current corpus snapshot and validation commands are published in [`docs/fixture-corpus.md`](docs/fixture-corpus.md).
 Repository-specific agent operating loops for fixture curation, unmatched-log triage, playbook refinement, and deterministic verification are published in [`docs/agent-workflows.md`](docs/agent-workflows.md).
+The refined shipping surface for the next release is published in [`docs/release-boundary.md`](docs/release-boundary.md).
 
 ## Try it in 60 seconds
 
@@ -185,6 +185,18 @@ Faultline is built for engineers who want:
 
 It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows. Designed to minimise false positives: better no result than a wrong one.
 
+## Release Boundary
+
+The default release story is intentionally small:
+
+- `analyze`
+- `workflow`
+- `list`
+- `explain`
+- `fix`
+
+`inspect`, `guard`, and `packs` remain supported companion commands, but they are not the primary onboarding path. Provider-backed GitHub Actions delta remains experimental and hidden behind `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1`.
+
 ## Why trust it
 
 - Same input and playbook set produce the same result every time.
@@ -202,8 +214,8 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Explain why the winning diagnosis beat nearby alternatives.
 - Surface likely drift causes only when repo context is explicit: config file changes, CI pipeline edits, large blast-radius commits, and hotspot patterns from recent history.
 - Turn the top diagnosis into a deterministic workflow handoff.
-- Inspect a repository for source-level failure risks.
-- Run quiet, high-confidence local checks with `guard`.
+- Optionally inspect a repository for source-level failure risks.
+- Optionally run quiet, high-confidence local checks with `guard`.
 - Render concise terminal, markdown, or stable JSON output.
 - Use checked-in playbooks and real-fixture regression gates as the trust boundary.
 
@@ -262,10 +274,9 @@ The repository includes runnable sample logs and expected markdown output.
 ./bin/faultline analyze examples/missing-executable.log --json --bayes
 cat examples/missing-executable.log | ./bin/faultline workflow --no-history
 cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes --no-history
-./bin/faultline guard .
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
 ./bin/faultline fix examples/missing-executable.log --format markdown
 ./bin/faultline explain missing-executable
+./bin/faultline guard .
 ```
 
 More runnable examples and output snapshots are documented in `examples/README.md`.
@@ -282,7 +293,6 @@ More runnable examples and output snapshots are documented in `examples/README.m
 | `list` | List bundled and installed playbooks |
 | `packs` | Install and list optional extra playbook packs |
 | `workflow [file]` | Generate a deterministic follow-up workflow |
-| `completion` | Generate shell completion scripts |
 
 Useful flags:
 
@@ -294,13 +304,14 @@ Useful flags:
 | `--top N` | Show the top N ranked diagnoses |
 | `--bayes` | Apply deterministic Bayesian-inspired reranking |
 | `--ci-annotations` | Emit GitHub Actions annotations during analysis |
-| `--delta-provider github-actions` | Compare against the last successful GitHub Actions run on the same branch |
 | `--git` | Enrich analysis with recent local git context (config drift, CI changes, large commits, hotspots, hotfix and revert signals, CODEOWNERS ownership boundary signals) |
 | `--repo <path>` | Choose the repository used by `--git` |
 
 Advanced usage:
 
 - `packs` installs and manages optional extra playbook packs after the bundled catalog is no longer enough.
+- `inspect` and `guard` provide bounded local-prevention checks using the same deterministic playbook model.
+- `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 faultline analyze ... --delta-provider github-actions` enables the hidden experimental provider-backed delta path.
 
 ## How it works
 
@@ -324,14 +335,14 @@ The same input and playbook set should produce the same result every time.
 | CI usage | Yes |
 | Local repo inspection | Yes |
 | Local guard checks | Yes |
-| Network calls during analysis | No |
+| Network calls during analysis | No by default; experimental provider delta only |
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats --class real` currently reports 84 accepted real fixtures and a `weak_match` rate of `0.119` (10/84).
+- `./bin/faultline fixtures stats --class real` currently reports 87 accepted real fixtures and a `weak_match` rate of `0.115` (10/87).
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
 - The bundled catalog currently ships 77 playbooks under `playbooks/bundled/`.
-- Release validation runs `make test`, `make review`, `make fixture-check`, release archive smoke tests, and Docker smoke tests.
+- Release validation runs `make test`, `make review`, `make fixture-check`, `make cli-smoke`, release archive smoke tests, and Docker smoke tests.
 
 These numbers describe the checked-in regression corpus, not the full space of CI failures.
 

@@ -32,13 +32,7 @@ if [ ! -x "$binary_path" ]; then
 	exit 1
 fi
 
-cat >"$TMP_DIR/docker-auth.log" <<'EOF'
-## Step: smoke release archive
-$ docker login ghcr.io
-pull access denied
-authentication required
-EOF
-
-output="$($binary_path analyze "$TMP_DIR/docker-auth.log")"
-printf '%s\n' "$output"
-printf '%s' "$output" | grep -F "docker-auth" >/dev/null
+ROOT_DIR="$ROOT_DIR" \
+BINARY="$binary_path" \
+FAULTLINE_PLAYBOOK_DIR="$stage_dir/playbooks/bundled" \
+sh "$ROOT_DIR/scripts/cli-smoke.sh"

@@ -3,7 +3,7 @@
 Faultline now supports multiple deterministic detector modules behind a shared
 result model.
 
-The bundled catalog currently splits into 72 log playbooks and 2 source
+The bundled catalog currently splits into 75 log playbooks and 2 source
 playbooks.
 
 ## Built-in detectors

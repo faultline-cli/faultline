@@ -11,8 +11,8 @@ The recommended surfaces for a separate `faultline-action` repository are:
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
 - optional evidence-fusion metadata: `faultline analyze <logfile> --json --bayes`
-- optional failure delta against the last successful run on the same branch:
-  `faultline analyze <logfile> --json --bayes --delta-provider github-actions`
+- experimental failure delta against the last successful run on the same branch:
+  `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 faultline analyze <logfile> --json --bayes --delta-provider github-actions`
 
 These contracts already exist in the CLI and should remain the integration boundary.
 
@@ -29,7 +29,7 @@ These contracts already exist in the CLI and should remain the integration bound
 1. Capture the failing log into a file inside the workflow job.
 2. Run `faultline analyze` to produce markdown and JSON artifacts.
 3. Optionally run `faultline analyze --json --bayes` when the action wants additive ranking metadata.
-4. Optionally enable provider-backed delta with `--delta-provider github-actions` and pass `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_REF_NAME`, and `GITHUB_RUN_ID`.
+4. Optionally enable the experimental provider-backed delta path with `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 --delta-provider github-actions` and pass `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_REF_NAME`, and `GITHUB_RUN_ID`.
 5. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
 6. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
 
@@ -42,6 +42,7 @@ faultline analyze build.log --format markdown > faultline-summary.md
 faultline analyze build.log --format markdown --ci-annotations > faultline-summary-annotated.md
 faultline analyze build.log --json > faultline-analysis.json
 faultline analyze build.log --json --bayes > faultline-analysis-bayes.json
+FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 \
 GITHUB_TOKEN="$GITHUB_TOKEN" \
 GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
 GITHUB_REF_NAME="$GITHUB_REF_NAME" \
@@ -70,7 +71,7 @@ docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --j
   run: |
     faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
     faultline analyze build.log --json --bayes > faultline-analysis.json
-    faultline analyze build.log --json --bayes --delta-provider github-actions > faultline-analysis-delta.json
+    FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 faultline analyze build.log --json --bayes --delta-provider github-actions > faultline-analysis-delta.json
     faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 

@@ -27,23 +27,8 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Run tests
-        run: make test
-
-      - name: Review bundled playbook conflicts
-        run: make review
-
-      - name: Check real fixture corpus baseline
-        run: make fixture-check
-
-      - name: Build release archives
-        run: make release-snapshot VERSION="$VERSION"
-
-      - name: Smoke test release archive
-        run: make smoke-release VERSION="$VERSION"
-
-      - name: Smoke test Docker image
-        run: make docker-smoke IMAGE=faultline-release-smoke
+      - name: Run release validation
+        run: WITH_DOCKER=1 IMAGE=faultline-release-smoke make release-check VERSION="$VERSION"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
