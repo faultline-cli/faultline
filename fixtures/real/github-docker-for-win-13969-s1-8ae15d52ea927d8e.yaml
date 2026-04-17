@@ -1,0 +1,26 @@
+id: github-docker-for-win-13969-s1-8ae15d52ea927d8e
+title: Permission denied while trying to connect to Docker socket inside container after updating to 4.28.0
+fixture_class: real
+normalized_log: 'permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.24/version": dial unix /var/run/docker.sock: connect: permission denied'
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/for-win/issues/13969
+    repository: docker/for-win
+    issue_number: 13969
+    title: Permission denied while trying to connect to Docker socket inside container after updating to 4.28.0
+    labels:
+        - area/linux
+        - status/triage
+    author: harichards
+    snippet: 1
+    fetched_at: "2026-04-17T08:26:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T08:26:43Z"
+fingerprint: 8ae15d52ea927d8e

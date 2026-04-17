@@ -37,13 +37,17 @@ func (a GitLabIssueAdapter) Fetch(ctx context.Context, rawURL string, client *ht
 	}
 	client = defaultHTTPClient(client)
 	projectRef := url.PathEscape(project)
+	requestOpts := jsonRequestOptions{
+		AcceptHeader:       "application/json",
+		OptionalStatusCodes: []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
+	}
 
 	var issue gitlabIssue
-	if err := getJSON(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d", apiBase, projectRef, issueNumber), &issue); err != nil {
+	if err := getJSON(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d", apiBase, projectRef, issueNumber), &issue, requestOpts); err != nil {
 		return nil, err
 	}
 	var notes []gitlabIssueNote
-	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d/notes?per_page=100", apiBase, projectRef, issueNumber), &notes); err != nil {
+	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/projects/%s/issues/%d/notes?per_page=100", apiBase, projectRef, issueNumber), &notes, requestOpts); err != nil {
 		return nil, err
 	}
 

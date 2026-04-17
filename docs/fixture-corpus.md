@@ -5,9 +5,9 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 ## Current Snapshot
 
 - Bundled playbooks: 67
-- Accepted real fixtures: 70
-- Top-1 match rate: 100% (70/70)
-- Top-3 match rate: 100% (70/70)
+- Accepted real fixtures: 73
+- Top-1 match rate: 100% (73/73)
+- Top-3 match rate: 100% (73/73)
 - Unmatched fixtures: 0
 - False positives: 0
 - Weak matches: 7

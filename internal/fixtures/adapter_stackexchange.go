@@ -40,13 +40,17 @@ func (a StackExchangeQuestionAdapter) Fetch(ctx context.Context, rawURL string, 
 		apiBase = "https://api.stackexchange.com/2.3"
 	}
 	client = defaultHTTPClient(client)
+	requestOpts := jsonRequestOptions{
+		AcceptHeader:       "application/json",
+		OptionalStatusCodes: []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
+	}
 
 	var question stackExchangeQuestionResponse
-	if err := getJSON(ctx, client, fmt.Sprintf("%s/questions/%d?site=%s&filter=withbody&order=desc&sort=activity", apiBase, questionID, url.QueryEscape(site)), &question); err != nil {
+	if err := getJSON(ctx, client, fmt.Sprintf("%s/questions/%d?site=%s&filter=withbody&order=desc&sort=activity", apiBase, questionID, url.QueryEscape(site)), &question, requestOpts); err != nil {
 		return nil, err
 	}
 	var answers stackExchangeQuestionResponse
-	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/questions/%d/answers?site=%s&filter=withbody&order=desc&sort=votes", apiBase, questionID, url.QueryEscape(site)), &answers); err != nil {
+	if err := getJSONOptional(ctx, client, fmt.Sprintf("%s/questions/%d/answers?site=%s&filter=withbody&order=desc&sort=votes", apiBase, questionID, url.QueryEscape(site)), &answers, requestOpts); err != nil {
 		return nil, err
 	}
 

@@ -60,6 +60,18 @@ This same `~/.faultline/packs/` convention is used by the Docker image at
 `/home/faultline/.faultline/packs`, so a mounted user directory can enable the
 same installed pack set in both local and containerized runs.
 
+## Fixture ingestion boundary
+
+Fixture ingestion is split deliberately:
+
+- site adapters stay explicit because each source has different URL parsing,
+  endpoint layout, and response schema
+- HTTP transport and JSON fetch behavior should be shared when possible
+
+That means Faultline should avoid a single generic "web adapter" abstraction
+for GitHub, GitLab, Stack Exchange, Reddit, and Discourse. The reusable layer
+is the transport, not the source-specific extraction logic.
+
 ## Detector boundary
 
 Detectors stay explicit and separate:

@@ -33,9 +33,10 @@ func (a DiscourseTopicAdapter) Fetch(ctx context.Context, rawURL string, client 
 	}
 	apiURL := topicURL + ".json"
 	client = defaultHTTPClient(client)
+	requestOpts := jsonRequestOptions{AcceptHeader: "application/json"}
 
 	var topic discourseTopicResponse
-	if err := getJSON(ctx, client, apiURL, &topic); err != nil {
+	if err := getJSON(ctx, client, apiURL, &topic, requestOpts); err != nil {
 		return nil, err
 	}
 

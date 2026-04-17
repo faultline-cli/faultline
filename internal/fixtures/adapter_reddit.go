@@ -42,10 +42,11 @@ func (a RedditPostAdapter) Fetch(ctx context.Context, rawURL string, client *htt
 		apiBase = "https://www.reddit.com"
 	}
 	client = defaultHTTPClient(client)
+	requestOpts := jsonRequestOptions{AcceptHeader: "application/json"}
 
 	var listing []redditListing
 	postURL := fmt.Sprintf("%s/r/%s/comments/%s/%s.json?raw_json=1", apiBase, subreddit, postID, postSlug)
-	if err := getJSON(ctx, client, postURL, &listing); err != nil {
+	if err := getJSON(ctx, client, postURL, &listing, requestOpts); err != nil {
 		return nil, err
 	}
 	if len(listing) == 0 || len(listing[0].Data.Children) == 0 {

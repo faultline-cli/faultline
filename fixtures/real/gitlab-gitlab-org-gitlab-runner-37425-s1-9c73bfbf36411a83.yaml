@@ -1,0 +1,28 @@
+id: gitlab-gitlab-org-gitlab-runner-37425-s1-9c73bfbf36411a83
+title: Gitlab Runner Docker Compose 'connection refused' to gitlab instance
+fixture_class: real
+normalized_log: 'could not execute post https://git.mydomain.at/api/v4/jobs/request dial tcp 127.0.1.1:443: connect: connection refused'
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/37425
+    repository: gitlab-org/gitlab-runner
+    issue_number: 37425
+    title: Gitlab Runner Docker Compose 'connection refused' to gitlab instance
+    labels:
+        - Category:Runner Core
+        - devops::verify
+        - group::runner core
+        - section::ci
+    author: scharez
+    snippet: 1
+    fetched_at: "2026-04-17T08:26:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T08:26:43Z"
+fingerprint: 9c73bfbf36411a83

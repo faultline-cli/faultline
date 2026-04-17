@@ -1,0 +1,52 @@
+id: stackexchange-stackoverflow-66742813-s1-baccaf8f85303f85
+title: 'Why does my GitLab build fail with error: &quot;executable file not found in $PATH&quot;'
+fixture_class: real
+normalized_log: |-
+    I am getting the following error repeatedly on a build
+    Running with gitlab-runner 13.8.0 (775dd39d)
+    on docker+machine ABwVypz2
+    Preparing the "docker+machine" executor
+    00:16
+    Using Docker executor with image docker:latest ...
+    Starting service docker:dind ...
+    Pulling docker image docker:dind ...
+    Using docker image sha256:6e82c575b16fb92f31c77a6ba88cadffa1720acd6e33526d82814232a82eb780 for docker:dind with digest docker@sha256:9f9a930bc5ec2e000867a87de844cae04590bafe929340e2fae4cb959cf6bc8f ...
+    ERROR: Preparation failed: Error response from daemon: OCI runtime create failed: container_linux.go:367: starting container process caused: exec: "dockerd-entrypoint.sh": executable file not found in $PATH: unknown (docker.go:502:0s)
+    Will be retried in 3s ...
+    Using Docker executor with image docker:latest ...
+    Starting service docker:dind ...
+    Pulling docker image docker:dind ...
+    Using docker image sha256:6e82c575b16fb92f31c77a6ba88cadffa1720acd6e33526d82814232a82eb780 for docker:dind with digest docker@sha256:9f9a930bc5ec2e000867a87de844cae04590bafe929340e2fae4cb959cf6bc8f ...
+    ERROR: Preparation failed: Error response from daemon: OCI runtime create failed: container_linux.go:367: starting container process caused: exec: "dockerd-entrypoint.sh": executable file not found in $PATH: unknown (docker.go:502:0s)
+    Will be retried in 3s ...
+    Using Docker executor with image docker:latest ...
+    Starting service docker:dind ...
+    Pulling docker image docker:dind ...
+    Using docker image sha256:6e82c575b16fb92f31c77a6ba88cadffa1720acd6e33526d82814232a82eb780 for docker:dind with digest docker@sha256:9f9a930bc5ec2e000867a87de844cae04590bafe929340e2fae4cb959cf6bc8f ...
+    ERROR: Preparation failed: Error response from daemon: OCI runtime create failed: container_linux.go:367: starting container process caused: exec: "dockerd-entrypoint.sh": executable file not found in $PATH: unknown (docker.go:502:0s)
+    Will be retried in 3s ...
+    ERROR: Job failed (system failure): Error response from daemon: OCI runtime create failed: container_linux.go:367: starting container process caused: exec: "dockerd-entrypoint.sh": executable file not found in $PATH: unknown (docker.go:502:0s)
+    Reduced to it's simplest I have the following .gitlab-ci.yaml
+    image: docker:latest
+    services:
+    - docker:dind
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66742813
+    repository: stackoverflow
+    issue_number: 66742813
+    comment_id: "0"
+    title: 'Why does my GitLab build fail with error: &quot;executable file not found in $PATH&quot;'
+    author: George
+    snippet: 1
+    fetched_at: "2026-04-17T08:26:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T08:26:43Z"
+fingerprint: baccaf8f85303f85

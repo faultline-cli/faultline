@@ -115,11 +115,12 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 ## Built on real failures
 
 - 67 bundled playbooks under `playbooks/bundled/`
-- 70 accepted real fixtures in the checked-in regression corpus
+- 73 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal, JSON, and workflow output for automation
 
 The current corpus snapshot and validation commands are published in [`docs/fixture-corpus.md`](docs/fixture-corpus.md).
+Repository-specific agent operating loops for fixture curation, unmatched-log triage, playbook refinement, and deterministic verification are published in [`docs/agent-workflows.md`](docs/agent-workflows.md).
 
 ## Try it in 60 seconds
 
@@ -322,7 +323,7 @@ The same input and playbook set should produce the same result every time.
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats --class real` currently reports 70 accepted real fixtures.
+- `./bin/faultline fixtures stats --class real` currently reports 73 accepted real fixtures.
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
 - The bundled catalog currently ships 67 playbooks under `playbooks/bundled/`.
 - Release validation runs `make test`, `make review`, `make fixture-check`, release archive smoke tests, and Docker smoke tests.
