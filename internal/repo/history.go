@@ -13,6 +13,7 @@ type Commit struct {
 	Hash    string
 	Time    time.Time
 	Subject string
+	Author  string   // author email; empty when not captured
 	Files   []string // paths changed in this commit
 }
 
@@ -26,7 +27,8 @@ func LoadHistory(s *Scanner, since string) ([]Commit, error) {
 
 	// Each commit starts with \x1f followed by metadata separated by \x1e.
 	// The remaining lines in the block come from --name-only and are file paths.
-	formatArg := "--format=%x1f%H%x1e%at%x1e%s"
+	// Fields: hash, unix timestamp, subject, author email.
+	formatArg := "--format=%x1f%H%x1e%at%x1e%s%x1e%ae"
 	logOut, err := s.Run("log", "--no-merges", "--name-only", sinceArg, formatArg)
 	if err != nil {
 		return nil, fmt.Errorf("git log: %w", err)
@@ -57,14 +59,21 @@ func parseCommitBlock(block string) (Commit, bool) {
 		return Commit{}, false
 	}
 
-	header := strings.SplitN(strings.TrimSpace(lines[0]), "\x1e", 3)
-	if len(header) != 3 {
+	// Require at least hash, timestamp, subject. Author email (4th field) is optional
+	// to stay compatible with any older callers that construct blocks directly.
+	header := strings.SplitN(strings.TrimSpace(lines[0]), "\x1e", 4)
+	if len(header) < 3 {
 		return Commit{}, false
 	}
 
 	unixTS, err := strconv.ParseInt(strings.TrimSpace(header[1]), 10, 64)
 	if err != nil {
 		return Commit{}, false
+	}
+
+	var author string
+	if len(header) >= 4 {
+		author = strings.TrimSpace(header[3])
 	}
 
 	files := make([]string, 0, len(lines)-1)
@@ -84,6 +93,7 @@ func parseCommitBlock(block string) (Commit, bool) {
 		Hash:    strings.TrimSpace(header[0]),
 		Time:    time.Unix(unixTS, 0).UTC(),
 		Subject: strings.TrimSpace(header[2]),
+		Author:  author,
 		Files:   files,
 	}, true
 }

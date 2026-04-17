@@ -624,6 +624,15 @@ func (r Renderer) renderRepoContext(repo *model.RepoContext) string {
 	for _, item := range repo.DriftSignals {
 		lines = append(lines, "- Drift hint: "+item)
 	}
+	for _, item := range repo.ConfigDriftSignals {
+		lines = append(lines, "- Config drift: "+item)
+	}
+	for _, item := range repo.CIChangeSignals {
+		lines = append(lines, "- CI change: "+item)
+	}
+	for _, item := range repo.LargeCommitSignals {
+		lines = append(lines, "- Large commit: "+item)
+	}
 	return strings.Join(lines, "\n")
 }
 

@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -33,6 +34,9 @@ func Correlate(root, category, playbookID string, commits []Commit, sigs Signals
 	ctx.CoChangeHints = coChangeHints(spec, sigs)
 	ctx.HotfixSignals = hotfixSignals(spec, commits, sigs)
 	ctx.DriftSignals = driftSignals(spec, commits, sigs)
+	ctx.ConfigDriftSignals = configDriftSignals(sigs)
+	ctx.CIChangeSignals = ciChangeSignals(sigs)
+	ctx.LargeCommitSignals = largeCommitSignals(sigs)
 
 	return ctx
 }
@@ -408,4 +412,43 @@ func matchesAny(filePath string, patterns []string) bool {
 		}
 	}
 	return false
+}
+
+// configDriftSignals returns the paths of recently changed dependency or
+// configuration files surfaced from the commit window.
+func configDriftSignals(sigs Signals) []string {
+	hints := make([]string, 0, maxSignalHints)
+	for _, fc := range sigs.ConfigChangedFiles {
+		hints = append(hints, fc.File)
+		if len(hints) >= maxSignalHints {
+			break
+		}
+	}
+	return hints
+}
+
+// ciChangeSignals returns the paths of recently changed CI pipeline config
+// files surfaced from the commit window.
+func ciChangeSignals(sigs Signals) []string {
+	hints := make([]string, 0, maxSignalHints)
+	for _, fc := range sigs.CIConfigChangedFiles {
+		hints = append(hints, fc.File)
+		if len(hints) >= maxSignalHints {
+			break
+		}
+	}
+	return hints
+}
+
+// largeCommitSignals returns a summary for each large commit (one that touched
+// at least LargeCommitFileThreshold files), formatted with file count context.
+func largeCommitSignals(sigs Signals) []string {
+	hints := make([]string, 0, maxSignalHints)
+	for _, commit := range sigs.LargeCommits {
+		hints = append(hints, fmt.Sprintf("%s (%d files)", commit.Subject, len(commit.Files)))
+		if len(hints) >= maxSignalHints {
+			break
+		}
+	}
+	return hints
 }

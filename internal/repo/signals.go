@@ -6,6 +6,13 @@ import (
 	"strings"
 )
 
+// LargeCommitFileThreshold is the minimum number of changed files in a single
+// commit that qualifies it as a large (blast-radius) commit.
+const LargeCommitFileThreshold = 10
+
+// maxTopAuthors is the maximum number of top-author entries retained in Signals.
+const maxTopAuthors = 5
+
 // Signals holds derived signals from commit history.
 type Signals struct {
 	// HotspotFiles are files edited most frequently, ranked by edit count.
@@ -22,6 +29,21 @@ type Signals struct {
 	RevertCommits []Commit
 	// CoChangePairs are pairs of files frequently changed together.
 	CoChangePairs []CoChangePair
+	// LargeCommits are commits that touched at least LargeCommitFileThreshold
+	// files, indicating a potentially risky blast-radius change.
+	LargeCommits []Commit
+	// ConfigChangedFiles are dependency or config files (go.mod, Dockerfile,
+	// package.json, etc.) that were touched in the commit window, ranked by
+	// edit count.
+	ConfigChangedFiles []FileChurn
+	// CIConfigChangedFiles are CI pipeline config files (.github/workflows,
+	// Makefile, etc.) touched in the commit window, ranked by edit count.
+	CIConfigChangedFiles []FileChurn
+	// AuthorCount is the number of distinct commit authors in the window.
+	AuthorCount int
+	// TopAuthors are the most prolific authors in the commit window, ranked
+	// by commit count. Ties are broken alphabetically by author.
+	TopAuthors []AuthorChurn
 }
 
 // FileChurn records how many times a file was touched in the commit window.
@@ -43,11 +65,18 @@ type CoChangePair struct {
 	Count int
 }
 
+// AuthorChurn records how many commits an author made in the commit window.
+type AuthorChurn struct {
+	Author string
+	Count  int
+}
+
 // DeriveSignals analyses a slice of commits and returns derived signals.
 // Results are deterministic: ties are broken by file/directory path.
 func DeriveSignals(commits []Commit) Signals {
 	fileCounts := make(map[string]int)
 	dirCounts := make(map[string]int)
+	authorCounts := make(map[string]int)
 
 	pairKey := func(a, b string) string {
 		if a > b {
@@ -58,7 +87,7 @@ func DeriveSignals(commits []Commit) Signals {
 	pairFiles := make(map[string][2]string)
 	pairCounts := make(map[string]int)
 
-	var hotfix, reverts []Commit
+	var hotfix, reverts, large []Commit
 
 	for _, c := range commits {
 		subLower := strings.ToLower(c.Subject)
@@ -67,6 +96,12 @@ func DeriveSignals(commits []Commit) Signals {
 		}
 		if isRevert(subLower) {
 			reverts = append(reverts, c)
+		}
+		if len(c.Files) >= LargeCommitFileThreshold {
+			large = append(large, c)
+		}
+		if c.Author != "" {
+			authorCounts[c.Author]++
 		}
 
 		for _, f := range c.Files {
@@ -100,6 +135,19 @@ func DeriveSignals(commits []Commit) Signals {
 		}
 		return hotspotFiles[i].File < hotspotFiles[j].File
 	})
+
+	// Build config and CI config file lists from the full file churn data.
+	var configFiles, ciFiles []FileChurn
+	for f, n := range fileCounts {
+		if isConfigFile(f) {
+			configFiles = append(configFiles, FileChurn{File: f, Count: n})
+		}
+		if isCIConfigFile(f) {
+			ciFiles = append(ciFiles, FileChurn{File: f, Count: n})
+		}
+	}
+	sortFileChurn(configFiles)
+	sortFileChurn(ciFiles)
 
 	// Build sorted directory hotspot list.
 	hotspotDirs := make([]DirChurn, 0, len(dirCounts))
@@ -154,14 +202,34 @@ func DeriveSignals(commits []Commit) Signals {
 		return coChangePairs[i].FileB < coChangePairs[j].FileB
 	})
 
+	// Build sorted author churn list.
+	topAuthors := make([]AuthorChurn, 0, len(authorCounts))
+	for a, n := range authorCounts {
+		topAuthors = append(topAuthors, AuthorChurn{Author: a, Count: n})
+	}
+	sort.Slice(topAuthors, func(i, j int) bool {
+		if topAuthors[i].Count != topAuthors[j].Count {
+			return topAuthors[i].Count > topAuthors[j].Count
+		}
+		return topAuthors[i].Author < topAuthors[j].Author
+	})
+	if len(topAuthors) > maxTopAuthors {
+		topAuthors = topAuthors[:maxTopAuthors]
+	}
+
 	return Signals{
-		HotspotFiles:  hotspotFiles,
-		HotspotDirs:   hotspotDirs,
-		RepeatedFiles: repeatedFiles,
-		RepeatedDirs:  repeatedDirs,
-		HotfixCommits: hotfix,
-		RevertCommits: reverts,
-		CoChangePairs: coChangePairs,
+		HotspotFiles:         hotspotFiles,
+		HotspotDirs:          hotspotDirs,
+		RepeatedFiles:        repeatedFiles,
+		RepeatedDirs:         repeatedDirs,
+		HotfixCommits:        hotfix,
+		RevertCommits:        reverts,
+		CoChangePairs:        coChangePairs,
+		LargeCommits:         large,
+		ConfigChangedFiles:   configFiles,
+		CIConfigChangedFiles: ciFiles,
+		AuthorCount:          len(authorCounts),
+		TopAuthors:           topAuthors,
 	}
 }
 
@@ -188,4 +256,61 @@ func isRevert(subLower string) bool {
 		}
 	}
 	return false
+}
+
+// isConfigFile returns true when the file path matches a known dependency or
+// configuration file pattern that frequently contributes to CI failures.
+func isConfigFile(name string) bool {
+	base := filepath.Base(name)
+	// Exact-name matches.
+	switch base {
+	case "go.mod", "go.sum",
+		"package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
+		"Dockerfile",
+		"pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "Pipfile.lock",
+		"Gemfile", "Gemfile.lock",
+		"Cargo.toml", "Cargo.lock",
+		"pom.xml":
+		return true
+	}
+	// Glob-based matches (build.gradle*, requirements*.txt, docker-compose*, .env*).
+	for _, pat := range []string{
+		"build.gradle*", "requirements*.txt", "docker-compose*", ".env*",
+	} {
+		if m, _ := filepath.Match(pat, base); m {
+			return true
+		}
+	}
+	return false
+}
+
+// isCIConfigFile returns true when the file path is a CI pipeline or build
+// system configuration file.
+func isCIConfigFile(name string) bool {
+	name = filepath.ToSlash(name)
+	base := filepath.Base(name)
+	// Paths that begin with known CI directories.
+	for _, prefix := range []string{".github/", ".circleci/", ".gitlab"} {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	// Exact-name matches.
+	switch base {
+	case "Makefile", "Jenkinsfile", "azure-pipelines.yml", "bitbucket-pipelines.yml",
+		".gitlab-ci.yml":
+		return true
+	}
+	return false
+}
+
+// sortFileChurn sorts a FileChurn slice in-place: highest count first,
+// ties broken alphabetically by file path.
+func sortFileChurn(items []FileChurn) {
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Count != items[j].Count {
+			return items[i].Count > items[j].Count
+		}
+		return items[i].File < items[j].File
+	})
 }

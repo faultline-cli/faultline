@@ -63,6 +63,9 @@ type repoCtxJSON struct {
 	CoChangeHints      []string         `json:"co_change_hints,omitempty"`
 	HotfixSignals      []string         `json:"hotfix_signals,omitempty"`
 	DriftSignals       []string         `json:"drift_signals,omitempty"`
+	ConfigDriftSignals []string         `json:"config_drift_signals,omitempty"`
+	CIChangeSignals    []string         `json:"ci_change_signals,omitempty"`
+	LargeCommitSignals []string         `json:"large_commit_signals,omitempty"`
 }
 
 type repoCommitJSON struct {
@@ -162,6 +165,9 @@ func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {
 		CoChangeHints:      repoCtx.CoChangeHints,
 		HotfixSignals:      repoCtx.HotfixSignals,
 		DriftSignals:       repoCtx.DriftSignals,
+		ConfigDriftSignals: repoCtx.ConfigDriftSignals,
+		CIChangeSignals:    repoCtx.CIChangeSignals,
+		LargeCommitSignals: repoCtx.LargeCommitSignals,
 	}
 	if len(repoCtx.RelatedCommits) > 0 {
 		out.RelatedCommits = make([]repoCommitJSON, len(repoCtx.RelatedCommits))

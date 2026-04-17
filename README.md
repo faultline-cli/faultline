@@ -191,7 +191,7 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Evidence is pulled directly from matched log lines.
 - Fix steps come from checked-in playbooks, not probabilistic generation.
 - `--bayes` never creates new matches; it only reranks already-detected candidates and explains why.
-- Repo or diff signals only participate when Faultline has explicit repository context, such as `--git` or guard/inspect change analysis.
+- Repo signals only participate when Faultline has explicit repository context (`--git` or guard/inspect). They are additive: they never create matches, only enrich an existing diagnosis with config drift, CI config changes, large-commit blast radius, hotspot files and directories, co-change pairs, and hotfix or revert indicators.
 - JSON and workflow output stay stable for automation and agent workflows.
 - Analysis runs locally without shipping build logs to a hosted service.
 
@@ -200,7 +200,7 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Analyze CI logs from a file or stdin.
 - Rerank close calls with `--bayes`.
 - Explain why the winning diagnosis beat nearby alternatives.
-- Surface likely drift causes only when repo context is explicit.
+- Surface likely drift causes only when repo context is explicit: config file changes, CI pipeline edits, large blast-radius commits, and hotspot patterns from recent history.
 - Turn the top diagnosis into a deterministic workflow handoff.
 - Inspect a repository for source-level failure risks.
 - Run quiet, high-confidence local checks with `guard`.
@@ -295,7 +295,7 @@ Useful flags:
 | `--bayes` | Apply deterministic Bayesian-inspired reranking |
 | `--ci-annotations` | Emit GitHub Actions annotations during analysis |
 | `--delta-provider github-actions` | Compare against the last successful GitHub Actions run on the same branch |
-| `--git` | Enrich analysis with recent local git context |
+| `--git` | Enrich analysis with recent local git context (config drift, CI changes, large commits, hotspots, hotfix and revert signals) |
 | `--repo <path>` | Choose the repository used by `--git` |
 
 Advanced usage:
@@ -308,7 +308,7 @@ Advanced usage:
 2. It loads deterministic YAML playbooks from the bundled catalog and any optional installed packs.
 3. It matches explicit patterns, extracts supporting evidence, and ranks results with stable rules.
 4. When `--bayes` is enabled, it reranks only the already-matched candidates and adds explainable ranking hints.
-5. When repo context is explicit, it can also attach additive delta hints based on changed files and recent local history.
+5. When repo context is explicit (`--git`), it attaches additive history signals to the diagnosis: recently changed config and dependency files, CI pipeline file edits, hotspot directories and files, co-change pairs, large blast-radius commits, hotfix and revert patterns, and author breadth across the commit window.
 6. It returns a diagnosis, evidence, fix steps, workflow hints, and validation guidance.
 
 The same input and playbook set should produce the same result every time.

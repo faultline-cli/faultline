@@ -380,13 +380,22 @@ type Result struct {
 // RepoContext holds git repository context enrichment from a recent commit window.
 // Only populated when the --git flag is used.
 type RepoContext struct {
-	RepoRoot           string           `json:"repo_root"`
-	RecentFiles        []string         `json:"recent_files,omitempty"`
-	RelatedCommits     []RepoCommit     `json:"related_commits,omitempty"`
-	HotspotDirectories []string         `json:"hotspot_directories,omitempty"`
-	CoChangeHints      []string         `json:"co_change_hints,omitempty"`
-	HotfixSignals      []string         `json:"hotfix_signals,omitempty"`
-	DriftSignals       []string         `json:"drift_signals,omitempty"`
+	RepoRoot           string       `json:"repo_root"`
+	RecentFiles        []string     `json:"recent_files,omitempty"`
+	RelatedCommits     []RepoCommit `json:"related_commits,omitempty"`
+	HotspotDirectories []string     `json:"hotspot_directories,omitempty"`
+	CoChangeHints      []string     `json:"co_change_hints,omitempty"`
+	HotfixSignals      []string     `json:"hotfix_signals,omitempty"`
+	DriftSignals       []string     `json:"drift_signals,omitempty"`
+	// ConfigDriftSignals are recently changed dependency or config files
+	// (go.mod, Dockerfile, package.json, etc.) relevant to the failure.
+	ConfigDriftSignals []string `json:"config_drift_signals,omitempty"`
+	// CIChangeSignals are recently changed CI pipeline config files
+	// (.github/workflows, Makefile, etc.) relevant to the failure.
+	CIChangeSignals []string `json:"ci_change_signals,omitempty"`
+	// LargeCommitSignals are subjects of large commits (touching many files)
+	// that may indicate a high blast-radius change.
+	LargeCommitSignals []string         `json:"large_commit_signals,omitempty"`
 	Topology           *TopologySignals `json:"topology,omitempty"`
 }
 
