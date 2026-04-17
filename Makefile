@@ -10,13 +10,14 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bench review extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test fixture-check bench review demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
 		"  build           Build the faultline CLI into $(BINARY)" \
 		"  run             Run the CLI locally: make run LOG=build.log" \
 		"  test            Run all Go tests" \
+		"  demo-assets     Rebuild README GIFs and screenshots from VHS tapes" \
 		"  fixture-check   Run the accepted real-fixture regression gate" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
@@ -32,6 +33,9 @@ help:
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"
 	$(GO) build -o $(BINARY) ./cmd
+
+demo-assets: build
+	sh ./tools/render-demo-assets.sh
 
 run:
 	@if [ -z "$(LOG)" ]; then printf "%s\n" "LOG is required, for example: make run LOG=build.log"; exit 1; fi

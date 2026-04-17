@@ -27,7 +27,7 @@ faultline analyze ci.log
 If you need a pinned version instead of the latest release:
 
 ```bash
-VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
 faultline analyze ci.log
 ```
 
@@ -43,7 +43,7 @@ go build -o faultline ./cmd
 Release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
-VERSION=v0.1.0
+VERSION=v0.2.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
@@ -78,12 +78,10 @@ Archives are written to `dist/releases/<version>/` by `make release-snapshot VER
 
 Tagged releases should continue to run this sequence:
 
-1. `make test`
-2. `make review`
-3. `make fixture-check`
-4. `make release-snapshot VERSION=<tag>`
-5. `make smoke-release VERSION=<tag>`
-6. `make docker-smoke IMAGE=faultline-release-smoke`
-7. publish release archives to the GitHub release created from that tag
+1. `make release-check VERSION=<tag>`
+2. `WITH_DOCKER=1 IMAGE=faultline-release-smoke make release-check VERSION=<tag>` when the container contract changed
+3. publish release archives to the GitHub release created from that tag
+
+`make release-check` already includes `make test`, `make fixture-check`, `make review`, `make release-snapshot`, and `make smoke-release`.
 
 

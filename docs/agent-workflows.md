@@ -39,7 +39,7 @@ These are narrower, but they are more useful: they tell an agent exactly how to 
 
 ## Repo Skills
 
-The repository also now ships two repo-local skills under [`agents/skills/`](../agents/skills/):
+The repository now ships five repo-local skills under [`agents/skills/`](../agents/skills/):
 
 - [`ingestion-pipeline`](../agents/skills/ingestion-pipeline/SKILL.md) for public-source fixture intake, staging review, promotion, and baseline validation
 - [`playbook-refinement`](../agents/skills/playbook-refinement/SKILL.md) for fixture-driven playbook tightening and workflow-field improvement
@@ -168,6 +168,24 @@ make build
 Why this matters:
 - Faultline's trust boundary is checked-in evidence, not optimistic reasoning
 
+### 8. Prepare A Release Candidate
+
+Use this when consolidating the repository for a tagged cut.
+
+```bash
+make release-check VERSION=v0.2.0
+```
+
+Add Docker validation when the release image also changed:
+
+```bash
+WITH_DOCKER=1 IMAGE=faultline-v0.2.0 make release-check VERSION=v0.2.0
+```
+
+Why this matters:
+- it exercises tests, playbook review, fixture regression, archive packaging, and release smoke in one deterministic path
+- it gives agent workflows a single release-grade validation target instead of a hand-built checklist
+
 ## Upgrade Path
 
 The next useful upgrades should stay small and repo-native.
@@ -176,7 +194,7 @@ The next useful upgrades should stay small and repo-native.
 2. Keep fixture ingestion and review as the only path for adding real-world evidence.
 3. Bias ingestion runs toward source diversity across GitHub, GitLab, Stack Exchange, Discourse, and Reddit when useful evidence is available.
 4. Keep playbook growth biased toward refinement over catalog expansion.
-5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 69 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
+5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 74 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
 6. Add new agent workflows only when they map cleanly to an existing deterministic command or checked-in regression gate.
 
 ## What Not To Add

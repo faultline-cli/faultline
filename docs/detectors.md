@@ -3,12 +3,22 @@
 Faultline now supports multiple deterministic detector modules behind a shared
 result model.
 
+The bundled catalog currently splits into 72 log playbooks and 2 source
+playbooks.
+
 ## Built-in detectors
 
 - `log`: the existing CI log matcher based on `match.any`, `match.all`, and
   `match.none`, with IDF-weighted conflict resolution preserved.
 - `source`: a source-aware detector that interprets trigger evidence,
   amplifiers, mitigations, suppressions, context, and change hints.
+
+Use `log` playbooks when the failure signature is visible in build output and
+should be diagnosable from a CI log alone.
+
+Use `source` playbooks when the risk is visible from repository structure or
+code paths before a CI log exists. In the shipped CLI, `inspect` and `guard`
+are the main source-detector surfaces.
 
 ## Source playbook schema
 
@@ -52,6 +62,11 @@ The output keeps the full evidence split for explainability:
 - mitigations
 - suppressions
 - context
+
+Source playbooks currently live under `playbooks/bundled/source/`. Use
+`faultline inspect .` to exercise the full source detector against a repository
+tree and `faultline guard .` when you only want quiet, high-confidence local
+prevention findings.
 
 ## Suppressions
 

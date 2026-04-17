@@ -4,7 +4,7 @@ These examples are small, runnable inputs derived from real CI failures.
 
 Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result. The missing-executable example also includes checked-in `workflow` snapshots for local and agent handoff flows.
 
-They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog covers 67 diagnoses.
+They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog currently ships 74 playbooks.
 
 ## Included examples
 
@@ -48,6 +48,16 @@ Those commands correspond to these checked-in snapshots:
 - `examples/missing-executable.workflow.local.txt`
 - `examples/missing-executable.workflow.agent.json`
 
+To refresh the checked-in example outputs after a renderer, workflow, or playbook change:
+
+```bash
+./bin/faultline analyze examples/docker-auth.log --format markdown > examples/docker-auth.expected.md
+./bin/faultline analyze examples/missing-executable.log --format markdown > examples/missing-executable.expected.md
+./bin/faultline analyze examples/runtime-mismatch.log --format markdown > examples/runtime-mismatch.expected.md
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history > examples/missing-executable.workflow.local.txt
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history > examples/missing-executable.workflow.agent.json
+```
+
 For the full playbook behind a diagnosis:
 
 ```bash
@@ -62,7 +72,7 @@ For a quiet high-confidence local prevention check in a repository:
 
 ## Coverage snapshot
 
-The bundled catalog currently includes diagnoses such as:
+The bundled catalog currently includes 74 playbooks across 72 log diagnoses and 2 source-detector rules. Representative diagnoses include:
 
 - `docker-auth`, `git-auth`, `ssh-key-auth`, `aws-credentials`
 - `missing-executable`, `runtime-mismatch`, `dependency-drift`, `npm-ci-lockfile`, `poetry-lockfile-drift`

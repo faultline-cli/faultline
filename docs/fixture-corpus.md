@@ -4,13 +4,13 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 69
-- Accepted real fixtures: 80
-- Top-1 match rate: 100% (80/80)
-- Top-3 match rate: 100% (80/80)
+- Bundled playbooks: 74
+- Accepted real fixtures: 84
+- Top-1 match rate: 100% (84/84)
+- Top-3 match rate: 100% (84/84)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 7
+- Weak matches: 9 (10.7%)
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 
@@ -45,6 +45,12 @@ Recompute the broader combined corpus if needed:
 
 ```bash
 ./bin/faultline fixtures stats --class all
+```
+
+Verify the bundled catalog size exposed by the CLI:
+
+```bash
+./bin/faultline list | tail -n +2 | wc -l
 ```
 
 ## Source Of Truth

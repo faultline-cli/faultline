@@ -49,7 +49,7 @@ faultline analyze ci.log
 Prefer a pinned release instead of latest:
 
 ```bash
-VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
 faultline analyze ci.log
 ```
 
@@ -115,8 +115,8 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 
 ## Built on real failures
 
-- 69 bundled playbooks under `playbooks/bundled/`
-- 80 accepted real fixtures in the checked-in regression corpus
+- 74 bundled playbooks under `playbooks/bundled/`
+- 84 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal, JSON, and workflow output for automation
 
@@ -241,7 +241,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 Release archives are published on the GitHub Releases page.
 
 ```bash
-VERSION=v0.1.0
+VERSION=v0.2.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
@@ -280,6 +280,7 @@ More runnable examples and output snapshots are documented in `examples/README.m
 | `guard [path]` | Emit only high-confidence local prevention findings |
 | `explain <id>` | Show the full playbook for one diagnosis |
 | `list` | List bundled and installed playbooks |
+| `packs` | Install and list optional extra playbook packs |
 | `workflow [file]` | Generate a deterministic follow-up workflow |
 | `completion` | Generate shell completion scripts |
 
@@ -292,6 +293,8 @@ Useful flags:
 | `--mode quick\|detailed` | Control human-readable output detail |
 | `--top N` | Show the top N ranked diagnoses |
 | `--bayes` | Apply deterministic Bayesian-inspired reranking |
+| `--ci-annotations` | Emit GitHub Actions annotations during analysis |
+| `--delta-provider github-actions` | Compare against the last successful GitHub Actions run on the same branch |
 | `--git` | Enrich analysis with recent local git context |
 | `--repo <path>` | Choose the repository used by `--git` |
 
@@ -325,9 +328,9 @@ The same input and playbook set should produce the same result every time.
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats --class real` currently reports 80 accepted real fixtures.
+- `./bin/faultline fixtures stats --class real` currently reports 84 accepted real fixtures and a `weak_match` rate of `0.107` (9/84).
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
-- The bundled catalog currently ships 69 playbooks under `playbooks/bundled/`.
+- The bundled catalog currently ships 74 playbooks under `playbooks/bundled/`.
 - Release validation runs `make test`, `make review`, `make fixture-check`, release archive smoke tests, and Docker smoke tests.
 
 These numbers describe the checked-in regression corpus, not the full space of CI failures.

@@ -7,6 +7,7 @@ Faultline's core CLI stays provider-agnostic. A GitHub-specific integration shou
 The recommended surfaces for a separate `faultline-action` repository are:
 
 - human summary: `faultline analyze <logfile> --format markdown`
+- GitHub annotations: `faultline analyze <logfile> --format markdown --ci-annotations`
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
 - optional evidence-fusion metadata: `faultline analyze <logfile> --json --bayes`
@@ -38,8 +39,13 @@ Using a local binary:
 
 ```bash
 faultline analyze build.log --format markdown > faultline-summary.md
+faultline analyze build.log --format markdown --ci-annotations > faultline-summary-annotated.md
 faultline analyze build.log --json > faultline-analysis.json
 faultline analyze build.log --json --bayes > faultline-analysis-bayes.json
+GITHUB_TOKEN="$GITHUB_TOKEN" \
+GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+GITHUB_REF_NAME="$GITHUB_REF_NAME" \
+GITHUB_RUN_ID="$GITHUB_RUN_ID" \
 faultline analyze build.log --json --bayes --delta-provider github-actions > faultline-analysis-delta.json
 faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
@@ -48,9 +54,24 @@ Using Docker:
 
 ```bash
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --format markdown > faultline-summary.md
+docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --format markdown --ci-annotations > faultline-summary-annotated.md
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --json > faultline-analysis.json
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --json --bayes > faultline-analysis-bayes.json
 docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --json --mode agent > faultline-workflow.json
+```
+
+## Example Wrapper Step
+
+```yaml
+- name: Analyze failing job with Faultline
+  if: failure()
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
+    faultline analyze build.log --json --bayes > faultline-analysis.json
+    faultline analyze build.log --json --bayes --delta-provider github-actions > faultline-analysis-delta.json
+    faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
 ## Notes For v0.2.0
