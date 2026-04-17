@@ -61,6 +61,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `internal/output` owns text formatting and JSON serialization.
 - `internal/workflow` owns deterministic next-step planning for local and agentic workflows.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
+- `internal/repo/topology` owns CODEOWNERS parsing, repository ownership graph construction, and topology signal derivation.
 - `internal/fixtures` owns deterministic fixture corpora, source adapters, curation workflow, and regression gates.
 - `internal/playbooks` also owns playbook overlap reporting for deterministic review of shared patterns and exclusions.
 - `playbooks/` owns bundled and external-pack boundaries and should contain only deterministic rule data or pack metadata.

@@ -32,6 +32,7 @@ func featureSet(weights weightsFile, inputs Inputs, result model.Result, baselin
 		scalarFeature(weights, "mitigation_presence", mitigationPresence(result), "mitigations or suppressions weaken the match", mitigationRefs(result)),
 	}
 	features = append(features, deltaPlaybookFeatures(inputs, result, delta)...)
+	features = append(features, topologyPlaybookFeatures(inputs, result)...)
 
 	out := make([]feature, 0, len(features))
 	for _, item := range features {
@@ -534,4 +535,63 @@ func jaccard(a, b []string) float64 {
 		return 0
 	}
 	return float64(inter) / float64(union)
+}
+
+// topologyPlaybookFeatures generates scoring contributions from topology
+// signals. It is only active for playbooks that declare RequiresTopology or
+// TopologyBoost entries.
+func topologyPlaybookFeatures(inputs Inputs, result model.Result) []feature {
+	pb := result.Playbook
+	if !pb.RequiresTopology && len(pb.TopologyBoost) == 0 {
+		return nil
+	}
+
+	topoSignals := topologySignalSet(inputs.RepoState)
+
+	var out []feature
+
+	// Penalise a topology-required playbook when no topology signals fired.
+	if pb.RequiresTopology && len(topoSignals) == 0 {
+		out = append(out, feature{
+			Name:   "topology_required_missing",
+			Value:  1,
+			Weight: -1.0,
+			Reason: "candidate requires topology context but no topology signals were observed",
+		})
+		return out
+	}
+
+	for _, boost := range pb.TopologyBoost {
+		signal := strings.TrimSpace(boost.Signal)
+		if signal == "" {
+			continue
+		}
+		if _, ok := topoSignals[signal]; !ok {
+			continue
+		}
+		weight := boost.Weight
+		if weight == 0 {
+			weight = 1
+		}
+		out = append(out, feature{
+			Name:   "topology_boost:" + signal,
+			Value:  1,
+			Weight: round(weight),
+			Reason: "topology signal " + signal + " aligns with the candidate",
+		})
+	}
+	return out
+}
+
+// topologySignalSet converts the topology signal slice in RepoState into a
+// fast lookup map.
+func topologySignalSet(state *RepoState) map[string]struct{} {
+	if state == nil || len(state.TopologySignals) == 0 {
+		return nil
+	}
+	out := make(map[string]struct{}, len(state.TopologySignals))
+	for _, s := range state.TopologySignals {
+		out[strings.TrimSpace(s)] = struct{}{}
+	}
+	return out
 }

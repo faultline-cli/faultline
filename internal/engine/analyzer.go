@@ -20,6 +20,7 @@ import (
 	"faultline/internal/engine/hypothesis"
 	"faultline/internal/model"
 	"faultline/internal/repo"
+	"faultline/internal/repo/topology"
 	"faultline/internal/scoring"
 )
 
@@ -365,6 +366,8 @@ func (e *Engine) loadRepoSnapshotFromPath(repoPath string, changeSet detectors.C
 	if len(state.ChangedFiles) == 0 {
 		state.ChangedFiles = append([]string(nil), state.RecentFiles...)
 	}
+	// Load CODEOWNERS and derive topology signals (best-effort).
+	state.TopologySignals = loadTopologySignals(scanner.Root, state.ChangedFiles)
 	return &repoSnapshot{
 		root:    scanner.Root,
 		commits: commits,
@@ -385,7 +388,48 @@ func correlateSnapshot(snapshot *repoSnapshot, result model.Result) *model.RepoC
 		return nil
 	}
 	repoCtx := repo.Correlate(snapshot.root, result.Playbook.Category, result.Playbook.ID, snapshot.commits, snapshot.signals)
+	// Attach topology signals when they were derived.
+	if snapshot.state != nil && len(snapshot.state.TopologySignals) > 0 {
+		repoCtx.Topology = toModelTopologySignals(snapshot.state.TopologySignals)
+	}
 	return &repoCtx
+}
+
+// loadTopologySignals parses CODEOWNERS from root, builds an ownership graph,
+// and derives topology signals from the given changed files. The failure files
+// are approximated from the hotspot files. Errors are silently ignored so
+// topology never blocks analysis.
+func loadTopologySignals(root string, changedFiles []string) []string {
+	rules, err := topology.ParseCODEOWNERS(root)
+	if err != nil || len(rules) == 0 {
+		return nil
+	}
+	fsys := os.DirFS(root)
+	graph := topology.BuildGraph(root, rules, fsys)
+	// Use hotspot dirs as proxies for failure-file locations.
+	sigs := topology.DeriveSignals(graph, changedFiles, nil)
+	return sigs.ActiveSignals
+}
+
+// toModelTopologySignals converts active topology signal names into the model
+// representation stored on RepoContext.
+func toModelTopologySignals(active []string) *model.TopologySignals {
+	ts := &model.TopologySignals{
+		ActiveSignals: append([]string(nil), active...),
+	}
+	for _, s := range active {
+		switch s {
+		case topology.SignalBoundaryCrossed:
+			ts.BoundaryCrossed = true
+		case topology.SignalUpstreamChanged:
+			ts.UpstreamChanged = true
+		case topology.SignalOwnershipMismatch:
+			ts.OwnershipMismatch = true
+		case topology.SignalFailureClustered:
+			ts.FailureClustered = true
+		}
+	}
+	return ts
 }
 
 func stateFromChangeSet(root string, changeSet detectors.ChangeSet) *scoring.RepoState {
@@ -412,6 +456,7 @@ func mergeRepoStates(states ...*scoring.RepoState) *scoring.RepoState {
 			copyState.HotspotDirs = append([]string(nil), state.HotspotDirs...)
 			copyState.HotfixSignals = append([]string(nil), state.HotfixSignals...)
 			copyState.DriftSignals = append([]string(nil), state.DriftSignals...)
+			copyState.TopologySignals = append([]string(nil), state.TopologySignals...)
 			copyState.TestsNewlyFailing = append([]string(nil), state.TestsNewlyFailing...)
 			copyState.ErrorsAdded = append([]string(nil), state.ErrorsAdded...)
 			copyState.EnvDiff = cloneDeltaEnvDiff(state.EnvDiff)
@@ -429,6 +474,7 @@ func mergeRepoStates(states ...*scoring.RepoState) *scoring.RepoState {
 		merged.HotspotDirs = dedupeSortedStrings(append(merged.HotspotDirs, state.HotspotDirs...))
 		merged.HotfixSignals = dedupeSortedStrings(append(merged.HotfixSignals, state.HotfixSignals...))
 		merged.DriftSignals = dedupeSortedStrings(append(merged.DriftSignals, state.DriftSignals...))
+		merged.TopologySignals = dedupeSortedStrings(append(merged.TopologySignals, state.TopologySignals...))
 		merged.TestsNewlyFailing = dedupeSortedStrings(append(merged.TestsNewlyFailing, state.TestsNewlyFailing...))
 		merged.ErrorsAdded = dedupeSortedStrings(append(merged.ErrorsAdded, state.ErrorsAdded...))
 		for key, value := range state.EnvDiff {

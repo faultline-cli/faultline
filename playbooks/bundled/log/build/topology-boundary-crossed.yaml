@@ -1,0 +1,81 @@
+id: topology-boundary-crossed
+title: Cross-ownership boundary failure
+category: build
+severity: high
+base_score: 0.8
+requires_topology: true
+tags: [topology, monorepo, codeowners, boundary, cross-team]
+stage_hints: [build, test]
+summary: |-
+  A change in one ownership zone has broken code in a separate ownership zone,
+  suggesting the failure originates at a cross-team integration boundary rather
+  than within a single component.
+diagnosis: |-
+  ## Diagnosis
+
+  Topology analysis detected that the recently changed files belong to a
+  different CODEOWNERS zone than the files producing the observed errors. This
+  pattern is characteristic of a cross-boundary regression:
+
+  - A shared library or internal API was modified.
+  - Downstream consumers in another team's codebase depend on the changed
+    interface.
+  - The change was not coordinated with, or reviewed by, the owner of the
+    consuming code.
+
+  Common root causes:
+  - **Unannounced interface change** — a function signature, type, or exported
+    constant was altered without a matching update in dependent packages.
+  - **Missing cross-owner LGTM** — the CODEOWNERS file required review from the
+    impacted owner, but the review was bypassed or the owner was not notified.
+  - **Implicit dependency** — the consuming code assumes undocumented
+    implementation details that changed.
+fix: |-
+  ## Fix steps
+
+  1. Identify the ownership boundary:
+     ```
+     cat CODEOWNERS | grep -E "(the-changed-dir|the-failing-dir)"
+     ```
+  2. Check whether the changed API or module is still backward-compatible:
+     ```bash
+     git diff HEAD~1 -- <changed-path>
+     ```
+  3. Update the downstream consumer to match the new interface, or revert the
+     upstream change until the consuming team can coordinate.
+  4. If the upstream change is intentional, open a PR that includes both the
+     change and the downstream fix, requesting LGTM from the relevant owners.
+  5. Add a test at the boundary (integration or contract test) to catch future
+     regressions.
+validation: |-
+  ## Validation
+
+  - Build succeeds end-to-end across both ownership zones.
+  - The CODEOWNERS-required reviewers have approved the combined change.
+  - A boundary test exists and passes in CI.
+topology_boost:
+  - signal: topology.boundary.crossed
+    weight: 1.5
+  - signal: topology.upstream.changed
+    weight: 0.8
+match:
+  any:
+    - "undefined:"
+    - "ImportError:"
+    - "cannot find module"
+    - "no such file or directory"
+    - "package .* is not in GOROOT"
+    - "Module not found:"
+    - "does not implement"
+    - "has no exported field or method"
+    - "cannot use .* as type"
+workflow:
+  likely_files:
+    - CODEOWNERS
+    - go.mod
+    - package.json
+    - pyproject.toml
+  verify:
+    - "Confirm ownership zones with: cat CODEOWNERS"
+    - "Check API diff: git diff HEAD~1 -- <changed-dir>"
+    - "Build both affected zones: go build ./... or npm run build"

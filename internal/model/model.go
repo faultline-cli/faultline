@@ -5,33 +5,61 @@ package model
 
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
-	ID            string         `yaml:"id" json:"id"`
-	Title         string         `yaml:"title" json:"title"`
-	Category      string         `yaml:"category" json:"category"`
-	Severity      string         `yaml:"severity" json:"severity"`
-	Detector      string         `yaml:"detector,omitempty" json:"detector,omitempty"`
-	BaseScore     float64        `yaml:"base_score" json:"base_score"`
-	Tags          []string       `yaml:"tags" json:"tags"`
-	StageHints    []string       `yaml:"stage_hints" json:"stage_hints"`
-	Match         MatchSpec      `yaml:"match" json:"match"`
-	Source        SourceSpec     `yaml:"source,omitempty" json:"source,omitempty"`
-	Summary       string         `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Diagnosis     string         `yaml:"diagnosis,omitempty" json:"diagnosis,omitempty"`
-	Fix           string         `yaml:"fix,omitempty" json:"fix,omitempty"`
-	Validation    string         `yaml:"validation,omitempty" json:"validation,omitempty"`
-	WhyItMatters  string         `yaml:"why_it_matters,omitempty" json:"why_it_matters,omitempty"`
-	RequiresDelta bool           `yaml:"requires_delta,omitempty" json:"requires_delta,omitempty"`
-	DeltaBoost    []DeltaBoost   `yaml:"delta_boost,omitempty" json:"delta_boost,omitempty"`
-	Workflow      WorkflowSpec   `yaml:"workflow" json:"workflow"`
-	Metadata      PlaybookMeta   `yaml:"metadata,omitempty" json:"metadata,omitempty"`
-	Scoring       ScoringConfig  `yaml:"scoring,omitempty" json:"scoring,omitempty"`
-	Contextual    ContextPolicy  `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
-	Hypothesis    HypothesisSpec `yaml:"hypothesis,omitempty" json:"hypothesis,omitempty"`
+	ID               string          `yaml:"id" json:"id"`
+	Title            string          `yaml:"title" json:"title"`
+	Category         string          `yaml:"category" json:"category"`
+	Severity         string          `yaml:"severity" json:"severity"`
+	Detector         string          `yaml:"detector,omitempty" json:"detector,omitempty"`
+	BaseScore        float64         `yaml:"base_score" json:"base_score"`
+	Tags             []string        `yaml:"tags" json:"tags"`
+	StageHints       []string        `yaml:"stage_hints" json:"stage_hints"`
+	Match            MatchSpec       `yaml:"match" json:"match"`
+	Source           SourceSpec      `yaml:"source,omitempty" json:"source,omitempty"`
+	Summary          string          `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Diagnosis        string          `yaml:"diagnosis,omitempty" json:"diagnosis,omitempty"`
+	Fix              string          `yaml:"fix,omitempty" json:"fix,omitempty"`
+	Validation       string          `yaml:"validation,omitempty" json:"validation,omitempty"`
+	WhyItMatters     string          `yaml:"why_it_matters,omitempty" json:"why_it_matters,omitempty"`
+	RequiresDelta    bool            `yaml:"requires_delta,omitempty" json:"requires_delta,omitempty"`
+	DeltaBoost       []DeltaBoost    `yaml:"delta_boost,omitempty" json:"delta_boost,omitempty"`
+	RequiresTopology bool            `yaml:"requires_topology,omitempty" json:"requires_topology,omitempty"`
+	TopologyBoost    []TopologyBoost `yaml:"topology_boost,omitempty" json:"topology_boost,omitempty"`
+	Workflow         WorkflowSpec    `yaml:"workflow" json:"workflow"`
+	Metadata         PlaybookMeta    `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+	Scoring          ScoringConfig   `yaml:"scoring,omitempty" json:"scoring,omitempty"`
+	Contextual       ContextPolicy   `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
+	Hypothesis       HypothesisSpec  `yaml:"hypothesis,omitempty" json:"hypothesis,omitempty"`
 }
 
 type DeltaBoost struct {
 	Signal string  `yaml:"signal,omitempty" json:"signal,omitempty"`
 	Weight float64 `yaml:"weight,omitempty" json:"weight,omitempty"`
+}
+
+// TopologyBoost amplifies (or discounts) a playbook score when the given
+// topology signal is active for the current repository context.
+type TopologyBoost struct {
+	Signal string  `yaml:"signal,omitempty" json:"signal,omitempty"`
+	Weight float64 `yaml:"weight,omitempty" json:"weight,omitempty"`
+}
+
+// TopologyNode represents a single path element in the repository ownership
+// graph. It is derived from CODEOWNERS and the top-level directory structure.
+type TopologyNode struct {
+	Path   string   `json:"path"`
+	Owners []string `json:"owners,omitempty"`
+}
+
+// TopologySignals holds the structural signals derived from the repository
+// ownership graph for a given analysis context. Only populated when --git
+// is active and a CODEOWNERS file is present.
+type TopologySignals struct {
+	ActiveSignals     []string `json:"active_signals,omitempty"`
+	OwnerZones        []string `json:"owner_zones,omitempty"`
+	BoundaryCrossed   bool     `json:"boundary_crossed,omitempty"`
+	UpstreamChanged   bool     `json:"upstream_changed,omitempty"`
+	OwnershipMismatch bool     `json:"ownership_mismatch,omitempty"`
+	FailureClustered  bool     `json:"failure_clustered,omitempty"`
 }
 
 // MatchSpec holds declarative match patterns for a Playbook.
@@ -352,13 +380,14 @@ type Result struct {
 // RepoContext holds git repository context enrichment from a recent commit window.
 // Only populated when the --git flag is used.
 type RepoContext struct {
-	RepoRoot           string       `json:"repo_root"`
-	RecentFiles        []string     `json:"recent_files,omitempty"`
-	RelatedCommits     []RepoCommit `json:"related_commits,omitempty"`
-	HotspotDirectories []string     `json:"hotspot_directories,omitempty"`
-	CoChangeHints      []string     `json:"co_change_hints,omitempty"`
-	HotfixSignals      []string     `json:"hotfix_signals,omitempty"`
-	DriftSignals       []string     `json:"drift_signals,omitempty"`
+	RepoRoot           string           `json:"repo_root"`
+	RecentFiles        []string         `json:"recent_files,omitempty"`
+	RelatedCommits     []RepoCommit     `json:"related_commits,omitempty"`
+	HotspotDirectories []string         `json:"hotspot_directories,omitempty"`
+	CoChangeHints      []string         `json:"co_change_hints,omitempty"`
+	HotfixSignals      []string         `json:"hotfix_signals,omitempty"`
+	DriftSignals       []string         `json:"drift_signals,omitempty"`
+	Topology           *TopologySignals `json:"topology,omitempty"`
 }
 
 // RepoCommit is a trimmed commit for output.

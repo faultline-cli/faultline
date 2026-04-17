@@ -16,6 +16,7 @@ type RepoState struct {
 	HotspotDirs       []string
 	HotfixSignals     []string
 	DriftSignals      []string
+	TopologySignals   []string
 	Provider          string
 	TestsNewlyFailing []string
 	ErrorsAdded       []string

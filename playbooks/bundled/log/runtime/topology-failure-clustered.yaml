@@ -1,0 +1,71 @@
+id: topology-failure-clustered
+title: Failures clustered within a single component boundary
+category: runtime
+severity: medium
+base_score: 0.6
+requires_topology: true
+tags: [topology, monorepo, cluster, component, localised]
+stage_hints: [test, build, runtime]
+summary: |-
+  Multiple failures are concentrated within a single directory or package
+  boundary, suggesting the root cause is localised to one component rather than
+  spread across the codebase.
+diagnosis: |-
+  ## Diagnosis
+
+  Topology analysis shows that all observed failures share a common directory
+  prefix, indicating the regression is confined to a single component or
+  subsystem boundary. This is in contrast to a cross-boundary failure where
+  multiple ownership zones are affected.
+
+  Common root causes:
+  - **Cascading intra-component failures** — a single bad change to a core
+    utility inside the component caused multiple dependents within it to fail.
+  - **Missing test fixture or test data** — the component relies on a resource
+    that no longer exists or was renamed.
+  - **Initialisation or bootstrapping error** — the component fails at startup,
+    causing every function that depends on it to also fail.
+  - **Race condition or shared state** — concurrent test execution is hitting
+    shared mutable state inside the component.
+fix: |-
+  ## Fix steps
+
+  1. Identify the common cluster root:
+     ```bash
+     # Find the shared directory prefix from the failing test paths
+     go test ./... 2>&1 | grep FAIL
+     ```
+  2. Check the most-recent change inside that directory:
+     ```bash
+     git log --oneline -10 -- <cluster-dir>
+     ```
+  3. Run only the failing component's tests in isolation to confirm the
+     root cause is localised:
+     ```bash
+     go test -v ./<cluster-dir>/...
+     ```
+  4. Look for changes to initialisation code, global state, or shared fixtures
+     within the cluster that could cause fan-out failures.
+  5. Fix the root cause and ensure the full component test suite passes.
+validation: |-
+  ## Validation
+
+  - All tests within the clustered directory pass.
+  - No new failures have appeared in adjacent directories.
+  - CI passes end-to-end.
+topology_boost:
+  - signal: topology.failure.clustered
+    weight: 1.3
+match:
+  any:
+    - "--- FAIL:"
+    - "FAILURES:"
+    - "multiple failures in"
+    - "suite failed"
+    - "tests failed in"
+workflow:
+  likely_files: []
+  verify:
+    - "Identify the failure cluster: failing test output | grep -E 'FAIL|panic'"
+    - "Check recent changes in the cluster: git log --oneline -10 -- <cluster-dir>"
+    - "Run isolated component tests: go test -v ./<cluster-dir>/..."

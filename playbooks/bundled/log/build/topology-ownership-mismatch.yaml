@@ -1,0 +1,70 @@
+id: topology-ownership-mismatch
+title: Change outside component ownership caused failure
+category: build
+severity: medium
+base_score: 0.6
+requires_topology: true
+tags: [topology, codeowners, ownership, monorepo, review-gate]
+stage_hints: [build, test, ci]
+summary: |-
+  The files that were recently changed are owned by a different team than the
+  files where the failure originated, indicating that an out-of-team edit
+  introduced a regression in code the editor does not own.
+diagnosis: |-
+  ## Diagnosis
+
+  CODEOWNERS analysis shows that the recently changed files are in a different
+  ownership zone than the failing component. This typically means one of:
+
+  - A developer edited code outside their area of ownership, introducing a
+    subtle incompatibility.
+  - A tooling or infra change (e.g. shared build scripts, Docker base images,
+    Go workspace, monorepo configuration) had an unintended side effect on a
+    downstream component.
+  - A code-generation step or auto-formatter was run without checking the
+    downstream impact.
+
+  In all cases, the owning team was not the author of the change, so the normal
+  review signal for that component was absent when the change landed.
+fix: |-
+  ## Fix steps
+
+  1. Identify the ownership mismatch:
+     ```
+     git log --name-only -5 | head -30
+     cat CODEOWNERS
+     ```
+  2. Determine whether the intent was to change the failing component's
+     behaviour or whether it was an unintended side effect.
+  3. Notify the owning team and open a joint review or revert the change.
+  4. If the change is intentional, add the downstream owner as a required
+     reviewer in CODEOWNERS and ensure they approve before merge.
+  5. Add a regression test in the failing component to pin the relevant
+     behaviour.
+validation: |-
+  ## Validation
+
+  - The failing component's owner has reviewed and approved the change.
+  - CI passes for the full test suite of both zones.
+  - CODEOWNERS coverage is reviewed for any newly shared paths.
+topology_boost:
+  - signal: topology.ownership.mismatch
+    weight: 1.4
+  - signal: topology.boundary.crossed
+    weight: 0.6
+match:
+  any:
+    - "CODEOWNERS"
+    - "code owners"
+    - "required review"
+    - "requires review from"
+    - "not authorized to merge"
+    - "protection rules"
+    - "branch protection"
+workflow:
+  likely_files:
+    - CODEOWNERS
+  verify:
+    - "Review recent changes outside owner zone: git log --name-only -10"
+    - "Check CODEOWNERS coverage: cat CODEOWNERS"
+    - "Run full test suite for the failing component"
