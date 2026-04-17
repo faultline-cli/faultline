@@ -1,0 +1,56 @@
+id: github-actions-checkout-417-s1-3e275ca3d3501ed3
+title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+fixture_class: real
+normalized_log: |-
+    Run actions/checkout@v2
+    with:
+    repository: tectonic/infrastructure-helm
+    token: ***
+    path: infrastructure-helm
+    fetch-depth: 0
+    ssh-strict: true
+    persist-credentials: true
+    clean: true
+    lfs: false
+    submodules: false
+    env:
+    XDG_DATA_HOME: /root/.local/share
+    KUBECONFIG: /root/kubeconfig
+    AWS_DEFAULT_REGION: eu-central-1
+    AWS_REGION: eu-central-1
+    AWS_ACCESS_KEY_ID: ***
+    AWS_SECRET_ACCESS_KEY: ***
+    /usr/bin/docker exec 391d5591308f1b002e6fa53e803efc54eab81186507cdf92652262f21b79d9ef sh -c "cat /etc/*release | grep ^ID"
+    Syncing repository: tectonic/infrastructure-helm
+    Getting Git version info
+    Initializing the repository
+    Disabling automatic garbage collection
+    Setting up auth
+    Determining the default branch
+    Retrieving the default branch name
+    Not Found
+    Waiting 13 seconds before trying again
+    Retrieving the default branch name
+    Not Found
+    Waiting 17 seconds before trying again
+    Retrieving the default branch name
+    Error: Not Found
+expectation:
+    expected_playbook: git-shallow-checkout
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/checkout/issues/417
+    repository: actions/checkout
+    issue_number: 417
+    comment_id: "756399860"
+    title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+    author: arhue
+    snippet: 1
+    fetched_at: "2026-04-17T23:27:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:39Z"
+fingerprint: 3e275ca3d3501ed3

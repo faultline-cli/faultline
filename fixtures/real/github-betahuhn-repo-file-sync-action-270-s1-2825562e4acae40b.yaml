@@ -1,0 +1,27 @@
+id: github-betahuhn-repo-file-sync-action-270-s1-2825562e4acae40b
+title: Syncing through forked repo hits "shallow update not allowed" after the first pull request is merged into target repo
+fixture_class: real
+normalized_log: |-
+    I synced with `FORK` parameter referring to [Fork and pull request workflow](https://github.com/BetaHuhn/repo-file-sync-action#fork-and-pull-request-workflow).
+    The action could successfully create the first pull request targeting to the target repo through forked repo. Once the first pull request is merged, when I push some change to the sync file next time in source repo the action run failed due to `shallow update not allowed` error, like https://github.com/GangWang01/Experiment/actions/runs/3443890910.
+    The error is a result of main branch of forked repo is some commits behind target repo. To work around this problem, I have to manually sync forked repo from its upstream(the target repo). However it doesn't make sense for the purpose of this action.
+expectation:
+    expected_playbook: git-shallow-checkout
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/BetaHuhn/repo-file-sync-action/issues/270
+    repository: BetaHuhn/repo-file-sync-action
+    issue_number: 270
+    title: Syncing through forked repo hits "shallow update not allowed" after the first pull request is merged into target repo
+    labels:
+        - bug
+    author: GangWang01
+    snippet: 1
+    fetched_at: "2026-04-17T23:32:25Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:39Z"
+fingerprint: 2825562e4acae40b

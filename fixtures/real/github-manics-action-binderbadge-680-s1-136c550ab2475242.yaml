@@ -1,0 +1,27 @@
+id: github-manics-action-binderbadge-680-s1-136c550ab2475242
+title: 'HttpError: Resource not accessible by integration'
+fixture_class: real
+normalized_log: |-
+    HttpError: Resource not accessible by integration - https://docs.github.com/rest/issues/comments#create-an-issue-comment
+    at /home/runner/work/_actions/manics/action-binderbadge/v3.0.0/node_modules/@actions/github/node_modules/@octokit/request/dist-node/index.js:124:1
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at addOrUpdateComment (/home/runner/work/_actions/manics/action-binderbadge/v3.0.0/lib/binder.js:149:1)
+    at addBinderComment (/home/runner/work/_actions/manics/action-binderbadge/v3.0.0/lib/binder.js:117:1)
+expectation:
+    expected_playbook: github-actions-permission
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/manics/action-binderbadge/issues/680
+    repository: manics/action-binderbadge
+    issue_number: 680
+    title: 'HttpError: Resource not accessible by integration'
+    author: mfisher87
+    snippet: 1
+    fetched_at: "2026-04-17T23:32:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:54Z"
+fingerprint: 136c550ab2475242

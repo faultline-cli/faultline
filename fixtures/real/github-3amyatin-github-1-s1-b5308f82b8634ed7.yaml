@@ -1,0 +1,26 @@
+id: github-3amyatin-github-1-s1-b5308f82b8634ed7
+title: 'ci: workflow unhealthy — pytest no tests collected (telegram_bot_template)'
+fixture_class: real
+normalized_log: |-
+    ============================= test session starts ==============================
+    collected 0 items
+    ============================ no tests ran in 0.01s =============================
+    ##[error]Process completed with exit code 5.
+expectation:
+    expected_playbook: pytest-no-tests
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/3amyatin/.github/issues/1
+    repository: 3amyatin/.github
+    issue_number: 1
+    title: 'ci: workflow unhealthy — pytest no tests collected (telegram_bot_template)'
+    author: github-actions[bot]
+    snippet: 1
+    fetched_at: "2026-04-17T23:33:26Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:53Z"
+fingerprint: b5308f82b8634ed7

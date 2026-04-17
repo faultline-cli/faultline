@@ -1,0 +1,30 @@
+id: github-aormsby-fork-sync-with-upstream-action-66-s1-509ee0075dac9d28
+title: shallow update not allowed
+fixture_class: real
+normalized_log: |-
+    > - name: Checkout target repo
+    > uses: actions/checkout@v3
+    > with:
+    > ref: MOODLE_401_STABLE
+    > persist-credentials: false
+    > fetch-depth: 0
+    >
+expectation:
+    expected_playbook: git-shallow-checkout
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/aormsby/Fork-Sync-With-Upstream-action/issues/66
+    repository: aormsby/Fork-Sync-With-Upstream-action
+    issue_number: 66
+    comment_id: "1423452578"
+    title: shallow update not allowed
+    author: aidenpearce001
+    snippet: 1
+    fetched_at: "2026-04-17T23:32:25Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:39Z"
+fingerprint: 509ee0075dac9d28

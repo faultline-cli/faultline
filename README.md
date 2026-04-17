@@ -119,7 +119,7 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 ## Built on real failures
 
 - 77 bundled playbooks under `playbooks/bundled/`
-- 87 accepted real fixtures in the checked-in regression corpus
+- 103 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal, JSON, and workflow output for automation
 
@@ -347,7 +347,7 @@ The same input and playbook set should produce the same result every time.
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats --class real` currently reports 87 accepted real fixtures and a `weak_match` rate of `0.115` (10/87).
+- `./bin/faultline fixtures stats --class real` currently reports 103 accepted real fixtures and a `weak_match` rate of `0.107` (11/103).
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
 - The bundled catalog currently ships 77 playbooks under `playbooks/bundled/`.
 - Release validation runs `make test`, `make review`, `make fixture-check`, `make cli-smoke`, release archive smoke tests, and Docker smoke tests.

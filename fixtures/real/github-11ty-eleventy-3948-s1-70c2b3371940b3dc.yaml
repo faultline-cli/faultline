@@ -1,0 +1,44 @@
+id: github-11ty-eleventy-3948-s1-70c2b3371940b3dc
+title: Large project, JavaScript heap out of memory
+fixture_class: real
+normalized_log: |-
+    <--- Last few GCs --->
+    [32711:0x456f1000] 1869082 ms: Scavenge 16180.2 (16513.7) -> 16180.2 (16513.7) MB, pooled: 0 MB, 240.00 / 0.00 ms (average mu = 0.992, current mu = 0.990) allocation failure;
+    [32711:0x456f1000] 1869317 ms: Scavenge 16180.2 (16513.7) -> 16180.2 (16513.7) MB, pooled: 0 MB, 235.14 / 0.00 ms (average mu = 0.992, current mu = 0.990) allocation failure;
+    <--- JS stacktrace --->
+    FATAL ERROR: Scavenger: semi-space copy Allocation failed - JavaScript heap out of memory
+    ----- Native stack trace -----
+    1: 0xe1603a node::OOMErrorHandler(char const*, v8::OOMDetails const&) [node]
+    2: 0x11e3540 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+    3: 0x11e3817 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [node]
+    4: 0x14110f5 [node]
+    5: 0x14a13f4 heap::base::SlotCallbackResult v8::internal::Scavenger::ScavengeObject<v8::internal::FullHeapObjectSlot>(v8::internal::FullHeapObjectSlot, v8::internal::Tagged<v8::internal::HeapObject>) [node]
+    6: 0x14a1a5f void v8::internal::BodyDescriptorBase::IteratePointers<v8::internal::ScavengeVisitor>(v8::internal::Tagged<v8::internal::HeapObject>, int, int, v8::internal::ScavengeVisitor*) [node]
+    7: 0x14ad40e v8::internal::Scavenger::Process(v8::JobDelegate*) [node]
+    8: 0x14ae1ef v8::internal::ScavengerCollector::JobTask::ProcessItems(v8::JobDelegate*, v8::internal::Scavenger*) [node]
+    9: 0x14ae35a v8::internal::ScavengerCollector::JobTask::Run(v8::JobDelegate*) [node]
+    10: 0x21ce548 v8::platform::DefaultJobWorker::Run() [node]
+    11: 0xffba04 [node]
+    12: 0x7fafc60821f5 [/lib/x86_64-linux-gnu/libc.so.6]
+    13: 0x7fafc61028dc [/lib/x86_64-linux-gnu/libc.so.6]
+expectation:
+    expected_playbook: node-out-of-memory
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/11ty/eleventy/issues/3948
+    repository: 11ty/eleventy
+    issue_number: 3948
+    title: Large project, JavaScript heap out of memory
+    labels:
+        - needs-test-case
+        - "feature: \U0001F3C7 performance"
+    author: uuksu
+    snippet: 1
+    fetched_at: "2026-04-17T23:32:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:53Z"
+fingerprint: 70c2b3371940b3dc

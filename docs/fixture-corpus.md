@@ -5,12 +5,12 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 ## Current Snapshot
 
 - Bundled playbooks: 77
-- Accepted real fixtures: 87
-- Top-1 match rate: 100% (87/87)
-- Top-3 match rate: 100% (87/87)
+- Accepted real fixtures: 103
+- Top-1 match rate: 100% (103/103)
+- Top-3 match rate: 100% (103/103)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 10 (11.5%)
+- Weak matches: 11 (10.7%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 

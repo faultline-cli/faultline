@@ -1,0 +1,25 @@
+id: github-pnpm-pnpm-7672-s1-2159d155b635ab32
+title: '`pnpm install --frozen-lockfile` results in ERR_PNPM_OUTDATED_LOCKFILE on detached git head but not on branch'
+fixture_class: real
+normalized_log: The issue with this is that when running `pnpm install --frozen-lockfile`, because we're in a detached head state it seems pnpm cannot detect the branch so we get the error `ERR_PNPM_OUTDATED_LOCKFILE Cannot install with "frozen-lockfile" because pnpm-lock.yaml is not up to date with ...`.
+expectation:
+    expected_playbook: pnpm-lockfile
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/pnpm/pnpm/issues/7672
+    repository: pnpm/pnpm
+    issue_number: 7672
+    comment_id: "3555544862"
+    title: '`pnpm install --frozen-lockfile` results in ERR_PNPM_OUTDATED_LOCKFILE on detached git head but not on branch'
+    labels:
+        - 'type: bug'
+    author: nonken
+    snippet: 1
+    fetched_at: "2026-04-17T23:33:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T23:36:54Z"
+fingerprint: 2159d155b635ab32
