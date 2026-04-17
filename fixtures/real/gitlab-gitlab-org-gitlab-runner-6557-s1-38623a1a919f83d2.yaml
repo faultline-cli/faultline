@@ -1,0 +1,31 @@
+id: gitlab-gitlab-org-gitlab-runner-6557-s1-38623a1a919f83d2
+title: Response status "403 Forbidden" when uploading artifacts
+fixture_class: real
+normalized_log: |-
+    ERROR: Uploading artifacts to coordinator... forbidden id=5843 responseStatus=403 Forbidden status=403 Forbidden token=****
+    FATAL: permission denied
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    disallowed_playbooks:
+        - permission-denied
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/6557
+    repository: gitlab-org/gitlab-runner
+    issue_number: 6557
+    title: Response status "403 Forbidden" when uploading artifacts
+    labels:
+        - '[Deprecated] Category:Runner'
+        - devops::verify
+        - group::runner core
+    author: danielmorlock
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 38623a1a919f83d2

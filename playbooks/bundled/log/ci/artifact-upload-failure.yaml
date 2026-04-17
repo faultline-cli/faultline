@@ -16,11 +16,11 @@ fix: |-
 
   1. Check whether the producing job actually ran and exited zero before the upload step.
   2. Verify the artifact path glob matches the actual output location (e.g., `dist/**` vs `build/dist/**`).
-  3. For GitHub Actions: check artifact retention settings (default 90 days) and confirm the artifact name is consistent between upload and download steps.
-  4. For GitLab CI: verify `artifacts.paths` and `artifacts.expire_in` in the producing job's config.
-  5. For CircleCI: confirm `store_artifacts` path matches the actual build output directory.
-  6. For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile.
-  7. Increase the artifact retention period if downstream jobs run long after the producing job.
+  3. For GitHub Actions: if the log says `No files were found with the provided path`, resolve the path from the repository root or upload from an absolute path that exists in the runner's filesystem.
+  4. For GitHub Actions container jobs: confirm the upload step can see the build output path from the host runner context, not just from inside the container.
+  5. For GitLab CI: verify `artifacts.paths` points at files produced by the job and check whether the runner or coordinator is rejecting the upload.
+  6. For CircleCI: confirm `store_artifacts` path matches the actual build output directory.
+  7. For Jenkins: check Archivable artifacts path in the post section of the Jenkinsfile.
 validation: |-
   ## Validation
 
@@ -34,14 +34,17 @@ match:
     - "Error uploading"
     - "artifact not found"
     - "No artifact found"
-    - "failed to download artifact"
-    - "artifact has expired"
-    - "Artifact expired"
     - "Unable to find artifact"
     - "download artifact"
+    - "No files were found with the provided path"
+    - "No artifacts will be uploaded"
+    - "Uploading artifacts to coordinator... forbidden"
   none:
     - "artifacts have expired"
     - "expired artifact"
+    - "Could not retrieve artifact"
+    - "no artifacts to download"
+    - "artifact download failed"
 workflow:
   likely_files:
     - .github/workflows/
@@ -55,11 +58,12 @@ workflow:
 why_it_matters: |-
   ## Why it matters
 
-  Artifact failures occur when: storage quota is exceeded, the upload step was skipped because an early step failed, the artifact name or path pattern does not match the files produced, the artifact has expired before the download attempt, or network issues interrupted the upload.
+  Artifact failures occur when: storage quota is exceeded, the upload step was skipped because an early step failed, the artifact name or path pattern does not match the files produced, the upload step runs from a different working directory or filesystem view than the build step, or the CI coordinator rejects the upload request.
 
   ## Prevention
 
   - Always upload artifacts in an `if: always()` (GitHub Actions) or `when: always` (GitLab) block so they are preserved even when tests fail.
   - Use explicit, stable artifact names rather than glob patterns to prevent accidental mismatches.
+  - Resolve upload paths from the repository root and add a pre-upload `ls -R <path>` check for critical artifacts.
   - Monitor artifact storage usage to avoid hitting quota limits.
   - For large artifacts, consider uploading to an external store (S3, GCS, Azure Blob) and passing the URL downstream rather than using the CI platform's artifact storage.

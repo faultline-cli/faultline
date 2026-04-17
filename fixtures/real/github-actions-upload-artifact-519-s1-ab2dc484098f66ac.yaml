@@ -1,0 +1,39 @@
+id: github-actions-upload-artifact-519-s1-ab2dc484098f66ac
+title: file that definitely exists can't be found for upload
+fixture_class: real
+normalized_log: |-
+    But when I Run `actions/upload-artifact@v4`
+    ```
+    with:
+    name: unison-windows-2019
+    path: /d/a/unison/unison/.stack-work/install/2736fb8a/bin/unison
+    ```
+    I get
+    ```
+    No files were found with the provided path: /d/a/unison/unison/.stack-work/install/2736fb8a/bin/unison.
+    No artifacts will be uploaded.
+    ```
+    <img width="1030" alt="image" src="https://github.com/actions/upload-artifact/assets/538571/<id>">
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    disallowed_playbooks:
+        - permission-denied
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/519
+    repository: actions/upload-artifact
+    issue_number: 519
+    title: file that definitely exists can't be found for upload
+    labels:
+        - bug
+    author: aryairani
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: ab2dc484098f66ac

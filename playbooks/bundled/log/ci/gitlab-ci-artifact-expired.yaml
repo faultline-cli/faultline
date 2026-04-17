@@ -1,0 +1,50 @@
+id: gitlab-ci-artifact-expired
+title: GitLab CI artifact missing or expired
+category: ci
+severity: medium
+base_score: 0.9
+tags: [gitlab, artifact, expired, dependency, ci]
+stage_hints: [build, deploy, test]
+summary: |-
+  A downstream GitLab CI job could not retrieve an artifact produced by an earlier job because it expired, was never produced, or was referenced incorrectly.
+diagnosis: |-
+  ## Diagnosis
+
+  A downstream GitLab CI job could not retrieve an artifact produced by an earlier job because it expired, was never produced, or was referenced incorrectly.
+fix: |-
+  ## Fix steps
+
+  1. Re-run the full pipeline from the beginning instead of retrying only the downstream job.
+  2. Increase the artifact lifetime with `artifacts: expire_in:` on the producing job.
+  3. Check the failing job's `needs:` or `dependencies:` references and confirm they point to the correct producer job.
+  4. Verify the upstream job actually declares `artifacts.paths` for the files the downstream job expects.
+validation: |-
+  ## Validation
+
+  - Re-run the pipeline from the producing job onward.
+  - Confirm the downstream job can download the artifact and no expiry message remains in the log.
+match:
+  any:
+    - "artifacts have expired"
+    - "expired artifact"
+    - "Could not retrieve artifact"
+    - "needs: artifact"
+    - "no artifacts to download"
+    - "artifact download failed"
+  none:
+    - "artifact upload failed"
+    - "failed to upload artifact"
+    - "Uploading artifacts to coordinator... forbidden"
+workflow:
+  likely_files:
+    - .gitlab-ci.yml
+why_it_matters: |-
+  ## Why it matters
+
+  GitLab artifacts are temporary by default. Manual reruns, delayed downstream jobs, or incorrect `needs:` wiring can make a healthy build look broken simply because the required artifact is gone or unreachable.
+
+  ## Prevention
+
+  - Set `expire_in` relative to how long downstream jobs and manual reruns must remain valid.
+  - Make artifact-producing and artifact-consuming relationships explicit with `needs:` or `dependencies:`.
+  - Store long-lived outputs in a package registry or object store instead of transient CI artifacts.

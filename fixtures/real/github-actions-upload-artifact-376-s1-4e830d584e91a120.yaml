@@ -1,0 +1,34 @@
+id: github-actions-upload-artifact-376-s1-4e830d584e91a120
+title: '[bug] `upload-artefact` doesn''t find files despite the previous step showing that they exist in the indicated folders'
+fixture_class: real
+normalized_log: |-
+    0s
+    Run actions/upload-artifact@v3
+    with:
+    if-no-files-found: error
+    name: extensions
+    path: '/home/runner/work/password-generator/password-generator/output/*'
+    Error: No files were found with the provided path: '/home/runner/work/password-generator/password-generator/output/*'. No artifacts will be uploaded.
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    disallowed_playbooks:
+        - permission-denied
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/376
+    repository: actions/upload-artifact
+    issue_number: 376
+    title: '[bug] `upload-artefact` doesn''t find files despite the previous step showing that they exist in the indicated folders'
+    labels:
+        - bug
+    author: preetmyob
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 4e830d584e91a120

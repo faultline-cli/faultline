@@ -1,0 +1,29 @@
+id: github-actions-runner-images-2875-s5-598c8c920dfd762f
+title: 'GitHub Actions failes with: "no space left on device"'
+fixture_class: real
+normalized_log: |-
+    Exact error:
+    `Error processing tar file(exit status 1): write /home/user/miniconda/envs/mypytest/lib/python3.9/site-packages/torch/lib/libtorch_cuda_cu.so: no space left on device
+    Error: exit status 1`
+expectation:
+    expected_playbook: runner-disk-full
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner-images/issues/2875
+    repository: actions/runner-images
+    issue_number: 2875
+    title: 'GitHub Actions failes with: "no space left on device"'
+    labels:
+        - 'Area: Shells'
+        - 'OS: Ubuntu'
+    author: Imipenem
+    snippet: 5
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 598c8c920dfd762f

@@ -1,0 +1,26 @@
+id: github-docker-hub-feedback-2421-s2-24dd3a2d5bf9aa5d
+title: 'Error response from daemon: toomanyrequests: Too Many Requests (HAP429)'
+fixture_class: real
+normalized_log: |-
+    docker pull nginx
+    Using default tag: latest
+    Error response from daemon: toomanyrequests: Too Many Requests (HAP429).
+expectation:
+    expected_playbook: rate-limited
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/hub-feedback/issues/2421
+    repository: docker/hub-feedback
+    issue_number: 2421
+    title: 'Error response from daemon: toomanyrequests: Too Many Requests (HAP429)'
+    author: asntcrz
+    snippet: 2
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 24dd3a2d5bf9aa5d

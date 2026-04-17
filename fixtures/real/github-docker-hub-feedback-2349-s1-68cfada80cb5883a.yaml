@@ -1,0 +1,26 @@
+id: github-docker-hub-feedback-2349-s1-68cfada80cb5883a
+title: '`docker pull` fails on an IPv4-only network'
+fixture_class: real
+normalized_log: |-
+    $ sudo docker pull hello-world
+    Using default tag: latest
+    Error response from daemon: Get "https://registry-1.docker.io/v2/library/hello-world/manifests/sha256:4f53e2564790c8e7856ec08e384732aa38dc43c52f02952483e3f003afbf23db": dial tcp [2600:1f18:2148:bc02:cfd8:db68:ea1f:277c]:443: connect: network is unreachable
+expectation:
+    expected_playbook: firewall-egress-blocked
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/hub-feedback/issues/2349
+    repository: docker/hub-feedback
+    issue_number: 2349
+    title: '`docker pull` fails on an IPv4-only network'
+    author: cletusw
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 68cfada80cb5883a

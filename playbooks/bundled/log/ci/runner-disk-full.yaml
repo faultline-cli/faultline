@@ -37,6 +37,7 @@ match:
     - "insufficient disk space"
     - "out of disk space"
     - "Disk is full"
+    - "Error processing tar file"
     - "buildkit-mount"
     - "failed to copy files"
     - "docker build -t"

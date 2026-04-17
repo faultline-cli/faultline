@@ -1,0 +1,30 @@
+id: gitlab-gitlab-org-gitlab-ce-67104-s1-9704ced27d786a0a
+title: Error on uploading artifacts to coordinator (403 Forbidden) devops::verify
+fixture_class: real
+normalized_log: |-
+    Uploading artifacts...
+    public: found 66 matching files
+    ERROR: Uploading artifacts to coordinator... forbidden id=201 responseStatus=403 Forbidden status=403 Forbidden token=yipWjsoC
+    FATAL: permission denied
+    ERROR: Job failed: exit status 1
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    disallowed_playbooks:
+        - permission-denied
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-ce/-/issues/67104
+    repository: gitlab-org/gitlab-ce
+    issue_number: 67104
+    title: Error on uploading artifacts to coordinator (403 Forbidden) devops::verify
+    author: ghost1
+    snippet: 1
+    fetched_at: "2026-04-17T09:20:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T09:36:28Z"
+fingerprint: 9704ced27d786a0a

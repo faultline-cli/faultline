@@ -119,6 +119,14 @@ fixtures:
     path: internal/engine/testdata/fixtures/secrets-not-available.log
     expectation:
       expected_playbook: secrets-not-available
+  - id: minimal-github-actions-permission
+    path: internal/engine/testdata/fixtures/github-actions-permission.log
+    expectation:
+      expected_playbook: github-actions-permission
+  - id: minimal-gitlab-ci-artifact-expired
+    path: internal/engine/testdata/fixtures/gitlab-ci-artifact-expired.log
+    expectation:
+      expected_playbook: gitlab-ci-artifact-expired
   - id: minimal-order-dependency
     path: internal/engine/testdata/fixtures/order-dependency.log
     expectation:

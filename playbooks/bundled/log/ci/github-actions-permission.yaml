@@ -1,0 +1,55 @@
+id: github-actions-permission
+title: GitHub Actions GITHUB_TOKEN permission denied
+category: ci
+severity: high
+base_score: 1.0
+tags: [github-actions, token, permissions, ci]
+stage_hints: [build, deploy, test]
+summary: |-
+  The `GITHUB_TOKEN` used by this workflow does not have the permissions required for the requested GitHub operation.
+diagnosis: |-
+  ## Diagnosis
+
+  The `GITHUB_TOKEN` used by this workflow does not have the permissions required for the requested GitHub operation.
+fix: |-
+  ## Fix steps
+
+  1. Add an explicit `permissions` block to the workflow or failing job and grant only the scopes that step actually needs.
+  2. Check the exact action or API call that failed and map it to the required permission such as `contents: write`, `packages: write`, `pull-requests: write`, or `id-token: write`.
+  3. For organization-owned repositories, confirm the repository or org-level Actions settings do not force a more restrictive default token policy.
+  4. If a third-party action is making the request, review its README for the minimum required permission scopes.
+validation: |-
+  ## Validation
+
+  - Re-run the job and confirm the `Resource not accessible by integration` or permission error is gone.
+  - Verify the workflow's `permissions:` block is present in the committed YAML.
+match:
+  any:
+    - "HttpError: Resource not accessible by integration"
+    - "Error: HttpError: Resource not accessible by integration"
+    - "GraphQL: Resource not accessible by integration"
+    - "Permission denied to github-actions\\[bot\\]"
+    - "requires the 'contents: write' permission"
+    - "Missing permissions"
+    - "insufficient permission"
+    - "refusing to allow a GitHub App to create or update file"
+  none:
+    - "Context access might be invalid: secrets"
+    - "secret value was not supplied"
+    - "Input required and not supplied"
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  verify:
+    - "grep -R \"^permissions:\" .github/workflows"
+why_it_matters: |-
+  ## Why it matters
+
+  GitHub Actions uses a scoped workflow token. Many workflows default to read-only permissions, so release, package publish, PR write, and file update steps fail unless the workflow declares the required scopes explicitly.
+
+  ## Prevention
+
+  - Declare `permissions:` explicitly on every workflow instead of relying on platform defaults.
+  - Keep write-capable steps isolated in dedicated jobs so elevated scopes stay narrow.
+  - Review third-party actions for required token scopes before adding them to critical workflows.
