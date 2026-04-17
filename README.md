@@ -115,7 +115,7 @@ The goal is not to catch everything. It is to reliably catch what is already kno
 
 ## Built on real failures
 
-- 74 bundled playbooks under `playbooks/bundled/`
+- 77 bundled playbooks under `playbooks/bundled/`
 - 84 accepted real fixtures in the checked-in regression corpus
 - Deterministic ranking, conflict review, and regression gates
 - Stable terminal, JSON, and workflow output for automation
@@ -191,7 +191,7 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 - Evidence is pulled directly from matched log lines.
 - Fix steps come from checked-in playbooks, not probabilistic generation.
 - `--bayes` never creates new matches; it only reranks already-detected candidates and explains why.
-- Repo signals only participate when Faultline has explicit repository context (`--git` or guard/inspect). They are additive: they never create matches, only enrich an existing diagnosis with config drift, CI config changes, large-commit blast radius, hotspot files and directories, co-change pairs, and hotfix or revert indicators.
+- Repo signals only participate when Faultline has explicit repository context (`--git` or guard/inspect). They are additive: they never create matches, only enrich an existing diagnosis with config drift, CI config changes, large-commit blast radius, hotspot files and directories, co-change pairs, hotfix or revert indicators, and CODEOWNERS-derived ownership boundary signals (boundary crossing, upstream component changes, ownership mismatch, failure clustering).
 - JSON and workflow output stay stable for automation and agent workflows.
 - Analysis runs locally without shipping build logs to a hosted service.
 
@@ -295,7 +295,7 @@ Useful flags:
 | `--bayes` | Apply deterministic Bayesian-inspired reranking |
 | `--ci-annotations` | Emit GitHub Actions annotations during analysis |
 | `--delta-provider github-actions` | Compare against the last successful GitHub Actions run on the same branch |
-| `--git` | Enrich analysis with recent local git context (config drift, CI changes, large commits, hotspots, hotfix and revert signals) |
+| `--git` | Enrich analysis with recent local git context (config drift, CI changes, large commits, hotspots, hotfix and revert signals, CODEOWNERS ownership boundary signals) |
 | `--repo <path>` | Choose the repository used by `--git` |
 
 Advanced usage:
@@ -308,7 +308,7 @@ Advanced usage:
 2. It loads deterministic YAML playbooks from the bundled catalog and any optional installed packs.
 3. It matches explicit patterns, extracts supporting evidence, and ranks results with stable rules.
 4. When `--bayes` is enabled, it reranks only the already-matched candidates and adds explainable ranking hints.
-5. When repo context is explicit (`--git`), it attaches additive history signals to the diagnosis: recently changed config and dependency files, CI pipeline file edits, hotspot directories and files, co-change pairs, large blast-radius commits, hotfix and revert patterns, and author breadth across the commit window.
+5. When repo context is explicit (`--git`), it attaches additive history signals to the diagnosis: recently changed config and dependency files, CI pipeline file edits, hotspot directories and files, co-change pairs, large blast-radius commits, hotfix and revert patterns, and author breadth across the commit window. It also parses CODEOWNERS, builds an ownership graph, and derives topology signals for ownership boundary crossings, upstream component changes, ownership mismatches, and localised failure clustering.
 6. It returns a diagnosis, evidence, fix steps, workflow hints, and validation guidance.
 
 The same input and playbook set should produce the same result every time.
@@ -328,9 +328,9 @@ The same input and playbook set should produce the same result every time.
 
 ## Credibility checks
 
-- `./bin/faultline fixtures stats --class real` currently reports 84 accepted real fixtures and a `weak_match` rate of `0.107` (9/84).
+- `./bin/faultline fixtures stats --class real` currently reports 84 accepted real fixtures and a `weak_match` rate of `0.119` (10/84).
 - The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
-- The bundled catalog currently ships 74 playbooks under `playbooks/bundled/`.
+- The bundled catalog currently ships 77 playbooks under `playbooks/bundled/`.
 - Release validation runs `make test`, `make review`, `make fixture-check`, release archive smoke tests, and Docker smoke tests.
 
 These numbers describe the checked-in regression corpus, not the full space of CI failures.
