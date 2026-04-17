@@ -39,6 +39,20 @@ match:
     - host port
     - EADDRINUSE
     - cannot assign requested address
+hypothesis:
+  supports:
+    - signal: test.parallel.resource_conflict
+      weight: 0.8
+  contradicts:
+    - signal: test.order.dependency
+      weight: -0.4
+    - signal: test.fixture.missing
+      weight: -0.4
+    - signal: test.timeout.detected
+      weight: -0.3
+  discriminators:
+    - description: Shared-resource collisions under parallel load are more specific than a generic flaky or timeout symptom.
+      signal: test.parallel.resource_conflict
 why_it_matters: |-
   ## Why it matters
 

@@ -4,6 +4,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +16,8 @@ import (
 	"faultline/internal/detectors"
 	"faultline/internal/detectors/logdetector"
 	"faultline/internal/detectors/sourcedetector"
+	enginedelta "faultline/internal/engine/delta"
+	"faultline/internal/engine/hypothesis"
 	"faultline/internal/model"
 	"faultline/internal/repo"
 	"faultline/internal/scoring"
@@ -44,6 +47,16 @@ type Options struct {
 	RepoPath string
 	// BayesEnabled enables deterministic Bayesian-inspired reranking over matches.
 	BayesEnabled bool
+	// DeltaProvider enables provider-backed failure delta resolution.
+	DeltaProvider string
+	// GitHubRepository identifies the GitHub repository for delta resolution.
+	GitHubRepository string
+	// GitHubBranch identifies the branch for delta resolution.
+	GitHubBranch string
+	// GitHubRunID identifies the current GitHub Actions run.
+	GitHubRunID int64
+	// GitHubToken authenticates GitHub Actions delta API requests.
+	GitHubToken string
 }
 
 // Engine orchestrates log analysis against loaded playbooks.
@@ -110,6 +123,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	}
 
 	ctx := ExtractContext(lines)
+	currentLog := joinOriginalLines(lines)
 	logDetector, err := e.registry.MustLookup(detectors.KindLog)
 	if err != nil {
 		return nil, err
@@ -130,15 +144,21 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		snapshot *repoSnapshot
 		delta    *model.Delta
 	)
+	deltaState := e.loadProviderDelta(currentLog)
 	if e.opts.GitContextEnabled {
 		snapshot = e.loadRepoSnapshot()
 	}
+	repoState := mergeRepoStates(repoStateFromSnapshot(snapshot), deltaState)
+	if !e.opts.BayesEnabled {
+		delta = scoring.DiagnoseDelta(repoState)
+	}
 	if e.opts.BayesEnabled {
 		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
-			Context:   ctx,
-			Lines:     lines,
-			Results:   results,
-			RepoState: repoStateFromSnapshot(snapshot),
+			Context:        ctx,
+			Lines:          lines,
+			Results:        results,
+			RepoState:      repoState,
+			DeltaRequested: e.deltaRequested(),
 		})
 		if scoreErr != nil {
 			return nil, scoreErr
@@ -146,6 +166,13 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		results = reranked
 		delta = scoredDelta
 	}
+	results, differential := hypothesis.Build(hypothesis.Inputs{
+		Results: results,
+		Lines:   lines,
+		Context: ctx,
+		Delta:   delta,
+		Limit:   3,
+	})
 
 	// Enrich results with history seen-counts (best-effort; never blocks analysis).
 	if !e.opts.NoHistory {
@@ -156,10 +183,11 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	fp := fingerprint(results[0])
 	analysis := &model.Analysis{
-		Results:     results,
-		Context:     ctx,
-		Fingerprint: fp,
-		Delta:       delta,
+		Results:      results,
+		Context:      ctx,
+		Fingerprint:  fp,
+		Delta:        delta,
+		Differential: differential,
 	}
 
 	// Persist the top result so future runs can report recurrence.
@@ -215,11 +243,16 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 	if len(changeSet.ChangedFiles) > 0 || e.opts.GitContextEnabled {
 		snapshot = e.loadRepoSnapshotFromPath(root, changeSet)
 	}
+	repoState := repoStateFromSnapshot(snapshot)
+	if !e.opts.BayesEnabled {
+		delta = scoring.DiagnoseDelta(repoState)
+	}
 	if e.opts.BayesEnabled {
 		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
-			Results:   results,
-			RepoState: repoStateFromSnapshot(snapshot),
-			ChangeSet: changeSet,
+			Results:        results,
+			RepoState:      repoState,
+			ChangeSet:      changeSet,
+			DeltaRequested: e.deltaRequested() || len(changeSet.ChangedFiles) > 0,
 		})
 		if scoreErr != nil {
 			return nil, scoreErr
@@ -227,6 +260,11 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		results = reranked
 		delta = scoredDelta
 	}
+	results, differential := hypothesis.Build(hypothesis.Inputs{
+		Results: results,
+		Delta:   delta,
+		Limit:   3,
+	})
 	if !e.opts.NoHistory {
 		for i := range results {
 			results[i].SeenCount = e.history.CountSeen(results[i].Playbook.ID)
@@ -234,11 +272,23 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		e.history.Record(results[0])
 	}
 	return &model.Analysis{
-		Results:     results,
-		Fingerprint: fingerprint(results[0]),
-		Source:      root,
-		Delta:       delta,
+		Results:      results,
+		Fingerprint:  fingerprint(results[0]),
+		Source:       root,
+		Delta:        delta,
+		Differential: differential,
 	}, nil
+}
+
+func joinOriginalLines(lines []model.Line) string {
+	var b strings.Builder
+	for _, line := range lines {
+		b.WriteString(line.Original)
+		if !strings.HasSuffix(line.Original, "\n") {
+			b.WriteByte('\n')
+		}
+	}
+	return b.String()
 }
 
 type localRepoEnricher struct {
@@ -346,6 +396,107 @@ func stateFromChangeSet(root string, changeSet detectors.ChangeSet) *scoring.Rep
 	return &scoring.RepoState{
 		Root:         root,
 		ChangedFiles: files,
+	}
+}
+
+func mergeRepoStates(states ...*scoring.RepoState) *scoring.RepoState {
+	var merged *scoring.RepoState
+	for _, state := range states {
+		if state == nil {
+			continue
+		}
+		if merged == nil {
+			copyState := *state
+			copyState.ChangedFiles = append([]string(nil), state.ChangedFiles...)
+			copyState.RecentFiles = append([]string(nil), state.RecentFiles...)
+			copyState.HotspotDirs = append([]string(nil), state.HotspotDirs...)
+			copyState.HotfixSignals = append([]string(nil), state.HotfixSignals...)
+			copyState.DriftSignals = append([]string(nil), state.DriftSignals...)
+			copyState.TestsNewlyFailing = append([]string(nil), state.TestsNewlyFailing...)
+			copyState.ErrorsAdded = append([]string(nil), state.ErrorsAdded...)
+			copyState.EnvDiff = cloneDeltaEnvDiff(state.EnvDiff)
+			merged = &copyState
+			continue
+		}
+		if merged.Root == "" {
+			merged.Root = state.Root
+		}
+		if merged.Provider == "" {
+			merged.Provider = state.Provider
+		}
+		merged.ChangedFiles = dedupeSortedStrings(append(merged.ChangedFiles, state.ChangedFiles...))
+		merged.RecentFiles = dedupeSortedStrings(append(merged.RecentFiles, state.RecentFiles...))
+		merged.HotspotDirs = dedupeSortedStrings(append(merged.HotspotDirs, state.HotspotDirs...))
+		merged.HotfixSignals = dedupeSortedStrings(append(merged.HotfixSignals, state.HotfixSignals...))
+		merged.DriftSignals = dedupeSortedStrings(append(merged.DriftSignals, state.DriftSignals...))
+		merged.TestsNewlyFailing = dedupeSortedStrings(append(merged.TestsNewlyFailing, state.TestsNewlyFailing...))
+		merged.ErrorsAdded = dedupeSortedStrings(append(merged.ErrorsAdded, state.ErrorsAdded...))
+		for key, value := range state.EnvDiff {
+			if merged.EnvDiff == nil {
+				merged.EnvDiff = map[string]model.DeltaEnvChange{}
+			}
+			merged.EnvDiff[key] = value
+		}
+	}
+	return merged
+}
+
+func dedupeSortedStrings(values []string) []string {
+	seen := map[string]struct{}{}
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		out = append(out, value)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func cloneDeltaEnvDiff(in map[string]model.DeltaEnvChange) map[string]model.DeltaEnvChange {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]model.DeltaEnvChange, len(in))
+	for key, value := range in {
+		out[key] = value
+	}
+	return out
+}
+
+func (e *Engine) deltaRequested() bool {
+	return strings.TrimSpace(e.opts.DeltaProvider) != ""
+}
+
+func (e *Engine) loadProviderDelta(currentLog string) *scoring.RepoState {
+	if !e.deltaRequested() {
+		return nil
+	}
+	resolver := enginedelta.NewResolver(nil)
+	snapshot, err := resolver.Resolve(context.Background(), enginedelta.Options{
+		Provider: e.opts.DeltaProvider,
+		GitHub: enginedelta.GitHubOptions{
+			Repository: e.opts.GitHubRepository,
+			Branch:     e.opts.GitHubBranch,
+			RunID:      e.opts.GitHubRunID,
+			Token:      e.opts.GitHubToken,
+		},
+	}, currentLog)
+	if err != nil || snapshot == nil {
+		return nil
+	}
+	return &scoring.RepoState{
+		Provider:          snapshot.Provider,
+		ChangedFiles:      append([]string(nil), snapshot.FilesChanged...),
+		TestsNewlyFailing: append([]string(nil), snapshot.TestsNewlyFailing...),
+		ErrorsAdded:       append([]string(nil), snapshot.ErrorsAdded...),
+		EnvDiff:           cloneDeltaEnvDiff(snapshot.EnvDiff),
 	}
 }
 

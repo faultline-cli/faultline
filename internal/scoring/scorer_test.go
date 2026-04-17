@@ -83,13 +83,25 @@ func TestScoreTieBreaksByPlaybookIDWhenSignalsMatch(t *testing.T) {
 
 func TestBuildDeltaClassifiesChangedFiles(t *testing.T) {
 	delta := buildDelta(&RepoState{
-		ChangedFiles: []string{".github/workflows/ci.yml", "package.json", "Dockerfile"},
+		Provider:          "github-actions",
+		ChangedFiles:      []string{".github/workflows/ci.yml", "package.json", "Dockerfile"},
+		TestsNewlyFailing: []string{"TestLockfile"},
+		ErrorsAdded:       []string{"npm ERR! package-lock.json is not in sync"},
 	})
 	if delta == nil || len(delta.Causes) == 0 {
 		t.Fatalf("expected delta output, got %#v", delta)
 	}
 	if delta.Causes[0].Kind == "" {
 		t.Fatalf("expected populated delta cause, got %#v", delta.Causes[0])
+	}
+	if delta.Provider != "github-actions" {
+		t.Fatalf("expected provider to be preserved, got %#v", delta)
+	}
+	if len(delta.Signals) == 0 {
+		t.Fatalf("expected delta signals, got %#v", delta)
+	}
+	if len(delta.TestsNewlyFailing) != 1 || delta.TestsNewlyFailing[0] != "TestLockfile" {
+		t.Fatalf("expected structured failing tests, got %#v", delta)
 	}
 }
 
@@ -124,5 +136,71 @@ func TestBaselineCandidateSeparationOnlyRewardsUniqueLeader(t *testing.T) {
 		{Playbook: model.Playbook{ID: "b"}, Score: 2},
 	}, 0); got != 0 {
 		t.Fatalf("expected tied leader to get no separation bonus, got %.2f", got)
+	}
+}
+
+func TestScoreDeltaBoostImprovesSpecificPlaybookRanking(t *testing.T) {
+	results := []model.Result{
+		{
+			Playbook: model.Playbook{
+				ID:            "dependency-drift",
+				Title:         "Dependency drift",
+				Category:      "build",
+				RequiresDelta: true,
+				DeltaBoost: []model.DeltaBoost{
+					{Signal: "delta.dependency.changed", Weight: 0.4},
+				},
+			},
+			Detector:   "log",
+			Score:      2.2,
+			Confidence: 0.70,
+		},
+		{
+			Playbook: model.Playbook{
+				ID:            "npm-ci-lockfile",
+				Title:         "npm ci lockfile mismatch",
+				Category:      "build",
+				RequiresDelta: true,
+				DeltaBoost: []model.DeltaBoost{
+					{Signal: "delta.dependency.changed", Weight: 1.2},
+					{Signal: "delta.scope.changed", Weight: 0.8},
+				},
+				Workflow: model.WorkflowSpec{
+					LikelyFiles: []string{"package.json", "package-lock.json"},
+				},
+			},
+			Detector:   "log",
+			Score:      2.0,
+			Confidence: 0.72,
+		},
+	}
+
+	withoutDelta, _, err := Score(Inputs{
+		Results:        results,
+		DeltaRequested: false,
+	})
+	if err != nil {
+		t.Fatalf("Score without delta: %v", err)
+	}
+	if withoutDelta[0].Playbook.ID != "dependency-drift" {
+		t.Fatalf("expected baseline leader to remain first without delta, got %s", withoutDelta[0].Playbook.ID)
+	}
+
+	withDelta, delta, err := Score(Inputs{
+		Results: results,
+		RepoState: &RepoState{
+			Provider:     "github-actions",
+			ChangedFiles: []string{"package.json", "package-lock.json"},
+		},
+		DeltaRequested: true,
+	})
+	if err != nil {
+		t.Fatalf("Score with delta: %v", err)
+	}
+	if delta == nil {
+		t.Fatal("expected structured delta")
+	}
+	if withDelta[0].Playbook.ID != "npm-ci-lockfile" {
+		t.Fatalf("expected delta-aware ranking to prefer npm-ci-lockfile, got %s", withDelta[0].Playbook.ID)
 	}
 }

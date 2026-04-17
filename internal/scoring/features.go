@@ -31,6 +31,7 @@ func featureSet(weights weightsFile, inputs Inputs, result model.Result, baselin
 		scalarFeature(weights, "historical_fixture_support", historicalFixtureSupport(weights, result.Playbook), "accepted fixtures provide conservative support", nil),
 		scalarFeature(weights, "mitigation_presence", mitigationPresence(result), "mitigations or suppressions weaken the match", mitigationRefs(result)),
 	}
+	features = append(features, deltaPlaybookFeatures(inputs, result, delta)...)
 
 	out := make([]feature, 0, len(features))
 	for _, item := range features {
@@ -47,6 +48,53 @@ func featureSet(weights weightsFile, inputs Inputs, result model.Result, baselin
 		}
 		return out[i].Name < out[j].Name
 	})
+	return out
+}
+
+func deltaPlaybookFeatures(inputs Inputs, result model.Result, delta *model.Delta) []feature {
+	if !inputs.DeltaRequested {
+		return nil
+	}
+	var out []feature
+	signals := deltaSignalMap(delta)
+	if result.Playbook.RequiresDelta && delta == nil {
+		out = append(out, feature{
+			Name:   "delta_required_missing",
+			Value:  1,
+			Weight: -1.5,
+			Reason: "candidate requires delta context but no change delta was available",
+		})
+		return out
+	}
+	if result.Playbook.RequiresDelta && len(result.Playbook.DeltaBoost) > 0 && !hasDeltaBoostSignal(signals, result.Playbook.DeltaBoost) {
+		out = append(out, feature{
+			Name:   "delta_required_unmatched",
+			Value:  1,
+			Weight: -0.75,
+			Reason: "candidate requires delta support but the observed change does not match its delta signals",
+		})
+	}
+	for _, boost := range result.Playbook.DeltaBoost {
+		signal := strings.TrimSpace(boost.Signal)
+		if signal == "" {
+			continue
+		}
+		detail, ok := signals[signal]
+		if !ok {
+			continue
+		}
+		weight := boost.Weight
+		if weight == 0 {
+			weight = 1
+		}
+		out = append(out, feature{
+			Name:         "delta_boost:" + signal,
+			Value:        1,
+			Weight:       round(weight),
+			Reason:       "delta signal " + signal + " aligns with the candidate",
+			EvidenceRefs: []string{detail},
+		})
+	}
 	return out
 }
 
@@ -343,6 +391,33 @@ func mitigationRefs(result model.Result) []string {
 		}
 	}
 	return dedupeStrings(refs)
+}
+
+func deltaSignalMap(delta *model.Delta) map[string]string {
+	if delta == nil || len(delta.Signals) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(delta.Signals))
+	for _, signal := range delta.Signals {
+		id := strings.TrimSpace(signal.ID)
+		if id == "" {
+			continue
+		}
+		out[id] = strings.TrimSpace(signal.Detail)
+	}
+	return out
+}
+
+func hasDeltaBoostSignal(signals map[string]string, boosts []model.DeltaBoost) bool {
+	if len(signals) == 0 {
+		return false
+	}
+	for _, boost := range boosts {
+		if _, ok := signals[strings.TrimSpace(boost.Signal)]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 func playbookSupportsClass(pb model.Playbook, class string) bool {

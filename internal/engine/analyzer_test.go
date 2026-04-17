@@ -46,6 +46,64 @@ func TestAnalyzeReaderMultipleResults(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReaderHypothesisPrefersDependencyDriftWhenCacheRestoreIsAbsent(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	log := "checksum mismatch\nfailed to resolve dependencies\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) < 2 {
+		t.Fatalf("expected competing results, got %#v", a.Results)
+	}
+	if a.Results[0].Playbook.ID != "dependency-drift" {
+		t.Fatalf("expected dependency-drift to win differential ranking, got %s", a.Results[0].Playbook.ID)
+	}
+	if a.Differential == nil || len(a.Differential.Alternatives) == 0 {
+		t.Fatalf("expected populated differential diagnosis, got %#v", a.Differential)
+	}
+	alternative := a.Differential.Alternatives[0]
+	if alternative.FailureID != "cache-corruption" {
+		t.Fatalf("expected cache-corruption as the main alternative, got %#v", alternative)
+	}
+	if len(alternative.WhyLessLikely) == 0 || !strings.Contains(strings.ToLower(strings.Join(alternative.WhyLessLikely, " ")), "cache restore") {
+		t.Fatalf("expected alternative to explain missing cache restore evidence, got %#v", alternative.WhyLessLikely)
+	}
+}
+
+func TestAnalyzeReaderHypothesisRulesOutDependencyDriftOnHashMismatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	log := "THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE\nfailed to resolve dependencies\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	if a.Results[0].Playbook.ID != "pip-hash-mismatch" {
+		t.Fatalf("expected pip-hash-mismatch to win, got %s", a.Results[0].Playbook.ID)
+	}
+	if a.Differential == nil || len(a.Differential.RuledOut) == 0 {
+		t.Fatalf("expected ruled-out rival in differential diagnosis, got %#v", a.Differential)
+	}
+	found := false
+	for _, item := range a.Differential.RuledOut {
+		if item.FailureID == "dependency-drift" {
+			found = true
+			if len(item.RuledOutBy) == 0 {
+				t.Fatalf("expected ruled-out reason for dependency-drift, got %#v", item)
+			}
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected dependency-drift to be ruled out, got %#v", a.Differential.RuledOut)
+	}
+}
+
 func TestAnalyzeReaderDockerAuthDoesNotMatchGenericPermissionDenied(t *testing.T) {
 	e := New(Options{
 		PlaybookDir:  repoPlaybookDir(t),

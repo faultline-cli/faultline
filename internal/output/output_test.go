@@ -47,6 +47,20 @@ func TestFormatAnalysisJSONMatched(t *testing.T) {
 		RecentFiles:        []string{"Dockerfile"},
 		HotspotDirectories: []string{"deploy"},
 	}
+	a.Results[0].Hypothesis = &model.HypothesisAssessment{
+		BaseScore:  1.0,
+		FinalScore: 1.4,
+		Why:        []string{"registry rejected credentials"},
+	}
+	a.Differential = &model.DifferentialDiagnosis{
+		Version: "hypothesis.v1",
+		Likely: &model.DifferentialCandidate{
+			FailureID:      "docker-auth",
+			Title:          "Docker auth",
+			ConfidenceText: "High",
+			Why:            []string{"registry rejected credentials"},
+		},
+	}
 	data, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
 		t.Fatalf("format json: %v", err)
@@ -70,12 +84,18 @@ func TestFormatAnalysisJSONMatched(t *testing.T) {
 	if r["detector"] != "log" {
 		t.Errorf("expected detector log, got %v", r["detector"])
 	}
+	if _, ok := r["hypothesis"].(map[string]interface{}); !ok {
+		t.Fatalf("expected hypothesis object, got %v", r["hypothesis"])
+	}
 	repoCtx, ok := out["repo_context"].(map[string]interface{})
 	if !ok {
 		t.Fatalf("expected repo_context object, got %v", out["repo_context"])
 	}
 	if repoCtx["repo_root"] != "/repo" {
 		t.Fatalf("expected repo_root in repo_context, got %v", repoCtx["repo_root"])
+	}
+	if _, ok := out["differential"].(map[string]interface{}); !ok {
+		t.Fatalf("expected differential object, got %v", out["differential"])
 	}
 }
 

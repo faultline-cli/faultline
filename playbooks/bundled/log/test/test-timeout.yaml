@@ -60,6 +60,20 @@ match:
     - "read timeout"
     - "dial timeout"
     - "failed to connect"
+hypothesis:
+  supports:
+    - signal: test.timeout.detected
+      weight: 0.8
+  contradicts:
+    - signal: test.retry.detected
+      weight: -0.4
+    - signal: test.fixture.missing
+      weight: -0.4
+    - signal: test.parallel.resource_conflict
+      weight: -0.3
+  discriminators:
+    - description: Runner timeout wording points to a hang or slow path, not a missing fixture or intermittent retry.
+      signal: test.timeout.detected
 why_it_matters: |-
   ## Why it matters
 

@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"faultline/internal/engine/hypothesis"
 	"gopkg.in/yaml.v3"
 
 	"faultline/internal/model"
@@ -80,6 +81,17 @@ type rawSafeContextRule struct {
 	Discount float64  `yaml:"discount"`
 }
 
+type rawHypothesisSignal struct {
+	Signal string  `yaml:"signal"`
+	Weight float64 `yaml:"weight"`
+}
+
+type rawHypothesisDiscriminator struct {
+	Description string  `yaml:"description"`
+	Signal      string  `yaml:"signal"`
+	Weight      float64 `yaml:"weight"`
+}
+
 type raw struct {
 	ID         string   `yaml:"id"`
 	Title      string   `yaml:"title"`
@@ -111,12 +123,17 @@ type raw struct {
 		} `yaml:"change_sensitivity"`
 		SafeContext []rawSafeContextRule `yaml:"safe_context"`
 	} `yaml:"source"`
-	Summary      string `yaml:"summary"`
-	Diagnosis    string `yaml:"diagnosis"`
-	Fix          string `yaml:"fix"`
-	Validation   string `yaml:"validation"`
-	WhyItMatters string `yaml:"why_it_matters"`
-	Workflow     struct {
+	Summary       string `yaml:"summary"`
+	Diagnosis     string `yaml:"diagnosis"`
+	Fix           string `yaml:"fix"`
+	Validation    string `yaml:"validation"`
+	WhyItMatters  string `yaml:"why_it_matters"`
+	RequiresDelta bool   `yaml:"requires_delta"`
+	DeltaBoost    []struct {
+		Signal string  `yaml:"signal"`
+		Weight float64 `yaml:"weight"`
+	} `yaml:"delta_boost"`
+	Workflow struct {
 		LikelyFiles []string `yaml:"likely_files"`
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
@@ -137,6 +154,12 @@ type raw struct {
 		PathIncludes []string `yaml:"path_includes"`
 		PathExcludes []string `yaml:"path_excludes"`
 	} `yaml:"context_filters"`
+	Hypothesis struct {
+		Supports       []rawHypothesisSignal        `yaml:"supports"`
+		Contradicts    []rawHypothesisSignal        `yaml:"contradicts"`
+		Discriminators []rawHypothesisDiscriminator `yaml:"discriminators"`
+		Excludes       []rawHypothesisSignal        `yaml:"excludes"`
+	} `yaml:"hypothesis"`
 }
 
 // LoadDefault loads playbooks from the default directory resolved by
@@ -266,12 +289,14 @@ func loadFile(path string) (model.Playbook, error) {
 			All:  r.Match.All,
 			None: r.Match.None,
 		},
-		Source:       convertSourceSpec(r),
-		Summary:      normalizeMarkdownBlock(r.Summary),
-		Diagnosis:    normalizeMarkdownBlock(r.Diagnosis),
-		Fix:          normalizeMarkdownBlock(r.Fix),
-		Validation:   normalizeMarkdownBlock(r.Validation),
-		WhyItMatters: normalizeMarkdownBlock(r.WhyItMatters),
+		Source:        convertSourceSpec(r),
+		Summary:       normalizeMarkdownBlock(r.Summary),
+		Diagnosis:     normalizeMarkdownBlock(r.Diagnosis),
+		Fix:           normalizeMarkdownBlock(r.Fix),
+		Validation:    normalizeMarkdownBlock(r.Validation),
+		WhyItMatters:  normalizeMarkdownBlock(r.WhyItMatters),
+		RequiresDelta: r.RequiresDelta,
+		DeltaBoost:    convertDeltaBoosts(r.DeltaBoost),
 		Workflow: model.WorkflowSpec{
 			LikelyFiles: r.Workflow.LikelyFiles,
 			LocalRepro:  r.Workflow.LocalRepro,
@@ -294,7 +319,34 @@ func loadFile(path string) (model.Playbook, error) {
 			PathIncludes: r.ContextFilters.PathIncludes,
 			PathExcludes: r.ContextFilters.PathExcludes,
 		},
+		Hypothesis: model.HypothesisSpec{
+			Supports:       convertHypothesisSignals(r.Hypothesis.Supports),
+			Contradicts:    convertHypothesisSignals(r.Hypothesis.Contradicts),
+			Discriminators: convertHypothesisDiscriminators(r.Hypothesis.Discriminators),
+			Excludes:       convertHypothesisSignals(r.Hypothesis.Excludes),
+		},
 	}, nil
+}
+
+func convertDeltaBoosts(rawBoosts []struct {
+	Signal string  `yaml:"signal"`
+	Weight float64 `yaml:"weight"`
+}) []model.DeltaBoost {
+	if len(rawBoosts) == 0 {
+		return nil
+	}
+	out := make([]model.DeltaBoost, 0, len(rawBoosts))
+	for _, item := range rawBoosts {
+		signal := strings.TrimSpace(item.Signal)
+		if signal == "" {
+			continue
+		}
+		out = append(out, model.DeltaBoost{
+			Signal: signal,
+			Weight: item.Weight,
+		})
+	}
+	return out
 }
 
 func normalizeMarkdownBlock(value string) string {
@@ -350,6 +402,44 @@ func validate(r raw, path string) error {
 		}
 	default:
 		return fmt.Errorf("playbook %s: unknown detector %q", path, detector)
+	}
+	if err := validateHypothesis(r, path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateHypothesis(r raw, path string) error {
+	validateSignal := func(signal, section string) error {
+		signal = strings.TrimSpace(signal)
+		if signal == "" {
+			return fmt.Errorf("playbook %s: %s must not be empty", path, section)
+		}
+		if !hypothesis.ValidSignal(signal) {
+			return fmt.Errorf("playbook %s: %s references unknown signal %q", path, section, signal)
+		}
+		return nil
+	}
+
+	for i, item := range r.Hypothesis.Supports {
+		if err := validateSignal(item.Signal, fmt.Sprintf("hypothesis.supports[%d].signal", i)); err != nil {
+			return err
+		}
+	}
+	for i, item := range r.Hypothesis.Contradicts {
+		if err := validateSignal(item.Signal, fmt.Sprintf("hypothesis.contradicts[%d].signal", i)); err != nil {
+			return err
+		}
+	}
+	for i, item := range r.Hypothesis.Discriminators {
+		if err := validateSignal(item.Signal, fmt.Sprintf("hypothesis.discriminators[%d].signal", i)); err != nil {
+			return err
+		}
+	}
+	for i, item := range r.Hypothesis.Excludes {
+		if err := validateSignal(item.Signal, fmt.Sprintf("hypothesis.excludes[%d].signal", i)); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -491,6 +581,29 @@ func convertConsistencyRules(items []rawConsistencyRule) []model.ConsistencyRule
 	out := make([]model.ConsistencyRule, 0, len(items))
 	for _, item := range items {
 		out = append(out, model.ConsistencyRule(item))
+	}
+	return out
+}
+
+func convertHypothesisSignals(items []rawHypothesisSignal) []model.HypothesisSignal {
+	out := make([]model.HypothesisSignal, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.HypothesisSignal{
+			Signal: item.Signal,
+			Weight: item.Weight,
+		})
+	}
+	return out
+}
+
+func convertHypothesisDiscriminators(items []rawHypothesisDiscriminator) []model.HypothesisDiscriminator {
+	out := make([]model.HypothesisDiscriminator, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.HypothesisDiscriminator{
+			Description: item.Description,
+			Signal:      item.Signal,
+			Weight:      item.Weight,
+		})
 	}
 	return out
 }

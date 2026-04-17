@@ -11,6 +11,18 @@ match:
     - go.sum file is not up to date
     - verifying module
     - no required module provides
+hypothesis:
+  supports:
+    - signal: dependency.go.sum.missing
+      weight: 0.8
+    - signal: dependency.lockfile.changed
+      weight: 0.5
+  contradicts:
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+  discriminators:
+    - description: Missing go.sum metadata is more specific than a generic dependency install failure.
+      signal: dependency.go.sum.missing
 summary: |-
   The build needs a module checksum that is missing from `go.sum`.
 diagnosis: |-
@@ -42,6 +54,12 @@ validation: |-
   - Run `git diff --exit-code go.mod go.sum` after `go mod tidy`.
   - Re-run `go test ./...`.
   - Confirm CI no longer reports a missing checksum entry.
+requires_delta: true
+delta_boost:
+  - signal: delta.dependency.changed
+    weight: 1.2
+  - signal: delta.scope.changed
+    weight: 0.8
 workflow:
   likely_files:
     - go.mod

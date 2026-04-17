@@ -65,6 +65,16 @@ match:
     - context deadline exceeded
     - dial tcp
     - no such host
+hypothesis:
+  supports:
+    - signal: dependency.package.not_found
+      weight: 0.8
+  contradicts:
+    - signal: dependency.hash.mismatch
+      weight: -0.4
+  discriminators:
+    - description: Package or version absence in the configured index is the defining signal for a generic install failure.
+      signal: dependency.package.not_found
 why_it_matters: |-
   ## Why it matters
 

@@ -33,6 +33,20 @@ match:
     - "YN0028"
     - "--immutable"
     - "The lockfile would have been modified by this install"
+hypothesis:
+  supports:
+    - signal: dependency.yarn.lockfile.sync_error
+      weight: 0.9
+    - signal: dependency.lockfile.changed
+      weight: 0.4
+  contradicts:
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+    - signal: runtime.node.version.mismatch
+      weight: -0.5
+  discriminators:
+    - description: Yarn immutable or frozen lockfile wording is more specific than a generic dependency conflict.
+      signal: dependency.yarn.lockfile.sync_error
 why_it_matters: |-
   ## Why it matters
 

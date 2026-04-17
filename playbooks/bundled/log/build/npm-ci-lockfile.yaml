@@ -15,6 +15,20 @@ match:
     - package-lock.json does not exist
     - from lock file
     - run `npm install` to generate a lockfile
+hypothesis:
+  supports:
+    - signal: dependency.npm.lockfile.sync_error
+      weight: 0.9
+    - signal: dependency.lockfile.changed
+      weight: 0.5
+  contradicts:
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+    - signal: runtime.node.version.mismatch
+      weight: -0.5
+  discriminators:
+    - description: npm ci only emits this failure when package-lock metadata is missing or out of sync.
+      signal: dependency.npm.lockfile.sync_error
 summary: |-
   `npm ci` found a missing or out-of-sync `package-lock.json`.
 diagnosis: |-
@@ -43,6 +57,12 @@ why_it_matters: |-
   ## Why it matters
 
   Lockfile mismatches break reproducibility. Fixing the lockfile keeps local installs and CI installs on the same dependency graph.
+requires_delta: true
+delta_boost:
+  - signal: delta.dependency.changed
+    weight: 1.2
+  - signal: delta.scope.changed
+    weight: 0.8
 
 workflow:
   likely_files:

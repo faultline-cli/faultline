@@ -40,6 +40,18 @@ match:
     - "Expected node version"
     - "Node.js version.*required"
     - "Engines: {\"node\":"
+hypothesis:
+  supports:
+    - signal: runtime.node.version.mismatch
+      weight: 0.8
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+    - signal: dependency.resolution.conflict
+      weight: -0.4
+  discriminators:
+    - description: Node engine errors outrank the generic runtime fallback when the log calls out node explicitly.
+      signal: runtime.node.version.mismatch
 workflow:
   likely_files:
     - .nvmrc

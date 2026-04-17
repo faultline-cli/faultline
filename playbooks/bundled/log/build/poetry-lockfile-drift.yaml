@@ -11,6 +11,20 @@ match:
     - Run `poetry lock [--no-update]` to fix it.
     - Installing dependencies from lock file
     - version solving failed
+hypothesis:
+  supports:
+    - signal: dependency.poetry.lockfile.stale
+      weight: 0.8
+    - signal: dependency.lockfile.changed
+      weight: 0.5
+  contradicts:
+    - signal: runtime.version.mismatch
+      weight: -0.4
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+  discriminators:
+    - description: Poetry only reaches this state when the manifest and poetry.lock disagree.
+      signal: dependency.poetry.lockfile.stale
 summary: |-
   Poetry is installing from a lockfile that no longer matches `pyproject.toml`, so dependency resolution fails before the environment is usable.
 diagnosis: |-
@@ -47,6 +61,12 @@ why_it_matters: |-
   - Update `poetry.lock` in the same change as every manifest edit.
   - Use one team-standard Poetry version in local development and CI.
   - Add a CI check that runs `poetry install` from a clean environment on dependency changes.
+requires_delta: true
+delta_boost:
+  - signal: delta.dependency.changed
+    weight: 1.2
+  - signal: delta.scope.changed
+    weight: 0.8
 workflow:
   likely_files:
     - pyproject.toml

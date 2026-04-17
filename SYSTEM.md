@@ -26,8 +26,9 @@ Given a build log from a local run or CI job, Faultline should identify the most
 4. Validate playbook structure and review overlap conflicts before matching.
 5. Match deterministic patterns against the normalized log.
 6. Score and rank matches using explicit, stable rules, with optional deterministic evidence-fusion reranking when enabled.
-7. Optionally enrich the likely diagnosis with recent local git repository context.
-8. Return the result as formatted text or JSON.
+7. Build a deterministic differential diagnosis across the top competing playbooks using supporting, contradictory, and excluding signals.
+8. Optionally enrich the likely diagnosis with recent local git repository context.
+9. Return the result as formatted text or JSON.
 
 ## Primary Commands
 
@@ -52,6 +53,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 - `cmd/main.go` owns CLI startup and command wiring.
 - `internal/engine` owns log ingestion, source tree scanning, normalization, and orchestration.
+- `internal/engine/hypothesis` owns deterministic differential diagnosis across competing playbooks.
 - `internal/detectors` owns detector module interfaces and target contracts.
 - `internal/playbooks` owns pack resolution, YAML loading, validation, and deterministic playbook ordering.
 - `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
@@ -86,6 +88,7 @@ type Playbook struct {
     Workflow   WorkflowSpec  // LikelyFiles, LocalRepro, Verify steps
     Scoring    ScoringConfig
     Contextual ContextPolicy
+    Hypothesis HypothesisSpec
 }
 ```
 
@@ -101,6 +104,7 @@ type Result struct {
     Confidence float64
     SeenCount  int
     Ranking    *Ranking  // Populated when --bayes is enabled
+    Hypothesis *HypothesisAssessment
 }
 ```
 
@@ -114,6 +118,7 @@ type Analysis struct {
     Fingerprint string
     RepoContext *RepoContext     // Populated when --git is enabled
     Delta       *Delta           // Populated when repo-aware scoring has explicit change or git context
+    Differential *DifferentialDiagnosis
 }
 ```
 
@@ -141,6 +146,7 @@ type Ranking struct {
 - Deterministic detectors stay authoritative for matching.
 - Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
 - Delta hints require explicit repo-aware context such as `--git` or changed-file analysis.
+- Provider-backed CI delta requires explicit opt-in and may call the provider API only when enabled.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.
@@ -155,7 +161,7 @@ type Ranking struct {
 - No dashboards or frontend UI.
 - No speculative rule engine abstractions.
 - No fuzzy or semantic matching.
-- No runtime network calls during analysis.
+- No runtime network calls during analysis unless explicit provider-backed delta resolution is enabled.
 
 ## Delivery Standard
 

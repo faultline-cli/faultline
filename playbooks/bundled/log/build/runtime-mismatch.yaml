@@ -53,6 +53,20 @@ match:
     - setup-node
     - java version mismatch
     - unsupportedclassversionerror
+hypothesis:
+  supports:
+    - signal: runtime.language.version.mismatch
+      weight: 0.8
+  contradicts:
+    - signal: runtime.node.version.mismatch
+      weight: -0.6
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+    - signal: dependency.package.not_found
+      weight: -0.6
+  discriminators:
+    - description: This fallback should only win when the runtime mismatch is real but not Node-specific.
+      signal: runtime.language.version.mismatch
 why_it_matters: |-
   ## Why it matters
 

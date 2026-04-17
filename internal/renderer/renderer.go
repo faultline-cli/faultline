@@ -143,7 +143,7 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 	}
 	if detailed {
 		if rank == 0 {
-			if differential := r.renderDifferential(a.Results); differential != "" {
+			if differential := r.renderDifferential(a); differential != "" {
 				parts = append(parts, r.renderDetailPanel("Differential Diagnosis", differential, "signal"))
 			}
 			if confidence := r.renderConfidenceBreakdown(a.Results, result); confidence != "" {
@@ -347,12 +347,17 @@ func (r Renderer) renderExplanation(title string, lines []string) string {
 	return r.renderDetailPanel(title, r.renderBulletLines(lines), "signal")
 }
 
-func (r Renderer) renderDifferential(results []model.Result) string {
-	if len(results) < 2 {
+func (r Renderer) renderDifferential(a *model.Analysis) string {
+	if a != nil && a.Differential != nil {
+		if body := r.renderDifferentialSummary(a.Differential); body != "" {
+			return body
+		}
+	}
+	if a == nil || len(a.Results) < 2 {
 		return ""
 	}
-	top := results[0]
-	runnerUp := results[1]
+	top := a.Results[0]
+	runnerUp := a.Results[1]
 	lines := []string{
 		fmt.Sprintf("- Top candidate: %s (%s)", top.Playbook.ID, top.Playbook.Title),
 		fmt.Sprintf("- Runner-up: %s (%s)", runnerUp.Playbook.ID, runnerUp.Playbook.Title),
@@ -368,6 +373,39 @@ func (r Renderer) renderDifferential(results []model.Result) string {
 	}
 	if reason := alternateReason(top, runnerUp); reason != "" {
 		lines = append(lines, "- Alternate remains plausible because: "+reason)
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (r Renderer) renderDifferentialSummary(diff *model.DifferentialDiagnosis) string {
+	if diff == nil {
+		return ""
+	}
+	lines := make([]string, 0)
+	if diff.Likely != nil {
+		lines = append(lines, fmt.Sprintf("- Likely cause: %s (%s)", diff.Likely.FailureID, diff.Likely.Title))
+		if diff.Likely.ConfidenceText != "" {
+			lines = append(lines, "- Confidence: "+diff.Likely.ConfidenceText)
+		}
+		for _, item := range diff.Likely.Why {
+			lines = append(lines, "- Evidence: "+item)
+		}
+		for _, item := range diff.Likely.DisproofChecks {
+			lines = append(lines, "- Disproof check: "+item)
+			break
+		}
+	}
+	for _, item := range diff.Alternatives {
+		lines = append(lines, fmt.Sprintf("- Alternative: %s (%s)", item.FailureID, item.Title))
+		for _, reason := range item.WhyLessLikely {
+			lines = append(lines, "- Why less likely: "+reason)
+		}
+	}
+	for _, item := range diff.RuledOut {
+		lines = append(lines, fmt.Sprintf("- Ruled out: %s (%s)", item.FailureID, item.Title))
+		for _, reason := range item.RuledOutBy {
+			lines = append(lines, "- Reason: "+reason)
+		}
 	}
 	return strings.Join(lines, "\n")
 }
@@ -613,6 +651,18 @@ func (r Renderer) renderDelta(delta *model.Delta) string {
 		return ""
 	}
 	var lines []string
+	if strings.TrimSpace(delta.Provider) != "" {
+		lines = append(lines, "- provider: "+delta.Provider)
+	}
+	for _, file := range delta.FilesChanged {
+		lines = append(lines, "- changed file: "+file)
+	}
+	for _, test := range delta.TestsNewlyFailing {
+		lines = append(lines, "- new failing test: "+test)
+	}
+	for _, item := range delta.ErrorsAdded {
+		lines = append(lines, "- new error: "+item)
+	}
 	for _, cause := range delta.Causes {
 		lines = append(lines, fmt.Sprintf("- %s: %.2f", cause.Kind, cause.Score))
 		for _, reason := range cause.Reasons {

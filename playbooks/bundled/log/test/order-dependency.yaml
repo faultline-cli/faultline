@@ -50,6 +50,20 @@ match:
     - leaked state
     - global state
     - "left over from previous"
+hypothesis:
+  supports:
+    - signal: test.order.dependency
+      weight: 0.7
+  contradicts:
+    - signal: test.parallel.resource_conflict
+      weight: -0.4
+    - signal: test.fixture.missing
+      weight: -0.4
+    - signal: test.database.duplicate_state
+      weight: -0.5
+  discriminators:
+    - description: Explicit references to prior-test state are stronger than generic test instability wording.
+      signal: test.order.dependency
 why_it_matters: |-
   ## Why it matters
 

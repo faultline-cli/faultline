@@ -5,25 +5,33 @@ package model
 
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
-	ID           string        `yaml:"id" json:"id"`
-	Title        string        `yaml:"title" json:"title"`
-	Category     string        `yaml:"category" json:"category"`
-	Severity     string        `yaml:"severity" json:"severity"`
-	Detector     string        `yaml:"detector,omitempty" json:"detector,omitempty"`
-	BaseScore    float64       `yaml:"base_score" json:"base_score"`
-	Tags         []string      `yaml:"tags" json:"tags"`
-	StageHints   []string      `yaml:"stage_hints" json:"stage_hints"`
-	Match        MatchSpec     `yaml:"match" json:"match"`
-	Source       SourceSpec    `yaml:"source,omitempty" json:"source,omitempty"`
-	Summary      string        `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Diagnosis    string        `yaml:"diagnosis,omitempty" json:"diagnosis,omitempty"`
-	Fix          string        `yaml:"fix,omitempty" json:"fix,omitempty"`
-	Validation   string        `yaml:"validation,omitempty" json:"validation,omitempty"`
-	WhyItMatters string        `yaml:"why_it_matters,omitempty" json:"why_it_matters,omitempty"`
-	Workflow     WorkflowSpec  `yaml:"workflow" json:"workflow"`
-	Metadata     PlaybookMeta  `yaml:"metadata,omitempty" json:"metadata,omitempty"`
-	Scoring      ScoringConfig `yaml:"scoring,omitempty" json:"scoring,omitempty"`
-	Contextual   ContextPolicy `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
+	ID            string         `yaml:"id" json:"id"`
+	Title         string         `yaml:"title" json:"title"`
+	Category      string         `yaml:"category" json:"category"`
+	Severity      string         `yaml:"severity" json:"severity"`
+	Detector      string         `yaml:"detector,omitempty" json:"detector,omitempty"`
+	BaseScore     float64        `yaml:"base_score" json:"base_score"`
+	Tags          []string       `yaml:"tags" json:"tags"`
+	StageHints    []string       `yaml:"stage_hints" json:"stage_hints"`
+	Match         MatchSpec      `yaml:"match" json:"match"`
+	Source        SourceSpec     `yaml:"source,omitempty" json:"source,omitempty"`
+	Summary       string         `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Diagnosis     string         `yaml:"diagnosis,omitempty" json:"diagnosis,omitempty"`
+	Fix           string         `yaml:"fix,omitempty" json:"fix,omitempty"`
+	Validation    string         `yaml:"validation,omitempty" json:"validation,omitempty"`
+	WhyItMatters  string         `yaml:"why_it_matters,omitempty" json:"why_it_matters,omitempty"`
+	RequiresDelta bool           `yaml:"requires_delta,omitempty" json:"requires_delta,omitempty"`
+	DeltaBoost    []DeltaBoost   `yaml:"delta_boost,omitempty" json:"delta_boost,omitempty"`
+	Workflow      WorkflowSpec   `yaml:"workflow" json:"workflow"`
+	Metadata      PlaybookMeta   `yaml:"metadata,omitempty" json:"metadata,omitempty"`
+	Scoring       ScoringConfig  `yaml:"scoring,omitempty" json:"scoring,omitempty"`
+	Contextual    ContextPolicy  `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
+	Hypothesis    HypothesisSpec `yaml:"hypothesis,omitempty" json:"hypothesis,omitempty"`
+}
+
+type DeltaBoost struct {
+	Signal string  `yaml:"signal,omitempty" json:"signal,omitempty"`
+	Weight float64 `yaml:"weight,omitempty" json:"weight,omitempty"`
 }
 
 // MatchSpec holds declarative match patterns for a Playbook.
@@ -145,6 +153,65 @@ type WorkflowSpec struct {
 	Verify      []string `yaml:"verify" json:"verify,omitempty"`
 }
 
+type HypothesisSpec struct {
+	Supports       []HypothesisSignal        `yaml:"supports,omitempty" json:"supports,omitempty"`
+	Contradicts    []HypothesisSignal        `yaml:"contradicts,omitempty" json:"contradicts,omitempty"`
+	Discriminators []HypothesisDiscriminator `yaml:"discriminators,omitempty" json:"discriminators,omitempty"`
+	Excludes       []HypothesisSignal        `yaml:"excludes,omitempty" json:"excludes,omitempty"`
+}
+
+type HypothesisSignal struct {
+	Signal string  `yaml:"signal,omitempty" json:"signal,omitempty"`
+	Weight float64 `yaml:"weight,omitempty" json:"weight,omitempty"`
+}
+
+type HypothesisDiscriminator struct {
+	Description string  `yaml:"description,omitempty" json:"description,omitempty"`
+	Signal      string  `yaml:"signal,omitempty" json:"signal,omitempty"`
+	Weight      float64 `yaml:"weight,omitempty" json:"weight,omitempty"`
+}
+
+type HypothesisMatch struct {
+	Signal      string   `json:"signal,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Weight      float64  `json:"weight,omitempty"`
+	Evidence    []string `json:"evidence,omitempty"`
+}
+
+type HypothesisAssessment struct {
+	BaseScore      float64           `json:"base_score,omitempty"`
+	FinalScore     float64           `json:"final_score,omitempty"`
+	Eliminated     bool              `json:"eliminated,omitempty"`
+	Supports       []HypothesisMatch `json:"supports,omitempty"`
+	Contradicts    []HypothesisMatch `json:"contradicts,omitempty"`
+	Discriminators []HypothesisMatch `json:"discriminators,omitempty"`
+	Excludes       []HypothesisMatch `json:"excludes,omitempty"`
+	Why            []string          `json:"why,omitempty"`
+	WhyLessLikely  []string          `json:"why_less_likely,omitempty"`
+	RuledOutBy     []string          `json:"ruled_out_by,omitempty"`
+	DisproofChecks []string          `json:"disproof_checks,omitempty"`
+}
+
+type DifferentialCandidate struct {
+	FailureID       string   `json:"failure_id,omitempty"`
+	Title           string   `json:"title,omitempty"`
+	Category        string   `json:"category,omitempty"`
+	Confidence      float64  `json:"confidence,omitempty"`
+	ConfidenceText  string   `json:"confidence_text,omitempty"`
+	HypothesisScore float64  `json:"hypothesis_score,omitempty"`
+	Why             []string `json:"why,omitempty"`
+	WhyLessLikely   []string `json:"why_less_likely,omitempty"`
+	RuledOutBy      []string `json:"ruled_out_by,omitempty"`
+	DisproofChecks  []string `json:"disproof_checks,omitempty"`
+}
+
+type DifferentialDiagnosis struct {
+	Version      string                  `json:"version,omitempty"`
+	Likely       *DifferentialCandidate  `json:"likely,omitempty"`
+	Alternatives []DifferentialCandidate `json:"alternatives,omitempty"`
+	RuledOut     []DifferentialCandidate `json:"ruled_out,omitempty"`
+}
+
 // Line is a single processed log line with its original and normalised forms.
 type Line struct {
 	Original   string
@@ -244,24 +311,42 @@ type DeltaCause struct {
 	Reasons []string `json:"reasons,omitempty"`
 }
 
+type DeltaEnvChange struct {
+	Baseline string `json:"baseline,omitempty"`
+	Current  string `json:"current,omitempty"`
+}
+
+type DeltaSignal struct {
+	ID     string  `json:"id"`
+	Detail string  `json:"detail,omitempty"`
+	Weight float64 `json:"weight,omitempty"`
+}
+
 type Delta struct {
-	Version string       `json:"version,omitempty"`
-	Causes  []DeltaCause `json:"causes,omitempty"`
+	Version           string                    `json:"version,omitempty"`
+	Provider          string                    `json:"provider,omitempty"`
+	FilesChanged      []string                  `json:"files_changed,omitempty"`
+	TestsNewlyFailing []string                  `json:"tests_newly_failing,omitempty"`
+	ErrorsAdded       []string                  `json:"errors_added,omitempty"`
+	EnvDiff           map[string]DeltaEnvChange `json:"env_diff,omitempty"`
+	Signals           []DeltaSignal             `json:"signals,omitempty"`
+	Causes            []DeltaCause              `json:"causes,omitempty"`
 }
 
 // Result is a single ranked playbook match with its scoring detail.
 type Result struct {
-	Playbook     Playbook          `json:"playbook"`
-	Detector     string            `json:"detector,omitempty"`
-	Score        float64           `json:"score"`
-	Confidence   float64           `json:"confidence"`
-	Evidence     []string          `json:"evidence"`
-	EvidenceBy   EvidenceBundle    `json:"evidence_by,omitempty"`
-	Explanation  ResultExplanation `json:"explanation,omitempty"`
-	Breakdown    ScoreBreakdown    `json:"breakdown,omitempty"`
-	ChangeStatus string            `json:"change_status,omitempty"`
-	SeenCount    int               `json:"seen_count"`
-	Ranking      *Ranking          `json:"ranking,omitempty"`
+	Playbook     Playbook              `json:"playbook"`
+	Detector     string                `json:"detector,omitempty"`
+	Score        float64               `json:"score"`
+	Confidence   float64               `json:"confidence"`
+	Evidence     []string              `json:"evidence"`
+	EvidenceBy   EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation  ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown    ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus string                `json:"change_status,omitempty"`
+	SeenCount    int                   `json:"seen_count"`
+	Ranking      *Ranking              `json:"ranking,omitempty"`
+	Hypothesis   *HypothesisAssessment `json:"hypothesis,omitempty"`
 }
 
 // RepoContext holds git repository context enrichment from a recent commit window.
@@ -286,10 +371,11 @@ type RepoCommit struct {
 // Analysis is the complete output of a log analysis run.
 // Results is empty (not nil) when no playbook matched.
 type Analysis struct {
-	Results     []Result     `json:"results"`
-	Context     Context      `json:"context"`
-	Fingerprint string       `json:"fingerprint,omitempty"`
-	Source      string       `json:"source,omitempty"`
-	RepoContext *RepoContext `json:"repo_context,omitempty"`
-	Delta       *Delta       `json:"delta,omitempty"`
+	Results      []Result               `json:"results"`
+	Context      Context                `json:"context"`
+	Fingerprint  string                 `json:"fingerprint,omitempty"`
+	Source       string                 `json:"source,omitempty"`
+	RepoContext  *RepoContext           `json:"repo_context,omitempty"`
+	Delta        *Delta                 `json:"delta,omitempty"`
+	Differential *DifferentialDiagnosis `json:"differential,omitempty"`
 }

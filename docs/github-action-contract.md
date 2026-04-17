@@ -10,6 +10,8 @@ The recommended surfaces for a separate `faultline-action` repository are:
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
 - optional evidence-fusion metadata: `faultline analyze <logfile> --json --bayes`
+- optional failure delta against the last successful run on the same branch:
+  `faultline analyze <logfile> --json --bayes --delta-provider github-actions`
 
 These contracts already exist in the CLI and should remain the integration boundary.
 
@@ -25,9 +27,10 @@ These contracts already exist in the CLI and should remain the integration bound
 
 1. Capture the failing log into a file inside the workflow job.
 2. Run `faultline analyze` to produce markdown and JSON artifacts.
-3. Optionally run `faultline analyze --json --bayes` when the action wants additive ranking or delta payloads.
-4. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
-5. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
+3. Optionally run `faultline analyze --json --bayes` when the action wants additive ranking metadata.
+4. Optionally enable provider-backed delta with `--delta-provider github-actions` and pass `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_REF_NAME`, and `GITHUB_RUN_ID`.
+5. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
+6. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
 
 ## Example Commands
 
@@ -37,6 +40,7 @@ Using a local binary:
 faultline analyze build.log --format markdown > faultline-summary.md
 faultline analyze build.log --json > faultline-analysis.json
 faultline analyze build.log --json --bayes > faultline-analysis-bayes.json
+faultline analyze build.log --json --bayes --delta-provider github-actions > faultline-analysis-delta.json
 faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 

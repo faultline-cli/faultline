@@ -36,6 +36,12 @@ why_it_matters: |-
   - Review snapshot diffs carefully in pull requests instead of auto-accepting them.
   - Prefer narrow golden files that capture only the behavior that matters.
   - Store snapshot update commands in the test docs or Makefile so regenerating expected output is consistent across contributors.
+requires_delta: true
+delta_boost:
+  - signal: delta.test.failure.introduced
+    weight: 1.2
+  - signal: delta.scope.changed
+    weight: 0.8
 
 match:
   any:

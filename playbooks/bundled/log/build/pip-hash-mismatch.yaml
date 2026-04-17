@@ -64,6 +64,18 @@ match:
     - "No matching distribution found"
     - "Could not build wheels for"
     - "error: command 'gcc' failed"
+hypothesis:
+  supports:
+    - signal: dependency.hash.mismatch
+      weight: 0.9
+  contradicts:
+    - signal: dependency.resolution.conflict
+      weight: -0.6
+    - signal: dependency.cache.corrupt
+      weight: -0.3
+  discriminators:
+    - description: Hash-checking mode failures point to package integrity metadata rather than resolver state.
+      signal: dependency.hash.mismatch
 
 workflow:
   likely_files:

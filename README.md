@@ -86,6 +86,7 @@ Faultline does not guess at detection.
 
 - Deterministic pattern matching
 - Ranked diagnoses with explicit evidence
+- Differential diagnosis for close calls: likely cause, alternatives, and ruled-out rivals
 - Optional `--bayes` reranking that stays deterministic, explainable, and additive
 - Deterministic workflow artifacts for local follow-through and agent handoff
 - Quiet `guard` checks for high-confidence local prevention
@@ -198,6 +199,7 @@ It is intentionally narrow. Faultline does not try to explain every possible fai
 
 - Analyze CI logs from a file or stdin.
 - Rerank close calls with `--bayes`.
+- Explain why the winning diagnosis beat nearby alternatives.
 - Surface likely drift causes only when repo context is explicit.
 - Turn the top diagnosis into a deterministic workflow handoff.
 - Inspect a repository for source-level failure risks.

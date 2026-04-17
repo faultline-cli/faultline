@@ -34,6 +34,20 @@ match:
     - "Run `pnpm install` to update the lockfile"
     - "pnpm install --frozen-lockfile"
     - "lockfile version"
+hypothesis:
+  supports:
+    - signal: dependency.pnpm.lockfile.sync_error
+      weight: 0.9
+    - signal: dependency.lockfile.changed
+      weight: 0.5
+  contradicts:
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+    - signal: runtime.node.version.mismatch
+      weight: -0.5
+  discriminators:
+    - description: Frozen-lockfile failures are specific to pnpm's generated lock metadata and install mode.
+      signal: dependency.pnpm.lockfile.sync_error
 workflow:
   likely_files:
     - pnpm-lock.yaml
@@ -51,3 +65,9 @@ why_it_matters: |-
   - Add a CI check: `pnpm install --frozen-lockfile && git diff --exit-code pnpm-lock.yaml`.
   - Add a pre-commit hook that runs `pnpm install` when `package.json` changes.
   - Use Renovate or Dependabot to keep the lockfile updated via automated PRs.
+requires_delta: true
+delta_boost:
+  - signal: delta.dependency.changed
+    weight: 1.2
+  - signal: delta.scope.changed
+    weight: 0.8

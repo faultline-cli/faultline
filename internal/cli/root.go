@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -95,6 +97,10 @@ func newAnalyzeCommand() *cobra.Command {
 		gitSince      string
 		repoPath      string
 		bayes         bool
+		deltaProvider string
+		githubRepo    string
+		githubBranch  string
+		githubRunID   int64
 	)
 
 	cmd := &cobra.Command{
@@ -143,6 +149,11 @@ func newAnalyzeCommand() *cobra.Command {
 				GitSince:          gitSince,
 				RepoPath:          repoPath,
 				BayesEnabled:      bayes,
+				DeltaProvider:     deltaProvider,
+				GitHubRepository:  firstNonEmpty(githubRepo, os.Getenv("GITHUB_REPOSITORY")),
+				GitHubBranch:      firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
+				GitHubRunID:       firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
+				GitHubToken:       firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -159,7 +170,41 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions)")
+	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
+	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
+	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
 	return cmd
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstInt64(values ...interface{}) int64 {
+	for _, value := range values {
+		switch v := value.(type) {
+		case int64:
+			if v != 0 {
+				return v
+			}
+		case string:
+			if strings.TrimSpace(v) == "" {
+				continue
+			}
+			parsed, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+			if err == nil && parsed != 0 {
+				return parsed
+			}
+		}
+	}
+	return 0
 }
 
 func newFixCommand() *cobra.Command {

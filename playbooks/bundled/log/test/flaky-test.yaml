@@ -51,6 +51,22 @@ match:
     - "retry attempt"
     - test passed on retry
     - sporadically fails
+hypothesis:
+  supports:
+    - signal: test.retry.detected
+      weight: 0.8
+  contradicts:
+    - signal: test.timeout.detected
+      weight: -0.5
+    - signal: test.fixture.missing
+      weight: -0.5
+    - signal: test.database.duplicate_state
+      weight: -0.5
+    - signal: test.parallel.resource_conflict
+      weight: -0.4
+  discriminators:
+    - description: Retry or intermittency wording is the strongest evidence that the failure is truly flaky.
+      signal: test.retry.detected
 why_it_matters: |-
   ## Why it matters
 

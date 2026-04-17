@@ -51,6 +51,10 @@ func Score(inputs Inputs) ([]model.Result, *model.Delta, error) {
 	return results, delta, nil
 }
 
+func DiagnoseDelta(repoState *RepoState) *model.Delta {
+	return buildDelta(repoState)
+}
+
 func recalibrateConfidence(results []model.Result) {
 	if len(results) == 0 {
 		return

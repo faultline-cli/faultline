@@ -10,20 +10,25 @@ const (
 )
 
 type RepoState struct {
-	Root          string
-	ChangedFiles  []string
-	RecentFiles   []string
-	HotspotDirs   []string
-	HotfixSignals []string
-	DriftSignals  []string
+	Root              string
+	ChangedFiles      []string
+	RecentFiles       []string
+	HotspotDirs       []string
+	HotfixSignals     []string
+	DriftSignals      []string
+	Provider          string
+	TestsNewlyFailing []string
+	ErrorsAdded       []string
+	EnvDiff           map[string]model.DeltaEnvChange
 }
 
 type Inputs struct {
-	Context   model.Context
-	Lines     []model.Line
-	Results   []model.Result
-	RepoState *RepoState
-	ChangeSet detectors.ChangeSet
+	Context        model.Context
+	Lines          []model.Line
+	Results        []model.Result
+	RepoState      *RepoState
+	ChangeSet      detectors.ChangeSet
+	DeltaRequested bool
 }
 
 type weightsFile struct {

@@ -64,6 +64,20 @@ match:
     - secret not found
     - mountvolume.setup failed
     - failedmount
+hypothesis:
+  supports:
+    - signal: test.fixture.missing
+      weight: 0.9
+  contradicts:
+    - signal: test.parallel.resource_conflict
+      weight: -0.4
+    - signal: test.timeout.detected
+      weight: -0.4
+    - signal: test.retry.detected
+      weight: -0.4
+  discriminators:
+    - description: Missing fixture or seed-data signals are more direct than downstream test failures.
+      signal: test.fixture.missing
 why_it_matters: |-
   ## Why it matters
 

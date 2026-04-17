@@ -16,6 +16,22 @@ match:
     - unexpected end of archive
     - corrupted tar archive
     - bad gzip
+hypothesis:
+  supports:
+    - signal: dependency.cache.corrupt
+      weight: 0.8
+    - signal: cache.restore.detected
+      weight: 0.4
+  contradicts:
+    - signal: cache.restore.absent
+      weight: -0.4
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+    - signal: runtime.version.mismatch
+      weight: -0.3
+  discriminators:
+    - description: Cache or archive corruption is only persuasive when the job actually restored cached artifacts.
+      signal: cache.restore.detected
 summary: |-
   CI restored a dependency cache, but the cached contents were stale,
   corrupted, or built for an incompatible environment.

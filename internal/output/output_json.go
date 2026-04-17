@@ -11,14 +11,15 @@ import (
 
 // analysisJSON is the stable JSON schema emitted by FormatAnalysisJSON.
 type analysisJSON struct {
-	Matched     bool         `json:"matched"`
-	Source      string       `json:"source,omitempty"`
-	Fingerprint string       `json:"fingerprint,omitempty"`
-	Context     ctxJSON      `json:"context"`
-	Results     []resultJSON `json:"results"`
-	RepoContext *repoCtxJSON `json:"repo_context,omitempty"`
-	Delta       *model.Delta `json:"delta,omitempty"`
-	Message     string       `json:"message,omitempty"`
+	Matched      bool                         `json:"matched"`
+	Source       string                       `json:"source,omitempty"`
+	Fingerprint  string                       `json:"fingerprint,omitempty"`
+	Context      ctxJSON                      `json:"context"`
+	Results      []resultJSON                 `json:"results"`
+	RepoContext  *repoCtxJSON                 `json:"repo_context,omitempty"`
+	Delta        *model.Delta                 `json:"delta,omitempty"`
+	Differential *model.DifferentialDiagnosis `json:"differential,omitempty"`
+	Message      string                       `json:"message,omitempty"`
 }
 
 // ctxJSON is the stable representation of model.Context in JSON output.
@@ -30,27 +31,28 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank         int                     `json:"rank"`
-	FailureID    string                  `json:"failure_id"`
-	Title        string                  `json:"title"`
-	Category     string                  `json:"category"`
-	Pack         string                  `json:"pack,omitempty"`
-	Severity     string                  `json:"severity,omitempty"`
-	Detector     string                  `json:"detector,omitempty"`
-	Score        float64                 `json:"score"`
-	Confidence   float64                 `json:"confidence"`
-	Summary      string                  `json:"summary,omitempty"`
-	Diagnosis    string                  `json:"diagnosis,omitempty"`
-	WhyItMatters string                  `json:"why_it_matters,omitempty"`
-	Fix          string                  `json:"fix,omitempty"`
-	Validation   string                  `json:"validation,omitempty"`
-	Evidence     []string                `json:"evidence"`
-	EvidenceBy   model.EvidenceBundle    `json:"evidence_by,omitempty"`
-	Explanation  model.ResultExplanation `json:"explanation,omitempty"`
-	Breakdown    model.ScoreBreakdown    `json:"breakdown,omitempty"`
-	ChangeStatus string                  `json:"change_status,omitempty"`
-	SeenCount    int                     `json:"seen_count"`
-	Ranking      *model.Ranking          `json:"ranking,omitempty"`
+	Rank         int                         `json:"rank"`
+	FailureID    string                      `json:"failure_id"`
+	Title        string                      `json:"title"`
+	Category     string                      `json:"category"`
+	Pack         string                      `json:"pack,omitempty"`
+	Severity     string                      `json:"severity,omitempty"`
+	Detector     string                      `json:"detector,omitempty"`
+	Score        float64                     `json:"score"`
+	Confidence   float64                     `json:"confidence"`
+	Summary      string                      `json:"summary,omitempty"`
+	Diagnosis    string                      `json:"diagnosis,omitempty"`
+	WhyItMatters string                      `json:"why_it_matters,omitempty"`
+	Fix          string                      `json:"fix,omitempty"`
+	Validation   string                      `json:"validation,omitempty"`
+	Evidence     []string                    `json:"evidence"`
+	EvidenceBy   model.EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation  model.ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown    model.ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus string                      `json:"change_status,omitempty"`
+	SeenCount    int                         `json:"seen_count"`
+	Ranking      *model.Ranking              `json:"ranking,omitempty"`
+	Hypothesis   *model.HypothesisAssessment `json:"hypothesis,omitempty"`
 }
 
 type repoCtxJSON struct {
@@ -96,6 +98,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 	}
 	payload.RepoContext = repoContextJSON(a.RepoContext)
 	payload.Delta = a.Delta
+	payload.Differential = a.Differential
 
 	if !payload.Matched {
 		payload.Message = "No known playbook matched this input."
@@ -126,6 +129,7 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 				ChangeStatus: r.ChangeStatus,
 				SeenCount:    r.SeenCount,
 				Ranking:      r.Ranking,
+				Hypothesis:   r.Hypothesis,
 			}
 		}
 	}

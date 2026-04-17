@@ -126,7 +126,7 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 			sections = append(sections, "", evidence)
 		}
 		if rank == 0 {
-			if differential := markdownListSection("## Differential Diagnosis", differentialLines(a.Results)); differential != "" {
+			if differential := markdownListSection("## Differential Diagnosis", differentialLines(a)); differential != "" {
 				sections = append(sections, "", differential)
 			}
 			if confidence := markdownListSection("## Confidence Breakdown", confidenceBreakdownLines(a.Results, result)); confidence != "" {
@@ -227,12 +227,17 @@ func sharesLine(left, right []string) bool {
 	return false
 }
 
-func differentialLines(results []model.Result) []string {
-	if len(results) < 2 {
+func differentialLines(a *model.Analysis) []string {
+	if a != nil && a.Differential != nil {
+		if lines := differentialSummaryLines(a.Differential); len(lines) > 0 {
+			return lines
+		}
+	}
+	if a == nil || len(a.Results) < 2 {
 		return nil
 	}
-	top := results[0]
-	runnerUp := results[1]
+	top := a.Results[0]
+	runnerUp := a.Results[1]
 	lines := []string{
 		fmt.Sprintf("top candidate: %s (%s)", top.Playbook.ID, top.Playbook.Title),
 		fmt.Sprintf("runner-up: %s (%s)", runnerUp.Playbook.ID, runnerUp.Playbook.Title),
@@ -250,6 +255,39 @@ func differentialLines(results []model.Result) []string {
 		lines = append(lines, "alternate remains plausible because: it matched the same failing evidence line")
 	} else if len(filterEmpty(trimmedLines(runnerUp.Evidence))) > 0 {
 		lines = append(lines, "alternate remains plausible because: it still matched explicit evidence from the input")
+	}
+	return lines
+}
+
+func differentialSummaryLines(diff *model.DifferentialDiagnosis) []string {
+	if diff == nil {
+		return nil
+	}
+	var lines []string
+	if diff.Likely != nil {
+		lines = append(lines, fmt.Sprintf("likely cause: %s (%s)", diff.Likely.FailureID, diff.Likely.Title))
+		if diff.Likely.ConfidenceText != "" {
+			lines = append(lines, "confidence: "+diff.Likely.ConfidenceText)
+		}
+		for _, item := range diff.Likely.Why {
+			lines = append(lines, "evidence: "+item)
+		}
+		for _, item := range diff.Likely.DisproofChecks {
+			lines = append(lines, "disproof check: "+item)
+			break
+		}
+	}
+	for _, item := range diff.Alternatives {
+		lines = append(lines, fmt.Sprintf("alternative: %s (%s)", item.FailureID, item.Title))
+		for _, reason := range item.WhyLessLikely {
+			lines = append(lines, "why less likely: "+reason)
+		}
+	}
+	for _, item := range diff.RuledOut {
+		lines = append(lines, fmt.Sprintf("ruled out: %s (%s)", item.FailureID, item.Title))
+		for _, reason := range item.RuledOutBy {
+			lines = append(lines, "reason: "+reason)
+		}
 	}
 	return lines
 }
@@ -409,6 +447,18 @@ func deltaLines(delta *model.Delta) []string {
 		return nil
 	}
 	var lines []string
+	if strings.TrimSpace(delta.Provider) != "" {
+		lines = append(lines, "Provider: "+delta.Provider)
+	}
+	for _, file := range delta.FilesChanged {
+		lines = append(lines, "Changed file: "+file)
+	}
+	for _, test := range delta.TestsNewlyFailing {
+		lines = append(lines, "New failing test: "+test)
+	}
+	for _, err := range delta.ErrorsAdded {
+		lines = append(lines, "New error: "+err)
+	}
 	for _, cause := range delta.Causes {
 		lines = append(lines, fmt.Sprintf("%s: %.2f", cause.Kind, cause.Score))
 		for _, reason := range cause.Reasons {

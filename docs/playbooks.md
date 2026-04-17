@@ -45,6 +45,50 @@ validation: |
   - Confirm the original failure signature is gone.
 ```
 
+Optional delta-aware ranking fields:
+
+```yaml
+requires_delta: true
+delta_boost:
+  - signal: delta.dependency.changed
+    weight: 1.2
+```
+
+Use these only when a playbook becomes meaningfully more precise once the
+failure is compared against a baseline successful run.
+
+Optional differential-diagnosis fields:
+
+```yaml
+hypothesis:
+  supports:
+    - signal: dependency.resolution.conflict
+      weight: 0.7
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.6
+  discriminators:
+    - description: Resolver wording points to incompatible requirements.
+      signal: dependency.resolution.conflict
+  excludes:
+    - signal: dependency.hash.mismatch
+```
+
+Use `hypothesis` when a playbook has nearby confusable rivals and you want the
+detailed output to explain why one wins, what evidence weakens it, and what
+would rule it out entirely.
+
+Signal IDs must be deterministic. Faultline currently supports curated signal
+aliases plus a small generic set:
+
+- named aliases such as `dependency.cache.corrupt`, `runtime.node.version.mismatch`, and `test.timeout.detected`
+- `log.contains:<text>`
+- `log.absent:<text>`
+- `delta.signal:<id>`
+- `delta.absent:<id>`
+- `context.stage:<stage>`
+- `context.stage.absent:<stage>`
+
 ## Writing guidelines
 
 - Keep `summary` to one or two sentences.

@@ -240,6 +240,11 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysi
 		GitSince:          opts.GitSince,
 		RepoPath:          opts.RepoPath,
 		BayesEnabled:      opts.BayesEnabled,
+		DeltaProvider:     opts.DeltaProvider,
+		GitHubRepository:  opts.GitHubRepository,
+		GitHubBranch:      opts.GitHubBranch,
+		GitHubRunID:       opts.GitHubRunID,
+		GitHubToken:       opts.GitHubToken,
 	}).AnalyzeReader(r)
 	if a != nil {
 		a.Source = source

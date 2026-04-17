@@ -51,6 +51,16 @@ match:
     - "Expected sha256"
     - "Hash mismatch (got:"
     - "does not match expected hash"
+hypothesis:
+  supports:
+    - signal: dependency.pip.install.failed
+      weight: 0.7
+  contradicts:
+    - signal: dependency.hash.mismatch
+      weight: -0.4
+  discriminators:
+    - description: pip-specific install and wheel-building signals should outrank the generic package-not-found fallback.
+      signal: dependency.pip.install.failed
 workflow:
   likely_files:
     - requirements.txt

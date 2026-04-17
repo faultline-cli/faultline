@@ -36,6 +36,16 @@ type AnalyzeOptions struct {
 	RepoPath string
 	// BayesEnabled enables deterministic Bayesian-inspired reranking.
 	BayesEnabled bool
+	// DeltaProvider enables provider-backed failure delta resolution.
+	DeltaProvider string
+	// GitHubRepository identifies the GitHub repository for provider-backed delta resolution.
+	GitHubRepository string
+	// GitHubBranch identifies the GitHub branch for provider-backed delta resolution.
+	GitHubBranch string
+	// GitHubRunID identifies the current GitHub Actions run for provider-backed delta resolution.
+	GitHubRunID int64
+	// GitHubToken authenticates provider-backed GitHub Actions delta resolution.
+	GitHubToken string
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

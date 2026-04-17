@@ -10,6 +10,9 @@ explicit deterministic layers:
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, history persistence,
   source loading, and git enrichment.
+- `internal/engine/delta` owns explicit provider-backed failure delta
+  resolution and minimal cross-run extraction such as changed files and newly
+  failing tests.
 - `internal/fixtures` owns deterministic fixture corpora, public-source
   ingestion adapters, normalization, review metadata, promotion flow, and
   regression statistics.
@@ -99,6 +102,9 @@ That boundary matters:
 - same input and same repo snapshot still produce the same output
 - ranking and delta payloads are additive and explainable
 - changed files are suspicious context, not proof on their own
+- provider-backed delta remains opt-in and should stay narrow: compare the
+  current failing run against the last successful run on the same branch,
+  extract deterministic diffs, and feed them back into the same scoring model
 
 ## Rendering boundary
 

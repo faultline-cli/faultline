@@ -25,6 +25,22 @@ match:
     - transfer failed for
     - pluginresolutionexception
     - could not resolve dependencies for project
+hypothesis:
+  supports:
+    - signal: dependency.resolution.conflict
+      weight: 0.7
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.6
+    - signal: dependency.cache.corrupt
+      weight: -0.4
+    - signal: runtime.version.mismatch
+      weight: -0.4
+  discriminators:
+    - description: Resolver conflict wording points to incompatible dependency requirements rather than stale generated files.
+      signal: dependency.resolution.conflict
+  excludes:
+    - signal: dependency.hash.mismatch
 
 summary: |-
   Dependency constraints have drifted apart enough that the package manager

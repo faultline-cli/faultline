@@ -85,6 +85,18 @@ match:
     - missing fixture
     - seed data
     - "ActiveRecord::RecordNotFound"
+hypothesis:
+  supports:
+    - signal: test.database.duplicate_state
+      weight: 0.9
+  contradicts:
+    - signal: test.fixture.missing
+      weight: -0.5
+    - signal: test.parallel.resource_conflict
+      weight: -0.3
+  discriminators:
+    - description: Duplicate rows or unexpected existing data strongly suggest polluted database state between tests.
+      signal: test.database.duplicate_state
 why_it_matters: |-
   ## Why it matters
 

@@ -152,6 +152,85 @@ workflow:
 	}
 }
 
+func TestLoadDirSupportsHypothesisMetadata(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: hypothesis-sample
+title: Hypothesis Sample
+category: build
+severity: medium
+summary: |
+  Summary.
+diagnosis: |
+  Diagnosis.
+fix: |
+  Fix.
+validation: |
+  Validate.
+match:
+  any:
+    - "primary error"
+hypothesis:
+  supports:
+    - signal: dependency.resolution.conflict
+      weight: 0.7
+  contradicts:
+    - signal: cache.restore.absent
+      weight: -0.4
+  discriminators:
+    - description: Resolver wording is specific.
+      signal: dependency.resolution.conflict
+  excludes:
+    - signal: dependency.hash.mismatch
+`)
+
+	pbs, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("LoadDir: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected 1 playbook, got %d", len(pbs))
+	}
+	if len(pbs[0].Hypothesis.Supports) != 1 || pbs[0].Hypothesis.Supports[0].Signal != "dependency.resolution.conflict" {
+		t.Fatalf("expected hypothesis supports to load, got %#v", pbs[0].Hypothesis)
+	}
+	if len(pbs[0].Hypothesis.Excludes) != 1 || pbs[0].Hypothesis.Excludes[0].Signal != "dependency.hash.mismatch" {
+		t.Fatalf("expected hypothesis excludes to load, got %#v", pbs[0].Hypothesis)
+	}
+}
+
+func TestLoadDirRejectsUnknownHypothesisSignal(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: invalid-hypothesis
+title: Invalid Hypothesis
+category: build
+severity: medium
+summary: |
+  Summary.
+diagnosis: |
+  Diagnosis.
+fix: |
+  Fix.
+validation: |
+  Validate.
+match:
+  any:
+    - "primary error"
+hypothesis:
+  supports:
+    - signal: not.a.real.signal
+`)
+
+	_, err := LoadDir(dir)
+	if err == nil {
+		t.Fatal("expected unknown hypothesis signal to fail validation")
+	}
+	if !strings.Contains(err.Error(), "unknown signal") {
+		t.Fatalf("expected unknown signal error, got %v", err)
+	}
+}
+
 func TestLoadDirRejectsMissingMarkdownFields(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "sample.yaml")

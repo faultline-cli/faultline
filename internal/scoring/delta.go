@@ -19,7 +19,9 @@ func buildDelta(repoState *RepoState) *model.Delta {
 		return nil
 	}
 	files := dedupeStrings(append(append([]string(nil), repoState.ChangedFiles...), repoState.RecentFiles...))
-	if len(files) == 0 && len(repoState.DriftSignals) == 0 && len(repoState.HotfixSignals) == 0 {
+	tests := dedupeStrings(repoState.TestsNewlyFailing)
+	errors := dedupeStrings(repoState.ErrorsAdded)
+	if len(files) == 0 && len(repoState.DriftSignals) == 0 && len(repoState.HotfixSignals) == 0 && len(tests) == 0 && len(errors) == 0 && len(repoState.EnvDiff) == 0 {
 		return nil
 	}
 
@@ -55,6 +57,10 @@ func buildDelta(repoState *RepoState) *model.Delta {
 		appendReason(buckets["environment"], strings.ToLower(signal))
 		buckets["environment"].score += 0.2
 	}
+	if len(tests) > 0 {
+		appendReason(buckets["test_data"], "new failing tests detected")
+		buckets["test_data"].score += 0.9
+	}
 
 	var causes []model.DeltaCause
 	for _, bucket := range buckets {
@@ -74,11 +80,19 @@ func buildDelta(repoState *RepoState) *model.Delta {
 		return causes[i].Kind < causes[j].Kind
 	})
 	if len(causes) == 0 {
-		return nil
+		if len(files) == 0 && len(tests) == 0 && len(errors) == 0 && len(repoState.EnvDiff) == 0 {
+			return nil
+		}
 	}
 	return &model.Delta{
-		Version: loadedVersionOrDefault(),
-		Causes:  causes,
+		Version:           loadedVersionOrDefault(),
+		Provider:          strings.TrimSpace(repoState.Provider),
+		FilesChanged:      dedupeStrings(repoState.ChangedFiles),
+		TestsNewlyFailing: tests,
+		ErrorsAdded:       errors,
+		EnvDiff:           cloneEnvDiff(repoState.EnvDiff),
+		Signals:           buildDeltaSignals(repoState),
+		Causes:            causes,
 	}
 }
 
@@ -126,4 +140,78 @@ func appendReason(bucket *deltaBucket, reason string) {
 	}
 	bucket.reasons = append(bucket.reasons, reason)
 	sort.Strings(bucket.reasons)
+}
+
+func cloneEnvDiff(in map[string]model.DeltaEnvChange) map[string]model.DeltaEnvChange {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]model.DeltaEnvChange, len(in))
+	for key, value := range in {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+		out[key] = value
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func buildDeltaSignals(repoState *RepoState) []model.DeltaSignal {
+	if repoState == nil {
+		return nil
+	}
+	var signals []model.DeltaSignal
+	files := dedupeStrings(repoState.ChangedFiles)
+	if len(files) > 0 {
+		signals = append(signals, model.DeltaSignal{
+			ID:     "delta.scope.changed",
+			Detail: strings.Join(files, ", "),
+			Weight: 1.0,
+		})
+	}
+	if hasClass(files, "dependency") {
+		signals = append(signals, model.DeltaSignal{
+			ID:     "delta.dependency.changed",
+			Detail: "dependency-related files changed",
+			Weight: 1.2,
+		})
+	}
+	if len(repoState.TestsNewlyFailing) > 0 {
+		signals = append(signals, model.DeltaSignal{
+			ID:     "delta.test.failure.introduced",
+			Detail: strings.Join(dedupeStrings(repoState.TestsNewlyFailing), ", "),
+			Weight: 1.2,
+		})
+	}
+	if len(repoState.ErrorsAdded) > 0 {
+		signals = append(signals, model.DeltaSignal{
+			ID:     "delta.error.new",
+			Detail: repoState.ErrorsAdded[0],
+			Weight: 1.0,
+		})
+	}
+	sort.Slice(signals, func(i, j int) bool {
+		if signals[i].ID != signals[j].ID {
+			return signals[i].ID < signals[j].ID
+		}
+		if signals[i].Weight != signals[j].Weight {
+			return signals[i].Weight > signals[j].Weight
+		}
+		return signals[i].Detail < signals[j].Detail
+	})
+	return signals
+}
+
+func hasClass(files []string, class string) bool {
+	for _, file := range files {
+		k, _, _ := classifyDeltaFile(file)
+		if k == class {
+			return true
+		}
+	}
+	return false
 }
