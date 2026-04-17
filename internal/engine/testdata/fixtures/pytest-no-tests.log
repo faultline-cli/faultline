@@ -1,0 +1,7 @@
+===================== short test session info =====================
+platform linux -- Python 3.11.9, pytest-8.1.1, pluggy-1.5.0
+rootdir: /home/runner/work/app/app
+collected 0 items
+
+===================== no tests ran in 0.03s =====================
+ExitCode.NO_TESTS_COLLECTED

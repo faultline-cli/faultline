@@ -175,3 +175,23 @@ fixtures:
     path: internal/engine/testdata/fixtures/segfault.log
     expectation:
       expected_playbook: segfault
+  - id: minimal-pytest-no-tests
+    path: internal/engine/testdata/fixtures/pytest-no-tests.log
+    expectation:
+      expected_playbook: pytest-no-tests
+  - id: minimal-git-shallow-checkout
+    path: internal/engine/testdata/fixtures/git-shallow-checkout.log
+    expectation:
+      expected_playbook: git-shallow-checkout
+  - id: minimal-docker-daemon-config-conflict
+    path: internal/engine/testdata/fixtures/docker-daemon-config-conflict.log
+    expectation:
+      expected_playbook: docker-daemon-config-conflict
+  - id: minimal-pip-hash-mismatch
+    path: internal/engine/testdata/fixtures/pip-hash-mismatch.log
+    expectation:
+      expected_playbook: pip-hash-mismatch
+  - id: minimal-arch-mismatch
+    path: internal/engine/testdata/fixtures/arch-mismatch.log
+    expectation:
+      expected_playbook: arch-mismatch

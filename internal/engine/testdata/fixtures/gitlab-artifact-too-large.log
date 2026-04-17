@@ -1,0 +1,4 @@
+Uploading artifacts...
+dist/: found 1 matching files and directories
+ERROR: Uploading artifacts as "archive" to coordinator... 413 Request Entity Too Large
+FATAL: artifact too large: artifact size exceeds the maximum allowed size for this instance

@@ -47,6 +47,10 @@ match:
     - "ImportError: No module named"
     - "cannot import name"
     - "No module named '"
+    - "THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE"
+    - "Expected sha256"
+    - "Hash mismatch (got:"
+    - "does not match expected hash"
 workflow:
   likely_files:
     - requirements.txt

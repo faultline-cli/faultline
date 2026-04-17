@@ -1,0 +1,9 @@
+│ Error: Inconsistent dependency lock file
+│
+│ The following dependency selections recorded in .terraform.lock.hcl are inconsistent with the
+│ current configuration:
+│   - provider registry.terraform.io/hashicorp/aws: locked version selection 5.31.0 doesn't match
+│     the updated provider requirements: ~> 5.40
+│
+│ To update the locked dependency selections to match a changed configuration, run:
+│   terraform init -upgrade
