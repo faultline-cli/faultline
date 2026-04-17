@@ -10,6 +10,9 @@ The useful workflows in Faultline are grounded in the shipped CLI, fixture corpu
 - promote accepted evidence into the checked-in corpus with `faultline fixtures promote`
 - defend the catalog with `make review`, `make test`, and `faultline fixtures stats --class real --check-baseline`
 - refine an existing playbook before adding a new one
+- audit playbook coverage against an independent stratified sample of real CI failures
+- author a new playbook only after a gap has been explicitly justified
+- investigate and resolve a failing baseline gate without weakening it
 
 ## Current Direction
 
@@ -28,6 +31,9 @@ Added:
 - [`prompts/curate-fixture-corpus.md`](../prompts/curate-fixture-corpus.md)
 - [`prompts/refine-playbook-from-fixture.md`](../prompts/refine-playbook-from-fixture.md)
 - [`prompts/verify-deterministic-change.md`](../prompts/verify-deterministic-change.md)
+- [`prompts/collect-coverage-evidence.md`](../prompts/collect-coverage-evidence.md)
+- [`prompts/author-new-playbook.md`](../prompts/author-new-playbook.md)
+- [`prompts/investigate-baseline-regression.md`](../prompts/investigate-baseline-regression.md)
 
 These are narrower, but they are more useful: they tell an agent exactly how to work inside this repository without inventing its own process.
 
@@ -37,6 +43,9 @@ The repository also now ships two repo-local skills under [`agents/skills/`](../
 
 - [`ingestion-pipeline`](../agents/skills/ingestion-pipeline/SKILL.md) for public-source fixture intake, staging review, promotion, and baseline validation
 - [`playbook-refinement`](../agents/skills/playbook-refinement/SKILL.md) for fixture-driven playbook tightening and workflow-field improvement
+- [`coverage-evidence`](../agents/skills/coverage-evidence/SKILL.md) for auditing playbook coverage against a broad, stratified sample of real CI failures from independent sources
+- [`new-playbook-authoring`](../agents/skills/new-playbook-authoring/SKILL.md) for authoring a new playbook after a gap has been explicitly justified, including pattern discipline, fixture pairing, and full validation
+- [`baseline-regression`](../agents/skills/baseline-regression/SKILL.md) for isolating and resolving a failing `make fixture-check` gate without weakening the baseline
 
 This location is intentionally agent-neutral so the same skill files can be used from Codex, Copilot, or any other repository-aware assistant workflow.
 
@@ -73,7 +82,25 @@ Why this matters:
 - it prevents random fixture accumulation
 - it should pull from a mixed set of public sources instead of overfitting the corpus to one provider or one long thread
 
-### 3. Refine Before Expanding
+### 3. Audit Coverage Before Authoring
+
+Use this when the goal is to find coverage gaps rather than process a specific known fixture.
+
+```bash
+./bin/faultline list
+faultline fixtures ingest --adapter <adapter> --url <url>
+./bin/faultline analyze <staged-file> --json
+faultline fixtures review
+make build
+./bin/faultline fixtures stats --class real --check-baseline
+```
+
+Why this matters:
+- it separates discovery from promotion so gaps are validated before anything is committed
+- it forces stratified sampling across CI systems, ecosystems, and failure categories
+- weakly matched cases revealed here feed directly into the refinement workflow rather than being ignored
+
+### 4. Refine Before Expanding
 
 Use this when a fixture is weakly matched or confused with a neighbor.
 
@@ -87,7 +114,42 @@ Why this matters:
 - most catalog quality improvements should come from tightening an existing rule
 - new playbooks should be the exception, not the default
 
-### 4. Close The Loop
+### 5. Author Only After Justification
+
+Use this after `triage-unmatched-log` or `collect-coverage-evidence` has confirmed a gap warrants a new playbook.
+
+```bash
+faultline explain <nearest-neighbor-id>    # pre-flight: confirm refinement can't cover it
+make review                               # after YAML is authored
+make test
+make build
+make fixture-check
+```
+
+Why this matters:
+- the path from "justified" to "correct YAML in the catalog" is the highest-risk step
+- pattern authoring without fixture pairing is how false positives are introduced
+- `make review` is the only way to see whether a new pattern silently outcompetes an existing one
+
+### 6. Investigate A Failing Gate
+
+Use this when `make fixture-check` exits non-zero after a repository change.
+
+```bash
+make build
+./bin/faultline fixtures stats --class real --json   # see per-fixture detail
+./bin/faultline analyze fixtures/real/<id>.yaml --json  # isolate each regression
+make review                                          # if a playbook was changed
+make test
+make fixture-check
+```
+
+Why this matters:
+- the gate protects the checked-in trust boundary; papering it over with expectation updates is not a fix
+- isolating the regressed fixture before acting prevents cascading changes
+- every regression has exactly one correct outcome: fix forward, fix expectations, or revert
+
+### 7. Close The Loop
 
 Use this before considering a repository change complete.
 
@@ -114,7 +176,7 @@ The next useful upgrades should stay small and repo-native.
 2. Keep fixture ingestion and review as the only path for adding real-world evidence.
 3. Bias ingestion runs toward source diversity across GitHub, GitLab, Stack Exchange, Discourse, and Reddit when useful evidence is available.
 4. Keep playbook growth biased toward refinement over catalog expansion.
-5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases.
+5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 67 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
 6. Add new agent workflows only when they map cleanly to an existing deterministic command or checked-in regression gate.
 
 ## What Not To Add
