@@ -1,0 +1,25 @@
+id: gitlab-gitlab-org-gitlab-runner-4648-s2-e676bd0eac6d8196
+title: Connection refused when connecting to an Influxdb service in a job via shell executor.
+fixture_class: real
+normalized_log: |-
+    curl: (7) Failed to connect to localhost port 8086: Connection refused
+    ERROR: Job failed: exit code 7
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4648
+    repository: gitlab-org/gitlab-runner
+    issue_number: 4648
+    title: Connection refused when connecting to an Influxdb service in a job via shell executor.
+    author: cmsax
+    snippet: 2
+    fetched_at: "2026-04-17T10:52:43Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T10:54:18Z"
+fingerprint: e676bd0eac6d8196

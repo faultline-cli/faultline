@@ -1,0 +1,36 @@
+id: stackexchange-stackoverflow-50768317-s1-9baa37ea744a2618
+title: '&quot;docker pull&quot; certificate signed by unknown authority'
+fixture_class: real
+normalized_log: |-
+    I was trying to pull a docker image from a docker registry but hit the following issue:
+    $ docker pull <docker registry>/<image name>/<tag>
+    Error response from daemon: Get <docker registry>/v1/_ping: x509: certificate signed by unknown authority
+    I tried with "curl" and get a similar error message:
+    curl performs SSL certificate verification by default, using a "bundle"
+    of Certificate Authority (CA) public keys (CA certs). If the default
+    bundle file isn't adequate, you can specify an alternate file
+    using the --cacert option.
+    So I downloaded the CA certificate and imported to the server (RedHat Linux 7) with the following commands:
+    cp root_cert.cer /etc/pki/ca-trust/source/anchors/
+    update-ca-trust
+    After the root cert is imported, I can see curl is working fine as it won't complain the cert error, however if I use docker pull I still have the same issue. Is docker using different ca-cert location than curl ? How do I fix the issue with docker pull in this situation?
+expectation:
+    expected_playbook: ssl-cert-error
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/50768317
+    repository: stackoverflow
+    issue_number: 50768317
+    comment_id: "0"
+    title: '&quot;docker pull&quot; certificate signed by unknown authority'
+    author: Chen Xie
+    snippet: 1
+    fetched_at: "2026-04-17T10:52:43Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T10:54:18Z"
+fingerprint: 9baa37ea744a2618

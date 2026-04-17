@@ -1,0 +1,23 @@
+id: reddit-r-devops-18gy2p2-0-0-s2-1117021cf5bc2c9b
+title: Github action fails to checkout private submodule.
+fixture_class: real
+normalized_log: 'git@github.com: Permission denied (publickey).'
+expectation:
+    expected_playbook: ssh-key-auth
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/devops/comments/18gy2p2/
+    repository: r/devops
+    comment_id: "0"
+    title: Github action fails to checkout private submodule.
+    author: EtaDaPiza
+    snippet: 2
+    fetched_at: "2026-04-17T10:52:43Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-17T10:54:23Z"
+fingerprint: 1117021cf5bc2c9b

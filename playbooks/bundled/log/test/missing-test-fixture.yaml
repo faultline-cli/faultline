@@ -41,10 +41,9 @@ match:
   any:
     - "fixture not found"
     - "missing fixture"
+    - "fixture file missing"
     - "no such file or directory"
     - "FileNotFoundError"
-    - "seed"
-    - "fixture"
     - "factory"
     - "undefined method"
     - "ActiveRecord::RecordNotFound"
