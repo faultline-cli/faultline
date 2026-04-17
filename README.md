@@ -355,7 +355,7 @@ These numbers describe the checked-in regression corpus, not the full space of C
 - `docs/github-action-contract.md` documents the provider-agnostic CLI contract for a thin GitHub Action wrapper.
 - `docs/playbooks.md` documents playbook authoring and pack composition.
 - `docs/distribution.md` covers release and Docker packaging.
-- `docs/releases/v0.2.0-preview.md` drafts the v0.2.0 positioning and release notes.
+- `docs/releases/v0.2.0.md` captures the shipped v0.2.0 positioning and release notes.
 - `docs/detectors.md` describes detector behavior.
 - `docs/adr/README.md` indexes architectural decisions.
 - `CONTRIBUTING.md` covers contribution and fixture-sanitization rules.
