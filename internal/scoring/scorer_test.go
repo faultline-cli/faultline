@@ -204,3 +204,72 @@ func TestScoreDeltaBoostImprovesSpecificPlaybookRanking(t *testing.T) {
 		t.Fatalf("expected delta-aware ranking to prefer npm-ci-lockfile, got %s", withDelta[0].Playbook.ID)
 	}
 }
+
+func TestDiagnoseDeltaReturnsNilForNilState(t *testing.T) {
+	if got := DiagnoseDelta(nil); got != nil {
+		t.Fatalf("expected nil delta for nil state, got %#v", got)
+	}
+}
+
+func TestDiagnoseDeltaPopulatesCausesFromFiles(t *testing.T) {
+	delta := DiagnoseDelta(&RepoState{
+		ChangedFiles: []string{"package.json", ".github/workflows/ci.yml"},
+	})
+	if delta == nil {
+		t.Fatal("expected non-nil delta")
+	}
+	if len(delta.Causes) == 0 {
+		t.Fatalf("expected at least one cause, got %#v", delta)
+	}
+}
+
+func TestDebugStringEmptyForNilRanking(t *testing.T) {
+	result := model.Result{
+		Playbook: model.Playbook{ID: "some-playbook"},
+	}
+	if got := DebugString(result); got != "" {
+		t.Fatalf("expected empty string for nil ranking, got %q", got)
+	}
+}
+
+func TestDebugStringFormatsIDAndScore(t *testing.T) {
+	result := model.Result{
+		Playbook: model.Playbook{ID: "my-playbook"},
+		Ranking: &model.Ranking{
+			FinalScore: 3.14159,
+		},
+	}
+	got := DebugString(result)
+	if got == "" {
+		t.Fatal("expected non-empty debug string")
+	}
+	if got != "my-playbook 3.14" {
+		t.Fatalf("unexpected debug string: %q", got)
+	}
+}
+
+func TestCloneEnvDiffReturnsNilForEmpty(t *testing.T) {
+	if got := cloneEnvDiff(nil); got != nil {
+		t.Fatalf("expected nil for nil input, got %#v", got)
+	}
+	if got := cloneEnvDiff(map[string]model.DeltaEnvChange{}); got != nil {
+		t.Fatalf("expected nil for empty input, got %#v", got)
+	}
+}
+
+func TestCloneEnvDiffCopiesEntries(t *testing.T) {
+	in := map[string]model.DeltaEnvChange{
+		"NODE_VERSION": {Baseline: "14", Current: "18"},
+		"  ":           {Baseline: "skip"},
+	}
+	out := cloneEnvDiff(in)
+	if out == nil {
+		t.Fatal("expected non-nil output")
+	}
+	if _, ok := out["NODE_VERSION"]; !ok {
+		t.Fatal("expected NODE_VERSION entry to be preserved")
+	}
+	if _, ok := out["  "]; ok {
+		t.Fatal("expected blank key to be dropped")
+	}
+}

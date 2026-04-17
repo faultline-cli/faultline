@@ -1,6 +1,7 @@
 package detectors
 
 import (
+	"strings"
 	"testing"
 
 	"faultline/internal/model"
@@ -115,5 +116,28 @@ func TestFilterPlaybooksNoneMatch(t *testing.T) {
 	got := FilterPlaybooks(pbs, KindLog)
 	if len(got) != 0 {
 		t.Fatalf("expected 0 results, got %d", len(got))
+	}
+}
+
+func TestRegistryMustLookupErrorIncludesAvailableKinds(t *testing.T) {
+	reg := NewRegistry(stubDetector{kind: KindSource})
+	_, err := reg.MustLookup(KindLog)
+	if err == nil {
+		t.Fatal("expected error for missing KindLog")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, string(KindSource)) {
+		t.Errorf("expected error message to include available kind %q, got: %s", KindSource, msg)
+	}
+}
+
+func TestRegistryAvailableKindsEmpty(t *testing.T) {
+	reg := NewRegistry()
+	_, err := reg.MustLookup(KindLog)
+	if err == nil {
+		t.Fatal("expected error for empty registry")
+	}
+	if !strings.Contains(err.Error(), "none") {
+		t.Errorf("expected 'none' in error for empty registry, got: %s", err.Error())
 	}
 }
