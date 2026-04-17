@@ -176,7 +176,7 @@ The next useful upgrades should stay small and repo-native.
 2. Keep fixture ingestion and review as the only path for adding real-world evidence.
 3. Bias ingestion runs toward source diversity across GitHub, GitLab, Stack Exchange, Discourse, and Reddit when useful evidence is available.
 4. Keep playbook growth biased toward refinement over catalog expansion.
-5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 67 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
+5. Strengthen workflow authoring inside playbooks by improving `likely_files`, `local_repro`, and `verify` for weak handoff cases. A structured sweep of the 69 bundled playbooks using `faultline explain <id>` to spot placeholder or thin workflow fields is a high-value, low-risk improvement pass.
 6. Add new agent workflows only when they map cleanly to an existing deterministic command or checked-in regression gate.
 
 ## What Not To Add
