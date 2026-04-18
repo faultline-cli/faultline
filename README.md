@@ -1,6 +1,13 @@
 # Faultline
 
-Deterministic CI failure diagnosis engine. Replays failing builds locally. no AI guessing, no probabilistic output, same input always produces the same result.
+Deterministic CI failure diagnosis. No guesswork. No AI.
+
+Faultline analyzes failing CI runs with structured detectors and fixture-validated playbooks to produce reproducible, evidence-backed diagnoses.
+
+- Deterministic results: same input, same output
+- Fixture-backed validation: detections are regression tested
+- Local-first execution: build logs stay on your machine by default
+- Agent-legible output: stable JSON and deterministic workflow artifacts
 
 ```text
 # CI log
@@ -21,25 +28,34 @@ Fix:
   - Verify the configured path after runner upgrades
 ```
 
-Faultline is a deterministic diagnosis engine built on 77 bundled playbooks and 103 real-fixture regression proofs. Each diagnosis pulls evidence directly from matched log lines - nothing generated, nothing guessed.
+Faultline is a deterministic diagnosis engine built on 77 bundled playbooks and 103 real-fixture regression proofs. Each diagnosis pulls evidence directly from matched log lines: nothing generated, nothing guessed.
 
-## Beyond basic diagnosis
+## What's already built (but not the default path)
 
-Faultline surfaces depth through advanced commands that add visibility without adding uncertainty:
+Faultline includes additional surfaces that are complete but intentionally outside the default onboarding workflow:
 
 | Command | Purpose |
 | --- | --- |
 | `trace` | Rule-by-rule evaluation showing why each playbook matched or was rejected |
-| `replay` | Re-render saved analysis artifacts from a previous run |
-| `compare` | Diff two analysis artifacts to see what changed between runs |
+| `replay` | Deterministically re-render saved analysis artifacts |
+| `compare` | Diff two analysis artifacts to show what changed between runs |
 | `inspect` | Scan repository source for local failure risks |
 | `guard` | Quiet, high-confidence local prevention checks |
 
-These commands are supported and tested. They ship alongside the core `analyze` → `workflow` pair but sit outside the default onboarding narrative.
+These commands are supported and tested. They ship alongside the core `analyze` -> `workflow` path but stay outside the default first-run narrative until they meet promotion criteria in the release boundary.
+
+Experimental provider-backed delta remains hidden behind explicit opt-in:
+
+```bash
+FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 \
+faultline analyze build.log --json --bayes --delta-provider github-actions
+```
 
 ## Designed for humans and agents
 
-Faultline produces stable output contracts for both:
+Faultline is designed to be legible to both humans and automated agents.
+
+It produces stable output contracts for both:
 
 - **Human engineers** get terminal output with evidence, confidence, and fix steps—immediately actionable without interpretation.
 - **Automation and agents** get deterministic JSON via `--json --mode agent` that stays stable release-to-release.
@@ -53,7 +69,7 @@ faultline analyze ci.log --json --mode agent > diagnosis.json
 faultline workflow ci.log --json --mode agent > workflow.json
 ```
 
-No ML, no LLM, no probabilistic ranking in the core product path. `--bayes` stays assistive—it reranks already-detected candidates and explains the ranking, it never creates new matches.
+No ML, no LLM, no probabilistic ranking in the core product path. `--bayes` stays assistive: it reranks already-detected candidates and explains the ranking, it never creates new matches.
 
 ## Command Maturity Model
 

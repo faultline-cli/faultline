@@ -255,6 +255,70 @@ Impact on technical architecture:
 - reuse source detector and scoring primitives
 - keep the scope narrow and high-confidence to avoid noisy local checks
 
+### Soft Exposure for Complete Surfaces
+
+Current foundation:
+
+- `trace`, `replay`, `compare`, `inspect`, and `guard` are already implemented and validated
+- release-boundary policy already separates default onboarding from companion surfaces
+
+v0.2.0 work:
+
+- add a clear "already built but non-default" section in top-level docs
+- expose one explicit opt-in discovery path for experimental provider-backed delta
+- keep default help and default narrative focused on stable commands
+- track usage and feedback from power users before graduation decisions
+
+Impact on developer and user experience:
+
+- power users can discover depth without digging through source
+- contributors get clearer promotion targets for command graduation
+- new users keep a simple first-run path with low cognitive load
+
+Impact on product:
+
+- improves discoverability of already-shipped depth
+- avoids feature rot caused by zero user pressure on complete surfaces
+- preserves trust by keeping release discipline intact
+
+Impact on technical architecture:
+
+- no runtime architecture change required
+- preserves hidden-flag and release-boundary enforcement in CLI behavior
+- requires docs, examples, and promotion metrics to stay synchronized
+
+### Fixture Sanitizer for Safe Contribution
+
+Current foundation:
+
+- fixture ingestion, review, and promotion flows already exist
+- real-world fixture quality is already a core trust boundary
+
+v0.2.0 work:
+
+- add a simple `faultline fixtures sanitize` path for contribution prep
+- mask obvious secrets and sensitive identifiers before fixture intake
+- start with conservative deterministic rules (tokens, emails, auth headers, obvious credential patterns)
+- document sanitizer limitations clearly so contributors know what still needs manual review
+
+Impact on developer and user experience:
+
+- lowers friction for submitting real CI failures
+- makes contribution safer for teams with strict data-handling policies
+- increases fixture throughput without requiring perfect automation
+
+Impact on product:
+
+- accelerates growth of the real-world corpus
+- strengthens regression evidence and trust in diagnosis coverage
+- improves community participation in playbook refinement
+
+Impact on technical architecture:
+
+- keep sanitizer deterministic and rule-based
+- keep masking rules explicit, versioned, and test-backed
+- integrate sanitizer output directly into existing fixtures ingest/review flow
+
 ## Suggested Build Order
 
 ### Slice 1: Action-First Adoption
@@ -274,6 +338,7 @@ Impact on technical architecture:
 - rewrite README and launch framing around deterministic, audit-friendly automation
 - make "safe to automate against" the top-level trust promise
 - publish fixture corpus stats with category coverage and release snapshots
+- expose complete-but-non-default surfaces without expanding default onboarding
 
 ### Slice 4: Distribution and Extensibility
 
@@ -288,6 +353,7 @@ Impact on technical architecture:
 ### Slice 6: Shift-Left Follow-Through
 
 - add a lightweight guard command
+- add `faultline fixtures sanitize` for safe fixture submission
 - polish docs, examples, thresholds, and automation handoff contracts
 
 ## Later, Not v0.2.0
