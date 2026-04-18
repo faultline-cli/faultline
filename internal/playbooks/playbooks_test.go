@@ -7,6 +7,85 @@ import (
 	"testing"
 )
 
+func TestLoadDefaultUsesEnvVar(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "test.yaml", `
+id: env-test
+title: Env Test
+category: test
+severity: low
+match:
+  any:
+    - "env error"
+`)
+	t.Setenv(envKey, dir)
+	pbs, err := LoadDefault()
+	if err != nil {
+		t.Fatalf("LoadDefault with env: %v", err)
+	}
+	if len(pbs) == 0 {
+		t.Fatal("expected playbooks from env-configured dir")
+	}
+	found := false
+	for _, pb := range pbs {
+		if pb.ID == "env-test" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected to find env-test playbook, got %v", pbs)
+	}
+}
+
+func TestLoadDefaultEnvVarInvalidDirErrors(t *testing.T) {
+	t.Setenv(envKey, "/nonexistent/path/that/does/not/exist")
+	_, err := LoadDefault()
+	if err == nil {
+		t.Fatal("expected error for invalid env-configured dir")
+	}
+}
+
+func TestLoadDefaultFallsBackToRepoPlaybooks(t *testing.T) {
+	// Point to the actual bundled playbooks directory to verify LoadDefault works
+	// when the env var points to a valid directory with yaml files.
+	bundledDir := "../../playbooks/bundled"
+	t.Setenv(envKey, bundledDir)
+	pbs, err := LoadDefault()
+	if err != nil {
+		t.Fatalf("LoadDefault with bundled dir: %v", err)
+	}
+	if len(pbs) == 0 {
+		t.Fatal("expected bundled playbooks to be found")
+	}
+}
+
+func TestDefaultDirUsesEnvVar(t *testing.T) {
+	dir := t.TempDir()
+	// Create a yaml file so the directory is treated as valid
+	path := filepath.Join(dir, "stub.yaml")
+	if err := os.WriteFile(path, []byte("id: stub\n"), 0o600); err != nil {
+		t.Fatalf("write stub: %v", err)
+	}
+	t.Setenv(envKey, dir)
+	got, err := DefaultDir()
+	if err != nil {
+		t.Fatalf("DefaultDir with env: %v", err)
+	}
+	if !strings.HasPrefix(got, dir) {
+		t.Errorf("expected DefaultDir to return %q, got %q", dir, got)
+	}
+}
+
+func TestDefaultDirErrorsForNonexistentEnvPath(t *testing.T) {
+	t.Setenv(envKey, "/no/such/dir")
+	_, err := DefaultDir()
+	if err == nil {
+		t.Fatal("expected error for nonexistent FAULTLINE_PLAYBOOK_DIR")
+	}
+}
+
+
 func TestLoadDirPreservesMatchNone(t *testing.T) {
 	dir := t.TempDir()
 	writePlaybookFixture(t, dir, "sample.yaml", `

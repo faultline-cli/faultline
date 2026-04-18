@@ -7,6 +7,57 @@ import (
 	"testing"
 )
 
+func TestReadLinesNormal(t *testing.T) {
+	lines, err := ReadLines(strings.NewReader("line one\nline two\nline three\n"))
+	if err != nil {
+		t.Fatalf("ReadLines: %v", err)
+	}
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 lines, got %d: %#v", len(lines), lines)
+	}
+	if lines[0].Original != "line one" {
+		t.Errorf("expected first line 'line one', got %q", lines[0].Original)
+	}
+	if lines[2].Original != "line three" {
+		t.Errorf("expected third line 'line three', got %q", lines[2].Original)
+	}
+}
+
+func TestReadLinesSkipsBlanks(t *testing.T) {
+	lines, err := ReadLines(strings.NewReader("\n\nline one\n\n  \nline two\n\n"))
+	if err != nil {
+		t.Fatalf("ReadLines: %v", err)
+	}
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 non-blank lines, got %d: %#v", len(lines), lines)
+	}
+}
+
+func TestReadLinesEmpty(t *testing.T) {
+	lines, err := ReadLines(strings.NewReader(""))
+	if err != nil {
+		t.Fatalf("ReadLines empty: %v", err)
+	}
+	if len(lines) != 0 {
+		t.Fatalf("expected 0 lines, got %d", len(lines))
+	}
+}
+
+func TestReadLinesPreservesLineNumbers(t *testing.T) {
+	lines, err := ReadLines(strings.NewReader("first\nsecond\nthird\n"))
+	if err != nil {
+		t.Fatalf("ReadLines: %v", err)
+	}
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 lines, got %d", len(lines))
+	}
+	for i, line := range lines {
+		if line.Number == 0 {
+			t.Errorf("line[%d] has zero line number", i)
+		}
+	}
+}
+
 func TestAnalyzeReaderFindsBestMatch(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
 
