@@ -1,0 +1,12 @@
+$ python manage.py migrate
+PermissionError: permission denied for relation "django_migrations" on database "prod"
+HINT: The user account "appuser" needs "CREATE" privileges to run migrations.
+
+$ psql -d myapp -c "ALTER TABLE users RENAME TO app_users;"
+ERROR: permission denied: permission denied for relation users
+
+$ chmod 644 /etc/app/config.yaml
+chmod: changing permissions of '/etc/app/config.yaml': Operation not permitted
+
+$ cat /root/.ssh/id_rsa
+cat: /root/.ssh/id_rsa: Permission denied

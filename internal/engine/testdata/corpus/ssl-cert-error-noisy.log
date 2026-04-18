@@ -1,0 +1,17 @@
+$ curl -I https://registry.yarnpkg.com/latest
+curl: (60) SSL certificate problem: certificate has expired
+curl: (60) SSL_CTX_load_verify_locations: CA file missing
+
+$ wget -q https://api.example.com/health
+wget: SSL certificate verify failed: certificate has expired
+
+$ npm install
+npm ERR! code UNABLE_TO_VERIFY_LEAF_SIGNATURE
+npm ERR! UNABLE_TO_VERIFY_LEAF_SIGNATURE: self signed certificate in certificate chain
+
+$ pip install requests
+Collecting requests
+  ERROR: HTTPSConnectionPool(host='pypi.org', port=443): Max retries exceeded: (SSLError(1, 'SSL: CERTIFICATE_VERIFY_FAILED'))
+
+$ go get golang.org/x/net
+go: golang.org/x/net: certificate is valid for 1 name, but certificate is expired

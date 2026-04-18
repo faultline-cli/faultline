@@ -1,0 +1,17 @@
+$ /workspace/app
+panic: version /workspace/app requires go1.21 but found go1.20
+
+$ go run main.go
+go: version go1.21 is required, have go1.20
+
+$ python3 -V
+Python 3.8.10
+
+$ pip install -r requirements.txt
+ERROR: Package 'fastapi' requires Python >=3.9 but found 3.8.10
+
+$ ruby -v
+ruby 2.7.0p0
+
+$ bundle install
+Ruby Gem Bundler requires Ruby >=3.0 but found 2.7.0

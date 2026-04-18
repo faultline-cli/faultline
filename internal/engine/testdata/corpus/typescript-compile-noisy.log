@@ -1,0 +1,10 @@
+$ npx tsc --noEmit
+src/app.ts:1:23: error TS2304: Cannot find name 'Process'.
+src/components/Button.tsx:42:15: error TS2322: Type 'string' is not assignable to type 'ButtonVariant'.
+src/hooks/useAuth.ts:78:4: error TS2339: 'user' is 'undefined'.
+src/utils/format.ts:12:8: error TS2304: Cannot find name 'Buffer'.
+src/services/api.ts:55:2: error TS2322: Type 'number | null' is not assignable to type 'number'.
+Found 5 errors in 3 files.
+
+$ npm run build
+npm ERR! Build failed with exit code 1

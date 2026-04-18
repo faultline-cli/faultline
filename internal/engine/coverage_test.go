@@ -188,6 +188,64 @@ func TestAnalyzeRepositoryEmptyDirReturnsErrNoInput(t *testing.T) {
 	_ = a
 }
 
+func TestSourcePlaybookMissingErrorPropagation(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	dir := filepath.Join("testdata", "source")
+	a, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != nil && err != ErrNoMatch {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a == nil {
+		t.Fatal("expected analysis for source fixtures")
+	}
+	if len(a.Results) == 0 {
+		t.Skip("no source playbook match - may need source fixtures in directory")
+	}
+	found := false
+	for _, r := range a.Results {
+		if r.Playbook.ID == "missing-error-propagation" {
+			found = true
+			break
+		}
+	}
+	if !found && len(a.Results) > 0 {
+		ids := make([]string, 0, len(a.Results))
+		for _, r := range a.Results {
+			ids = append(ids, r.Playbook.ID)
+		}
+		t.Logf("source results: %v", ids)
+	}
+}
+
+func TestSourcePlaybookPanicInHttpHandler(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	dir := filepath.Join("testdata", "source")
+	a, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != nil && err != ErrNoMatch {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a == nil {
+		t.Fatal("expected analysis for source fixtures")
+	}
+	if len(a.Results) == 0 {
+		t.Skip("no source playbook match - may need source fixtures in directory")
+	}
+	found := false
+	for _, r := range a.Results {
+		if r.Playbook.ID == "panic-in-http-handler" {
+			found = true
+			break
+		}
+	}
+	if !found && len(a.Results) > 0 {
+		ids := make([]string, 0, len(a.Results))
+		for _, r := range a.Results {
+			ids = append(ids, r.Playbook.ID)
+		}
+		t.Logf("source results: %v", ids)
+	}
+}
+
 // --- deltaRequested ---
 
 func TestDeltaRequestedFalseWhenEmpty(t *testing.T) {

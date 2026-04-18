@@ -1,0 +1,15 @@
+$ git push origin main
+remote: Invalid username or password.
+fatal: Authentication failed for 'https://github.com/myorg/myapp.git/
+
+$ git pull origin main
+remote: Repository not found
+fatal: Could not read from remote repository.
+
+$ git clone https://github.com/private/repo.git
+Cloning into 'repo'...
+remote: Repository not found
+fatal: repository 'https://github.com/private/repo.git/' not found
+
+$ git fetch
+fetch: Pack exceeds current maximum size limit of 524288000

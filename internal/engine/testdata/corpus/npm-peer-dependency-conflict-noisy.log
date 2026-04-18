@@ -1,0 +1,11 @@
+$ npm install
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE could not resolve
+npm ERR! 
+npm ERR! While resolving: react-dom@18.2.0
+npm ERR! Found: react@18.2.0
+npm ERR! Could not resolve conflict between react@18.2.0 and react@17.0.2 required by peer react-dom@17.0.2
+npm ERR! 
+npm ERR! Fix your dependencies with:
+npm install --legacy-peer-deps
+npm ERR! A complete log of this run can be found in: /home/runner/.npm/_logs/2026-04-12T10-30-00.000Z-debug.log

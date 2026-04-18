@@ -5,7 +5,7 @@
   "top_3_rate": 1,
   "unmatched_rate": 0,
   "false_positive_rate": 0,
-  "weak_match_rate": 0.10679611650485436,
+  "weak_match_rate": 0.0970873786407767,
   "thresholds": {
     "min_top_1": 0.65,
     "min_top_3": 0.85,
@@ -13,6 +13,6 @@
     "max_false_positive": 0.35,
     "max_weak_match": 0.15
   },
-  "generated_at": "2026-04-17T23:37:34Z",
-  "fingerprint": "9ba2b27d444b110c"
+  "generated_at": "2026-04-18T02:26:24Z",
+  "fingerprint": "b26c7141a12a36c1"
 }

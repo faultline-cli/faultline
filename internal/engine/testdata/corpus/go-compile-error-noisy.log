@@ -1,0 +1,7 @@
+$ go build ./...
+# github.com/myorg/myapp
+./main.go:42:10: undefined: handleRquest
+./handlers.go:15:2: cannot use ctx (type "context".Context) as type *"golang.org/x/net/context".Context
+./database.go:88:15: undefined: ConnectToDefaultDB
+./main.go:156:2: too many arguments to function log.Fatal
+./go.mod:12:2: require golang.org/x/net v0.0.0-20231128000000-000000000000: invalid version: pseudo-version with zero-length suffix

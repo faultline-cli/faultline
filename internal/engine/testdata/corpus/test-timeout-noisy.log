@@ -1,0 +1,16 @@
+$ python -m pytest tests/
+============================= test session starts =============================
+platform linux -- Python 3.11.0, pytest 7.4.0
+tests/test_api.py::test_get_user FAILED
+tests/test_api.py::test_create_user FAILED
+tests/test_worker.py::test_process_queue TIMEOUT
+----------------------------- Captured stdout -----------------------------
+Running test suite with timeout=60s
+
+$ python -m pytest tests/ --timeout=30
+tests/test_worker.py::test_process_queue ERROR
+tests/test_worker.py::test_process_queue ERROR
+
+$ cat pytest.log
+Timeout: 30 seconds per test
+ERROR - Test suite exceeded timeout

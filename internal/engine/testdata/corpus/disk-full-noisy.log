@@ -1,0 +1,20 @@
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       100G   100G     0B 100% /
+
+$ du -sh /workspace/*
+du: cannot read directory '/workspace/node_modules': No space left on device
+du: cannot read directory '/workspace/dist': No space left on device
+
+$ tar -xzf artifacts.tar.gz
+tar: /workspace/output.log: Cannot write: No space left on device
+
+$ pip install -r requirements.txt
+ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device
+
+$ go build ./...
+# runtime
+write /tmp/go-build1234: no space left on device
+
+$ npm run build
+npm ERR! enospc: no space left on device

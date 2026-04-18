@@ -7,7 +7,7 @@ normalized_log: |-
     ERROR: Could not find a version that satisfies the requirement inference (from versions: none)
     ERROR: No matching distribution found for inference`
 expectation:
-    expected_playbook: install-failure
+    expected_playbook: pip-install-failure
     top_n: 3
     strict_top1: true
     min_confidence: 0.55

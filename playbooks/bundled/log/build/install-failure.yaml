@@ -47,8 +47,6 @@ match:
   any:
     - npm ERR! code E404
     - "npm ERR! 404 Not Found"
-    - "ERROR: Could not find a version that satisfies"
-    - "ERROR: No matching distribution found"
     - could not find package
     - package not found
     - apt-get install failed
@@ -65,6 +63,16 @@ match:
     - context deadline exceeded
     - dial tcp
     - no such host
+    - pip install
+    - pip._
+    - pip's dependency
+    - "python -m pip"
+    - "Could not build wheels for"
+    - "No matching distribution found for"
+    - "Requirements were not successfully"
+    - "ERROR: Could not find a version"
+    - "ERROR: No matching distribution"
+    - "ResolutionImpossible"
 hypothesis:
   supports:
     - signal: dependency.package.not_found

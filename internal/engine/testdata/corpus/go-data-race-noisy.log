@@ -1,0 +1,20 @@
+$ go test ./...
+--- FAIL: TestIntegration (5.23s)
+FAIL    github.com/myorg/myapp/internal/integration
+--- FAIL: TestDataRace (3.45s)
+WARNING: DATA RACE
+Read at 0x00c000123456 by goroutine 45:
+  github.com/myorg/myapp/internal/cache.(*Cache).Get()
+      /home/runner/work/myapp/myapp/internal/cache/cache.go:78 +0x3a
+Previous write at 0x00c000123456 by goroutine 23:
+  github.com/myorg/myapp/internal/cache.(*Cache).Set()
+      /home/runner/work/myapp/myapp/internal/cache/cache.go:52 +0x5b
+FAIL
+--- FAIL: TestConcurrent (2.10s)
+PASS
+FAIL	github.com/myorg/myapp	4.567s
+--- FAIL: TestDatabase (8.32s)
+FAIL    github.com/myorg/myapp/internal/database
+FAIL	github.com/myorg/myapp	10.234s
+--- MOK: Test unit tests passed
+ok  	github.com/myorg/myapp	0.123s

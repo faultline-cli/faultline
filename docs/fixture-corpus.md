@@ -13,6 +13,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Weak matches: 11 (10.7%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
+- Test corpus files: 30 (release-gated through `corpus_test.go`)
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 
@@ -55,9 +56,10 @@ This table is intended as public proof coverage, not a claim that unknown failur
 
 Starting snapshot table for release-over-release tracking:
 
-| Snapshot | Bundled Playbooks | Accepted Real Fixtures | Top-1 | Top-3 | Unmatched | False Positive |
-| --- | --- | --- | --- | --- | --- | --- |
-| 2026-04-17 baseline (`fixtures/real/baseline.json`) | 77 | 103 | 100% | 100% | 0 | 0 |
+| Snapshot | Bundled Playbooks | Accepted Real Fixtures | Test Corpus | Top-1 | Top-3 | Unmatched | False Positive |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-04-17 baseline (`fixtures/real/baseline.json`) | 77 | 103 | 16 | 100% | 100% | 0 | 0 |
+| 2026-04-18 corpus expansion | 77 | 103 | 30 | 100% | 100% | 0 | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
@@ -114,6 +116,8 @@ Verify the bundled catalog size exposed by the CLI:
 
 - Bundled playbooks live under `playbooks/bundled/`.
 - Accepted real fixtures live under `fixtures/real/`.
+- Test corpus files live under `internal/engine/testdata/corpus/`.
+- The test corpus validates playbook matching through `corpus_test.go` as part of `make test`.
 - The checked-in regression baseline is `fixtures/real/baseline.json`.
 - The fixture commands are wired through `faultline fixtures stats`.
 - Source provenance and adapter counts are included in `faultline fixtures stats` output.

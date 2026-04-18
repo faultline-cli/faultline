@@ -1,0 +1,4 @@
+$ docker build .
+[+] Building 3.2s (10/12) ERROR: error creating container: no active session for load build definition from Dockerfile
+failed to create LLB definition: no active session for load build definition from Dockerfile
+error: failed to create task: cannot load build definition: .dockerignore not found: no active session

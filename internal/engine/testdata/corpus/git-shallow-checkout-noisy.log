@@ -1,0 +1,15 @@
+$ git fetch origin main
+fatal: refusing to fetch shallow history by default
+
+$ git fetch --unshallow origin main
+fatal: error: Shallow repository has not been cloned with --depth or --unshallow
+error: Cannot fetch with history from remote
+
+$ git checkout HEAD~3
+fatal: your branch is based on 'origin/main', but the upstream is gone
+
+$ git rebase origin/main
+fatal: refusing to rebase history: missing commits on origin/main
+
+$ git pull --rebase origin main
+fatal: refusing to rebase shallow history

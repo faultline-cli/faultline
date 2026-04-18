@@ -1,0 +1,16 @@
+$ make build
+make: *** No rule to make target 'build-rules.mk': needed by Makefile
+make: *** Stopped
+
+$ cmake ..
+make: not found: CMakeLists.txt missing required file
+
+$ gradle build
+> Could not find gradle.properties in root directory
+> Run with '--stacktrace' to see why
+
+$ ./configure
+configure: error: required file 'config.h' not found in ./include/
+
+$ npm run build
+ENOTDIR: not a directory - cannot stat file './src/components'
