@@ -66,6 +66,53 @@ func TestValidateWorkflowMode(t *testing.T) {
 	}
 }
 
+func TestValidateView(t *testing.T) {
+	cases := []struct {
+		value   string
+		want    string
+		wantErr bool
+	}{
+		{"summary", "summary", false},
+		{"evidence", "evidence", false},
+		{"fix", "fix", false},
+		{"raw", "raw", false},
+		{"trace", "trace", false},
+		{"", "", false},
+		{"invalid", "", true},
+		{"SUMMARY", "summary", false},
+		{"  fix  ", "fix", false},
+	}
+	for _, tc := range cases {
+		got, err := validateView(tc.value)
+		if (err != nil) != tc.wantErr {
+			t.Errorf("validateView(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
+			continue
+		}
+		if string(got) != tc.want {
+			t.Errorf("validateView(%q): got=%q want=%q", tc.value, got, tc.want)
+		}
+	}
+}
+
+func TestValidateSelect(t *testing.T) {
+	cases := []struct {
+		value   int
+		wantErr bool
+	}{
+		{1, false},
+		{0, false},
+		{10, false},
+		{-1, true},
+		{-100, true},
+	}
+	for _, tc := range cases {
+		err := validateSelect(tc.value)
+		if (err != nil) != tc.wantErr {
+			t.Errorf("validateSelect(%d): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
+		}
+	}
+}
+
 func TestValidateExperimentalDeltaProvider(t *testing.T) {
 	t.Run("disabled by default", func(t *testing.T) {
 		t.Setenv(experimentalGitHubDeltaEnv, "")
