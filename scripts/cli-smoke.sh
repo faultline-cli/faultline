@@ -43,6 +43,20 @@ run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.
 	"$BINARY" analyze "$ROOT_DIR/examples/runtime-mismatch.log" --format markdown --no-history
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history >"$TMP_DIR/missing.analysis.json"
+cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history >"$TMP_DIR/runtime.analysis.json"
+
+run_compare "missing-executable.replay.expected.md" "$ROOT_DIR/examples/missing-executable.replay.expected.md" \
+	"$BINARY" replay --format markdown --mode detailed "$TMP_DIR/missing.analysis.json"
+run_compare "missing-vs-runtime.compare.expected.md" "$ROOT_DIR/examples/missing-vs-runtime.compare.expected.md" \
+	"$BINARY" compare --format markdown "$TMP_DIR/missing.analysis.json" "$TMP_DIR/runtime.analysis.json"
+
+cat "$ROOT_DIR/examples/missing-executable.log" | \
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history >"$TMP_DIR/missing.trace.md"
+cmp -s "$TMP_DIR/missing.trace.md" "$ROOT_DIR/examples/missing-executable.trace.expected.md"
+
+cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --no-history >"$TMP_DIR/workflow.local.txt"
 cmp -s "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executable.workflow.local.txt"
 
@@ -58,6 +72,38 @@ grep -F "docker-auth" "$TMP_DIR/list.txt" >/dev/null
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" fix "$ROOT_DIR/examples/docker-auth.log" --format markdown --no-history >"$TMP_DIR/fix.md"
 grep -F "## Fix" "$TMP_DIR/fix.md" >/dev/null
+
+SMOKE_REPO="$TMP_DIR/guard-repo"
+mkdir -p "$SMOKE_REPO/api"
+(
+	cd "$SMOKE_REPO"
+	git init -q
+	git config user.name "Faultline Smoke"
+	git config user.email "faultline@example.com"
+	cat >"api/handler.go" <<'EOF'
+package api
+
+func UserHandler() string { return "ok" }
+EOF
+	git add .
+	GIT_AUTHOR_DATE=2026-04-10T10:00:00Z GIT_COMMITTER_DATE=2026-04-10T10:00:00Z git commit --quiet -m "baseline: add handler"
+	cat >"api/handler.go" <<'EOF'
+package api
+
+func UserHandler() string {
+	panic("boom")
+}
+EOF
+)
+
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" inspect --format markdown "$SMOKE_REPO" >"$TMP_DIR/inspect.md"
+grep -F "panic-in-http-handler" "$TMP_DIR/inspect.md" >/dev/null
+
+if FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" guard "$SMOKE_REPO" >"$TMP_DIR/guard.txt"; then
+	printf '%s\n' "guard smoke expected findings with non-zero exit" >&2
+	exit 1
+fi
+grep -F "panic-in-http-handler" "$TMP_DIR/guard.txt" >/dev/null
 
 HOME="$TMP_DIR/home" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs list >"$TMP_DIR/packs.txt"
 grep -F "No installed playbook packs." "$TMP_DIR/packs.txt" >/dev/null

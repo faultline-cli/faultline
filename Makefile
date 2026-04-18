@@ -19,7 +19,7 @@ help:
 		"  test            Run all Go tests" \
 		"  demo-assets     Rebuild README GIFs and screenshots from VHS tapes" \
 		"  fixture-check   Run the accepted real-fixture regression gate" \
-		"  cli-smoke       Build the CLI and validate shipped examples plus core commands" \
+		"  cli-smoke       Build the CLI and validate shipped examples plus companion commands" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \

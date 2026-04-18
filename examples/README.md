@@ -2,7 +2,7 @@
 
 These examples are small, runnable inputs derived from real CI failures.
 
-Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result. The missing-executable example also includes checked-in `workflow` snapshots for local and agent handoff flows.
+Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result. The missing-executable example also includes checked-in snapshots for `workflow`, `replay`, and `trace`, plus a deterministic `compare` snapshot against the runtime-mismatch sample.
 
 They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog currently ships 77 playbooks.
 
@@ -11,8 +11,9 @@ They are intended for first-run checks, docs validation, and quick regression sa
 | Input | What it demonstrates | Expected output |
 | --- | --- | --- |
 | `examples/docker-auth.log` | Registry authentication or missing login during image pull | `examples/docker-auth.expected.md` |
-| `examples/missing-executable.log` | Required runtime or executable missing from the job image | `examples/missing-executable.expected.md`, `examples/missing-executable.workflow.local.txt`, `examples/missing-executable.workflow.agent.json` |
+| `examples/missing-executable.log` | Required runtime or executable missing from the job image | `examples/missing-executable.expected.md`, `examples/missing-executable.workflow.local.txt`, `examples/missing-executable.workflow.agent.json`, `examples/missing-executable.replay.expected.md`, `examples/missing-executable.trace.expected.md` |
 | `examples/runtime-mismatch.log` | Language runtime version mismatch between the job and the project | `examples/runtime-mismatch.expected.md` |
+| `examples/missing-vs-runtime.compare.expected.md` | Deterministic compare report between missing-executable and runtime-mismatch analyses | `examples/missing-vs-runtime.compare.expected.md` |
 
 ## High-impact demo path
 
@@ -59,6 +60,9 @@ Those commands correspond to these checked-in snapshots:
 
 - `examples/missing-executable.workflow.local.txt`
 - `examples/missing-executable.workflow.agent.json`
+- `examples/missing-executable.replay.expected.md`
+- `examples/missing-executable.trace.expected.md`
+- `examples/missing-vs-runtime.compare.expected.md`
 
 To refresh the checked-in example outputs after a renderer, workflow, or playbook change:
 
@@ -68,6 +72,11 @@ To refresh the checked-in example outputs after a renderer, workflow, or playboo
 ./bin/faultline analyze examples/runtime-mismatch.log --format markdown --no-history > examples/runtime-mismatch.expected.md
 cat examples/missing-executable.log | ./bin/faultline workflow --no-history > examples/missing-executable.workflow.local.txt
 cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history > examples/missing-executable.workflow.agent.json
+cat examples/missing-executable.log | ./bin/faultline analyze --json --no-history > /tmp/missing.analysis.json
+cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --no-history > /tmp/runtime.analysis.json
+./bin/faultline replay --format markdown --mode detailed /tmp/missing.analysis.json > examples/missing-executable.replay.expected.md
+cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --no-history > examples/missing-executable.trace.expected.md
+./bin/faultline compare --format markdown /tmp/missing.analysis.json /tmp/runtime.analysis.json > examples/missing-vs-runtime.compare.expected.md
 ```
 
 For the full playbook behind a diagnosis:
