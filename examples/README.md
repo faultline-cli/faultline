@@ -14,7 +14,18 @@ They are intended for first-run checks, docs validation, and quick regression sa
 | `examples/missing-executable.log` | Required runtime or executable missing from the job image | `examples/missing-executable.expected.md`, `examples/missing-executable.workflow.local.txt`, `examples/missing-executable.workflow.agent.json` |
 | `examples/runtime-mismatch.log` | Language runtime version mismatch between the job and the project | `examples/runtime-mismatch.expected.md` |
 
-## Run them
+## High-impact demo path
+
+Run the core product flow first: diagnose, then generate the deterministic workflow handoff.
+
+```bash
+make build
+./bin/faultline analyze examples/missing-executable.log --format markdown --mode quick
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
+```
+
+## Run all examples
 
 ```bash
 make build

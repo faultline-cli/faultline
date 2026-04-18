@@ -2,6 +2,8 @@
 
 Faultline's core CLI stays provider-agnostic. A GitHub-specific integration should be a thin wrapper over stable CLI commands and output artifacts, not a fork of the product logic.
 
+For most teams, this wrapper is the fastest path to value and should be treated as the primary adoption route.
+
 ## Contract Surface
 
 The recommended surfaces for a separate `faultline-action` repository are:
@@ -15,6 +17,8 @@ The recommended surfaces for a separate `faultline-action` repository are:
   `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 faultline analyze <logfile> --json --bayes --delta-provider github-actions`
 
 These contracts already exist in the CLI and should remain the integration boundary.
+
+`workflow.v1` is the deterministic handoff contract for downstream scripts and agents. Additive fields are allowed; silent removals or renames are not.
 
 ## Design Rules
 
@@ -32,6 +36,7 @@ These contracts already exist in the CLI and should remain the integration bound
 4. Optionally enable the experimental provider-backed delta path with `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 --delta-provider github-actions` and pass `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_REF_NAME`, and `GITHUB_RUN_ID`.
 5. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
 6. Publish the markdown summary and upload the JSON outputs as workflow artifacts.
+7. Optionally gate follow-up automation based on deterministic confidence and playbook thresholds in the action repository, not in core CLI logic.
 
 ## Example Commands
 

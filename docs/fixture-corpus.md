@@ -23,6 +23,55 @@ These numbers describe the checked-in regression corpus only. They are useful be
 - Playbook coverage, thresholds, and baseline behavior are visible in version control.
 - Automation consumers can audit the proof artifact that backs the product's trust story.
 
+## Coverage By Failure Class
+
+Bundled playbook coverage by category (from `playbooks/bundled/`):
+
+| Category | Bundled Playbooks |
+| --- | --- |
+| build | 29 |
+| runtime | 13 |
+| test | 10 |
+| ci | 8 |
+| network | 6 |
+| deploy | 6 |
+| auth | 5 |
+
+Accepted real fixtures mapped through expected playbooks (from `fixtures/real/`):
+
+| Category | Accepted Real Fixtures |
+| --- | --- |
+| build | 33 |
+| network | 28 |
+| ci | 19 |
+| runtime | 11 |
+| auth | 7 |
+| deploy | 4 |
+| test | 1 |
+
+This table is intended as public proof coverage, not a claim that unknown failures are solved.
+
+## Release Snapshot Trend
+
+Starting snapshot table for release-over-release tracking:
+
+| Snapshot | Bundled Playbooks | Accepted Real Fixtures | Top-1 | Top-3 | Unmatched | False Positive |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2026-04-17 baseline (`fixtures/real/baseline.json`) | 77 | 103 | 100% | 100% | 0 | 0 |
+
+Append one row per release cut so corpus growth and match stability stay visible over time.
+
+## Contribution Prompt
+
+If Faultline misses a failure class, contribute a sanitized public log:
+
+1. Open an issue with an anonymized failing snippet and environment context.
+2. Include a public source URL when possible (issue, discussion, or forum thread).
+3. Avoid secrets, private hostnames, and internal repository names.
+4. Mark expected diagnosis if known to speed triage.
+
+Maintainers should route accepted cases through the deterministic ingest/review/promote flow.
+
 ## Regenerate And Check
 
 Build the CLI first:

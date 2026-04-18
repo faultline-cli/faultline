@@ -257,25 +257,35 @@ Impact on technical architecture:
 
 ## Suggested Build Order
 
-### Slice 1: Messaging and Proof
+### Slice 1: Action-First Adoption
+
+- ship the GitHub Action as the default onboarding route
+- publish copy-paste workflow examples that emit markdown summary plus JSON workflow artifacts
+- document deterministic gating policy for downstream automation
+
+### Slice 2: Workflow-First Product Story
+
+- promote analyze -> workflow as the hero path in README and examples
+- tighten workflow JSON compatibility guidance as an API contract
+- keep schema changes additive by default
+
+### Slice 3: Messaging and Proof
 
 - rewrite README and launch framing around deterministic, audit-friendly automation
-- promote workflow with real examples
-- publish fixture corpus stats
+- make "safe to automate against" the top-level trust promise
+- publish fixture corpus stats with category coverage and release snapshots
 
-### Slice 2: Distribution and Extensibility
+### Slice 4: Distribution and Extensibility
 
-- ship the GitHub Action
-- tighten workflow JSON and examples
 - publish pack examples and pack authoring guidance
 
-### Slice 3: Deterministic Intelligence
+### Slice 5: Deterministic Intelligence
 
 - land the Bayesian-inspired reranking layer behind `--bayes`
 - add delta-differential diagnosis and explanation payloads
 - compare legacy and Bayes modes across the fixture corpus before promotion
 
-### Slice 4: Shift-Left Follow-Through
+### Slice 6: Shift-Left Follow-Through
 
 - add a lightweight guard command
 - polish docs, examples, thresholds, and automation handoff contracts

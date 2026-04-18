@@ -17,7 +17,17 @@ Optional extra playbook packs can be composed on top when needed, but the defaul
 
 ## Install Flow
 
-The default install path is the release installer:
+The default adoption path is GitHub Actions with CLI artifacts as the integration contract. Use the workflow wrapper to run:
+
+```bash
+faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
+faultline analyze build.log --json --bayes > faultline-analysis.json
+faultline workflow build.log --json --mode agent > faultline-workflow.json
+```
+
+Publish the markdown summary and upload the JSON outputs as artifacts in the failing job.
+
+For local usage, the default install path is the release installer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
@@ -51,6 +61,8 @@ cd "faultline_${VERSION}_linux_amd64"
 ```
 
 The installer places bundled playbooks under the install prefix and configures `FAULTLINE_PLAYBOOK_DIR` for the wrapper it places on `PATH`.
+
+For the provider-specific wrapper contract, see `docs/github-action-contract.md`.
 
 ## Docker Distribution
 
