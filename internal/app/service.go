@@ -43,6 +43,10 @@ func NewService() Service {
 
 // Analyze performs log analysis and writes formatted output to w.
 func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+	if opts.View == output.ViewTrace {
+		opts.TraceEnabled = true
+		opts.View = output.ViewDefault
+	}
 	if opts.TraceEnabled || opts.TracePlaybook != "" {
 		return Service{}.Trace(r, source, opts, w)
 	}
@@ -115,6 +119,9 @@ func (Service) Replay(r io.Reader, opts AnalyzeOptions, w io.Writer) error {
 	a, err := output.ParseAnalysisJSON(data)
 	if err != nil {
 		return err
+	}
+	if opts.View == output.ViewTrace {
+		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
 	}
 	if opts.TraceEnabled || opts.TracePlaybook != "" {
 		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")

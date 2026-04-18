@@ -26,7 +26,7 @@ explicit deterministic layers:
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
-  serialization, focused views (`--view summary|evidence|fix|raw`), compare
+  serialization, focused views (`--view summary|evidence|trace|fix|raw`), compare
   formatting, and evidence-only views.
 - `internal/renderer` owns terminal-aware human rendering, including quick
   (default) and detailed modes, plain fallback, markdown rendering, and
@@ -123,10 +123,12 @@ as `summary`, `diagnosis`, `fix`, and
 - structured playbook fields still drive matching and ranking
 - CLI commands render the same deterministic content model to terminal or markdown output
 - `--format json` and `--json` emit the structured machine-readable form
-- `--view summary|evidence|fix|raw` selects a focused slice of the human-readable output
+- `--view summary|evidence|trace|fix|raw` selects a focused slice of the human-readable output
   without changing the underlying analysis; `summary` and `raw` map to quick and
   detailed rendering modes respectively; `evidence` and `fix` emit narrow single-purpose
-  slices of the top result
+  slices of the top result; `trace` routes to deterministic rule-by-rule playbook evaluation
+- replayed analysis artifacts support `summary|evidence|fix|raw`; trace replay requires a
+  saved trace artifact or rerunning `faultline trace` on the original log
 - non-TTY and no-color environments fall back to plain output
 
 ## Compare boundary

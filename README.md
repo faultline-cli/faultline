@@ -306,7 +306,8 @@ The default release story is intentionally small:
 - Trace rule-by-rule playbook evaluation with `faultline trace` or `faultline analyze --trace`.
 - Replay saved analysis artifacts with `faultline replay analysis.json`.
 - Compare saved analysis artifacts with `faultline compare previous.analysis.json current.analysis.json`.
-- Focus the live or replayed report with `--view summary|evidence|fix|raw`.
+- Focus the live report with `--view summary|evidence|trace|fix|raw`.
+- Focus replayed analysis artifacts with `--view summary|evidence|fix|raw`.
 - Surface likely drift causes only when repo context is explicit: config file changes, CI pipeline edits, large blast-radius commits, and hotspot patterns from recent history.
 - Turn the top diagnosis into a deterministic workflow handoff.
 - Optionally inspect a repository for source-level failure risks.

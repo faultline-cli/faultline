@@ -72,7 +72,7 @@ func validateOutputMode(value string) error {
 func validateView(value string) (output.View, error) {
 	view, ok := output.ParseView(value)
 	if !ok {
-		return "", fmt.Errorf("--view must be %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw)
+		return "", fmt.Errorf("--view must be %q, %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw, output.ViewTrace)
 	}
 	return view, nil
 }
@@ -179,6 +179,10 @@ func newAnalyzeCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if resolvedView == output.ViewTrace {
+				traceEnabled = true
+				resolvedView = output.ViewDefault
+			}
 			if resolvedJSON && resolvedView != output.ViewDefault {
 				return fmt.Errorf("--view cannot be combined with --json")
 			}
@@ -222,7 +226,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
-	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw")
+	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw|trace")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
@@ -389,6 +393,9 @@ func newReplayCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if resolvedView == output.ViewTrace {
+				return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
+			}
 			if resolvedJSON && resolvedView != output.ViewDefault {
 				return fmt.Errorf("--view cannot be combined with --json")
 			}
@@ -415,7 +422,7 @@ func newReplayCommand() *cobra.Command {
 	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
-	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw")
+	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw|trace")
 	return cmd
 }
 

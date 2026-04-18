@@ -248,6 +248,25 @@ func TestAnalyzeEvidenceView(t *testing.T) {
 	}
 }
 
+func TestAnalyzeTraceView(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--view", "trace", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --view trace: %v", err)
+	}
+	if !strings.Contains(out.String(), "TRACE") || !strings.Contains(out.String(), "Rule Evaluation") {
+		t.Fatalf("expected trace view output, got %q", out.String())
+	}
+}
+
 func TestAnalyzeRejectsViewWithJSON(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
@@ -534,6 +553,36 @@ func TestReplayCommandFixView(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "Fix Steps") {
 		t.Fatalf("expected fix view output, got %q", out.String())
+	}
+}
+
+func TestReplayCommandRejectsTraceView(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	svc := app.NewService()
+	var artifact bytes.Buffer
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
+		Top:         1,
+		Mode:        "quick",
+		Format:      "json",
+		JSON:        true,
+		NoHistory:   true,
+		PlaybookDir: playbookDir,
+	}, &artifact); err != nil {
+		t.Fatalf("build analysis artifact: %v", err)
+	}
+	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"replay", "--view", "trace", artifactPath})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected replay trace view error")
+	}
+	if !strings.Contains(err.Error(), "replay trace is not supported") {
+		t.Fatalf("unexpected replay trace view error: %v", err)
 	}
 }
 

@@ -147,6 +147,24 @@ func TestAnalyzeTraceOutput(t *testing.T) {
 	}
 }
 
+func TestAnalyzeTraceViewOutput(t *testing.T) {
+	svc := NewService()
+	log := "exec /__e/node20/bin/node: no such file or directory\n"
+	opts := baseOpts()
+	opts.View = output.ViewTrace
+	var buf bytes.Buffer
+
+	err := svc.Analyze(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Analyze trace view: %v", err)
+	}
+	for _, want := range []string{"TRACE", "missing-executable", "Rule Evaluation"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Fatalf("expected %q in trace view output, got:\n%s", want, buf.String())
+		}
+	}
+}
+
 func TestTraceSpecificPlaybookWithoutWinningMatch(t *testing.T) {
 	svc := NewService()
 	log := "pull access denied\nError response from daemon: authentication required\n"

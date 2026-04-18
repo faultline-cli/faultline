@@ -603,6 +603,7 @@ func TestParseViewKnownValues(t *testing.T) {
 		{"evidence", ViewEvidence},
 		{"fix", ViewFix},
 		{"raw", ViewRaw},
+		{"trace", ViewTrace},
 	}
 	for _, tt := range tests {
 		got, ok := ParseView(tt.input)
@@ -625,7 +626,7 @@ func TestParseViewUnknown(t *testing.T) {
 }
 
 func TestViewValid(t *testing.T) {
-	for _, v := range []View{ViewDefault, ViewSummary, ViewEvidence, ViewFix, ViewRaw} {
+	for _, v := range []View{ViewDefault, ViewSummary, ViewEvidence, ViewFix, ViewRaw, ViewTrace} {
 		if !v.Valid() {
 			t.Errorf("View(%q).Valid() = false, want true", v)
 		}

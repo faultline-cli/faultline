@@ -44,6 +44,7 @@ const (
 	ViewEvidence View = "evidence"
 	ViewFix      View = "fix"
 	ViewRaw      View = "raw"
+	ViewTrace    View = "trace"
 )
 
 // Valid reports whether f is a recognised output format.
@@ -85,6 +86,8 @@ func ParseView(value string) (View, bool) {
 		return ViewFix, true
 	case string(ViewRaw):
 		return ViewRaw, true
+	case string(ViewTrace):
+		return ViewTrace, true
 	default:
 		return "", false
 	}
