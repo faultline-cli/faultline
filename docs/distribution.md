@@ -17,7 +17,22 @@ Optional extra playbook packs can be composed on top when needed, but the defaul
 
 ## Install Flow
 
-The default adoption path is GitHub Actions with CLI artifacts as the integration contract. Use the workflow wrapper to run:
+The default adoption path is the local CLI: diagnose the failing log first, then generate the deterministic workflow handoff.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+faultline workflow ci.log --json --mode agent
+```
+
+If you need a pinned version instead of the latest release:
+
+```bash
+VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+faultline analyze ci.log
+```
+
+GitHub Actions is the strongest follow-up path when you want the same CLI artifacts attached automatically to failed workflow runs:
 
 ```bash
 faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
@@ -26,20 +41,6 @@ faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
 Publish the markdown summary and upload the JSON outputs as artifacts in the failing job.
-
-For local usage, the default install path is the release installer:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-faultline analyze ci.log
-```
-
-If you need a pinned version instead of the latest release:
-
-```bash
-VERSION=v0.2.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-faultline analyze ci.log
-```
 
 If you are working from the repository directly, install from source:
 
@@ -53,7 +54,7 @@ go build -o faultline ./cmd
 Release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
-VERSION=v0.2.0
+VERSION=v0.3.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
@@ -95,5 +96,4 @@ Tagged releases should continue to run this sequence:
 3. publish release archives to the GitHub release created from that tag
 
 `make release-check` already includes `make test`, `make fixture-check`, `make review`, `make release-snapshot`, and `make smoke-release`.
-
 

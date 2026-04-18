@@ -2,7 +2,7 @@
 
 Faultline's core CLI stays provider-agnostic. A GitHub-specific integration should be a thin wrapper over stable CLI commands and output artifacts, not a fork of the product logic.
 
-For most teams, this wrapper is the fastest path to value and should be treated as the primary adoption route.
+For most teams, this wrapper is the strongest follow-up path after validating the local CLI flow. It should stay a thin integration layer over the default product path, not redefine it.
 
 ## Contract Surface
 
@@ -80,7 +80,7 @@ docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --j
     faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
-## Notes For v0.2.0
+## Notes For v0.3.0
 
 - Keep `workflow.v1` stable unless an explicit breaking version is introduced.
 - Additive JSON fields are acceptable; silent field removals or renames are not.
