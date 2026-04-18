@@ -24,7 +24,7 @@ That includes:
 ## Consequences
 
 - Adding playbooks requires thinking about confusable neighbors, not just positive matches.
-- Release validation should continue to include `make review` and `make test`.
+- Release validation should continue to include `make test`, `make review`, `make fixture-check`, `make cli-smoke`, and `make release-check VERSION=<tag>` before release cut.
 - Ranking changes are architecture-level behavior changes and should be introduced deliberately.
 - Operators and automation can trust that repeated runs with the same input preserve ordering and evidence.
 

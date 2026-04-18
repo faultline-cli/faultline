@@ -7,7 +7,7 @@
 
 Faultline is positioned as a deterministic CI failure analysis tool, not a hosted diagnosis service or probabilistic assistant. The repository already reflects a CLI-only architecture with explicit layers for command handling, orchestration, detectors, playbook loading, matching, output, workflow generation, and repository context.
 
-This architectural stance appears in [SYSTEM.md](../../SYSTEM.md), [docs/architecture.md](../architecture.md), [docs/internal/implementation-status.md](../internal/implementation-status.md), and the repository history from the initial CLI-focused baseline onward.
+This architectural stance appears in [SYSTEM.md](../../SYSTEM.md), [docs/architecture.md](../architecture.md), [docs/release-boundary.md](../release-boundary.md), [docs/internal/implementation-status.md](../internal/implementation-status.md), and the repository history from the initial CLI-focused baseline onward.
 
 ## Decision
 
@@ -21,6 +21,8 @@ The architecture keeps these boundaries stable:
 - detector implementations stay explicit in `internal/detectors`
 - playbook loading and validation stay in `internal/playbooks`
 - ranking and evidence extraction stay in `internal/matcher`
+- deterministic compare/report diffing stays in `internal/compare`
+- deterministic trace rendering stays in `internal/trace`
 - rendering and serialization stay in `internal/output` and `internal/renderer`
 - repository enrichment stays in `internal/repo`
 - follow-up planning stays in `internal/workflow`
@@ -36,5 +38,6 @@ The architecture keeps these boundaries stable:
 
 - [SYSTEM.md](../../SYSTEM.md)
 - [docs/architecture.md](../architecture.md)
+- [docs/release-boundary.md](../release-boundary.md)
 - [docs/internal/implementation-status.md](../internal/implementation-status.md)
 - Git history: `cf15d08` initial repository baseline, followed by the CLI-focused cleanup reflected in current docs

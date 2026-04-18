@@ -26,6 +26,7 @@ The supported composition model is:
 - Team-specific or extended playbooks can evolve independently of the binary.
 - Docker uses the same installed-pack convention at `/home/faultline/.faultline/packs`, which keeps local and containerized behavior aligned.
 - Bundled playbooks should stay broad and useful on first run, while extra packs concentrate on deeper provider-specific, operations, security, or ecosystem-specific coverage.
+- Extra-pack composition remains deterministic through `make extra-pack-check` and optional `make extra-pack-review`, and can be included in release validation when `EXTRA_PACK_DIR` is configured.
 
 ## References
 

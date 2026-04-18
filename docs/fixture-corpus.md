@@ -57,7 +57,7 @@ This table is intended as public proof coverage, not a claim that unknown failur
 Starting snapshot table for release-over-release tracking:
 
 | Snapshot | Bundled Playbooks | Accepted Real Fixtures | Test Corpus | Top-1 | Top-3 | Unmatched | False Positive |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-04-17 baseline (`fixtures/real/baseline.json`) | 77 | 103 | 16 | 100% | 100% | 0 | 0 |
 | 2026-04-18 corpus expansion | 77 | 103 | 30 | 100% | 100% | 0 | 0 |
 
