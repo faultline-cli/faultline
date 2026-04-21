@@ -121,7 +121,7 @@ jobs:
       - name: Analyze failure with Faultline
         if: failure()
         run: |
-          VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+          VERSION=v0.3.1 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
           faultline analyze build.log --json > faultline-analysis.json
           faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
@@ -186,7 +186,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 Release archives are also published on the GitHub Releases page:
 
 ```bash
-VERSION=v0.3.0
+VERSION=v0.3.1
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

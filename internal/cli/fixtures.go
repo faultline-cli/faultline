@@ -209,11 +209,11 @@ func newFixturesSanitizeCommand() *cobra.Command {
 
 func newFixturesCompareModesCommand() *cobra.Command {
 	var (
-		root            string
-		classValue      string
-		playbookDir     string
-		playbookPacks   []string
-		jsonOut         bool
+		root             string
+		classValue       string
+		playbookDir      string
+		playbookPacks    []string
+		jsonOut          bool
 		failOnRegression bool
 	)
 	cmd := &cobra.Command{
