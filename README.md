@@ -2,90 +2,28 @@
 
 Deterministic CI failure diagnosis. No guesswork. No AI.
 
-Faultline analyzes failing CI runs with structured detectors and fixture-validated playbooks to produce reproducible, evidence-backed diagnoses.
+Faultline reads failing CI logs, matches them against checked-in playbooks, and returns evidence-backed diagnoses with stable output for humans and automation. It is local-first, deterministic, and built to turn a noisy failure into a concrete next step without guessing.
 
 - 🔁 Deterministic results: same input, same output
-- 🧪 Fixture-backed validation: detections are regression tested
-- 🏠 Local-first execution: build logs stay on your machine by default
-- 🤖 Agent-legible output: stable JSON and deterministic workflow artifacts
+- 🔍 Evidence-backed diagnoses: matched lines, not generated summaries
+- 🏠 Local-first by default: your logs stay on your machine
+- 🤖 Automation-friendly output: stable JSON and workflow artifacts
 
 ```text
-# CI log
-exec /__e/node20/bin/node: no such file or directory
+$ faultline analyze ci.log
 
-# Faultline: deterministic diagnosis
 [1] missing-executable (confidence: 84%)
-[2] path-lookup-failure (confidence: 22%)
-[3] runner-image-upgrade (confidence: 8%)
-
 Evidence:
   - exec /__e/node20/bin/node: no such file or directory
-  - /__e/node20/bin/node: required runtime not found in PATH
 
 Fix:
   - Install the missing runtime in the CI image
   - Pin the runner to an image that includes the expected binary
-  - Verify the configured path after runner upgrades
 ```
 
-Faultline is a deterministic diagnosis engine built on 77 bundled playbooks and 103 real-fixture regression proofs. Each diagnosis pulls evidence directly from matched log lines: nothing generated, nothing guessed.
-
-## What else is already built 🧩
-
-Faultline includes additional surfaces that are complete but intentionally outside the default onboarding workflow:
-
-| Command | Purpose |
-| --- | --- |
-| `trace` | Rule-by-rule evaluation showing why each playbook matched or was rejected |
-| `replay` | Deterministically re-render saved analysis artifacts |
-| `compare` | Diff two analysis artifacts to show what changed between runs |
-| `inspect` | Scan repository source for local failure risks |
-| `guard` | Quiet, high-confidence local prevention checks |
-
-These commands are supported and tested. They ship alongside the core `analyze` -> `workflow` path but stay outside the default first-run narrative until they meet promotion criteria in the release boundary.
-
-Experimental provider-backed delta remains hidden behind explicit opt-in:
-
-```bash
-FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 \
-faultline analyze build.log --json --bayes --delta-provider github-actions
-```
-
-## Designed for humans and agents 🤝
-
-Faultline is designed to be legible to both humans and automated agents.
-
-It produces stable output contracts for both:
-
-- 👩‍💻 **Human engineers** get terminal output with evidence, confidence, and fix steps—immediately actionable without interpretation.
-- 🤖 **Automation and agents** get deterministic JSON via `--json --mode agent` that stays stable release-to-release.
-
-```bash
-# Engineer workflow
-faultline analyze ci.log
-
-# Agent/automation workflow
-faultline analyze ci.log --json --mode agent > diagnosis.json
-faultline workflow ci.log --json --mode agent > workflow.json
-```
-
-No ML, no LLM, no probabilistic ranking in the core product path. `--bayes` stays assistive: it reranks already-detected candidates and explains the ranking, it never creates new matches.
-
-## Command Maturity Model 🧭
-
-Faultline organizes commands by maturity to provide structural clarity for contributors:
-
-| Tier | Commands | Description |
-| --- | --- | --- |
-| **Stable** | `analyze`, `workflow`, `list`, `explain`, `fix` | Default release boundary. Ship-ready, tested, documented. |
-| **Complete** | `trace`, `replay`, `compare`, `inspect`, `guard` | Full feature parity. Tested and documented, but not the first-run story. |
-| **Experimental** | `--delta-provider github-actions` (behind `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1`) | Opt-in only. Requires equivalent test coverage before promotion. |
-
-Tier promotion follows the release-boundary contract: deterministic command coverage, fixture-backed regression proof, checked-in snapshots, and release-check integration.
+Built on 77 bundled playbooks and 103 accepted real-fixture regression proofs. Same input, same result.
 
 ## Try it now 🚀
-
-Start locally with the core analyze -> workflow path:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
@@ -93,40 +31,80 @@ faultline analyze ci.log
 faultline workflow ci.log --json --mode agent
 ```
 
-That is the default product path: diagnose the failing log first, then turn the top diagnosis into a deterministic follow-up artifact.
+That is the default path: diagnose the failing log first, then turn the winning diagnosis into a deterministic handoff artifact. Use `faultline analyze ci.log --json` when you want machine-readable diagnosis output.
 
-Prefer a pinned release instead of latest:
+You can think of the output modes like this:
 
-```bash
-VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-faultline analyze ci.log
+- 👩‍💻 `faultline analyze ci.log` for a human-readable diagnosis with evidence and fix steps
+- 🤖 `faultline analyze ci.log --json` for stable machine-readable diagnosis output
+- 🧭 `faultline workflow ci.log --json --mode agent` for a deterministic next-step artifact
+
+```json
+{
+  "schema_version": "workflow.v1",
+  "mode": "agent",
+  "failure_id": "missing-executable",
+  "evidence": [
+    "exec /__e/node20/bin/node: no such file or directory"
+  ],
+  "files": [
+    "Dockerfile",
+    ".github/workflows/ci.yml"
+  ]
+}
 ```
 
-For automation, use stable JSON output contracts:
+`--bayes` is optional and assistive: it reranks already-matched candidates and explains the ranking, but it never creates new matches.
+
+## Why trust it ✅
+
+- 🔁 Same log input and playbook set produce the same result every time.
+- 🔍 Evidence is pulled directly from matched log lines.
+- 📚 Diagnoses and fix steps come from checked-in playbooks, not generated guesses.
+- 🧪 The shipped catalog is backed by 77 bundled playbooks and 103 accepted real fixtures.
+- 🏠 Faultline runs locally by default, so build logs stay on your machine unless you choose otherwise.
+- 🤖 JSON output and workflow artifacts stay stable enough for automation and agent handoff.
+
+Some companion commands are supported but not part of the first-run story, and provider-backed delta remains experimental. The current boundary is documented in [docs/release-boundary.md](docs/release-boundary.md).
+
+## Core workflow 🧭
+
+The default path is intentionally small:
+
+- `faultline analyze <logfile>` diagnoses a failing log from a file or stdin.
+- `faultline workflow <logfile>` turns the winning diagnosis into a deterministic follow-up plan.
+- `faultline list` and `faultline explain <id>` help you inspect the bundled catalog.
+- `faultline fix <logfile>` prints the remediation steps for the top diagnosis.
+
+For a fast local run:
 
 ```bash
+faultline analyze ci.log
 faultline analyze ci.log --json
 faultline workflow ci.log --json --mode agent
 ```
 
-Build from source if you want to work from the repo directly. Requires Go 1.25+.
+Common follow-through looks like this:
 
-```bash
-git clone https://github.com/faultline-cli/faultline
-cd faultline
-go build -o faultline ./cmd
-./faultline analyze examples/missing-executable.log
-```
+1. Run `faultline analyze` on the failing log.
+2. Check the matched evidence lines and the top remediation steps.
+3. Run `faultline workflow` if you want a structured handoff for an agent or automation step.
+4. Use `list`, `explain`, or `fix` when you want to inspect the catalog or narrow in on one diagnosis.
 
-Pipe any failing log directly into the analyzer:
+## Common failure classes 🛠️
 
-```bash
-cat failing-ci.log | ./faultline analyze
-cat failing-ci.log | ./faultline analyze --json
-cat failing-ci.log | ./faultline workflow --json --mode agent
-```
+- 🧰 Missing executables, PATH failures, and command invocation errors
+- 🧬 Runtime version mismatches across Node, Python, Ruby, and Go
+- 📦 Dependency install, resolver, and lockfile drift failures
+- 🐳 Docker, registry authentication, and image configuration failures
+- 🔐 Permission, filesystem, and working-directory errors
+- 🌐 DNS, TLS, timeout, and other network failures
 
-When the local flow is working for you, the same commands drop cleanly into GitHub Actions:
+Faultline is intentionally narrow: it aims to be reliable on failures it knows, not broad in a hand-wavy way.
+
+## CI integration 🔁
+
+After the local flow works for you, the same commands drop into CI unchanged:
 
 ```yaml
 name: ci
@@ -140,202 +118,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # ... your build/test steps that write build.log ...
       - name: Analyze failure with Faultline
         if: failure()
         run: |
           VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-          faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
-          faultline analyze build.log --json --bayes > faultline-analysis.json
+          faultline analyze build.log --json > faultline-analysis.json
           faultline workflow build.log --json --mode agent > faultline-workflow.json
-      - name: Upload Faultline artifacts
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: faultline
-          path: |
-            faultline-summary.md
-            faultline-analysis.json
-            faultline-workflow.json
 ```
 
-GitHub Actions is a strong follow-up path because it preserves the same deterministic CLI contract while attaching the artifacts to the failure where your team already looks.
+This keeps the same deterministic CLI contract in CI that you use locally, which is the main reason Faultline fits cleanly into automation.
+
+## Examples and snapshots 🧪
+
+The repository includes runnable sample logs and checked-in outputs if you want a quick proof run without bringing your own CI log yet:
+
+```bash
+./bin/faultline analyze examples/missing-executable.log
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+./bin/faultline analyze examples/runtime-mismatch.log
+./bin/faultline analyze examples/docker-auth.log
+```
+
+The demo below shows the same default flow on the checked-in `missing-executable` example:
 
 ![Faultline missing executable demo](docs/readme-assets/missing-executable.gif)
 
-The demo shows the default high-signal flow in one pass: deterministic diagnosis first, deterministic workflow handoff second.
+That gives you three different failure classes to inspect right away:
 
-## Why Faultline ✅
+- `missing-executable` for missing runtime or binary failures
+- `runtime-mismatch` for toolchain/version drift failures
+- `docker-auth` for container registry authentication failures
 
-Most tools try to guess what went wrong.
+More sample inputs and expected outputs live in [examples/README.md](examples/README.md).
 
-Faultline does not guess at detection.
+## More commands 🧩
 
-- 🎯 Deterministic pattern matching
-- 📊 Ranked diagnoses with explicit evidence
-- 🧭 Differential diagnosis for close calls: likely cause, alternatives, and ruled-out rivals
-- ⚖️ Optional `--bayes` reranking that stays deterministic, explainable, and additive
-- 🧩 Deterministic workflow artifacts for local follow-through and agent handoff
-- 🛡️ Quiet `guard` checks for high-confidence local prevention
-- 🧯 Structured fix steps instead of vague advice
-- 🚫 No LLMs, no opaque ranking, and no non-reproducible output
-- 🔍 Audit-friendly output with evidence pulled directly from the log
-- ✅ Faultline only emits a diagnosis when the match clears its confidence threshold
+These companion commands are supported and documented, but they stay out of the default onboarding path on purpose:
 
-That makes it reliable in CI, explainable to engineers, and safe to automate against.
+- `trace` shows rule-by-rule evaluation and rejection context.
+- `replay` and `compare` re-render or diff saved analysis artifacts deterministically.
+- `inspect` and `guard` cover repository-local prevention and high-confidence checks.
+- `packs` installs and lists optional extra playbook packs.
 
-## Handles 🛠️
+Experimental provider-backed delta also exists behind explicit opt-in. The current shipping boundary is documented in [docs/release-boundary.md](docs/release-boundary.md).
 
-- 🐳 Docker and registry authentication failures
-- 🧰 Missing executables, PATH problems, and command invocation errors
-- 🧬 Runtime version mismatches across Node, Python, Ruby, and Go
-- 📦 Dependency install, resolver, and lockfile failures
-- 🗄️ Cache corruption and dependency drift
-- 🔐 Permission issues and filesystem access failures
-- 🧾 CI config errors, bad working directories, and missing build inputs
-- 🌿 Git checkout and runner failures
-- 🔑 Environment variable problems, invalid secrets, and expired credentials
-- 🌐 DNS, TLS, timeout, and connection failures
-- 🏗️ Compile, lint, test, and deploy failures
+## More install options 📦
 
-The goal is not to catch everything. It is to reliably catch what is already known and explain it clearly.
+If you want something other than the one-command installer, Faultline also supports source builds, Docker, and release archives.
 
-## Built on real failures 📚
+<details>
+<summary>Build from source, use Docker, or download a release archive</summary>
 
-- 📚 77 bundled playbooks under `playbooks/bundled/`
-- 🧪 103 accepted real fixtures in the checked-in regression corpus
-- ⚙️ Deterministic ranking, conflict review, and regression gates
-- 🤖 Stable terminal, JSON, and workflow output for automation
-
-The current corpus snapshot and validation commands are published in [`docs/fixture-corpus.md`](docs/fixture-corpus.md).
-Coverage by failure class and release-to-release proof snapshots are published in [`docs/fixture-corpus.md#coverage-by-failure-class`](docs/fixture-corpus.md#coverage-by-failure-class).
-Repository-specific agent operating loops for fixture curation, unmatched-log triage, playbook refinement, and deterministic verification are published in [`docs/agent-workflows.md`](docs/agent-workflows.md).
-The refined shipping surface is published in [`docs/release-boundary.md`](docs/release-boundary.md).
-
-## See the checked-in example ⏱️
-
-Want a repo-local proof run? Build the CLI and run the analyze -> workflow handoff on a checked-in sample log:
-
-```bash
-make build
-./bin/faultline analyze examples/missing-executable.log --format markdown --mode quick
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history
-```
-
-Or use Docker without installing Go:
-
-```bash
-docker build -t faultline .
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/missing-executable.log
-```
-
-What you get back is a ranked diagnosis with evidence, not a generic summary. When you want the follow-through artifact as well, the same example also produces a deterministic workflow plan:
-
-```text
-WORKFLOW  missing-executable · Required executable or runtime binary missing  [local · workflow.v1]
-Source: stdin
-Evidence:
-  - exec /__e/node20/bin/node: no such file or directory
-Focus files:
-  - Dockerfile
-  - .github/workflows/ci.yml
-```
-
-The full checked-in snapshots live in:
-
-- 📄 `examples/missing-executable.workflow.local.txt`
-- 🤖 `examples/missing-executable.workflow.agent.json`
-- 🔁 `examples/missing-executable.replay.expected.md`
-- 🔍 `examples/missing-executable.trace.expected.md`
-- 🆚 `examples/missing-vs-runtime.compare.expected.md`
-
-For a concise playbook-driven demo set with different failure classes:
-
-- 🧪 `./bin/faultline analyze examples/missing-executable.log --format markdown --mode quick`
-- 🧪 `./bin/faultline analyze examples/runtime-mismatch.log --format markdown --mode quick`
-- 🧪 `./bin/faultline analyze examples/docker-auth.log --format markdown --mode quick`
-
-The bundled missing-executable diagnosis snapshot starts like this:
-
-```md
-# Required executable or runtime binary missing
-
-- ID: `missing-executable`
-- Confidence: 84%
-- Category: build
-- Severity: high
-
-## Summary
-
-The job tried to launch a required tool or runtime binary, but that executable was missing from the image, runner, or expected path.
-```
-
-## Why it exists 🎯
-
-CI failures are often repetitive, noisy, opaque, and slower to diagnose than they should be.
-
-Faultline is built for engineers who want:
-
-- 🎯 deterministic results from explicit rules
-- 🔍 evidence pulled directly from the log
-- ⚡ fast local diagnosis without uploading build data
-- 🤖 stable terminal, JSON, and workflow output for automation
-
-It is intentionally narrow. Faultline does not try to explain every possible failure. It aims to be fast, repeatable, and trustworthy on failures it knows. Designed to minimise false positives: better no result than a wrong one.
-
-## Release Boundary 📦
-
-The default release story is intentionally small:
-
-- 🔎 `analyze`
-- 🧭 `workflow`
-- 📚 `list`
-- 🗂️ `explain`
-- 🧯 `fix`
-
-`inspect`, `guard`, and `packs` remain supported companion commands, but they are not the primary onboarding path. Provider-backed GitHub Actions delta remains experimental and hidden behind `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1`.
-
-## Why trust it 🔒
-
-- 🔁 Same input and playbook set produce the same result every time.
-- 🔍 Evidence is pulled directly from matched log lines.
-- 🧯 Fix steps come from checked-in playbooks, not probabilistic generation.
-- ⚖️ `--bayes` never creates new matches; it only reranks already-detected candidates and explains why.
-- 🧠 Repo signals only participate when Faultline has explicit repository context (`--git` or guard/inspect). They are additive: they never create matches, only enrich an existing diagnosis with config drift, CI config changes, large-commit blast radius, hotspot files and directories, co-change pairs, hotfix or revert indicators, and CODEOWNERS-derived ownership boundary signals (boundary crossing, upstream component changes, ownership mismatch, failure clustering).
-- 🤖 JSON and workflow output stay stable for automation and agent workflows.
-- 🏠 Analysis runs locally without shipping build logs to a hosted service.
-
-## What it does ⚙️
-
-- 🔎 Analyze CI logs from a file or stdin.
-- 📈 Rerank close calls with `--bayes`.
-- 🧭 Explain why the winning diagnosis beat nearby alternatives.
-- 🔍 Trace rule-by-rule playbook evaluation with `faultline trace` or `faultline analyze --trace`.
-- 🔁 Replay saved analysis artifacts with `faultline replay analysis.json`.
-- 🆚 Compare saved analysis artifacts with `faultline compare previous.analysis.json current.analysis.json`.
-- 🪟 Focus the live report with `--view summary|evidence|trace|fix|raw`.
-- 🪟 Focus replayed analysis artifacts with `--view summary|evidence|fix|raw`.
-- 🌡️ Surface likely drift causes only when repo context is explicit: config file changes, CI pipeline edits, large blast-radius commits, and hotspot patterns from recent history.
-- 🧩 Turn the top diagnosis into a deterministic workflow handoff.
-- 🗂️ Optionally inspect a repository for source-level failure risks.
-- 🛡️ Optionally run quiet, high-confidence local checks with `guard`.
-- 🖥️ Render concise terminal, markdown, or stable JSON output.
-- 📐 Use checked-in playbooks and real-fixture regression gates as the trust boundary.
-
-## Install options 📥
-
-### One-command installer ⚡
-
-This is the default local install path.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-faultline analyze ci.log
-```
-
-### Build from source 🧱
-
-Requires Go 1.25+.
+Requires Go 1.25+ for source builds.
 
 ```bash
 git clone https://github.com/faultline-cli/faultline
@@ -344,16 +178,12 @@ go build -o faultline ./cmd
 ./faultline analyze examples/missing-executable.log
 ```
 
-### Docker 🐳
-
 ```bash
 docker build -t faultline .
 docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/missing-executable.log
 ```
 
-### Release archive 🗃️
-
-Release archives are published on the GitHub Releases page.
+Release archives are also published on the GitHub Releases page:
 
 ```bash
 VERSION=v0.3.0
@@ -363,130 +193,15 @@ cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze build.log
 ```
 
-If you move the binary elsewhere, keep `playbooks/bundled/` beside it or set `FAULTLINE_PLAYBOOK_DIR`.
+</details>
 
-### GitHub Actions follow-up path 🔁
+## Learn more 📚
 
-After validating the local CLI flow, run the same deterministic outputs inside a failing workflow job:
-
-```bash
-VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
-faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
-faultline analyze build.log --json --bayes > faultline-analysis.json
-faultline workflow build.log --json --mode agent > faultline-workflow.json
-```
-
-This is the strongest next step when you want the diagnosis artifacts attached automatically to failed runs without changing the core product path.
-The provider integration contract is documented in `docs/github-action-contract.md`.
-
-## First run examples 🧪
-
-The repository includes runnable sample logs and expected markdown output.
-
-```bash
-./bin/faultline analyze examples/missing-executable.log
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes --no-history
-./bin/faultline analyze examples/runtime-mismatch.log
-./bin/faultline analyze examples/docker-auth.log
-./bin/faultline analyze examples/missing-executable.log --format markdown
-./bin/faultline analyze examples/missing-executable.log --json --bayes
-./bin/faultline fix examples/missing-executable.log --format markdown
-./bin/faultline explain missing-executable
-./bin/faultline guard .
-```
-
-More runnable examples and output snapshots are documented in `examples/README.md`.
-
-## Command guide 🧰
-
-Stable commands in the default release path:
-
-| Command | Purpose |
-| --- | --- |
-| `analyze [file]` | Diagnose a CI log from a file or stdin |
-| `workflow [file]` | Generate a deterministic follow-up workflow |
-| `fix [file]` | Print fix steps for the top diagnosis |
-| `list` | List bundled and installed playbooks |
-| `explain <id>` | Show the full playbook for one diagnosis |
-
-Supported companion commands:
-
-| Command | Purpose |
-| --- | --- |
-| `trace [file]` | Show rule-by-rule evaluation and rejection context |
-| `replay <analysis.json>` | Re-render a saved analysis artifact deterministically |
-| `compare <before> <after>` | Diff two saved analysis artifacts |
-| `inspect [path]` | Scan a repository for source-level findings |
-| `guard [path]` | Emit only high-confidence local prevention findings |
-| `packs` | Install and list optional extra playbook packs |
-
-Useful flags:
-
-| Flag | Description |
-| --- | --- |
-| `--json` | Emit machine-readable JSON |
-| `--format terminal\|markdown\|json` | Choose the output format |
-| `--mode quick\|detailed` | Control human-readable output detail |
-| `--top N` | Show the top N ranked diagnoses |
-| `--bayes` | Apply deterministic Bayesian-inspired reranking |
-| `--ci-annotations` | Emit GitHub Actions annotations during analysis |
-| `--git` | Enrich analysis with recent local git context (config drift, CI changes, large commits, hotspots, hotfix and revert signals, CODEOWNERS ownership boundary signals) |
-| `--repo <path>` | Choose the repository used by `--git` |
-
-Advanced usage:
-
-- 📦 `packs` installs and manages optional extra playbook packs after the bundled catalog is no longer enough.
-- 🛡️ `inspect` and `guard` provide bounded local-prevention checks using the same deterministic playbook model.
-- 🧪 `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1 faultline analyze ... --delta-provider github-actions` enables the hidden experimental provider-backed delta path.
-
-## How it works 🧠
-
-1. Faultline normalizes the input log into stable lines.
-2. It loads deterministic YAML playbooks from the bundled catalog and any optional installed packs.
-3. It matches explicit patterns, extracts supporting evidence, and ranks results with stable rules.
-4. When `--bayes` is enabled, it reranks only the already-matched candidates and adds explainable ranking hints.
-5. When repo context is explicit (`--git`), it attaches additive history signals to the diagnosis: recently changed config and dependency files, CI pipeline file edits, hotspot directories and files, co-change pairs, large blast-radius commits, hotfix and revert patterns, and author breadth across the commit window. It also parses CODEOWNERS, builds an ownership graph, and derives topology signals for ownership boundary crossings, upstream component changes, ownership mismatches, and localised failure clustering.
-6. It returns a diagnosis, evidence, fix steps, workflow hints, and validation guidance.
-
-The same input and playbook set should produce the same result every time.
-
-## Support matrix 📋
-
-| Capability | Supported |
-| --- | --- |
-| Local log files | Yes |
-| Stdin input | Yes |
-| Stable JSON output | Yes |
-| Docker usage | Yes |
-| CI usage | Yes |
-| Local repo inspection | Yes |
-| Local guard checks | Yes |
-| Network calls during analysis | No by default; experimental provider delta only |
-
-## Credibility checks ✅
-
-- 🧪 `./bin/faultline fixtures stats --class real` currently reports 103 accepted real fixtures and a `weak_match` rate of `0.097` (10/103).
-- 📊 The checked-in regression snapshot reports top-1 = 1.000, top-3 = 1.000, unmatched = 0.000, false_positive = 0.000.
-- 📚 The bundled catalog currently ships 77 playbooks under `playbooks/bundled/`.
-- ✅ Release validation runs `make test`, `make review`, `make fixture-check`, `make cli-smoke`, release archive smoke tests, and Docker smoke tests.
-
-These numbers describe the checked-in regression corpus, not the full space of CI failures.
-
-## Repository guide 🗺️
-
-- 🧪 `examples/README.md` shows runnable sample logs and expected output.
-- 📈 `docs/fixture-corpus.md` publishes the checked-in regression snapshot and regeneration commands.
-- 🧭 `docs/failures/README.md` indexes search-targeted CI failure pages tied to Faultline diagnoses.
-- 🏗️ `docs/architecture.md` explains package boundaries and runtime flow.
-- 🔌 `docs/github-action-contract.md` documents the provider-agnostic CLI contract for a thin GitHub Action wrapper.
-- 🧩 `docs/playbooks.md` documents playbook authoring and pack composition.
-- 📦 `docs/distribution.md` covers release and Docker packaging.
-- 📰 `docs/releases/v0.3.0.md` captures the shipped v0.3.0 release notes.
-- 📰 `docs/releases/v0.2.0.md` captures the shipped v0.2.0 positioning and release notes.
-- 🔍 `docs/detectors.md` describes detector behavior.
-- 🗂️ `docs/adr/README.md` indexes architectural decisions.
-- 🤝 `CONTRIBUTING.md` covers contribution and fixture-sanitization rules.
+- [examples/README.md](examples/README.md) for runnable sample logs and checked-in output snapshots
+- [docs/github-action-contract.md](docs/github-action-contract.md) for the GitHub Actions wrapper contract
+- [docs/fixture-corpus.md](docs/fixture-corpus.md) for regression corpus details and coverage snapshots
+- [docs/playbooks.md](docs/playbooks.md) for playbook authoring and pack composition
+- [docs/release-boundary.md](docs/release-boundary.md) for core vs companion vs experimental surfaces
 
 ## Development 👩‍💻
 
@@ -497,11 +212,11 @@ make review
 make demo-assets
 ```
 
-`make demo-assets` regenerates the README GIFs and screenshots from the VHS tapes under `docs/readme-assets/tapes/`.
+`make demo-assets` regenerates the README demo assets from the VHS tapes under `docs/readme-assets/tapes/`.
 
 ## Feedback 💬
 
-The most useful issue is a sanitized CI failure that Faultline should diagnose better. Have a failure this doesn't catch? Open an issue with the log. Include the smallest log excerpt that reproduces the problem, the expected diagnosis, and what Faultline returned instead.
+The most useful issue is a sanitized CI failure that Faultline should diagnose better. Include the smallest log excerpt that reproduces the problem, the expected diagnosis, and what Faultline returned instead.
 
 Raw ingestion artifacts belong in `fixtures/staging/` only as a local review queue. Sanitize them before promotion into `fixtures/real/`.
 
