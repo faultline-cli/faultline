@@ -198,6 +198,7 @@ cd "faultline_${VERSION}_linux_amd64"
 ## Learn more 📚
 
 - [examples/README.md](examples/README.md) for runnable sample logs and checked-in output snapshots
+- [ROADMAP.md](ROADMAP.md) for the current v0.4 delivery order and product direction
 - [docs/github-action-contract.md](docs/github-action-contract.md) for the GitHub Actions wrapper contract
 - [docs/fixture-corpus.md](docs/fixture-corpus.md) for regression corpus details and coverage snapshots
 - [docs/playbooks.md](docs/playbooks.md) for playbook authoring and pack composition

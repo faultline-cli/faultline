@@ -18,9 +18,18 @@ Use `faultline fixtures ingest` to collect candidate cases into `fixtures/stagin
 
 Before anything is committed:
 
-1. Remove or redact credentials, emails, signed URLs, internal hostnames, and other identifying data.
-2. Keep only the evidence needed to preserve the failure mode.
-3. Promote accepted cases into `fixtures/real/` with a stable expectation.
+1. Run `faultline fixtures sanitize <staging-id>` to mask known credential and identity patterns automatically.
+2. Inspect the output and remove anything the sanitizer did not catch: internal hostnames, signed URLs, customer-specific identifiers, and any remaining data you would not share publicly.
+3. Keep only the evidence needed to preserve the failure mode.
+4. Promote accepted cases into `fixtures/real/` with a stable expectation.
+
+The sanitizer handles a conservative set of patterns (GitHub tokens, AWS keys, Authorization headers, URL credentials, credential key=value pairs, JWTs, PEM private keys, and email addresses). It is not exhaustive. Manual review is always required before promotion.
+
+Use `--dry-run` to preview replacements without modifying the file:
+
+```bash
+faultline fixtures sanitize <staging-id> --dry-run
+```
 
 Do not commit raw staging fixture YAML files.
 

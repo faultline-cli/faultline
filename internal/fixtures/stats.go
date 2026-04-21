@@ -18,6 +18,7 @@ type EvaluateOptions struct {
 	PlaybookDir      string
 	PlaybookPackDirs []string
 	NoHistory        bool
+	BayesEnabled     bool
 }
 
 type EvaluatedFixture struct {
@@ -72,6 +73,7 @@ func EvaluateFixtures(layout Layout, class Class, loaded []Fixture, opts Evaluat
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
 		NoHistory:        opts.NoHistory,
+		BayesEnabled:     opts.BayesEnabled,
 	})
 	report := Report{
 		Class:             class,

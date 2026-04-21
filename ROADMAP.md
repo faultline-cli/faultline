@@ -1,376 +1,209 @@
 # Faultline Roadmap
 
-## Roadmap Review
+## Current Position
 
-The existing roadmap got the V1 foundations right:
+Faultline already ships the deterministic CLI foundations that the roadmap
+should build on:
 
-- keep the CLI deterministic and fast
-- preserve stable JSON and CI-friendly Docker delivery
-- grow coverage through playbooks and fixture-driven validation
-- keep Bayesian-inspired reranking optional and downstream of detection
+- stable `analyze`, `workflow`, `list`, `explain`, and `fix` flows
+- deterministic playbook loading, matching, ranking, and rendering
+- bundled-plus-extra pack composition through `internal/playbooks`
+- checked-in fixture corpus, sanitizer flow, and regression gates
+- stable JSON and workflow artifacts for automation and agent handoff
 
-The gap is not the foundation. The gap is what the roadmap makes primary.
+The next release should not restart the story from "basic log analyzer."
+It should extend the shipped CLI into a fleet-safe deterministic operations
+layer without weakening the local-first trust boundary.
 
-Today the repository already contains several pieces that point beyond "log analyzer":
+## v0.4 Theme
 
-- `faultline workflow` already turns a diagnosis into a deterministic follow-up plan
-- repo context and drift signals already exist under `internal/repo`
-- pack installation and pack composition already exist
-- fixture ingestion, review, promotion, and baseline checks already exist
-- stable machine-readable JSON already exists for automation
+**Fleet-safe deterministic operations**
 
-That means v0.2.0 should not be framed as more of the same. It should prove that Faultline belongs in real workflows as a deterministic prevention, diagnosis, and remediation layer for CI/CD.
+v0.4 should make five things clear:
 
-## v0.2.0 Theme
+- the deterministic forensic engine remains the substrate for every new feature
+- managed inheritance is the main enterprise headline
+- authoring stays grounded in the existing fixture and review loop
+- reliability metrics are explicit machine-readable outputs, not hidden scoring
+- quarantine remains advisory policy, not CI orchestration
 
-**From diagnosis to prevention**
+## Why This Order
 
-Faultline v0.2.0 should make five things obvious:
+The proposed v0.4 ordering is:
 
-- it is safe to automate against
-- it produces deterministic next-step artifacts, not just diagnoses
-- it can explain likely drift between green and red runs
-- it is backed by a visible, growing real-world fixture corpus
-- it fits naturally into CI and local developer workflows
+1. Deterministic Forensic Engine (Core)
+2. Managed Inheritance (Golden Playbook Registry)
+3. Authoring Assistant (Knowledge Codification)
+4. Pipeline Reliability Metrics (PHI, TSS, FPC)
+5. Deterministic Quarantine Policy
 
-## v0.2.0 Pillars
+This order matches the repository shape:
 
-### 1. Reposition Around Deterministic, Audit-Friendly Automation
+- the engine, output, workflow, fixture, and pack seams already exist
+- managed inheritance extends the current pack boundary cleanly
+- authoring should target the inheritance model rather than predate it
+- metrics need explicit artifacts, pack provenance, and stable history inputs
+- quarantine should consume metrics rather than invent a parallel subsystem
 
-Current foundation:
+## v0.4 Delivery Order
 
-- the product is already deterministic, local-first, and explainable
-- README copy already gestures at trust, reproducibility, and automation safety
+### 1. Deterministic Forensic Engine (Core)
 
-v0.2.0 work:
+Treat the existing engine as the v0.4 substrate, not a solved problem that can
+be ignored while new surfaces pile on.
 
-- rewrite top-level messaging around deterministic, explainable, reproducible analysis
-- make "safe to automate against" a first-class promise in README, docs, and release notes
-- explicitly frame output as audit-friendly and procurement-friendly for security-conscious teams
-- keep user-facing language focused on guarantees rather than implementation trivia
+v0.4 work:
 
-Impact on developer and user experience:
+- harden `analyze`, `workflow`, `fix`, `trace`, differential diagnosis, and
+  stable JSON as the foundation every later feature depends on
+- preserve deterministic tie-breaks, evidence provenance, and stable output
+  schemas as product promises, not just implementation details
+- keep `workflow` derived from analysis results, repo context, and checked-in
+  playbook metadata only
 
-- engineers understand faster when Faultline should be trusted in CI loops
-- automation consumers get a clearer contract for when results are stable enough to drive actions
-- the product feels more like infrastructure and less like a helper utility
+Why first:
 
-Impact on product:
+- every later feature needs a stable diagnosis object model
+- the release boundary already treats these commands as the core story
+- additive roadmap work is safer than parallel architecture creation
 
-- sharpens the commercial wedge against probabilistic CI assistants
-- improves category clarity for teams that care about traceability and repeatability
-- makes future enterprise and policy packaging easier to explain
+### 2. Managed Inheritance (Golden Playbook Registry)
 
-Impact on technical architecture:
+This is the first true v0.4 feature pillar and the clearest enterprise-scale
+capability extension.
 
-- no large runtime change is required
-- stable schemas, deterministic tie-breaks, and evidence provenance become even more important because they are now part of the product promise, not just implementation quality
-- the Bayesian-inspired layer should expose explainability and automation-safety signals without changing match semantics
+v0.4 work:
 
-### 2. Make Workflow a First-Class Surface
+- extend the existing pack model with **local sync / pinned reference**
+  inheritance instead of runtime remote fetch during `analyze`
+- keep any network activity inside explicit `packs` management flows
+- add pack provenance so results can report the synced pack and version lineage
+- support constrained insert/overlay bindings for service-local extension
+  without free-form rule mutation
 
-Current foundation:
+Why second:
 
-- `faultline workflow` already exists
-- deterministic workflow text and JSON output already exist
-- playbooks already carry workflow hints such as likely files, local repro commands, and verification commands
+- it builds directly on the current bundled-plus-extra pack architecture
+- it solves the highest-value fleet maintenance problem without changing the
+  analysis trust boundary
+- it creates the right destination for later codified knowledge
 
-v0.2.0 work:
+### 3. Authoring Assistant (Knowledge Codification)
 
-- promote workflow alongside `analyze` in README and examples
-- add examples that show actionable artifacts instead of diagnosis-only output
-- tighten the workflow schema so it is easier for scripts, agents, and CI steps to consume
-- let workflow output incorporate ranking and delta context when available
+The authoring assistant should land after inheritance so new knowledge can be
+captured into the right pack and overlay model.
 
-Impact on developer and user experience:
+v0.4 work:
 
-- the user gets a next-step plan, not just a label
-- teams can wire workflow JSON into scripts or agent prompts without inventing their own glue
-- the CLI feels useful even when the user already understands the raw log
+- keep the assistant maintainer-only and hidden from the default CLI narrative
+- reuse the existing deterministic fixture pipeline as the source of truth
+- support sanitized-log intake, candidate playbook or overlay scaffolding, and
+  fix/validation draft generation
+- keep any LLM augmentation optional, non-authoritative, and outside core
+  product logic
 
-Impact on product:
+Why third:
 
-- this is the bridge from diagnosis to remediation
-- it makes Faultline operationally valuable instead of merely informative
-- it sets up future deterministic patch suggestions or policy-guided remediation without requiring AI in the core path
+- authoring without a target inheritance model creates rework
+- the repository already has deterministic review gates that can police quality
+- this stays aligned with the existing local skills and prompt workflows
 
-Impact on technical architecture:
+### 4. Pipeline Reliability Metrics (PHI, TSS, FPC)
 
-- `internal/workflow` should remain deterministic and consume analysis results rather than owning diagnosis logic
-- the scoring layer can provide stable explanation and prioritization signals that workflow consumes
-- any new workflow artifact types should be derived from playbook content, repo context, and checked-in rules only
+Reliability metrics should arrive as additive machine-readable outputs once pack
+provenance and explicit artifact inputs are in place.
 
-### 3. Add Delta-Differential Diagnosis as a Core Capability
+v0.4 work:
 
-Current foundation:
+- add an additive `metrics` block to analysis and workflow JSON
+- compute metrics from explicit artifact sets or supplied history only
+- make TSS the first-class metric because it has the clearest deterministic path
+- expose PHI and FPC only when sufficient input data exists
+- surface drift-component reporting so external automation can identify what is
+  degrading reliability
 
-- repo history loading and drift correlation already exist
-- the Bayesian-inspired design already includes delta-oriented scoring concepts
-- the engine already has a natural post-detection integration point for reranking
+Why fourth:
 
-v0.2.0 work:
+- these metrics are most useful once pack provenance and authoring loops exist
+- JSON and workflow artifacts already provide the right distribution boundary
+- dashboards can stay external; Faultline only needs to emit stable data
 
-- pilot a deterministic Bayesian-inspired reranking layer behind `--bayes`
-- add delta-oriented scoring that answers "what changed between green and red?"
-- start with a minimal scope: dependency files, runtime files, CI workflow files, environment/config files, and deploy/infra files
-- expose ranked drift signals and clear reasons in human output and JSON
+### 5. Deterministic Quarantine Policy
 
-Impact on developer and user experience:
+Quarantine belongs last because it should be the policy layer built on top of
+the metrics layer rather than a separate execution engine.
 
-- users get a much better first answer than "this failed"
-- triage starts from likely drift, not a cold read of a long log
-- repeated failures feel less opaque because Faultline can point at the most relevant recent changes
+v0.4 work:
 
-Impact on product:
+- emit advisory policy recommendations such as `blocking`, `observe`, or
+  `quarantine`
+- base policy on documented TSS and FPC thresholds
+- keep retries, suite isolation, and CI routing outside Faultline itself
+- expose the same policy through additive JSON and workflow hints
 
-- this is the most valuable intelligence upgrade that still fits the deterministic product identity
-- it moves Faultline closer to prevention and faster remediation without turning it into a generic assistant
-- it creates a strong release headline for v0.2.0
+Why fifth:
 
-Impact on technical architecture:
+- quarantine quality depends on the reliability metrics being explicit first
+- keeping it advisory preserves Faultline's role as a diagnosis and policy CLI
+- this avoids quietly turning the product into a flaky-test orchestrator
 
-- add a small `internal/scoring` package behind the engine, after detection and before workflow/output consumption
-- keep detection, playbook matching, and fix content unchanged
-- persist only minimal, explicit snapshot data when success-state comparison is introduced
-- keep tie-breaks, rounding, and explanation ordering fully deterministic
+## Interface Direction
 
-### 4. Ship a GitHub Action as the Main Distribution Surface
+Planned additive interface changes for v0.4:
 
-Current foundation:
+- `packs` grows synced-reference metadata and pinned update flows for managed
+  inheritance
+- analysis JSON grows additive sections for `pack_provenance`, `metrics`, and
+  `policy`
+- workflow JSON grows additive metrics and policy hints derived from the same
+  deterministic analysis result
+- authoring assistance remains hidden and should compose with the existing
+  `fixtures` and playbook-authoring workflows rather than redefine the command
+  maturity model
 
-- Faultline already runs well in Docker and from the CLI
-- JSON output is already stable enough to act as an external integration contract
-- README already documents manual GitHub Actions usage
+Defaults to preserve:
 
-v0.2.0 work:
+- absent data means absent fields, not guessed values
+- the same local playbook set plus the same input still yields the same output
+- `analyze`, `workflow`, and `trace` must not require runtime network access
 
-- ship a dedicated `faultline-action` repository
-- support file input, stdin-like capture, markdown summary output, and JSON artifacts
-- make the action a thin integration layer over the CLI rather than a provider-specific branch of the product
-- document thresholds and failure behavior clearly so teams can adopt it safely
+## v0.4 Release Boundary Rules
 
-Impact on developer and user experience:
+The current release boundary remains the guardrail for v0.4 planning:
 
-- integration becomes copy-paste simple
-- users see Faultline where the failure already happens instead of having to reproduce setup manually
-- CI maintainers get an easy path to structured artifacts and workflow follow-up
+- the default narrative stays centered on `analyze`, `workflow`, `list`,
+  `explain`, and `fix`
+- managed inheritance should land under `packs`, not as a default-networked
+  analysis path
+- the authoring assistant should stay hidden and maintainer-only until it has
+  deterministic validation equivalent to other maintainer workflows
+- metrics and quarantine should start as machine-readable companion outputs
+  rather than new first-run commands
+- any future promotion to the default narrative should require deterministic
+  coverage, checked-in snapshots where relevant, and release-check integration
 
-Impact on product:
+## Validation Standard
 
-- this is the highest-leverage distribution step
-- it creates a natural funnel for external logs, issue reports, fixtures, and credibility
-- it gives the product a real workflow foothold without requiring a hosted service
+Core hardening and any v0.4 implementation work should satisfy these checks:
 
-Impact on technical architecture:
+- snapshot-test JSON, workflow, and trace stability
+- verify pack provenance is deterministic across repeated runs
+- verify synced packs resolve offline after sync and preserve stable ordering
+- require authoring output to pass `make review`, `make test`, and
+  `make fixture-check` before promotion
+- snapshot-test TSS, PHI, and FPC calculations, missing-data behavior, and
+  rounding
+- verify quarantine recommendations never trigger retries or CI mutations inside
+  Faultline itself
 
-- keep provider-specific code out of the core CLI
-- treat CLI JSON and markdown output as the stable integration contract
-- use the scoring and workflow layers to control summary quality, artifact richness, and automation safety without adding provider logic to `internal/`
+## Later, Not v0.4
 
-### 5. Expose the Fixture Corpus as the Moat
+The roadmap should stay disciplined about what it is not doing in this release:
 
-Current foundation:
-
-- the repository already has accepted real fixtures, baseline checks, and stats support
-- the regression corpus already acts as the quality gate for ranking behavior
-
-v0.2.0 work:
-
-- publish a fixture stats document and link it from README
-- show category coverage, fixture counts, and release-over-release growth
-- document the contribution path for new real-world failures
-- use the checked-in corpus as the source of conservative priors for the Bayesian-inspired reranker
-
-Impact on developer and user experience:
-
-- contributors understand where new evidence fits
-- users can see that coverage is grounded in real failures, not just hand-written demos
-- ranking behavior becomes easier to trust because it is visibly regression-tested
-
-Impact on product:
-
-- the corpus becomes an external trust signal, not just an internal engineering asset
-- it strengthens the moat around empirical coverage and repeatability
-- it supports future commercial packaging around premium and policy packs
-
-Impact on technical architecture:
-
-- keep fixture evaluation deterministic and checked in
-- derive priors and weights offline from accepted fixtures, never at runtime
-- preserve simple, reviewable data artifacts such as baseline files and versioned scoring weights
-
-## Supporting Tracks for v0.2.0
-
-### Pack Foundations Now, Registry Later
-
-Current foundation:
-
-- pack composition, installation, and auto-discovery already exist
-
-v0.2.0 work:
-
-- document the pack contract more clearly
-- add example packs and install/versioning guidance
-- make it obvious that packs are the extension and monetization boundary
-
-Impact on developer and user experience:
-
-- teams can extend coverage without forking core
-- the extensibility model becomes easier to understand and test locally
-
-Impact on product:
-
-- packs become the clean path to ecosystem depth and future commercial packaging
-- the roadmap stays focused on ecosystem readiness rather than registry theater
-
-Impact on technical architecture:
-
-- keep pack metadata simple and deterministic
-- avoid registry, signing, or pack-specific runtime weight overrides in v0.2.0
-
-### Pre-Commit and Pre-Push Guard
-
-Current foundation:
-
-- `inspect`, source detection, repo scanning, and workflow generation already exist
-
-v0.2.0 work:
-
-- add a lightweight `faultline guard` path for high-confidence local checks
-- focus on known deterministic failure classes that are cheap to detect before CI
-- use the same evidence and workflow model rather than inventing a separate subsystem
-
-Impact on developer and user experience:
-
-- catches some failures before cloud CI time is spent
-- reinforces the shift-left story without requiring a heavy IDE integration first
-
-Impact on product:
-
-- strengthens the prevention narrative
-- increases usage frequency and habit formation
-
-Impact on technical architecture:
-
-- reuse source detector and scoring primitives
-- keep the scope narrow and high-confidence to avoid noisy local checks
-
-### Soft Exposure for Complete Surfaces
-
-Current foundation:
-
-- `trace`, `replay`, `compare`, `inspect`, and `guard` are already implemented and validated
-- release-boundary policy already separates default onboarding from companion surfaces
-
-v0.2.0 work:
-
-- add a clear "already built but non-default" section in top-level docs
-- expose one explicit opt-in discovery path for experimental provider-backed delta
-- keep default help and default narrative focused on stable commands
-- track usage and feedback from power users before graduation decisions
-
-Impact on developer and user experience:
-
-- power users can discover depth without digging through source
-- contributors get clearer promotion targets for command graduation
-- new users keep a simple first-run path with low cognitive load
-
-Impact on product:
-
-- improves discoverability of already-shipped depth
-- avoids feature rot caused by zero user pressure on complete surfaces
-- preserves trust by keeping release discipline intact
-
-Impact on technical architecture:
-
-- no runtime architecture change required
-- preserves hidden-flag and release-boundary enforcement in CLI behavior
-- requires docs, examples, and promotion metrics to stay synchronized
-
-### Fixture Sanitizer for Safe Contribution
-
-Current foundation:
-
-- fixture ingestion, review, and promotion flows already exist
-- real-world fixture quality is already a core trust boundary
-
-v0.2.0 work:
-
-- add a simple `faultline fixtures sanitize` path for contribution prep
-- mask obvious secrets and sensitive identifiers before fixture intake
-- start with conservative deterministic rules (tokens, emails, auth headers, obvious credential patterns)
-- document sanitizer limitations clearly so contributors know what still needs manual review
-
-Impact on developer and user experience:
-
-- lowers friction for submitting real CI failures
-- makes contribution safer for teams with strict data-handling policies
-- increases fixture throughput without requiring perfect automation
-
-Impact on product:
-
-- accelerates growth of the real-world corpus
-- strengthens regression evidence and trust in diagnosis coverage
-- improves community participation in playbook refinement
-
-Impact on technical architecture:
-
-- keep sanitizer deterministic and rule-based
-- keep masking rules explicit, versioned, and test-backed
-- integrate sanitizer output directly into existing fixtures ingest/review flow
-
-## Suggested Build Order
-
-### Slice 1: Action-First Adoption
-
-- ship the GitHub Action as the default onboarding route
-- publish copy-paste workflow examples that emit markdown summary plus JSON workflow artifacts
-- document deterministic gating policy for downstream automation
-
-### Slice 2: Workflow-First Product Story
-
-- promote analyze -> workflow as the hero path in README and examples
-- tighten workflow JSON compatibility guidance as an API contract
-- keep schema changes additive by default
-
-### Slice 3: Messaging and Proof
-
-- rewrite README and launch framing around deterministic, audit-friendly automation
-- make "safe to automate against" the top-level trust promise
-- publish fixture corpus stats with category coverage and release snapshots
-- expose complete-but-non-default surfaces without expanding default onboarding
-
-### Slice 4: Distribution and Extensibility
-
-- publish pack examples and pack authoring guidance
-
-### Slice 5: Deterministic Intelligence
-
-- land the Bayesian-inspired reranking layer behind `--bayes`
-- add delta-differential diagnosis and explanation payloads
-- compare legacy and Bayes modes across the fixture corpus before promotion
-
-### Slice 6: Shift-Left Follow-Through
-
-- add a lightweight guard command
-- add `faultline fixtures sanitize` for safe fixture submission
-- polish docs, examples, thresholds, and automation handoff contracts
-
-## Later, Not v0.2.0
-
-- deep IDE or LSP integration
 - hosted pack registry
-- premium pack delivery infrastructure
-- AI-generated fixes in the core execution path
-- signed packs and enterprise governance layers
-- cryptographic or ZK-style attestations
-
-## Roadmap Standard
-
-Changes on this roadmap should keep the same core invariants:
-
-- deterministic detection stays authoritative
-- same input and same checked-in rule set produce the same output
-- scoring only reranks explicit candidates and remains explainable
-- workflow and automation output stay stable and auditable
-- fixture-backed evaluation gates any ranking change before it becomes the default
+- runtime remote pack fetch during analysis
+- dashboards or a hosted analytics surface
+- CI or test execution orchestration inside Faultline
+- AI-generated fixes in the product's authoritative decision path
+- speculative governance layers such as signing or enterprise policy control
+  before the pack and provenance model is stable

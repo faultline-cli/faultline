@@ -47,6 +47,21 @@ This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTA
 
 These capabilities may exist, but they should not define the release boundary.
 
+## v0.4 Direction
+
+The current roadmap for v0.4 should extend this boundary rather than replace it:
+
+- keep the default narrative centered on `analyze`, `workflow`, `list`,
+  `explain`, and `fix`
+- treat managed inheritance as a `packs`-driven capability with explicit sync
+  or update flows, not runtime network fetch during analysis
+- keep the authoring assistant hidden and maintainer-only until it has
+  deterministic validation equivalent to the existing fixture workflows
+- add reliability metrics and quarantine recommendations first as additive JSON
+  and workflow outputs, not as new first-run command surfaces
+- preserve the no-runtime-network expectation for `analyze`, `workflow`, and
+  `trace`
+
 ## Release-Readiness Contract
 
 The repository is release-ready only when all of these stay true:
@@ -56,6 +71,23 @@ The repository is release-ready only when all of these stay true:
 - `make fixture-check` passes on the accepted real corpus baseline
 - `make cli-smoke` passes against checked-in examples and workflow snapshots
 - `make release-check VERSION=<tag>` passes before a release cut
+
+## Bayes Promotion Gate
+
+`--bayes` remains an explicit opt-in flag. Before it can graduate to a default or release-gated path, all of these must hold:
+
+- `make bayes-check` shows zero regressions across the real fixture corpus
+- `make bayes-check` shows no Top-1 or Top-3 rate regression vs the baseline scorer
+- The comparison report is reviewed and checked in as part of the promotion commit
+- The release notes document the promotion explicitly
+
+Run the gate with `--fail-on-regression` to enforce it in CI:
+
+```bash
+./bin/faultline fixtures compare-modes --class real --fail-on-regression
+```
+
+The current known state is one Bayes regression (`gitlab-gitlab-org-gitlab-runner-6557-s3-64c99cfe7a2f9dfa`, rank 1 → 2). Bayes stays opt-in until that regression is resolved.
 
 ## Contribution Rule
 

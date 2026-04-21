@@ -13,10 +13,12 @@ func TestNewFixturesCommandRegistersHiddenSubcommands(t *testing.T) {
 	}
 
 	want := map[string]bool{
-		"ingest":  false,
-		"review":  false,
-		"promote": false,
-		"stats":   false,
+		"ingest":        false,
+		"review":        false,
+		"promote":       false,
+		"stats":         false,
+		"sanitize":      false,
+		"compare-modes": false,
 	}
 	for _, child := range cmd.Commands() {
 		if _, ok := want[child.Name()]; ok {
@@ -76,5 +78,17 @@ func TestFixturesStatsCommandRejectsInvalidClass(t *testing.T) {
 	err := cmd.Execute()
 	if err == nil || !strings.Contains(err.Error(), "invalid fixture class") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestFixturesSanitizeCommandRequiresArgs(t *testing.T) {
+	cmd := newFixturesSanitizeCommand()
+	cmd.SetArgs([]string{})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error when no staging IDs are provided")
 	}
 }

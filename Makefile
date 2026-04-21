@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bench review cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
+.PHONY: help build run test fixture-check bayes-check bench review cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -19,6 +19,7 @@ help:
 		"  test            Run all Go tests" \
 		"  demo-assets     Rebuild README GIFs and screenshots from VHS tapes" \
 		"  fixture-check   Run the accepted real-fixture regression gate" \
+		"  bayes-check     Compare baseline vs Bayes ranking across the real fixture corpus (pre-promotion gate)" \
 		"  cli-smoke       Build the CLI and validate shipped examples plus companion commands" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Print bundled playbook pattern conflicts" \
@@ -47,6 +48,9 @@ test:
 
 fixture-check:
 	$(GO) run ./cmd fixtures stats --class real --check-baseline
+
+bayes-check: build
+	$(BINARY) fixtures compare-modes --class real
 
 cli-smoke: build
 	sh ./scripts/cli-smoke.sh

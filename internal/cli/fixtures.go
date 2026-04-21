@@ -20,6 +20,8 @@ func newFixturesCommand() *cobra.Command {
 	cmd.AddCommand(newFixturesReviewCommand())
 	cmd.AddCommand(newFixturesPromoteCommand())
 	cmd.AddCommand(newFixturesStatsCommand())
+	cmd.AddCommand(newFixturesSanitizeCommand())
+	cmd.AddCommand(newFixturesCompareModesCommand())
 	return cmd
 }
 
@@ -166,5 +168,86 @@ func newFixturesStatsCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().BoolVar(&checkBaseline, "check-baseline", false, "fail if the current report regresses from the baseline snapshot")
 	cmd.Flags().BoolVar(&updateBaseline, "update-baseline", false, "write the current report metrics to the baseline snapshot")
+	return cmd
+}
+
+func newFixturesSanitizeCommand() *cobra.Command {
+	var (
+		root    string
+		dryRun  bool
+		jsonOut bool
+	)
+	cmd := &cobra.Command{
+		Use:   "sanitize <staging-id> [<staging-id>...]",
+		Short: "Mask secrets and sensitive patterns in staging fixtures before promotion",
+		Long: strings.Join([]string{
+			"Sanitize applies deterministic masking rules to the raw_log and normalized_log",
+			"fields of the named staging fixture(s). Masked patterns include GitHub tokens,",
+			"AWS keys, Authorization header values, URL credentials, credential key=value",
+			"pairs, JWT tokens, PEM-encoded private keys, and email addresses.",
+			"",
+			"Sanitization is not a substitute for manual review. Always inspect the results",
+			"before promoting fixtures into fixtures/real/.",
+		}, "\n"),
+		Example: strings.Join([]string{
+			"  faultline fixtures sanitize staging-abc123",
+			"  faultline fixtures sanitize staging-abc123 staging-def456 --dry-run",
+			"  faultline fixtures sanitize staging-abc123 --json",
+		}, "\n"),
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return app.NewService().FixturesSanitize(root, args, fixtures.SanitizeOptions{
+				DryRun: dryRun,
+			}, jsonOut, cmd.OutOrStdout())
+		},
+	}
+	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "report what would be replaced without modifying files")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
+	return cmd
+}
+
+func newFixturesCompareModesCommand() *cobra.Command {
+	var (
+		root            string
+		classValue      string
+		playbookDir     string
+		playbookPacks   []string
+		jsonOut         bool
+		failOnRegression bool
+	)
+	cmd := &cobra.Command{
+		Use:   "compare-modes",
+		Short: "Compare baseline vs Bayes ranking across the fixture corpus",
+		Long: strings.Join([]string{
+			"compare-modes runs two evaluations over the same fixture corpus — one with the",
+			"deterministic baseline scorer and one with the Bayesian-inspired reranker — and",
+			"reports the per-fixture rank changes, aggregate rate deltas, and any regressions.",
+			"",
+			"Use this before promoting --bayes to a default or release-gated path.",
+		}, "\n"),
+		Example: strings.Join([]string{
+			"  faultline fixtures compare-modes",
+			"  faultline fixtures compare-modes --class real --fail-on-regression",
+			"  faultline fixtures compare-modes --json",
+		}, "\n"),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			class, err := fixtures.ParseClass(classValue)
+			if err != nil {
+				return err
+			}
+			return app.NewService().FixturesCompareModes(root, class, fixtures.EvaluateOptions{
+				PlaybookDir:      playbookDir,
+				PlaybookPackDirs: playbookPacks,
+				NoHistory:        true,
+			}, jsonOut, failOnRegression, cmd.OutOrStdout())
+		},
+	}
+	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
+	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassReal), "fixture class to evaluate: minimal|real|all")
+	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
+	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
+	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
+	cmd.Flags().BoolVar(&failOnRegression, "fail-on-regression", false, "exit non-zero when Bayes mode regresses any fixture's rank")
 	return cmd
 }

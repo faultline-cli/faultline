@@ -72,7 +72,47 @@ If Faultline misses a failure class, contribute a sanitized public log:
 3. Avoid secrets, private hostnames, and internal repository names.
 4. Mark expected diagnosis if known to speed triage.
 
-Maintainers should route accepted cases through the deterministic ingest/review/promote flow.
+Maintainers should route accepted cases through the deterministic ingest/review/promote flow:
+
+```bash
+# Ingest from a public source URL.
+faultline fixtures ingest --adapter github-issue --url https://github.com/owner/repo/issues/123
+
+# Sanitize known credential and identity patterns in the staging fixture.
+faultline fixtures sanitize <staging-id>
+
+# Preview replacements without modifying the file.
+faultline fixtures sanitize <staging-id> --dry-run
+
+# Review predicted matches and duplicate signals.
+faultline fixtures review
+
+# Promote to fixtures/real/ with a locked expectation.
+faultline fixtures promote <staging-id> --expected-playbook <id>
+```
+
+### Sanitizer Scope and Limitations
+
+`faultline fixtures sanitize` applies a deterministic, rule-based pass over the `raw_log` and `normalized_log` fields of a staging fixture. It masks:
+
+- GitHub personal access tokens and app tokens
+- AWS access key IDs
+- `Authorization: Bearer/Token/Basic` header values
+- Credentials embedded in URLs (`https://user:password@host`)
+- Credential key=value and key: value pairs (`password=`, `secret=`, `api_key=`, `access_token=`, `auth_token=`, `private_key=`)
+- JWT tokens
+- PEM-encoded private key blocks
+- Email addresses
+
+The sanitizer does **not** catch:
+
+- Internal hostnames, company-specific domain names, and service endpoint URLs
+- Signed or pre-authorized URLs that do not contain obvious credential prefixes
+- Customer or tenant identifiers embedded in paths or query strings
+- Usernames, project names, or repository names that could identify a contributor's environment
+- Any secret that does not match the above explicit patterns
+
+Always inspect the fixture manually after running the sanitizer. The tool is a first-pass aide, not a guarantee of complete redaction.
 
 ## Regenerate And Check
 

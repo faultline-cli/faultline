@@ -499,6 +499,59 @@ func (Service) FixturesPromote(root string, ids []string, opts fixtures.PromoteO
 	return nil
 }
 
+func (Service) FixturesSanitize(root string, ids []string, opts fixtures.SanitizeOptions, jsonOut bool, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	results, err := fixtures.Sanitize(layout, ids, opts)
+	if err != nil {
+		return err
+	}
+	formatted, err := fixtures.FormatSanitizeResults(results, jsonOut)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, formatted)
+	return err
+}
+
+func (Service) FixturesCompareModes(root string, class fixtures.Class, opts fixtures.EvaluateOptions, jsonOut, failOnRegression bool, w io.Writer) error {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return err
+	}
+	baselineOpts := opts
+	baselineOpts.BayesEnabled = false
+	bayesOpts := opts
+	bayesOpts.BayesEnabled = true
+
+	baselineReport, err := fixtures.Evaluate(layout, class, baselineOpts)
+	if err != nil {
+		return fmt.Errorf("baseline evaluation: %w", err)
+	}
+	bayesReport, err := fixtures.Evaluate(layout, class, bayesOpts)
+	if err != nil {
+		return fmt.Errorf("bayes evaluation: %w", err)
+	}
+	cmp, err := fixtures.CompareReports(baselineReport, bayesReport)
+	if err != nil {
+		return err
+	}
+	formatted, err := fixtures.FormatModeComparison(cmp, jsonOut)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprint(w, formatted)
+	if err != nil {
+		return err
+	}
+	if failOnRegression && cmp.HasRegressions() {
+		return fmt.Errorf("bayes mode regressed %d fixture(s)", cmp.Regressed)
+	}
+	return nil
+}
+
 func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.EvaluateOptions, baselinePath string, jsonOut, checkBaseline, updateBaseline bool, w io.Writer) error {
 	layout, err := fixtures.ResolveLayout(root)
 	if err != nil {
