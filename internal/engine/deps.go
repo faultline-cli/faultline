@@ -12,32 +12,12 @@ type playbookCatalog interface {
 	Explain(id string) (model.Playbook, error)
 }
 
-type historyRecorder interface {
-	CountSeen(failureID string) int
-	Record(result model.Result)
-	AllEntries() []historyEntry
-}
-
 type repoEnricher interface {
 	Enrich(result model.Result) *model.RepoContext
 }
 
 type sourceLoader interface {
 	Load(root string) ([]detectors.SourceFile, error)
-}
-
-type defaultHistoryRecorder struct{}
-
-func (defaultHistoryRecorder) CountSeen(failureID string) int {
-	return countSeen(failureID)
-}
-
-func (defaultHistoryRecorder) Record(result model.Result) {
-	recordResult(result)
-}
-
-func (defaultHistoryRecorder) AllEntries() []historyEntry {
-	return allHistoryEntries()
 }
 
 type defaultSourceLoader struct{}

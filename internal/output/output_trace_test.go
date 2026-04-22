@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"faultline/internal/model"
+	"faultline/internal/signature"
 	tracereport "faultline/internal/trace"
 )
 
@@ -128,6 +129,48 @@ func TestFormatTraceMarkdownShowsCompetingSection(t *testing.T) {
 	}
 }
 
+func TestFormatTraceMarkdownShowsHooksSection(t *testing.T) {
+	report := makeTraceReport(true)
+	report.Hooks = &model.HookReport{
+		Mode:            model.HookModeSafe,
+		BaseConfidence:  0.84,
+		ConfidenceDelta: 0.05,
+		FinalConfidence: 0.89,
+		Results: []model.HookResult{{
+			ID:       "registry-config",
+			Category: model.HookCategoryVerify,
+			Status:   model.HookStatusExecuted,
+			Passed:   boolPtr(true),
+		}},
+	}
+
+	out := FormatTraceMarkdown(report, false, false, false)
+	if !strings.Contains(out, "## Hooks") {
+		t.Fatalf("expected hooks section in markdown, got:\n%s", out)
+	}
+	if !strings.Contains(out, "verify/registry-config: executed") {
+		t.Fatalf("expected hook summary in markdown, got:\n%s", out)
+	}
+}
+
+func TestFormatTraceMarkdownShowsSignatureSection(t *testing.T) {
+	report := makeTraceReport(true)
+	sig := signature.ForResult(model.Result{
+		Playbook: model.Playbook{ID: "docker-auth"},
+		Detector: "log",
+		Evidence: []string{"authentication required"},
+	})
+	report.Signature = &sig
+
+	out := FormatTraceMarkdown(report, false, false, false)
+	if !strings.Contains(out, "## Signature") {
+		t.Fatalf("expected signature section in markdown, got:\n%s", out)
+	}
+	if !strings.Contains(out, sig.Hash) {
+		t.Fatalf("expected signature hash in markdown, got:\n%s", out)
+	}
+}
+
 func TestFormatTraceMarkdownScoreInHeader(t *testing.T) {
 	report := makeTraceReport(true)
 	report.Score = 2.5
@@ -221,6 +264,53 @@ func TestFormatTraceJSONIncludesCompetingWhenRequested(t *testing.T) {
 	competing, ok := m["competing"].([]interface{})
 	if !ok || len(competing) == 0 {
 		t.Error("expected competing field with entries when showRejected=true")
+	}
+}
+
+func TestFormatTraceJSONIncludesHooks(t *testing.T) {
+	report := makeTraceReport(true)
+	report.Hooks = &model.HookReport{
+		Mode:            model.HookModeSafe,
+		BaseConfidence:  0.84,
+		ConfidenceDelta: 0.05,
+		FinalConfidence: 0.89,
+	}
+	out, err := FormatTraceJSON(report, false, false, false)
+	if err != nil {
+		t.Fatalf("FormatTraceJSON: %v", err)
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if m["hooks"] == nil {
+		t.Fatal("expected hooks field in trace json")
+	}
+}
+
+func TestFormatTraceJSONIncludesSignatureWhenAvailable(t *testing.T) {
+	report := makeTraceReport(true)
+	sig := signature.ForResult(model.Result{
+		Playbook: model.Playbook{ID: "docker-auth"},
+		Detector: "log",
+		Evidence: []string{"authentication required"},
+	})
+	report.Signature = &sig
+
+	out, err := FormatTraceJSON(report, false, false, false)
+	if err != nil {
+		t.Fatalf("FormatTraceJSON: %v", err)
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	signatureValue, ok := m["signature"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected signature object, got %#v", m["signature"])
+	}
+	if signatureValue["hash"] != sig.Hash {
+		t.Fatalf("expected signature hash %s, got %#v", sig.Hash, signatureValue["hash"])
 	}
 }
 

@@ -9,11 +9,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"faultline/internal/app"
+	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/workflow"
 )
 
 const experimentalGitHubDeltaEnv = "FAULTLINE_EXPERIMENTAL_GITHUB_DELTA"
+const storeEnv = "FAULTLINE_STORE"
 
 // NewRootCommand builds the Faultline CLI command tree.
 func NewRootCommand(version string) *cobra.Command {
@@ -116,6 +118,19 @@ func validateExperimentalDeltaProvider(provider string) error {
 	return nil
 }
 
+func validateHookMode(value string) (model.HookMode, error) {
+	mode := model.HookMode(strings.TrimSpace(value))
+	switch mode {
+	case "", model.HookModeOff, model.HookModeVerifyOnly, model.HookModeCollectOnly, model.HookModeSafe, model.HookModeFull:
+		if mode == "" {
+			return model.HookModeOff, nil
+		}
+		return mode, nil
+	default:
+		return "", fmt.Errorf("--hooks must be %q, %q, %q, %q, or %q", model.HookModeOff, model.HookModeVerifyOnly, model.HookModeCollectOnly, model.HookModeSafe, model.HookModeFull)
+	}
+}
+
 func newAnalyzeCommand() *cobra.Command {
 	var (
 		jsonOut            bool
@@ -127,6 +142,8 @@ func newAnalyzeCommand() *cobra.Command {
 		playbookPacks      []string
 		ciAnnotations      bool
 		noHistory          bool
+		noStore            bool
+		storePath          string
 		gitContext         bool
 		gitSince           string
 		repoPath           string
@@ -142,6 +159,7 @@ func newAnalyzeCommand() *cobra.Command {
 		githubBranch       string
 		githubRunID        int64
 		metricsHistoryFile string
+		hookMode           string
 	)
 
 	cmd := &cobra.Command{
@@ -176,6 +194,10 @@ func newAnalyzeCommand() *cobra.Command {
 			if err := validateExperimentalDeltaProvider(deltaProvider); err != nil {
 				return err
 			}
+			resolvedHookMode, err := validateHookMode(hookMode)
+			if err != nil {
+				return err
+			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
 			if err != nil {
 				return err
@@ -201,7 +223,7 @@ func newAnalyzeCommand() *cobra.Command {
 				View:               resolvedView,
 				JSON:               resolvedJSON,
 				CIAnnotations:      ciAnnotations,
-				NoHistory:          noHistory,
+				NoHistory:          noHistory || noStore,
 				PlaybookDir:        playbookDir,
 				PlaybookPackDirs:   playbookPacks,
 				GitContextEnabled:  gitContext,
@@ -220,6 +242,8 @@ func newAnalyzeCommand() *cobra.Command {
 				GitHubRunID:        firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
 				GitHubToken:        firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
 				MetricsHistoryFile: metricsHistoryFile,
+				Store:              firstNonEmpty(storePath, os.Getenv(storeEnv)),
+				HookMode:           resolvedHookMode,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -233,6 +257,8 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
@@ -248,11 +274,15 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
 	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
 	cmd.Flags().StringVar(&metricsHistoryFile, "history-file", "", "path to a JSONL history file for FPC and PHI computation")
+	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
 	_ = cmd.Flags().MarkHidden("delta-provider")
 	_ = cmd.Flags().MarkHidden("github-repo")
 	_ = cmd.Flags().MarkHidden("github-branch")
 	_ = cmd.Flags().MarkHidden("github-run-id")
 	_ = cmd.Flags().MarkHidden("history-file")
+	_ = cmd.Flags().MarkHidden("hooks")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 	return cmd
 }
 
@@ -292,6 +322,8 @@ func newFixCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		noStore       bool
+		storePath     string
 		bayes         bool
 	)
 
@@ -313,9 +345,10 @@ func newFixCommand() *cobra.Command {
 			return app.NewService().Fix(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:              1,
 				Format:           resolvedFormat,
-				NoHistory:        noHistory,
+				NoHistory:        noHistory || noStore,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
+				Store:            firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				BayesEnabled:     bayes,
 			}, cmd.OutOrStdout())
 		},
@@ -325,7 +358,11 @@ func newFixCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 	return cmd
 }
 
@@ -437,6 +474,8 @@ func newTraceCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		noStore       bool
+		storePath     string
 		gitContext    bool
 		gitSince      string
 		repoPath      string
@@ -446,6 +485,7 @@ func newTraceCommand() *cobra.Command {
 		showRejected  bool
 		showEvidence  bool
 		showScoring   bool
+		hookMode      string
 	)
 
 	cmd := &cobra.Command{
@@ -454,6 +494,10 @@ func newTraceCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateSelect(selectRank); err != nil {
+				return err
+			}
+			resolvedHookMode, err := validateHookMode(hookMode)
+			if err != nil {
 				return err
 			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
@@ -471,7 +515,7 @@ func newTraceCommand() *cobra.Command {
 				Select:            selectRank,
 				Format:            resolvedFormat,
 				JSON:              resolvedJSON,
-				NoHistory:         noHistory,
+				NoHistory:         noHistory || noStore,
 				PlaybookDir:       playbookDir,
 				PlaybookPackDirs:  playbookPacks,
 				GitContextEnabled: gitContext,
@@ -483,6 +527,8 @@ func newTraceCommand() *cobra.Command {
 				ShowRejected:      showRejected,
 				ShowEvidence:      showEvidence,
 				ShowScoring:       showScoring,
+				Store:             firstNonEmpty(storePath, os.Getenv(storeEnv)),
+				HookMode:          resolvedHookMode,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -492,6 +538,8 @@ func newTraceCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
@@ -501,6 +549,10 @@ func newTraceCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context")
 	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix")
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail")
+	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
+	_ = cmd.Flags().MarkHidden("hooks")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 	return cmd
 }
 
@@ -513,6 +565,8 @@ func newInspectCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		noStore       bool
+		storePath     string
 		bayes         bool
 	)
 
@@ -537,9 +591,10 @@ func newInspectCommand() *cobra.Command {
 				Mode:             output.Mode(mode),
 				Format:           resolvedFormat,
 				JSON:             resolvedJSON,
-				NoHistory:        noHistory,
+				NoHistory:        noHistory || noStore,
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
+				Store:            firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				BayesEnabled:     bayes,
 			}, cmd.OutOrStdout())
 		},
@@ -552,7 +607,11 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic findings with the Bayesian-inspired scoring layer")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 	return cmd
 }
 
@@ -664,6 +723,8 @@ func newWorkflowCommand() *cobra.Command {
 		playbookDir   string
 		playbookPacks []string
 		noHistory     bool
+		noStore       bool
+		storePath     string
 		gitContext    bool
 		gitSince      string
 		repoPath      string
@@ -701,9 +762,10 @@ func newWorkflowCommand() *cobra.Command {
 
 			return app.NewService().Workflow(input.Reader, input.Source, app.AnalyzeOptions{
 				Top:               1,
-				NoHistory:         noHistory,
+				NoHistory:         noHistory || noStore,
 				PlaybookDir:       playbookDir,
 				PlaybookPackDirs:  playbookPacks,
+				Store:             firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				GitContextEnabled: gitContext,
 				GitSince:          gitSince,
 				RepoPath:          repoPath,
@@ -717,10 +779,14 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich the workflow with recent local git repository context")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 	return cmd
 }
 

@@ -12,69 +12,6 @@ import (
 	"faultline/internal/scoring"
 )
 
-// --- defaultHistoryRecorder (deps.go) ---
-
-func TestDefaultHistoryRecorderCountSeenEmpty(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	rec := defaultHistoryRecorder{}
-	count := rec.CountSeen("git-auth")
-	if count != 0 {
-		t.Errorf("expected 0 for empty history, got %d", count)
-	}
-}
-
-func TestDefaultHistoryRecorderRecordAndCount(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	rec := defaultHistoryRecorder{}
-	result := model.Result{
-		Playbook: model.Playbook{
-			ID:       "docker-auth",
-			Title:    "Docker auth failure",
-			Category: "auth",
-		},
-	}
-	rec.Record(result)
-	rec.Record(result)
-	if rec.CountSeen("docker-auth") != 2 {
-		t.Errorf("expected 2 after two records, got %d", rec.CountSeen("docker-auth"))
-	}
-	if rec.CountSeen("other-failure") != 0 {
-		t.Error("expected 0 for unrecorded failure")
-	}
-}
-
-func TestDefaultHistoryRecorderAllEntriesEmpty(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	rec := defaultHistoryRecorder{}
-	entries := rec.AllEntries()
-	if len(entries) != 0 {
-		t.Errorf("expected 0 entries for empty history, got %d", len(entries))
-	}
-}
-
-func TestDefaultHistoryRecorderAllEntriesAfterRecord(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	rec := defaultHistoryRecorder{}
-	result := model.Result{
-		Playbook: model.Playbook{
-			ID:       "go-build",
-			Title:    "Go build failure",
-			Category: "build",
-		},
-	}
-	rec.Record(result)
-	rec.Record(result)
-	entries := rec.AllEntries()
-	if len(entries) != 2 {
-		t.Errorf("expected 2 entries, got %d", len(entries))
-	}
-	for _, e := range entries {
-		if e.FailureID != "go-build" {
-			t.Errorf("expected failure_id go-build, got %q", e.FailureID)
-		}
-	}
-}
-
 // --- defaultSourceLoader (deps.go) ---
 
 func TestDefaultSourceLoaderLoadScansDirectory(t *testing.T) {
@@ -326,26 +263,5 @@ func TestRepoStateFromSnapshotReturnsState(t *testing.T) {
 	state := repoStateFromSnapshot(snap)
 	if state == nil || state.Root != "/repo" {
 		t.Errorf("expected state with /repo root, got %#v", state)
-	}
-}
-
-// --- saveHistory ---
-
-func TestSaveHistoryWritesAndReadsBack(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	store := historyStore{
-		Entries: []historyEntry{
-			{Timestamp: "2026-01-01T00:00:00Z", FailureID: "npm-ci-lockfile", Title: "NPM lockfile", Category: "build"},
-		},
-	}
-	if err := saveHistory(store); err != nil {
-		t.Fatalf("saveHistory: %v", err)
-	}
-	loaded, err := loadHistory()
-	if err != nil {
-		t.Fatalf("loadHistory: %v", err)
-	}
-	if len(loaded.Entries) != 1 || loaded.Entries[0].FailureID != "npm-ci-lockfile" {
-		t.Errorf("unexpected loaded history: %#v", loaded.Entries)
 	}
 }

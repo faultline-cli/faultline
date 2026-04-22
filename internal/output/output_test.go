@@ -138,6 +138,8 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.67, []string{"authentication required"})
 	a.Source = "stdin"
 	a.Fingerprint = "abc123"
+	a.InputHash = "input123"
+	a.OutputHash = "output123"
 	a.Context = model.Context{Stage: "deploy", CommandHint: "docker push"}
 	a.RepoContext = &model.RepoContext{
 		RepoRoot:           "/repo",
@@ -168,6 +170,30 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 		Reason:         "trace stability is degrading",
 		Basis:          []string{"tss", "phi"},
 	}
+	a.Results[0].Hooks = &model.HookReport{
+		Mode:            model.HookModeSafe,
+		BaseConfidence:  0.67,
+		ConfidenceDelta: 0.05,
+		FinalConfidence: 0.72,
+		Results: []model.HookResult{{
+			ID:       "go-mod-present",
+			Category: model.HookCategoryVerify,
+			Kind:     model.HookKindFileExists,
+			Status:   model.HookStatusExecuted,
+		}},
+	}
+	a.Results[0].SignatureHash = "sig123"
+	a.Results[0].SeenBefore = true
+	a.Results[0].OccurrenceCount = 3
+	a.Results[0].FirstSeenAt = "2026-04-20T10:00:00Z"
+	a.Results[0].LastSeenAt = "2026-04-22T12:00:00Z"
+	a.Results[0].HookHistorySummary = &model.HookHistorySummary{
+		TotalCount:    2,
+		ExecutedCount: 2,
+		PassedCount:   1,
+		FailedCount:   1,
+		LastSeenAt:    "2026-04-22T12:00:00Z",
+	}
 
 	data, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
@@ -177,7 +203,7 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseAnalysisJSON: %v", err)
 	}
-	if parsed.Source != a.Source || parsed.Fingerprint != a.Fingerprint {
+	if parsed.Source != a.Source || parsed.Fingerprint != a.Fingerprint || parsed.InputHash != a.InputHash || parsed.OutputHash != a.OutputHash {
 		t.Fatalf("round-trip metadata mismatch: got %#v", parsed)
 	}
 	if len(parsed.Results) != 1 || parsed.Results[0].Playbook.ID != "docker-auth" {
@@ -197,6 +223,36 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	}
 	if parsed.Policy == nil || parsed.Policy.Recommendation != "quarantine" {
 		t.Fatalf("expected policy to survive round trip, got %#v", parsed.Policy)
+	}
+	if parsed.Results[0].Hooks == nil || parsed.Results[0].Hooks.FinalConfidence != 0.72 {
+		t.Fatalf("expected hooks to survive round trip, got %#v", parsed.Results[0].Hooks)
+	}
+	if parsed.Results[0].SignatureHash != "sig123" || parsed.Results[0].OccurrenceCount != 3 || parsed.Results[0].HookHistorySummary == nil {
+		t.Fatalf("expected history fields to survive round trip, got %#v", parsed.Results[0])
+	}
+}
+
+func TestFormatHookSummariesText(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.84, []string{"authentication required"})
+	a.Results[0].Hooks = &model.HookReport{
+		Mode:            model.HookModeSafe,
+		BaseConfidence:  0.84,
+		ConfidenceDelta: 0.05,
+		FinalConfidence: 0.89,
+		Results: []model.HookResult{{
+			ID:       "registry-config",
+			Category: model.HookCategoryVerify,
+			Status:   model.HookStatusExecuted,
+			Passed:   boolPtr(true),
+		}},
+	}
+
+	text := FormatHookSummariesText(a)
+	if !strings.Contains(text, "docker-auth: mode: safe") {
+		t.Fatalf("expected hook mode in text summary, got %q", text)
+	}
+	if !strings.Contains(text, "verify/registry-config: executed (passed)") {
+		t.Fatalf("expected hook result in text summary, got %q", text)
 	}
 }
 
@@ -241,6 +297,10 @@ func TestFormatAnalysisTextQuickTopN(t *testing.T) {
 	if strings.Contains(text, "#3") {
 		t.Errorf("should not include #3 (top=2), got %q", text)
 	}
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
 
 func TestFormatAnalysisMarkdownDetailed(t *testing.T) {

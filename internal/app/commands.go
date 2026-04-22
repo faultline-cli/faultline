@@ -2,9 +2,12 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"strings"
 
+	"faultline/internal/hooks"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/renderer"
@@ -63,6 +66,10 @@ type AnalyzeOptions struct {
 	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
 	// records used to compute FPC and PHI. When empty, only TSS is computed.
 	MetricsHistoryFile string
+	// Store configures the local forensic store path or mode (auto|off|/path/to/store.db).
+	Store string
+	// HookMode controls whether constrained playbook hooks run for rendered results.
+	HookMode model.HookMode
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.
@@ -115,10 +122,18 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 		mode = output.ModeDetailed
 	}
 	if opts.Format == output.FormatMarkdown {
-		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode))
+		rendered := output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode)
+		if hooks := output.FormatHookSummariesMarkdown(selected); hooks != "" {
+			rendered = strings.TrimRight(rendered, "\n") + "\n\n" + strings.TrimRight(hooks, "\n") + "\n"
+		}
+		_, err := fmt.Fprint(w, rendered)
 		return err
 	}
-	_, err = fmt.Fprint(w, output.FormatAnalysisText(selected, selectedTop(opts), mode, renderOpts))
+	rendered := output.FormatAnalysisText(selected, selectedTop(opts), mode, renderOpts)
+	if hooks := output.FormatHookSummariesText(selected); hooks != "" {
+		rendered = strings.TrimRight(rendered, "\n") + "\n\n" + strings.TrimRight(hooks, "\n") + "\n"
+	}
+	_, err = fmt.Fprint(w, rendered)
 	return err
 }
 
@@ -149,4 +164,31 @@ func selectAnalysisResults(a *model.Analysis, opts AnalyzeOptions) (*model.Analy
 		clone.Differential = nil
 	}
 	return &clone, nil
+}
+
+func applyHooksToAnalysis(a *model.Analysis, opts AnalyzeOptions) *model.Analysis {
+	if a == nil || len(a.Results) == 0 {
+		return a
+	}
+	executor := hooks.NewExecutor(hooks.HookPolicy{Mode: opts.HookMode})
+	clone := *a
+	clone.Results = append([]model.Result(nil), a.Results...)
+	for i := range clone.Results {
+		result := clone.Results[i]
+		report := executor.Execute(context.Background(), result.Playbook, result.Confidence, hookWorkDir(opts))
+		if report == nil {
+			continue
+		}
+		result.Hooks = report
+		result.Confidence = report.FinalConfidence
+		clone.Results[i] = result
+	}
+	return &clone
+}
+
+func hookWorkDir(opts AnalyzeOptions) string {
+	if strings.TrimSpace(opts.RepoPath) != "" {
+		return opts.RepoPath
+	}
+	return "."
 }

@@ -36,8 +36,14 @@ These are supported, but they are not the first-run story. Docs and help text sh
 ### Gate Behind Flag
 
 - provider-backed GitHub Actions delta via `--delta-provider github-actions`
+- constrained playbook hooks via hidden `--hooks <mode>`
 
 This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1`. It is intentionally excluded from the default help surface and release narrative until it has release-grade coverage equivalent to the core CLI flow.
+
+Hooks are also intentionally hidden in the current release. They extend
+playbooks through typed, policy-gated local checks, but they are not part of
+the default onboarding path and should stay additive to `analyze` and `trace`
+rather than becoming a generic automation surface.
 
 ### Defer Or Remove From Default Narrative
 

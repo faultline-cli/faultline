@@ -609,3 +609,159 @@ match:
 		t.Errorf("PackPinnedRef = %q, want cafebabe", pbs[0].Metadata.PackPinnedRef)
 	}
 }
+
+func TestLoadPacksAppliesHookCatalogOverlay(t *testing.T) {
+	base := t.TempDir()
+	overlay := t.TempDir()
+
+	writePlaybookFixture(t, base, "rule.yaml", `
+id: docker-auth
+title: Docker Auth
+category: auth
+severity: high
+match:
+  any:
+    - "authentication required"
+hooks:
+  verify:
+    - id: inline-check
+      kind: env_var_present
+      env_var: OLD_TOKEN
+      confidence_delta: 0.05
+`)
+	if err := os.WriteFile(filepath.Join(overlay, HookCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: hooks.v1
+named_hooks:
+  registry-config:
+    kind: file_exists
+    path: .npmrc
+    confidence_delta: 0.04
+playbook_hooks:
+  docker-auth:
+    disable:
+      - inline-check
+    verify:
+      - use: registry-config
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write hook catalog: %v", err)
+	}
+	writePlaybookFixture(t, overlay, "extra.yaml", `
+id: extra-playbook
+title: Extra Playbook
+category: auth
+severity: low
+match:
+  any:
+    - "secondary auth error"
+`)
+
+	pbs, err := LoadPacks([]Pack{
+		{Name: "starter", Root: base},
+		{Name: "team", Root: overlay},
+	})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	var target model.Playbook
+	for _, pb := range pbs {
+		if pb.ID == "docker-auth" {
+			target = pb
+			break
+		}
+	}
+	if target.ID == "" {
+		t.Fatal("expected docker-auth playbook to load")
+	}
+	if len(target.Hooks.Verify) != 1 {
+		t.Fatalf("expected one resolved verify hook, got %#v", target.Hooks.Verify)
+	}
+	if target.Hooks.Verify[0].ID != "registry-config" {
+		t.Fatalf("expected named hook to resolve, got %#v", target.Hooks.Verify[0])
+	}
+	if target.Hooks.Verify[0].Metadata.SourcePack != "team" {
+		t.Fatalf("expected overlay pack metadata on hook, got %#v", target.Hooks.Verify[0].Metadata)
+	}
+}
+
+func TestLoadPacksSupportsNamedHookExtends(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: runtime-mismatch
+title: Runtime mismatch
+category: runtime
+severity: medium
+match:
+  any:
+    - "node version mismatch"
+`)
+	if err := os.WriteFile(filepath.Join(dir, HookCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: hooks.v1
+named_hooks:
+  base-node-check:
+    kind: command_output_matches
+    command:
+      - node
+      - --version
+  expected-node-check:
+    extends: base-node-check
+    pattern: ^v20\.
+    confidence_delta: 0.05
+playbook_hooks:
+  runtime-mismatch:
+    verify:
+      - use: expected-node-check
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write hook catalog: %v", err)
+	}
+
+	pbs, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected one playbook, got %d", len(pbs))
+	}
+	if len(pbs[0].Hooks.Verify) != 1 {
+		t.Fatalf("expected one resolved hook, got %#v", pbs[0].Hooks.Verify)
+	}
+	hook := pbs[0].Hooks.Verify[0]
+	if hook.Kind != model.HookKindCommandOutputMatches {
+		t.Fatalf("expected inherited kind, got %#v", hook)
+	}
+	if len(hook.Command) != 2 || hook.Command[0] != "node" || hook.Pattern != "^v20\\." {
+		t.Fatalf("expected inherited command and override pattern, got %#v", hook)
+	}
+}
+
+func TestLoadPacksRejectsUnknownHookPlaybookTarget(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: only-playbook
+title: Only Playbook
+category: test
+severity: low
+match:
+  any:
+    - "known error"
+`)
+	if err := os.WriteFile(filepath.Join(dir, HookCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: hooks.v1
+playbook_hooks:
+  missing-playbook:
+    verify:
+      - id: missing-file
+        kind: file_exists
+        path: go.mod
+        confidence_delta: 0.05
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write hook catalog: %v", err)
+	}
+
+	_, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err == nil {
+		t.Fatal("expected unknown hook target to fail")
+	}
+	if !strings.Contains(err.Error(), "unknown playbook") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}

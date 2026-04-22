@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"faultline/internal/model"
+	"faultline/internal/signature"
 	tracereport "faultline/internal/trace"
 )
 
@@ -31,6 +33,12 @@ func FormatTraceText(report tracereport.Report, showEvidence, showScoring, showR
 	sections = append(sections, renderTraceRulesText(report.Rules))
 	if len(report.Why) > 0 {
 		sections = append(sections, joinTraceSection("Why This Result", bulletLines(report.Why)))
+	}
+	if sig := renderTraceSignatureText(report.Signature); sig != "" {
+		sections = append(sections, joinTraceSection("Signature", sig))
+	}
+	if hooks := renderTraceHooksText(report.Hooks); hooks != "" {
+		sections = append(sections, joinTraceSection("Hooks", hooks))
 	}
 	if showScoring {
 		if scoring := renderTraceScoringText(report); scoring != "" {
@@ -80,6 +88,12 @@ func FormatTraceMarkdown(report tracereport.Report, showEvidence, showScoring, s
 	if len(report.Why) > 0 {
 		sections = append(sections, "", "## Why This Result", "", bulletLines(report.Why))
 	}
+	if sig := renderTraceSignatureMarkdown(report.Signature); sig != "" {
+		sections = append(sections, "", "## Signature", "", sig)
+	}
+	if hooks := renderTraceHooksMarkdown(report.Hooks); hooks != "" {
+		sections = append(sections, "", "## Hooks", "", hooks)
+	}
 	if showScoring {
 		if scoring := renderTraceScoringMarkdown(report); scoring != "" {
 			sections = append(sections, "", "## Score", "", scoring)
@@ -111,8 +125,10 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		Score       float64                 `json:"score,omitempty"`
 		Confidence  float64                 `json:"confidence,omitempty"`
 		Detector    string                  `json:"detector,omitempty"`
+		Signature   interface{}             `json:"signature,omitempty"`
 		Rules       []tracereport.Rule      `json:"rules"`
 		Why         []string                `json:"why,omitempty"`
+		Hooks       *model.HookReport       `json:"hooks,omitempty"`
 		Scoring     interface{}             `json:"scoring,omitempty"`
 		Ranking     interface{}             `json:"ranking,omitempty"`
 		Competing   []tracereport.Candidate `json:"competing,omitempty"`
@@ -127,8 +143,10 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		Score:       report.Score,
 		Confidence:  report.Confidence,
 		Detector:    fallback(report.Detector, fallback(report.Playbook.Detector, "log")),
+		Signature:   traceSignatureJSON(report.Signature),
 		Rules:       report.Rules,
 		Why:         report.Why,
+		Hooks:       report.Hooks,
 	}
 	if showScoring {
 		payload.Scoring = report.Scoring
@@ -205,6 +223,31 @@ func renderTraceScoringMarkdown(report tracereport.Report) string {
 	return bulletLines(lines)
 }
 
+func renderTraceSignatureText(sig *signature.ResultSignature) string {
+	if sig == nil {
+		return ""
+	}
+	return strings.Join([]string{
+		"Hash: " + sig.Hash,
+		"Version: " + sig.Version,
+		"Payload: " + sig.Normalized,
+	}, "\n")
+}
+
+func renderTraceSignatureMarkdown(sig *signature.ResultSignature) string {
+	if sig == nil {
+		return ""
+	}
+	return strings.Join([]string{
+		"- Hash: `" + sig.Hash + "`",
+		"- Version: `" + sig.Version + "`",
+		"- Payload:",
+		"```json",
+		sig.Normalized,
+		"```",
+	}, "\n")
+}
+
 func renderTraceEvidenceText(report tracereport.Report) string {
 	seen := make(map[string]struct{})
 	var lines []string
@@ -256,6 +299,35 @@ func renderTraceCompetingMarkdown(candidates []tracereport.Candidate) string {
 		}
 	}
 	return strings.Join(lines, "\n")
+}
+
+func traceSignatureJSON(sig *signature.ResultSignature) interface{} {
+	if sig == nil {
+		return nil
+	}
+	return struct {
+		Hash       string      `json:"hash"`
+		Version    string      `json:"version"`
+		Payload    interface{} `json:"payload"`
+		Normalized string      `json:"normalized"`
+	}{
+		Hash:       sig.Hash,
+		Version:    sig.Version,
+		Payload:    sig.Payload,
+		Normalized: sig.Normalized,
+	}
+}
+
+func renderTraceHooksText(report *model.HookReport) string {
+	lines := hookSummaryLines(report)
+	if len(lines) == 0 {
+		return ""
+	}
+	return strings.Join(lines, "\n")
+}
+
+func renderTraceHooksMarkdown(report *model.HookReport) string {
+	return bulletLines(hookSummaryLines(report))
 }
 
 func joinTraceSection(title, body string) string {

@@ -62,3 +62,12 @@
 - 1 trigger rule(s) matched explicit log evidence
 - 6 exclusion rule(s) stayed clear
 - matched evidence was pulled directly from the input log
+
+## Signature
+
+- Hash: `4e9c13ba9d6a5ad10c761c94bcdf32b86abb858f75fc56874ec59c55b28bf11a`
+- Version: `signature.v1`
+- Payload:
+```json
+{"version":"signature.v1","failure_id":"missing-executable","detector":"log","evidence":["exec <runner>/node20/bin/node no such file or directory"]}
+```

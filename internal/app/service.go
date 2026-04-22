@@ -15,6 +15,7 @@ import (
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
+	"faultline/internal/hooks"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/playbooks"
@@ -51,7 +52,7 @@ func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Wri
 	if opts.TraceEnabled || opts.TracePlaybook != "" {
 		return Service{}.Trace(r, source, opts, w)
 	}
-	a, err := analyzeLog(r, source, opts)
+	a, err := analyzeLog(r, source, opts, "analyze", true)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -91,6 +92,12 @@ func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Write
 	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, playbooks, playbookID, opts.ShowRejected)
 	if err != nil {
 		return err
+	}
+	if hookReport := hooks.NewExecutor(hooks.HookPolicy{Mode: opts.HookMode}).Execute(context.Background(), report.Playbook, report.Confidence, hookWorkDir(opts)); hookReport != nil {
+		report.Hooks = hookReport
+		if report.Matched {
+			report.Confidence = hookReport.FinalConfidence
+		}
 	}
 
 	switch {
@@ -169,7 +176,7 @@ func (Service) Compare(left, right io.Reader, opts AnalyzeOptions, w io.Writer) 
 
 // Fix performs log analysis and writes only the ranked fix steps to w.
 func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	a, err := analyzeLog(r, source, opts)
+	a, err := analyzeLog(r, source, opts, "fix", false)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -274,7 +281,7 @@ func (Service) InstallPack(srcDir, name string, force bool, w io.Writer) error {
 
 // Workflow analyzes the log and emits a deterministic follow-up workflow.
 func (Service) Workflow(r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
-	a, err := analyzeLog(r, source, opts)
+	a, err := analyzeLog(r, source, opts, "workflow", false)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -303,7 +310,6 @@ func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
 	a, err := engine.New(engine.Options{
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
-		NoHistory:        opts.NoHistory,
 		GitSince:         opts.GitSince,
 		RepoPath:         opts.RepoPath,
 		BayesEnabled:     opts.BayesEnabled,
@@ -313,6 +319,10 @@ func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
 	}
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
+	}
+	a, prepErr := prepareAnalysisWithStore(a, "", "repository", "inspect", opts, true)
+	if prepErr != nil {
+		return prepErr
 	}
 	return writeAnalysis(a, opts, w)
 }
@@ -356,24 +366,32 @@ func (Service) Guard(root string, opts AnalyzeOptions, w io.Writer) error {
 	return ErrGuardFindings
 }
 
-func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysis, error) {
+func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string, persist bool) (*model.Analysis, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("read log input: %w", err)
+	}
 	a, err := engine.New(engine.Options{
-		PlaybookDir:        opts.PlaybookDir,
-		PlaybookPackDirs:   opts.PlaybookPackDirs,
-		NoHistory:          opts.NoHistory,
-		GitContextEnabled:  opts.GitContextEnabled,
-		GitSince:           opts.GitSince,
-		RepoPath:           opts.RepoPath,
-		BayesEnabled:       opts.BayesEnabled,
-		DeltaProvider:      opts.DeltaProvider,
-		GitHubRepository:   opts.GitHubRepository,
-		GitHubBranch:       opts.GitHubBranch,
-		GitHubRunID:        opts.GitHubRunID,
-		GitHubToken:        opts.GitHubToken,
-		MetricsHistoryFile: opts.MetricsHistoryFile,
-	}).AnalyzeReader(r)
+		PlaybookDir:       opts.PlaybookDir,
+		PlaybookPackDirs:  opts.PlaybookPackDirs,
+		GitContextEnabled: opts.GitContextEnabled,
+		GitSince:          opts.GitSince,
+		RepoPath:          opts.RepoPath,
+		BayesEnabled:      opts.BayesEnabled,
+		DeltaProvider:     opts.DeltaProvider,
+		GitHubRepository:  opts.GitHubRepository,
+		GitHubBranch:      opts.GitHubBranch,
+		GitHubRunID:       opts.GitHubRunID,
+		GitHubToken:       opts.GitHubToken,
+	}).AnalyzeReader(bytes.NewReader(data))
 	if a != nil {
 		a.Source = source
+	}
+	if prepErr := error(nil); a != nil || errors.Is(err, engine.ErrNoMatch) {
+		a, prepErr = prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
+		if prepErr != nil {
+			return nil, prepErr
+		}
 	}
 	return a, err
 }
@@ -392,7 +410,9 @@ func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedA
 	if err != nil {
 		return loadedAnalysisInput{}, err
 	}
-	analysis, err := analyzeLog(bytes.NewReader(data), source, opts)
+	baseOpts := opts
+	baseOpts.HookMode = model.HookModeOff
+	analysis, err := analyzeLog(bytes.NewReader(data), source, baseOpts, "trace", false)
 	return loadedAnalysisInput{
 		Analysis: analysis,
 		Lines:    lines,

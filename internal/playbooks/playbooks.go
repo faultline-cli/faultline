@@ -139,6 +139,7 @@ type raw struct {
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
 	} `yaml:"workflow"`
+	Hooks    model.PlaybookHooks `yaml:"hooks"`
 	Metadata struct {
 		SchemaVersion string `yaml:"schema_version"`
 	} `yaml:"metadata"`
@@ -229,7 +230,7 @@ func LoadDir(dir string) ([]model.Playbook, error) {
 			return nil
 		}
 		name := d.Name()
-		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName {
+		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName && name != HookCatalogFileName {
 			files = append(files, path)
 		}
 		return nil
@@ -303,6 +304,7 @@ func loadFile(path string) (model.Playbook, error) {
 			LocalRepro:  r.Workflow.LocalRepro,
 			Verify:      r.Workflow.Verify,
 		},
+		Hooks: normalizePlaybookHooks(r.Hooks),
 		Metadata: model.PlaybookMeta{
 			SchemaVersion: r.Metadata.SchemaVersion,
 			SourceFile:    path,
@@ -405,6 +407,9 @@ func validate(r raw, path string) error {
 		return fmt.Errorf("playbook %s: unknown detector %q", path, detector)
 	}
 	if err := validateHypothesis(r, path); err != nil {
+		return err
+	}
+	if err := validatePlaybookHooks(r.Hooks, path); err != nil {
 		return err
 	}
 	return nil

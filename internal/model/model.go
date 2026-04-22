@@ -25,6 +25,7 @@ type Playbook struct {
 	RequiresTopology bool            `yaml:"requires_topology,omitempty" json:"requires_topology,omitempty"`
 	TopologyBoost    []TopologyBoost `yaml:"topology_boost,omitempty" json:"topology_boost,omitempty"`
 	Workflow         WorkflowSpec    `yaml:"workflow" json:"workflow"`
+	Hooks            PlaybookHooks   `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 	Metadata         PlaybookMeta    `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 	Scoring          ScoringConfig   `yaml:"scoring,omitempty" json:"scoring,omitempty"`
 	Contextual       ContextPolicy   `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
@@ -182,6 +183,109 @@ type WorkflowSpec struct {
 	LikelyFiles []string `yaml:"likely_files" json:"likely_files,omitempty"`
 	LocalRepro  []string `yaml:"local_repro" json:"local_repro,omitempty"`
 	Verify      []string `yaml:"verify" json:"verify,omitempty"`
+}
+
+type HookCategory string
+
+const (
+	HookCategoryVerify    HookCategory = "verify"
+	HookCategoryCollect   HookCategory = "collect"
+	HookCategoryRemediate HookCategory = "remediate"
+)
+
+type HookMode string
+
+const (
+	HookModeOff         HookMode = "off"
+	HookModeVerifyOnly  HookMode = "verify-only"
+	HookModeCollectOnly HookMode = "collect-only"
+	HookModeSafe        HookMode = "safe"
+	HookModeFull        HookMode = "full"
+)
+
+type HookKind string
+
+const (
+	HookKindFileExists           HookKind = "file_exists"
+	HookKindDirExists            HookKind = "dir_exists"
+	HookKindEnvVarPresent        HookKind = "env_var_present"
+	HookKindCommandExitZero      HookKind = "command_exit_zero"
+	HookKindCommandOutputMatches HookKind = "command_output_matches"
+	HookKindCommandOutputCapture HookKind = "command_output_capture"
+	HookKindReadFileExcerpt      HookKind = "read_file_excerpt"
+)
+
+type PlaybookHooks struct {
+	Verify    []HookDefinition `yaml:"verify,omitempty" json:"verify,omitempty"`
+	Collect   []HookDefinition `yaml:"collect,omitempty" json:"collect,omitempty"`
+	Remediate []HookDefinition `yaml:"remediate,omitempty" json:"remediate,omitempty"`
+	Disable   []string         `yaml:"disable,omitempty" json:"disable,omitempty"`
+}
+
+type HookDefinition struct {
+	ID              string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Use             string   `yaml:"use,omitempty" json:"use,omitempty"`
+	Extends         string   `yaml:"extends,omitempty" json:"extends,omitempty"`
+	Kind            HookKind `yaml:"kind,omitempty" json:"kind,omitempty"`
+	Path            string   `yaml:"path,omitempty" json:"path,omitempty"`
+	EnvVar          string   `yaml:"env_var,omitempty" json:"env_var,omitempty"`
+	Command         []string `yaml:"command,omitempty" json:"command,omitempty"`
+	Pattern         string   `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	Lines           int      `yaml:"lines,omitempty" json:"lines,omitempty"`
+	MaxBytes        int      `yaml:"max_bytes,omitempty" json:"max_bytes,omitempty"`
+	ConfidenceDelta float64  `yaml:"confidence_delta,omitempty" json:"confidence_delta,omitempty"`
+	Metadata        HookMeta `yaml:"-" json:"metadata,omitempty"`
+}
+
+type HookMeta struct {
+	SourcePack string `json:"source_pack,omitempty"`
+	SourceFile string `json:"source_file,omitempty"`
+}
+
+type HookStatus string
+
+const (
+	HookStatusExecuted HookStatus = "executed"
+	HookStatusSkipped  HookStatus = "skipped"
+	HookStatusBlocked  HookStatus = "blocked"
+	HookStatusFailed   HookStatus = "failed"
+)
+
+type HookFact struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+type HookResult struct {
+	ID              string       `json:"id"`
+	Category        HookCategory `json:"category"`
+	Kind            HookKind     `json:"kind,omitempty"`
+	Status          HookStatus   `json:"status"`
+	Passed          *bool        `json:"passed,omitempty"`
+	ConfidenceDelta float64      `json:"confidence_delta,omitempty"`
+	Reason          string       `json:"reason,omitempty"`
+	Facts           []HookFact   `json:"facts,omitempty"`
+	Evidence        []string     `json:"evidence,omitempty"`
+	SourcePack      string       `json:"source_pack,omitempty"`
+	SourceFile      string       `json:"source_file,omitempty"`
+}
+
+type HookReport struct {
+	Mode            HookMode     `json:"mode,omitempty"`
+	BaseConfidence  float64      `json:"base_confidence,omitempty"`
+	ConfidenceDelta float64      `json:"confidence_delta,omitempty"`
+	FinalConfidence float64      `json:"final_confidence,omitempty"`
+	Results         []HookResult `json:"results,omitempty"`
+}
+
+type HookHistorySummary struct {
+	TotalCount    int    `json:"total_count,omitempty"`
+	ExecutedCount int    `json:"executed_count,omitempty"`
+	PassedCount   int    `json:"passed_count,omitempty"`
+	FailedCount   int    `json:"failed_count,omitempty"`
+	BlockedCount  int    `json:"blocked_count,omitempty"`
+	SkippedCount  int    `json:"skipped_count,omitempty"`
+	LastSeenAt    string `json:"last_seen_at,omitempty"`
 }
 
 type HypothesisSpec struct {
@@ -366,18 +470,25 @@ type Delta struct {
 
 // Result is a single ranked playbook match with its scoring detail.
 type Result struct {
-	Playbook     Playbook              `json:"playbook"`
-	Detector     string                `json:"detector,omitempty"`
-	Score        float64               `json:"score"`
-	Confidence   float64               `json:"confidence"`
-	Evidence     []string              `json:"evidence"`
-	EvidenceBy   EvidenceBundle        `json:"evidence_by,omitempty"`
-	Explanation  ResultExplanation     `json:"explanation,omitempty"`
-	Breakdown    ScoreBreakdown        `json:"breakdown,omitempty"`
-	ChangeStatus string                `json:"change_status,omitempty"`
-	SeenCount    int                   `json:"seen_count"`
-	Ranking      *Ranking              `json:"ranking,omitempty"`
-	Hypothesis   *HypothesisAssessment `json:"hypothesis,omitempty"`
+	Playbook           Playbook              `json:"playbook"`
+	Detector           string                `json:"detector,omitempty"`
+	Score              float64               `json:"score"`
+	Confidence         float64               `json:"confidence"`
+	Evidence           []string              `json:"evidence"`
+	EvidenceBy         EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation        ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown          ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus       string                `json:"change_status,omitempty"`
+	SeenCount          int                   `json:"seen_count"`
+	SignatureHash      string                `json:"signature_hash,omitempty"`
+	SeenBefore         bool                  `json:"seen_before,omitempty"`
+	OccurrenceCount    int                   `json:"occurrence_count,omitempty"`
+	FirstSeenAt        string                `json:"first_seen_at,omitempty"`
+	LastSeenAt         string                `json:"last_seen_at,omitempty"`
+	HookHistorySummary *HookHistorySummary   `json:"hook_history_summary,omitempty"`
+	Ranking            *Ranking              `json:"ranking,omitempty"`
+	Hypothesis         *HypothesisAssessment `json:"hypothesis,omitempty"`
+	Hooks              *HookReport           `json:"hooks,omitempty"`
 }
 
 // RepoContext holds git repository context enrichment from a recent commit window.
@@ -425,6 +536,8 @@ type Analysis struct {
 	Results         []Result               `json:"results"`
 	Context         Context                `json:"context"`
 	Fingerprint     string                 `json:"fingerprint,omitempty"`
+	InputHash       string                 `json:"input_hash,omitempty"`
+	OutputHash      string                 `json:"output_hash,omitempty"`
 	Source          string                 `json:"source,omitempty"`
 	RepoContext     *RepoContext           `json:"repo_context,omitempty"`
 	Delta           *Delta                 `json:"delta,omitempty"`
@@ -475,9 +588,9 @@ type MetricsHistoryEntry struct {
 //   - "ok":         metrics look healthy or there is insufficient history.
 //   - "observe":    a pattern is emerging but not yet at quarantine threshold.
 //   - "quarantine": persistent recurrence or low pipeline health; recommend
-//                   isolating the test or pipeline path for review.
+//     isolating the test or pipeline path for review.
 //   - "blocking":   high-confidence persistent critical failure that should
-//                   block the pipeline until resolved.
+//     block the pipeline until resolved.
 type Policy struct {
 	// Recommendation is one of "ok", "observe", "quarantine", or "blocking".
 	Recommendation string `json:"recommendation"`

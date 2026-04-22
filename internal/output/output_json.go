@@ -1,6 +1,8 @@
 package output
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -14,6 +16,8 @@ type analysisJSON struct {
 	Matched        bool                         `json:"matched"`
 	Source         string                       `json:"source,omitempty"`
 	Fingerprint    string                       `json:"fingerprint,omitempty"`
+	InputHash      string                       `json:"input_hash,omitempty"`
+	OutputHash     string                       `json:"output_hash,omitempty"`
 	Context        ctxJSON                      `json:"context"`
 	Results        []resultJSON                 `json:"results"`
 	RepoContext    *repoCtxJSON                 `json:"repo_context,omitempty"`
@@ -34,28 +38,35 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank         int                         `json:"rank"`
-	FailureID    string                      `json:"failure_id"`
-	Title        string                      `json:"title"`
-	Category     string                      `json:"category"`
-	Pack         string                      `json:"pack,omitempty"`
-	Severity     string                      `json:"severity,omitempty"`
-	Detector     string                      `json:"detector,omitempty"`
-	Score        float64                     `json:"score"`
-	Confidence   float64                     `json:"confidence"`
-	Summary      string                      `json:"summary,omitempty"`
-	Diagnosis    string                      `json:"diagnosis,omitempty"`
-	WhyItMatters string                      `json:"why_it_matters,omitempty"`
-	Fix          string                      `json:"fix,omitempty"`
-	Validation   string                      `json:"validation,omitempty"`
-	Evidence     []string                    `json:"evidence"`
-	EvidenceBy   model.EvidenceBundle        `json:"evidence_by,omitempty"`
-	Explanation  model.ResultExplanation     `json:"explanation,omitempty"`
-	Breakdown    model.ScoreBreakdown        `json:"breakdown,omitempty"`
-	ChangeStatus string                      `json:"change_status,omitempty"`
-	SeenCount    int                         `json:"seen_count"`
-	Ranking      *model.Ranking              `json:"ranking,omitempty"`
-	Hypothesis   *model.HypothesisAssessment `json:"hypothesis,omitempty"`
+	Rank               int                         `json:"rank"`
+	FailureID          string                      `json:"failure_id"`
+	Title              string                      `json:"title"`
+	Category           string                      `json:"category"`
+	Pack               string                      `json:"pack,omitempty"`
+	Severity           string                      `json:"severity,omitempty"`
+	Detector           string                      `json:"detector,omitempty"`
+	Score              float64                     `json:"score"`
+	Confidence         float64                     `json:"confidence"`
+	Summary            string                      `json:"summary,omitempty"`
+	Diagnosis          string                      `json:"diagnosis,omitempty"`
+	WhyItMatters       string                      `json:"why_it_matters,omitempty"`
+	Fix                string                      `json:"fix,omitempty"`
+	Validation         string                      `json:"validation,omitempty"`
+	Evidence           []string                    `json:"evidence"`
+	EvidenceBy         model.EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation        model.ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown          model.ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus       string                      `json:"change_status,omitempty"`
+	SeenCount          int                         `json:"seen_count"`
+	SignatureHash      string                      `json:"signature_hash,omitempty"`
+	SeenBefore         bool                        `json:"seen_before,omitempty"`
+	OccurrenceCount    int                         `json:"occurrence_count,omitempty"`
+	FirstSeenAt        string                      `json:"first_seen_at,omitempty"`
+	LastSeenAt         string                      `json:"last_seen_at,omitempty"`
+	HookHistorySummary *model.HookHistorySummary   `json:"hook_history_summary,omitempty"`
+	Ranking            *model.Ranking              `json:"ranking,omitempty"`
+	Hypothesis         *model.HypothesisAssessment `json:"hypothesis,omitempty"`
+	Hooks              *model.HookReport           `json:"hooks,omitempty"`
 }
 
 type repoCtxJSON struct {
@@ -81,67 +92,7 @@ type repoCommitJSON struct {
 
 // FormatAnalysisJSON serialises an analysis to the stable JSON schema.
 func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
-	payload := analysisJSON{
-		Matched: a != nil && len(a.Results) > 0,
-	}
-
-	if a == nil {
-		payload.Message = "No known playbook matched this input."
-		payload.Results = []resultJSON{}
-		data, err := json.Marshal(payload)
-		if err != nil {
-			return "", fmt.Errorf("marshal analysis JSON: %w", err)
-		}
-		return string(data) + "\n", nil
-	}
-
-	payload.Source = a.Source
-	payload.Fingerprint = a.Fingerprint
-	payload.Context = ctxJSON{
-		Stage:       a.Context.Stage,
-		CommandHint: a.Context.CommandHint,
-		Step:        a.Context.Step,
-	}
-	payload.RepoContext = repoContextJSON(a.RepoContext)
-	payload.Delta = a.Delta
-	payload.Differential = a.Differential
-	payload.PackProvenance = a.PackProvenances
-	payload.Metrics = a.Metrics
-	payload.Policy = a.Policy
-
-	if !payload.Matched {
-		payload.Message = "No known playbook matched this input."
-		payload.Results = []resultJSON{}
-	} else {
-		results := topN(a.Results, top)
-		payload.Results = make([]resultJSON, len(results))
-		for i, r := range results {
-			payload.Results[i] = resultJSON{
-				Rank:         i + 1,
-				FailureID:    r.Playbook.ID,
-				Title:        r.Playbook.Title,
-				Category:     r.Playbook.Category,
-				Pack:         displayPackName(r.Playbook),
-				Severity:     r.Playbook.Severity,
-				Detector:     r.Detector,
-				Score:        r.Score,
-				Confidence:   r.Confidence,
-				Summary:      r.Playbook.Summary,
-				Diagnosis:    r.Playbook.Diagnosis,
-				WhyItMatters: r.Playbook.WhyItMatters,
-				Fix:          r.Playbook.Fix,
-				Validation:   r.Playbook.Validation,
-				Evidence:     r.Evidence,
-				EvidenceBy:   r.EvidenceBy,
-				Explanation:  r.Explanation,
-				Breakdown:    r.Breakdown,
-				ChangeStatus: r.ChangeStatus,
-				SeenCount:    r.SeenCount,
-				Ranking:      r.Ranking,
-				Hypothesis:   r.Hypothesis,
-			}
-		}
-	}
+	payload := analysisPayload(a, top)
 
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -172,6 +123,8 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 		Results:         make([]model.Result, 0, len(payload.Results)),
 		Source:          payload.Source,
 		Fingerprint:     payload.Fingerprint,
+		InputHash:       payload.InputHash,
+		OutputHash:      payload.OutputHash,
 		Context:         model.Context(payload.Context),
 		Delta:           payload.Delta,
 		Differential:    payload.Differential,
@@ -197,17 +150,24 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 					PackName: item.Pack,
 				},
 			},
-			Detector:     item.Detector,
-			Score:        item.Score,
-			Confidence:   item.Confidence,
-			Evidence:     item.Evidence,
-			EvidenceBy:   item.EvidenceBy,
-			Explanation:  item.Explanation,
-			Breakdown:    item.Breakdown,
-			ChangeStatus: item.ChangeStatus,
-			SeenCount:    item.SeenCount,
-			Ranking:      item.Ranking,
-			Hypothesis:   item.Hypothesis,
+			Detector:           item.Detector,
+			Score:              item.Score,
+			Confidence:         item.Confidence,
+			Evidence:           item.Evidence,
+			EvidenceBy:         item.EvidenceBy,
+			Explanation:        item.Explanation,
+			Breakdown:          item.Breakdown,
+			ChangeStatus:       item.ChangeStatus,
+			SeenCount:          item.SeenCount,
+			SignatureHash:      item.SignatureHash,
+			SeenBefore:         item.SeenBefore,
+			OccurrenceCount:    item.OccurrenceCount,
+			FirstSeenAt:        item.FirstSeenAt,
+			LastSeenAt:         item.LastSeenAt,
+			HookHistorySummary: item.HookHistorySummary,
+			Ranking:            item.Ranking,
+			Hypothesis:         item.Hypothesis,
+			Hooks:              item.Hooks,
 		})
 	}
 
@@ -216,6 +176,88 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 	}
 
 	return a, nil
+}
+
+func HashAnalysisOutput(a *model.Analysis) (string, error) {
+	payload := analysisPayload(a, 0)
+	payload.OutputHash = ""
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("marshal analysis JSON for hash: %w", err)
+	}
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:]), nil
+}
+
+func analysisPayload(a *model.Analysis, top int) analysisJSON {
+	payload := analysisJSON{
+		Matched: a != nil && len(a.Results) > 0,
+	}
+
+	if a == nil {
+		payload.Message = "No known playbook matched this input."
+		payload.Results = []resultJSON{}
+		return payload
+	}
+
+	payload.Source = a.Source
+	payload.Fingerprint = a.Fingerprint
+	payload.InputHash = a.InputHash
+	payload.OutputHash = a.OutputHash
+	payload.Context = ctxJSON{
+		Stage:       a.Context.Stage,
+		CommandHint: a.Context.CommandHint,
+		Step:        a.Context.Step,
+	}
+	payload.RepoContext = repoContextJSON(a.RepoContext)
+	payload.Delta = a.Delta
+	payload.Differential = a.Differential
+	payload.PackProvenance = a.PackProvenances
+	payload.Metrics = a.Metrics
+	payload.Policy = a.Policy
+
+	if !payload.Matched {
+		payload.Message = "No known playbook matched this input."
+		payload.Results = []resultJSON{}
+		return payload
+	}
+
+	results := topN(a.Results, top)
+	payload.Results = make([]resultJSON, len(results))
+	for i, r := range results {
+		payload.Results[i] = resultJSON{
+			Rank:               i + 1,
+			FailureID:          r.Playbook.ID,
+			Title:              r.Playbook.Title,
+			Category:           r.Playbook.Category,
+			Pack:               displayPackName(r.Playbook),
+			Severity:           r.Playbook.Severity,
+			Detector:           r.Detector,
+			Score:              r.Score,
+			Confidence:         r.Confidence,
+			Summary:            r.Playbook.Summary,
+			Diagnosis:          r.Playbook.Diagnosis,
+			WhyItMatters:       r.Playbook.WhyItMatters,
+			Fix:                r.Playbook.Fix,
+			Validation:         r.Playbook.Validation,
+			Evidence:           r.Evidence,
+			EvidenceBy:         r.EvidenceBy,
+			Explanation:        r.Explanation,
+			Breakdown:          r.Breakdown,
+			ChangeStatus:       r.ChangeStatus,
+			SeenCount:          r.SeenCount,
+			SignatureHash:      r.SignatureHash,
+			SeenBefore:         r.SeenBefore,
+			OccurrenceCount:    r.OccurrenceCount,
+			FirstSeenAt:        r.FirstSeenAt,
+			LastSeenAt:         r.LastSeenAt,
+			HookHistorySummary: r.HookHistorySummary,
+			Ranking:            r.Ranking,
+			Hypothesis:         r.Hypothesis,
+			Hooks:              r.Hooks,
+		}
+	}
+	return payload
 }
 
 func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {

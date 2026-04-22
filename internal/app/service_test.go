@@ -74,6 +74,48 @@ func TestAnalyzeMatchedJSONOutput(t *testing.T) {
 	}
 }
 
+func TestAnalyzeIncludesHookSummaryWhenEnabled(t *testing.T) {
+	svc := NewService()
+	dir := t.TempDir()
+	playbook := strings.TrimSpace(`
+id: docker-auth
+title: Docker auth
+category: auth
+severity: high
+match:
+  any:
+    - "authentication required"
+summary: |
+  Summary.
+diagnosis: |
+  Diagnosis.
+fix: |
+  1. Fix.
+validation: |
+  - Validate.
+hooks:
+  verify:
+    - id: docker-config
+      kind: file_exists
+      path: missing-config
+      confidence_delta: 0.05
+`) + "\n"
+	if err := os.WriteFile(filepath.Join(dir, "rule.yaml"), []byte(playbook), 0o600); err != nil {
+		t.Fatalf("write playbook: %v", err)
+	}
+	opts := baseOpts()
+	opts.PlaybookDir = dir
+	opts.HookMode = "safe"
+	var buf bytes.Buffer
+
+	if err := svc.Analyze(strings.NewReader("authentication required\n"), "stdin", opts, &buf); err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+	if !strings.Contains(buf.String(), "docker-auth: mode: safe") {
+		t.Fatalf("expected hook summary in analyze output, got:\n%s", buf.String())
+	}
+}
+
 func TestAnalyzeSelectChoosesRequestedResult(t *testing.T) {
 	svc := NewService()
 	log := "pull access denied\nError response from daemon: authentication required\n"

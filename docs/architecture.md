@@ -7,20 +7,24 @@ explicit deterministic layers:
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
   explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+- `internal/store` owns optional durable local forensic memory, deterministic
+  signature hashing, SQLite persistence, and explicit schema migrations.
 - `internal/authoring` owns the hidden maintainer-only scaffold flow that turns
   a sanitized log into a deterministic candidate playbook YAML.
 - `internal/compare` owns deterministic diffing of two saved analysis artifacts
   into a structured `Report` (diagnosis change, evidence delta, repo-context
   delta, and delta-signal changes).
 - `internal/engine` owns analysis orchestration and depends on explicit
-  collaborators for playbook catalogs, detector lookup, history persistence,
-  source loading, and git enrichment.
+  collaborators for playbook catalogs, detector lookup, source loading, and
+  git enrichment. It does not own persistence.
 - `internal/engine/delta` owns explicit provider-backed failure delta
   resolution and minimal cross-run extraction such as changed files and newly
   failing tests.
 - `internal/fixtures` owns deterministic fixture corpora, public-source
   ingestion adapters, normalization, review metadata, promotion flow, and
   regression statistics.
+- `internal/hooks` owns constrained playbook hook execution, policy gating,
+  typed hook handlers, and additive confidence refinement.
 - `internal/metrics` owns deterministic reliability metric calculation from
   explicit local history and optional supplied history artifacts.
 - `internal/detectors` owns the detector registry plus the distinct `log` and
@@ -83,6 +87,18 @@ baseline so `inspect` is useful without an extra install. Extra packs can
 concentrate on provider-specific depth, advanced deployment or operations
 workflows, and deeper source or security rules.
 
+The same pack boundary now carries optional hook overlays through
+`faultline-hooks.yaml` at the pack root. Those overlays:
+
+- define reusable named typed hooks
+- attach verify, collect, or remediate hooks to existing playbooks by ID
+- allow later packs to disable or override earlier hook definitions
+- remain additive to the playbook catalog instead of redefining matching logic
+
+Hook execution itself stays explicit and local. The analysis engine still owns
+matching and ranking; hooks are an evidence refinement layer that runs only
+when the user opts in through the hidden hooks flag.
+
 This same `~/.faultline/packs/` convention is used by the Docker image at
 `/home/faultline/.faultline/packs`, so a mounted user directory can enable the
 same installed pack set in both local and containerized runs.
@@ -108,6 +124,36 @@ Detectors stay explicit and separate:
 
 Both emit the shared `model.Result` shape so ranking, output, workflow, and
 history remain stable across command surfaces.
+
+## Store boundary
+
+The store is intentionally narrow:
+
+- local only
+- SQLite-backed by default
+- optional at runtime
+- additive to the existing analysis path
+
+The ownership split is deliberate:
+
+- `internal/app` resolves store config, opens the store, handles graceful
+  degradation, enriches results with history, and records completed runs
+- `internal/store` hides SQL, migrations, and schema details behind a small
+  interface plus a no-op fallback
+- `internal/engine` stays deterministic and store-agnostic; it returns analysis
+  results without querying or mutating on-disk state
+- detectors remain stateless in v1 and do not read from the store directly
+
+The store records durable forensic memory such as:
+
+- top-diagnosis recurrence by `signature_hash`
+- run-level `input_hash` and `output_hash`
+- ranked playbook matches for longitudinal review
+- hook execution results when hooks are enabled
+
+The store does not become a generic raw-log warehouse. By default it stores
+hashes, normalized signature material, minimal evidence excerpts, and small
+structured summaries only.
 
 ## Scoring boundary
 
@@ -155,8 +201,20 @@ also include:
 - `metrics` when sufficient explicit history exists to compute TSS, FPC, or PHI
 - `policy` when a deterministic advisory recommendation can be derived from
   those metrics
+- `input_hash` and `output_hash` for repeated-run determinism checks
+- result-level `signature_hash`, recurrence fields, and hook history summaries
 
 Saved analysis artifacts preserve those fields on replay and compare.
+
+When hook execution is enabled, result JSON may also include additive `hooks`
+reports. These reports record:
+
+- execution mode
+- base confidence, total confidence delta, and final confidence
+- per-hook status (`executed`, `blocked`, `skipped`, or `failed`)
+- structured hook facts and captured evidence excerpts
+
+Absent hook execution remains absent from output.
 
 Workflow artifacts are derived from the same deterministic analysis object.
 When present, JSON and text workflow output may also carry:
