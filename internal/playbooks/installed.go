@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -17,6 +18,9 @@ type InstalledPack struct {
 	Name          string
 	Root          string
 	PlaybookCount int
+	Version       string // from faultline-pack.yaml; empty when not recorded
+	PinnedRef     string // git ref at install time; empty when not available
+	SourceURL     string // install-time source path or URL; empty when not recorded
 }
 
 // InstalledPackRoot returns the per-user directory used for installed packs.
@@ -57,7 +61,7 @@ func DiscoverInstalledPackRoots() ([]string, error) {
 	return roots, nil
 }
 
-// ListInstalledPacks returns user-installed packs with playbook counts.
+// ListInstalledPacks returns user-installed packs with playbook counts and provenance.
 func ListInstalledPacks() ([]InstalledPack, error) {
 	roots, err := DiscoverInstalledPackRoots()
 	if err != nil {
@@ -69,10 +73,14 @@ func ListInstalledPacks() ([]InstalledPack, error) {
 		if loadErr != nil {
 			return nil, fmt.Errorf("load installed pack %q: %w", filepath.Base(root), loadErr)
 		}
+		meta, _, _ := ReadPackMeta(root) // best-effort; missing manifest is fine
 		packs = append(packs, InstalledPack{
 			Name:          filepath.Base(root),
 			Root:          root,
 			PlaybookCount: len(pbs),
+			Version:       meta.Version,
+			PinnedRef:     meta.PinnedRef,
+			SourceURL:     meta.SourceURL,
 		})
 	}
 	return packs, nil
@@ -120,6 +128,9 @@ func InstallPack(srcDir, name string, force bool) (InstalledPack, error) {
 	} else if !os.IsNotExist(err) {
 		return InstalledPack{}, fmt.Errorf("check installed pack %q: %w", packName, err)
 	}
+	// Read provenance from the source pack if it has a manifest.
+	srcMeta, _, _ := ReadPackMeta(root) // best-effort
+
 	if err := copyTree(root, dest); err != nil {
 		return InstalledPack{}, err
 	}
@@ -127,7 +138,53 @@ func InstallPack(srcDir, name string, force bool) (InstalledPack, error) {
 		_ = os.RemoveAll(dest)
 		return InstalledPack{}, fmt.Errorf("validate installed pack %q: %w", packName, err)
 	}
-	return InstalledPack{Name: packName, Root: dest, PlaybookCount: len(pbs)}, nil
+
+	// Derive pinned ref from the source directory's git HEAD if available.
+	pinnedRef := resolveGitHead(root)
+
+	// Inherit version from the source manifest if present; mark local installs explicitly.
+	version := srcMeta.Version
+	if version == "" {
+		version = "0.0.0+local"
+	}
+
+	// Absolute source path is the canonical install-time source URL for local directories.
+	sourceURL := srcMeta.SourceURL
+	if sourceURL == "" {
+		abs, absErr := filepath.Abs(root)
+		if absErr == nil {
+			sourceURL = abs
+		}
+	}
+
+	installMeta := PackMeta{
+		Name:      packName,
+		Version:   version,
+		SourceURL: sourceURL,
+		PinnedRef: pinnedRef,
+	}
+	// Best-effort: a manifest write failure should not prevent the pack from loading.
+	_ = WritePackMeta(dest, installMeta)
+
+	return InstalledPack{
+		Name:          packName,
+		Root:          dest,
+		PlaybookCount: len(pbs),
+		Version:       installMeta.Version,
+		PinnedRef:     installMeta.PinnedRef,
+		SourceURL:     installMeta.SourceURL,
+	}, nil
+}
+
+// resolveGitHead returns the short SHA of HEAD in dir, or an empty string
+// when dir is not a git repository or git is not available.
+func resolveGitHead(dir string) string {
+	cmd := exec.Command("git", "-C", dir, "rev-parse", "--short", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 func copyTree(src, dest string) error {
@@ -163,6 +220,9 @@ func copyTree(src, dest string) error {
 }
 
 func isPlaybookFile(name string) bool {
+	if name == PackMetaFileName {
+		return false
+	}
 	return strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")
 }
 

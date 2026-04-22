@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"faultline/internal/authoring"
 	analysiscompare "faultline/internal/compare"
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
@@ -242,11 +243,19 @@ func (Service) ListInstalledPacks(w io.Writer) error {
 		return err
 	}
 	tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
-	if _, err := fmt.Fprintln(tw, "NAME\tPLAYBOOKS\tPATH"); err != nil {
+	if _, err := fmt.Fprintln(tw, "NAME\tPLAYBOOKS\tVERSION\tPINNED REF\tPATH"); err != nil {
 		return err
 	}
 	for _, pack := range packs {
-		if _, err := fmt.Fprintf(tw, "%s\t%d\t%s\n", pack.Name, pack.PlaybookCount, pack.Root); err != nil {
+		version := pack.Version
+		if version == "" {
+			version = "-"
+		}
+		ref := pack.PinnedRef
+		if ref == "" {
+			ref = "-"
+		}
+		if _, err := fmt.Fprintf(tw, "%s\t%d\t%s\t%s\t%s\n", pack.Name, pack.PlaybookCount, version, ref, pack.Root); err != nil {
 			return err
 		}
 	}
@@ -349,18 +358,19 @@ func (Service) Guard(root string, opts AnalyzeOptions, w io.Writer) error {
 
 func analyzeLog(r io.Reader, source string, opts AnalyzeOptions) (*model.Analysis, error) {
 	a, err := engine.New(engine.Options{
-		PlaybookDir:       opts.PlaybookDir,
-		PlaybookPackDirs:  opts.PlaybookPackDirs,
-		NoHistory:         opts.NoHistory,
-		GitContextEnabled: opts.GitContextEnabled,
-		GitSince:          opts.GitSince,
-		RepoPath:          opts.RepoPath,
-		BayesEnabled:      opts.BayesEnabled,
-		DeltaProvider:     opts.DeltaProvider,
-		GitHubRepository:  opts.GitHubRepository,
-		GitHubBranch:      opts.GitHubBranch,
-		GitHubRunID:       opts.GitHubRunID,
-		GitHubToken:       opts.GitHubToken,
+		PlaybookDir:        opts.PlaybookDir,
+		PlaybookPackDirs:   opts.PlaybookPackDirs,
+		NoHistory:          opts.NoHistory,
+		GitContextEnabled:  opts.GitContextEnabled,
+		GitSince:           opts.GitSince,
+		RepoPath:           opts.RepoPath,
+		BayesEnabled:       opts.BayesEnabled,
+		DeltaProvider:      opts.DeltaProvider,
+		GitHubRepository:   opts.GitHubRepository,
+		GitHubBranch:       opts.GitHubBranch,
+		GitHubRunID:        opts.GitHubRunID,
+		GitHubToken:        opts.GitHubToken,
+		MetricsHistoryFile: opts.MetricsHistoryFile,
 	}).AnalyzeReader(r)
 	if a != nil {
 		a.Source = source
@@ -591,5 +601,27 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 		return err
 	}
 	_, err = fmt.Fprint(w, formatted)
+	return err
+}
+
+// FixturesScaffold generates a candidate playbook YAML scaffold from a
+// sanitized log. logText is the raw log content; sanitization is applied
+// automatically before pattern extraction. The scaffold is written to w (and
+// optionally to opts.PackDir when set).
+//
+// FixturesScaffold is maintainer-only; it is wired under the hidden
+// fixtures command and is not part of the default user narrative.
+func (Service) FixturesScaffold(logText string, opts authoring.ScaffoldOptions, w io.Writer) error {
+	sanitized, _ := fixtures.ApplySanitizeRules(logText)
+	result, err := authoring.ScaffoldPlaybook(sanitized, opts)
+	if err != nil {
+		return err
+	}
+	if result.OutputPath != "" {
+		if _, err := fmt.Fprintf(w, "wrote scaffold: %s\n\n", result.OutputPath); err != nil {
+			return err
+		}
+	}
+	_, err = fmt.Fprint(w, result.YAML)
 	return err
 }

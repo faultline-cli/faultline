@@ -6,6 +6,7 @@ The useful workflows in Faultline are grounded in the shipped CLI, fixture corpu
 
 - diagnose a known failure from a log with `faultline analyze` or `faultline workflow`
 - turn a public failure report into a staged fixture with `faultline fixtures ingest`
+- draft a maintainer-only candidate playbook from sanitized evidence with `faultline fixtures scaffold`
 - review staged evidence against the current catalog with `faultline fixtures review`
 - promote accepted evidence into the checked-in corpus with `faultline fixtures promote`
 - defend the catalog with `make review`, `make test`, and `faultline fixtures stats --class real --check-baseline`
@@ -67,6 +68,9 @@ faultline workflow ci.log --json --mode agent
 Why this matters:
 - `analyze` establishes the deterministic diagnosis and evidence
 - `workflow` turns the same result into a bounded next-step artifact for an engineer or another agent
+- workflow artifacts may carry additive `ranking_hints`, `delta_hints`,
+  `metrics_hints`, and `policy_hints` when the underlying analysis has enough
+  explicit context
 
 ### 2. Ingest And Curate Evidence
 
@@ -74,6 +78,8 @@ Use this when we find a real public failure worth learning from.
 
 ```bash
 faultline fixtures ingest --adapter github-issue --url <public-url>
+faultline fixtures sanitize <staging-id>
+faultline fixtures scaffold --from-fixture <staging-id> --category <category>
 faultline fixtures review
 faultline fixtures promote <staging-id> --expected-playbook <id>
 ./bin/faultline fixtures stats --class real --check-baseline
@@ -81,6 +87,7 @@ faultline fixtures promote <staging-id> --expected-playbook <id>
 
 Why this matters:
 - it keeps acquisition, acceptance, and regression proof in one deterministic loop
+- it keeps drafting tied to sanitized staging evidence instead of free-form rule writing
 - it prevents random fixture accumulation
 - it should pull from a mixed set of public sources instead of overfitting the corpus to one provider or one long thread
 

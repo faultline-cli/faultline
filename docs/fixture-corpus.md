@@ -87,6 +87,9 @@ faultline fixtures sanitize <staging-id> --dry-run
 # Review predicted matches and duplicate signals.
 faultline fixtures review
 
+# Draft a candidate playbook from the sanitized fixture when a real gap exists.
+faultline fixtures scaffold --from-fixture <staging-id> --category <category>
+
 # Promote to fixtures/real/ with a locked expectation.
 faultline fixtures promote <staging-id> --expected-playbook <id>
 ```
@@ -113,6 +116,21 @@ The sanitizer does **not** catch:
 - Any secret that does not match the above explicit patterns
 
 Always inspect the fixture manually after running the sanitizer. The tool is a first-pass aide, not a guarantee of complete redaction.
+
+### Scaffold Helper
+
+`faultline fixtures scaffold` is a hidden maintainer helper that composes with
+the staging workflow above. It can read from:
+
+- `--from-fixture <staging-id>`
+- `--log <path>`
+- a positional log path
+- stdin
+
+The command applies the same deterministic sanitizer pass before extracting
+candidate match patterns, then emits a draft YAML playbook with required fields
+and `TODO` markers. It is useful for bootstrapping a new rule, but it does not
+replace manual review, `make review`, or the fixture regression gates.
 
 ## Regenerate And Check
 

@@ -2,11 +2,14 @@ package cli
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"faultline/internal/app"
+	"faultline/internal/authoring"
 	"faultline/internal/fixtures"
 )
 
@@ -22,6 +25,7 @@ func newFixturesCommand() *cobra.Command {
 	cmd.AddCommand(newFixturesStatsCommand())
 	cmd.AddCommand(newFixturesSanitizeCommand())
 	cmd.AddCommand(newFixturesCompareModesCommand())
+	cmd.AddCommand(newFixturesScaffoldCommand())
 	return cmd
 }
 
@@ -250,4 +254,119 @@ func newFixturesCompareModesCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
 	cmd.Flags().BoolVar(&failOnRegression, "fail-on-regression", false, "exit non-zero when Bayes mode regresses any fixture's rank")
 	return cmd
+}
+
+func newFixturesScaffoldCommand() *cobra.Command {
+	var (
+		root        string
+		logFile     string
+		fromFixture string
+		category    string
+		id          string
+		packDir     string
+		maxMatch    int
+	)
+	cmd := &cobra.Command{
+		Use:   "scaffold [logfile]",
+		Short: "Generate a candidate playbook YAML scaffold from a sanitized log",
+		Long: strings.Join([]string{
+			"scaffold extracts candidate match patterns from a build log and emits a",
+			"playbook YAML scaffold with all required fields pre-populated. Fields marked",
+			"TODO require human review before the scaffold can be committed.",
+			"",
+			"Sanitization is applied automatically so secrets are not written into the",
+			"scaffold output. Always inspect the result before committing.",
+			"",
+			"Use --log to read from a file, --from-fixture to load a staging fixture's",
+			"raw_log field by ID, or pipe the log via stdin.",
+		}, "\n"),
+		Example: strings.Join([]string{
+			"  faultline fixtures scaffold --log build.log --category auth",
+			"  cat build.log | faultline fixtures scaffold --category network",
+			"  faultline fixtures scaffold --log build.log --id auth-my-new-rule --pack-dir packs/my-pack",
+			"  faultline fixtures scaffold --from-fixture staging-abc123 --category build",
+		}, "\n"),
+		Args: cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			logText, err := readScaffoldLog(root, logFile, fromFixture, args, cmd.InOrStdin())
+			if err != nil {
+				return err
+			}
+			return app.NewService().FixturesScaffold(logText, authoring.ScaffoldOptions{
+				Category: category,
+				ID:       id,
+				PackDir:  packDir,
+				MaxMatch: maxMatch,
+			}, cmd.OutOrStdout())
+		},
+	}
+	cmd.Flags().StringVar(&root, "root", ".", "repository root (used when loading staging fixtures by ID)")
+	cmd.Flags().StringVar(&logFile, "log", "", "read log from this file path instead of stdin")
+	cmd.Flags().StringVar(&fromFixture, "from-fixture", "", "load the raw_log from a staging fixture by ID")
+	cmd.Flags().StringVar(&category, "category", "", "playbook category hint: auth|build|ci|deploy|network|runtime|test")
+	cmd.Flags().StringVar(&id, "id", "", "override the auto-derived playbook ID")
+	cmd.Flags().StringVar(&packDir, "pack-dir", "", "write the scaffold YAML to this pack directory")
+	cmd.Flags().IntVar(&maxMatch, "max-match", 5, "maximum number of match.any patterns to extract")
+	return cmd
+}
+
+// readScaffoldLog returns the log text for the scaffold command.
+// Priority: --from-fixture → --log → positional arg → stdin.
+func readScaffoldLog(root, logFile, fromFixture string, args []string, stdin io.Reader) (string, error) {
+	sources := 0
+	if strings.TrimSpace(fromFixture) != "" {
+		sources++
+	}
+	if strings.TrimSpace(logFile) != "" {
+		sources++
+	}
+	if len(args) > 0 {
+		sources++
+	}
+	if sources > 1 {
+		return "", fmt.Errorf("choose exactly one log source: --from-fixture, --log, positional logfile, or stdin")
+	}
+	if fromFixture != "" {
+		return loadStagingFixtureLog(root, fromFixture)
+	}
+	if logFile != "" {
+		raw, err := os.ReadFile(logFile)
+		if err != nil {
+			return "", fmt.Errorf("read log file %q: %w", logFile, err)
+		}
+		return string(raw), nil
+	}
+	if len(args) > 0 {
+		raw, err := os.ReadFile(args[0])
+		if err != nil {
+			return "", fmt.Errorf("read log file %q: %w", args[0], err)
+		}
+		return string(raw), nil
+	}
+	raw, err := io.ReadAll(stdin)
+	if err != nil {
+		return "", fmt.Errorf("read stdin: %w", err)
+	}
+	return string(raw), nil
+}
+
+// loadStagingFixtureLog reads the raw_log (or log) field from a staging fixture by ID.
+func loadStagingFixtureLog(root, fixtureID string) (string, error) {
+	layout, err := fixtures.ResolveLayout(root)
+	if err != nil {
+		return "", fmt.Errorf("resolve layout: %w", err)
+	}
+	staged, err := fixtures.Load(layout, fixtures.ClassStaging)
+	if err != nil {
+		return "", fmt.Errorf("load staging fixtures: %w", err)
+	}
+	for _, f := range staged {
+		if f.ID == fixtureID {
+			if f.RawLog != "" {
+				return f.RawLog, nil
+			}
+			return f.NormalizedLog, nil
+		}
+	}
+	return "", fmt.Errorf("staging fixture %q not found", fixtureID)
 }

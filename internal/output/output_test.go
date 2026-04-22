@@ -144,6 +144,30 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 		RecentFiles:        []string{"Dockerfile"},
 		HotspotDirectories: []string{"deploy"},
 	}
+	a.PackProvenances = []model.PackProvenance{
+		{
+			Name:          "premium",
+			Version:       "1.2.3",
+			SourceURL:     "https://example.com/premium.git",
+			PinnedRef:     "abc1234",
+			PlaybookCount: 7,
+		},
+	}
+	tss := 0.75
+	fpc := 0.60
+	phi := 0.58
+	a.Metrics = &model.Metrics{
+		TSS:             &tss,
+		FPC:             &fpc,
+		PHI:             &phi,
+		HistoryCount:    8,
+		DriftComponents: []string{"recurring auth failures"},
+	}
+	a.Policy = &model.Policy{
+		Recommendation: "quarantine",
+		Reason:         "trace stability is degrading",
+		Basis:          []string{"tss", "phi"},
+	}
 
 	data, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
@@ -161,6 +185,18 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	}
 	if parsed.RepoContext == nil || parsed.RepoContext.RepoRoot != "/repo" {
 		t.Fatalf("expected repo context to survive round trip, got %#v", parsed.RepoContext)
+	}
+	if len(parsed.PackProvenances) != 1 {
+		t.Fatalf("expected pack provenance to survive round trip, got %#v", parsed.PackProvenances)
+	}
+	if parsed.PackProvenances[0].SourceURL != "https://example.com/premium.git" {
+		t.Fatalf("expected pack source_url to survive round trip, got %#v", parsed.PackProvenances[0])
+	}
+	if parsed.Metrics == nil || parsed.Metrics.TSS == nil || *parsed.Metrics.TSS != tss {
+		t.Fatalf("expected metrics to survive round trip, got %#v", parsed.Metrics)
+	}
+	if parsed.Policy == nil || parsed.Policy.Recommendation != "quarantine" {
+		t.Fatalf("expected policy to survive round trip, got %#v", parsed.Policy)
 	}
 }
 
@@ -570,16 +606,22 @@ func TestFormatWorkflowText(t *testing.T) {
 			Stage:       "build",
 			CommandHint: "docker build -f Dockerfile .",
 		},
-		Evidence:    []string{"failed to read Dockerfile"},
-		Files:       []string{"Dockerfile", ".dockerignore"},
-		LocalRepro:  []string{"docker build -f Dockerfile ."},
-		Verify:      []string{"docker build -f Dockerfile ."},
+		Evidence:   []string{"failed to read Dockerfile"},
+		Files:      []string{"Dockerfile", ".dockerignore"},
+		LocalRepro: []string{"docker build -f Dockerfile ."},
+		Verify:     []string{"docker build -f Dockerfile ."},
+		MetricsHints: []string{
+			"TSS 0.40 (5 runs)",
+		},
+		PolicyHints: []string{
+			"policy: quarantine",
+		},
 		Steps:       []string{"Verify the exact `docker build` command."},
 		AgentPrompt: "You are helping resolve a deterministic CI failure.",
 	}
 
 	text := FormatWorkflowText(plan)
-	for _, want := range []string{"WORKFLOW", "docker-build-context", "Local repro:", "Verify:", "Next steps:", "Agent prompt:"} {
+	for _, want := range []string{"WORKFLOW", "docker-build-context", "Local repro:", "Verify:", "Metrics:", "Policy:", "Next steps:", "Agent prompt:"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in workflow text, got:\n%s", want, text)
 		}
@@ -854,6 +896,8 @@ func TestFormatWorkflowJSON(t *testing.T) {
 		Mode:          workflow.ModeLocal,
 		FailureID:     "snapshot-mismatch",
 		Title:         "Snapshot or golden-file mismatch",
+		MetricsHints:  []string{"TSS 0.40 (5 runs)"},
+		PolicyHints:   []string{"policy: observe"},
 		Verify:        []string{"go test ./..."},
 		Steps:         []string{"Inspect the diff."},
 	}
@@ -870,5 +914,11 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	}
 	if out["schema_version"] != "workflow.v1" {
 		t.Fatalf("expected schema_version, got %v", out["schema_version"])
+	}
+	if _, ok := out["metrics_hints"].([]interface{}); !ok {
+		t.Fatalf("expected metrics_hints in workflow JSON, got %v", out["metrics_hints"])
+	}
+	if _, ok := out["policy_hints"].([]interface{}); !ok {
+		t.Fatalf("expected policy_hints in workflow JSON, got %v", out["policy_hints"])
 	}
 }

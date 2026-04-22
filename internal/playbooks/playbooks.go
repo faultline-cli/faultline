@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"faultline/internal/engine/hypothesis"
+
 	"gopkg.in/yaml.v3"
 
 	"faultline/internal/model"
@@ -228,7 +229,7 @@ func LoadDir(dir string) ([]model.Playbook, error) {
 			return nil
 		}
 		name := d.Name()
-		if strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml") {
+		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName {
 			files = append(files, path)
 		}
 		return nil

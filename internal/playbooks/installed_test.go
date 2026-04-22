@@ -380,3 +380,201 @@ match:
 		t.Error("expected non-empty pack name when name is derived from directory")
 	}
 }
+
+// ── pack manifest ─────────────────────────────────────────────────────────────
+
+func TestReadPackMetaMissingFileReturnsNotFound(t *testing.T) {
+	dir := t.TempDir()
+	_, ok, err := ReadPackMeta(dir)
+	if err != nil {
+		t.Fatalf("ReadPackMeta: %v", err)
+	}
+	if ok {
+		t.Error("expected ok=false for missing manifest")
+	}
+}
+
+func TestWriteAndReadPackMeta(t *testing.T) {
+	dir := t.TempDir()
+	want := PackMeta{
+		Name:      "test-pack",
+		Version:   "1.2.3",
+		SourceURL: "/tmp/source",
+		PinnedRef: "abc1234",
+		FetchedAt: "2026-04-22T10:00:00Z",
+	}
+	if err := WritePackMeta(dir, want); err != nil {
+		t.Fatalf("WritePackMeta: %v", err)
+	}
+	got, ok, err := ReadPackMeta(dir)
+	if err != nil {
+		t.Fatalf("ReadPackMeta: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected ok=true after write")
+	}
+	if got.Name != want.Name || got.Version != want.Version || got.PinnedRef != want.PinnedRef || got.SourceURL != want.SourceURL {
+		t.Errorf("ReadPackMeta = %+v, want %+v", got, want)
+	}
+}
+
+func TestWritePackMetaSetsDefaultFetchedAt(t *testing.T) {
+	dir := t.TempDir()
+	if err := WritePackMeta(dir, PackMeta{Name: "x", Version: "0.1.0"}); err != nil {
+		t.Fatalf("WritePackMeta: %v", err)
+	}
+	meta, _, _ := ReadPackMeta(dir)
+	if meta.FetchedAt == "" {
+		t.Error("expected FetchedAt to be set automatically")
+	}
+}
+
+func TestInstallPackWritesManifest(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	src := t.TempDir()
+	writePlaybookFixture(t, src, "rule.yaml", `
+id: manifest-test
+title: Manifest Test
+category: test
+severity: low
+summary: Summary.
+diagnosis: |
+  ## Diagnosis
+
+  Details.
+fix: |
+  ## Fix steps
+
+  1. Fix.
+validation: |
+  ## Validation
+
+  - Check.
+match:
+  any:
+    - "manifest error"
+`)
+
+	pack, err := InstallPack(src, "manifest-pack", false)
+	if err != nil {
+		t.Fatalf("InstallPack: %v", err)
+	}
+
+	// Manifest should be written at the install root.
+	meta, ok, err := ReadPackMeta(pack.Root)
+	if err != nil {
+		t.Fatalf("ReadPackMeta: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected manifest to be written by InstallPack")
+	}
+	if meta.Name != "manifest-pack" {
+		t.Errorf("meta.Name = %q, want manifest-pack", meta.Name)
+	}
+	if meta.Version == "" {
+		t.Error("expected Version to be set by InstallPack")
+	}
+	if meta.SourceURL == "" {
+		t.Error("expected SourceURL to be set by InstallPack")
+	}
+	if meta.FetchedAt == "" {
+		t.Error("expected FetchedAt to be set by InstallPack")
+	}
+
+	// InstalledPack return value should reflect the manifest.
+	if pack.Version == "" {
+		t.Error("expected InstalledPack.Version to be populated after install")
+	}
+}
+
+func TestManifestFileIsNotLoadedAsPlaybook(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	src := t.TempDir()
+	writePlaybookFixture(t, src, "rule.yaml", `
+id: manifest-skip-test
+title: Manifest Skip
+category: test
+severity: low
+summary: Summary.
+diagnosis: |
+  ## Diagnosis
+
+  Details.
+fix: |
+  ## Fix steps
+
+  1. Fix.
+validation: |
+  ## Validation
+
+  - Check.
+match:
+  any:
+    - "skip error"
+`)
+	// Write a pre-existing manifest in the source (simulate a versioned pack dir).
+	if err := WritePackMeta(src, PackMeta{Name: "manifest-skip-test", Version: "2.0.0"}); err != nil {
+		t.Fatalf("WritePackMeta: %v", err)
+	}
+
+	pack, err := InstallPack(src, "manifest-skip-pack", false)
+	if err != nil {
+		t.Fatalf("InstallPack: %v", err)
+	}
+	// Only the one playbook YAML should have loaded; the manifest must not be treated as a playbook.
+	if pack.PlaybookCount != 1 {
+		t.Errorf("PlaybookCount = %d, want 1", pack.PlaybookCount)
+	}
+}
+
+func TestListInstalledPacksShowsVersion(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	src := t.TempDir()
+	writePlaybookFixture(t, src, "rule.yaml", `
+id: list-version-test
+title: List Version Test
+category: test
+severity: low
+summary: Summary.
+diagnosis: |
+  ## Diagnosis
+
+  Details.
+fix: |
+  ## Fix steps
+
+  1. Fix.
+validation: |
+  ## Validation
+
+  - Check.
+match:
+  any:
+    - "list version error"
+`)
+	// Write pre-existing versioned manifest.
+	if err := WritePackMeta(src, PackMeta{Name: "version-pack", Version: "3.1.0", PinnedRef: "deadbee"}); err != nil {
+		t.Fatalf("WritePackMeta: %v", err)
+	}
+
+	if _, err := InstallPack(src, "version-pack", false); err != nil {
+		t.Fatalf("InstallPack: %v", err)
+	}
+
+	packs, err := ListInstalledPacks()
+	if err != nil {
+		t.Fatalf("ListInstalledPacks: %v", err)
+	}
+	if len(packs) != 1 {
+		t.Fatalf("expected 1 pack, got %d", len(packs))
+	}
+	if packs[0].Version == "" {
+		t.Error("expected Version to be populated by ListInstalledPacks")
+	}
+}

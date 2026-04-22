@@ -112,6 +112,62 @@ func TestBuildWithOptionsResolvesLikelyFilesFromRepo(t *testing.T) {
 	}
 }
 
+func TestBuildIncludesMetricsAndPolicyHints(t *testing.T) {
+	tss := 0.42
+	fpc := 0.55
+	phi := 0.38
+	a := &model.Analysis{
+		Results: []model.Result{
+			{
+				Playbook: model.Playbook{
+					ID:    "docker-auth",
+					Title: "Docker registry authentication failure",
+					Fix:   "1. Re-authenticate before retrying.",
+				},
+				Evidence: []string{"authentication required"},
+			},
+		},
+		Metrics: &model.Metrics{
+			TSS:             &tss,
+			FPC:             &fpc,
+			PHI:             &phi,
+			HistoryCount:    6,
+			DriftComponents: []string{"auth failures dominating recent runs"},
+		},
+		Policy: &model.Policy{
+			Recommendation: "quarantine",
+			Reason:         "the same failure pattern is recurring",
+			Basis:          []string{"tss", "phi"},
+		},
+	}
+
+	plan := Build(a, ModeLocal)
+	if len(plan.MetricsHints) < 4 {
+		t.Fatalf("expected metrics hints, got %v", plan.MetricsHints)
+	}
+	if !strings.Contains(strings.Join(plan.MetricsHints, " | "), "TSS 0.42 (6 runs)") {
+		t.Fatalf("expected TSS hint, got %v", plan.MetricsHints)
+	}
+	if !strings.Contains(strings.Join(plan.PolicyHints, " | "), "policy: quarantine") {
+		t.Fatalf("expected policy recommendation hint, got %v", plan.PolicyHints)
+	}
+	if strings.Contains(strings.Join(plan.Steps, " | "), "Recent change drift points at") {
+		t.Fatalf("did not expect delta hint step when delta is absent, got %v", plan.Steps)
+	}
+}
+
+func TestMetricsHintsNilReturnsNil(t *testing.T) {
+	if got := metricsHints(nil); got != nil {
+		t.Fatalf("expected nil metrics hints, got %v", got)
+	}
+}
+
+func TestPolicyHintsNilReturnsNil(t *testing.T) {
+	if got := policyHints(nil); got != nil {
+		t.Fatalf("expected nil policy hints, got %v", got)
+	}
+}
+
 func mustWriteFile(t *testing.T, path string, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

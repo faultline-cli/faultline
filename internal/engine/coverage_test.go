@@ -43,6 +43,38 @@ func TestDefaultHistoryRecorderRecordAndCount(t *testing.T) {
 	}
 }
 
+func TestDefaultHistoryRecorderAllEntriesEmpty(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	rec := defaultHistoryRecorder{}
+	entries := rec.AllEntries()
+	if len(entries) != 0 {
+		t.Errorf("expected 0 entries for empty history, got %d", len(entries))
+	}
+}
+
+func TestDefaultHistoryRecorderAllEntriesAfterRecord(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	rec := defaultHistoryRecorder{}
+	result := model.Result{
+		Playbook: model.Playbook{
+			ID:       "go-build",
+			Title:    "Go build failure",
+			Category: "build",
+		},
+	}
+	rec.Record(result)
+	rec.Record(result)
+	entries := rec.AllEntries()
+	if len(entries) != 2 {
+		t.Errorf("expected 2 entries, got %d", len(entries))
+	}
+	for _, e := range entries {
+		if e.FailureID != "go-build" {
+			t.Errorf("expected failure_id go-build, got %q", e.FailureID)
+		}
+	}
+}
+
 // --- defaultSourceLoader (deps.go) ---
 
 func TestDefaultSourceLoaderLoadScansDirectory(t *testing.T) {

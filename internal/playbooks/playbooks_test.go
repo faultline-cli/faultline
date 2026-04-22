@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"faultline/internal/model"
 )
 
 func TestLoadDefaultUsesEnvVar(t *testing.T) {
@@ -84,7 +86,6 @@ func TestDefaultDirErrorsForNonexistentEnvPath(t *testing.T) {
 		t.Fatal("expected error for nonexistent FAULTLINE_PLAYBOOK_DIR")
 	}
 }
-
 
 func TestLoadDirPreservesMatchNone(t *testing.T) {
 	dir := t.TempDir()
@@ -508,5 +509,103 @@ func writePlaybookFixture(t *testing.T, dir, name, content string) {
 	}
 	if err := os.WriteFile(path, []byte(content+"\n"), 0o600); err != nil {
 		t.Fatalf("write fixture %s: %v", path, err)
+	}
+}
+
+// ── pack provenance ───────────────────────────────────────────────────────────
+
+func TestProvenanceFromPlaybooks(t *testing.T) {
+	pbs := []model.Playbook{
+		{ID: "a", Metadata: model.PlaybookMeta{PackName: "starter", PackRoot: "/p1", PackVersion: ""}},
+		{ID: "b", Metadata: model.PlaybookMeta{PackName: "starter", PackRoot: "/p1", PackVersion: ""}},
+		{ID: "c", Metadata: model.PlaybookMeta{PackName: "premium", PackRoot: "/p2", PackVersion: "1.0.0", PackSourceURL: "https://example.com/premium.git", PackPinnedRef: "abc1234"}},
+	}
+	prov := ProvenanceFromPlaybooks(pbs)
+	if len(prov) != 2 {
+		t.Fatalf("expected 2 provenance entries, got %d", len(prov))
+	}
+	if prov[0].Name != "starter" || prov[0].PlaybookCount != 2 {
+		t.Errorf("starter entry = %+v", prov[0])
+	}
+	if prov[1].Name != "premium" || prov[1].Version != "1.0.0" || prov[1].SourceURL != "https://example.com/premium.git" || prov[1].PinnedRef != "abc1234" || prov[1].PlaybookCount != 1 {
+		t.Errorf("premium entry = %+v", prov[1])
+	}
+}
+
+func TestProvenanceFromPlaybooksEmpty(t *testing.T) {
+	prov := ProvenanceFromPlaybooks(nil)
+	if len(prov) != 0 {
+		t.Errorf("expected empty provenance for nil playbooks, got %v", prov)
+	}
+}
+
+func TestLoadPacksPropagatesPackMeta(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: provenance-playbook
+title: Provenance Playbook
+category: test
+severity: low
+match:
+  any:
+    - "prov error"
+`)
+	if err := WritePackMeta(dir, PackMeta{Name: "prov-pack", Version: "2.3.4", SourceURL: "https://example.com/prov-pack.git", PinnedRef: "deadbeef"}); err != nil {
+		t.Fatalf("WritePackMeta: %v", err)
+	}
+
+	packs := []Pack{{Name: "prov-pack", Root: dir}}
+	pbs, err := LoadPacks(packs)
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected 1 playbook, got %d", len(pbs))
+	}
+	if pbs[0].Metadata.PackVersion != "2.3.4" {
+		t.Errorf("PackVersion = %q, want 2.3.4", pbs[0].Metadata.PackVersion)
+	}
+	if pbs[0].Metadata.PackSourceURL != "https://example.com/prov-pack.git" {
+		t.Errorf("PackSourceURL = %q, want https://example.com/prov-pack.git", pbs[0].Metadata.PackSourceURL)
+	}
+	if pbs[0].Metadata.PackPinnedRef != "deadbeef" {
+		t.Errorf("PackPinnedRef = %q, want deadbeef", pbs[0].Metadata.PackPinnedRef)
+	}
+}
+
+func TestLoadPacksUsesExplicitPackMetadataWhenManifestMissing(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: explicit-meta-playbook
+title: Explicit Meta Playbook
+category: test
+severity: low
+match:
+  any:
+    - "explicit meta error"
+`)
+
+	packs := []Pack{{
+		Name:      "explicit-meta-pack",
+		Root:      dir,
+		Version:   "9.9.9",
+		SourceURL: "https://example.com/explicit-meta-pack.git",
+		PinnedRef: "cafebabe",
+	}}
+	pbs, err := LoadPacks(packs)
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected 1 playbook, got %d", len(pbs))
+	}
+	if pbs[0].Metadata.PackVersion != "9.9.9" {
+		t.Errorf("PackVersion = %q, want 9.9.9", pbs[0].Metadata.PackVersion)
+	}
+	if pbs[0].Metadata.PackSourceURL != "https://example.com/explicit-meta-pack.git" {
+		t.Errorf("PackSourceURL = %q, want https://example.com/explicit-meta-pack.git", pbs[0].Metadata.PackSourceURL)
+	}
+	if pbs[0].Metadata.PackPinnedRef != "cafebabe" {
+		t.Errorf("PackPinnedRef = %q, want cafebabe", pbs[0].Metadata.PackPinnedRef)
 	}
 }

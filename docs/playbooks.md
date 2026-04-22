@@ -110,6 +110,18 @@ Treat playbook growth as a deterministic review loop, not a content-volume goal.
 5. For every accepted playbook, add at least one positive fixture and one nearby negative or adversarial regression so ranking stays stable in noisy logs.
 6. Re-run `make review` after edits to inspect shared patterns and `make test` to confirm fixture, corpus, and ranking regressions remain deterministic.
 
+When you are authoring from a new real failure, keep the maintainer workflow
+explicit and deterministic:
+
+1. ingest or stage the candidate evidence
+2. sanitize the staging fixture
+3. optionally generate a draft with `faultline fixtures scaffold`
+4. review and hand-edit the YAML before committing anything
+5. run `make review` and the relevant regression checks
+
+`faultline fixtures scaffold` is hidden and maintainer-only on purpose. It is a
+drafting helper, not an authoritative authoring engine.
+
 Review interpretation:
 
 - `make review` and the composed-pack review checks are overlap inspection tools, not a requirement that the catalog reach zero shared phrases.
@@ -143,6 +155,17 @@ Use `--playbooks <dir>` only for full catalog overrides such as testing a pack i
 
 For installed extra packs, prefer `faultline packs install` as the long-lived path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.
 
+Installed packs now carry deterministic provenance metadata recorded at install
+time in `faultline-pack.yaml`. When available, Faultline preserves:
+
+- semantic version
+- install-time source URL or local source path
+- pinned git ref
+
+`faultline packs list` exposes that metadata through `VERSION` and
+`PINNED REF` columns, and analysis JSON includes additive `pack_provenance`
+entries so downstream automation can audit which catalog inputs were active.
+
 ## Minimal Example Pack
 
 A small example pack lives under `examples/packs/minimal/`.
@@ -160,3 +183,23 @@ When you are ready to install a real pack persistently:
 ./bin/faultline packs install ./examples/packs/minimal --name example-pack
 ./bin/faultline packs list
 ```
+
+## Hidden Authoring Helper
+
+Maintainers can also draft a candidate playbook from a sanitized log:
+
+```bash
+faultline fixtures scaffold --log build.log --category build
+faultline fixtures scaffold --from-fixture <staging-id> --category auth
+faultline fixtures scaffold --log build.log --category ci --pack-dir ./packs/team-pack
+```
+
+This helper:
+
+- applies the same deterministic sanitizer pass before extracting patterns
+- generates a candidate `match.any` block and required markdown fields with
+  `TODO` markers
+- writes to `<pack-dir>/<id>.yaml` only when `--pack-dir` is provided
+
+The output still requires human review. Use it to accelerate drafting, not to
+skip the normal fixture, review, and regression gates.

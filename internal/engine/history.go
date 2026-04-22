@@ -46,6 +46,16 @@ func countSeen(failureID string) int {
 	return count
 }
 
+// allHistoryEntries returns all local history entries for metrics computation.
+// On any error it returns an empty slice so callers can silently skip metrics.
+func allHistoryEntries() []historyEntry {
+	store, err := loadHistory()
+	if err != nil {
+		return nil
+	}
+	return store.Entries
+}
+
 // recordResult appends result to the history file. Errors are silently
 // swallowed so that history failures never interrupt analysis output.
 func recordResult(result model.Result) {

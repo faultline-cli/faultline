@@ -41,6 +41,8 @@ type Plan struct {
 	Verify        []string      `json:"verify,omitempty"`
 	RankingHints  []string      `json:"ranking_hints,omitempty"`
 	DeltaHints    []string      `json:"delta_hints,omitempty"`
+	MetricsHints  []string      `json:"metrics_hints,omitempty"`
+	PolicyHints   []string      `json:"policy_hints,omitempty"`
 	Steps         []string      `json:"steps"`
 	AgentPrompt   string        `json:"agent_prompt,omitempty"`
 }
@@ -101,6 +103,8 @@ func BuildWithOptions(a *model.Analysis, mode Mode, opts BuildOptions) Plan {
 			plan.DeltaHints = plan.DeltaHints[:3]
 		}
 	}
+	plan.MetricsHints = metricsHints(a.Metrics)
+	plan.PolicyHints = policyHints(a.Policy)
 	plan.Files = resolveFiles(a, top, opts)
 	plan.Steps = append(plan.Steps, baseSteps(a, top, plan)...)
 	if mode == ModeAgent {
@@ -362,4 +366,44 @@ func dedupeKeepOrder(base []string, values []string) []string {
 
 func trimTerminalPunctuation(s string) string {
 	return strings.TrimRight(strings.TrimSpace(s), ".!?")
+}
+
+// metricsHints converts the reliability metrics (when present) into compact
+// human-readable hints for embedding in workflow plans. Returns nil when no
+// metrics are available so the JSON field stays absent.
+func policyHints(p *model.Policy) []string {
+	if p == nil {
+		return nil
+	}
+	var hints []string
+	hints = append(hints, fmt.Sprintf("policy: %s", p.Recommendation))
+	if p.Reason != "" {
+		hints = append(hints, p.Reason)
+	}
+	hints = append(hints, p.Basis...)
+	if len(hints) == 0 {
+		return nil
+	}
+	return hints
+}
+
+func metricsHints(m *model.Metrics) []string {
+	if m == nil {
+		return nil
+	}
+	var hints []string
+	if m.TSS != nil {
+		hints = append(hints, fmt.Sprintf("TSS %.2f (%d runs)", *m.TSS, m.HistoryCount))
+	}
+	if m.FPC != nil {
+		hints = append(hints, fmt.Sprintf("FPC %.2f", *m.FPC))
+	}
+	if m.PHI != nil {
+		hints = append(hints, fmt.Sprintf("PHI %.2f", *m.PHI))
+	}
+	hints = append(hints, m.DriftComponents...)
+	if len(hints) == 0 {
+		return nil
+	}
+	return hints
 }

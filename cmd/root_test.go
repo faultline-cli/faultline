@@ -151,6 +151,38 @@ func TestAnalyzeFileJSON(t *testing.T) {
 	}
 }
 
+func TestAnalyzeJSONIncludesPackProvenance(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--json", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze --json: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal JSON: %v", err)
+	}
+	prov, ok := payload["pack_provenance"].([]interface{})
+	if !ok || len(prov) == 0 {
+		t.Fatalf("expected non-empty pack_provenance in JSON, got %v", payload["pack_provenance"])
+	}
+	first := prov[0].(map[string]interface{})
+	if first["name"] == "" || first["name"] == nil {
+		t.Errorf("expected pack name in provenance entry, got %v", first)
+	}
+	if first["playbook_count"] == nil {
+		t.Errorf("expected playbook_count in provenance entry, got %v", first)
+	}
+}
+
 func TestAnalyzeStdinJSON(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	oldStdin := os.Stdin
@@ -819,6 +851,10 @@ func TestPacksInstallAndAutoLoad(t *testing.T) {
 	if !strings.Contains(packsOut.String(), filepath.Base(extra)) {
 		t.Fatalf("expected installed pack in packs list, got %q", packsOut.String())
 	}
+	// VERSION and PINNED REF columns should be present in the header.
+	if !strings.Contains(packsOut.String(), "VERSION") || !strings.Contains(packsOut.String(), "PINNED REF") {
+		t.Fatalf("expected VERSION and PINNED REF columns in packs list, got %q", packsOut.String())
+	}
 }
 
 // ── explain ──────────────────────────────────────────────────────────────────
@@ -1020,7 +1056,283 @@ func TestGuardCommandReturnsNonZeroOnFindings(t *testing.T) {
 	}
 }
 
+// ── trace ────────────────────────────────────────────────────────────────────
+
+func TestTraceCommandText(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"trace", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute trace: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "TRACE") {
+		t.Fatalf("expected TRACE header in output, got %q", got)
+	}
+	if !strings.Contains(got, "docker-auth") {
+		t.Fatalf("expected docker-auth playbook in trace output, got %q", got)
+	}
+	if !strings.Contains(got, "Rule Evaluation") {
+		t.Fatalf("expected Rule Evaluation section in trace output, got %q", got)
+	}
+}
+
+func TestTraceCommandMarkdownFormat(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"trace", "--format", "markdown", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute trace --format markdown: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "# Faultline Trace") {
+		t.Fatalf("expected markdown trace heading, got %q", got)
+	}
+	if !strings.Contains(got, "## Rule Evaluation") {
+		t.Fatalf("expected markdown rule evaluation section, got %q", got)
+	}
+	if !strings.Contains(got, "docker-auth") {
+		t.Fatalf("expected docker-auth in markdown trace output, got %q", got)
+	}
+}
+
+func TestTraceCommandJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"trace", "--json", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute trace --json: %v", err)
+	}
+	if strings.Contains(out.String(), "\x1b[") {
+		t.Fatalf("trace json output should not contain ANSI sequences, got %q", out.String())
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal trace JSON: %v", err)
+	}
+	if payload["playbook_id"] != "docker-auth" {
+		t.Fatalf("expected playbook_id=docker-auth, got %v", payload["playbook_id"])
+	}
+	if payload["matched"] != true {
+		t.Fatalf("expected matched=true, got %v", payload["matched"])
+	}
+	rules, ok := payload["rules"].([]interface{})
+	if !ok || len(rules) == 0 {
+		t.Fatalf("expected non-empty rules array, got %v", payload["rules"])
+	}
+}
+
+func TestTraceCommandPlaybookFlag(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	// Use a log that triggers go-sum-missing, not docker-auth.
+	logPath := writeTempLog(t, "missing go.sum entry for module providing package\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"trace", "--playbook", "docker-auth", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute trace --playbook docker-auth: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "docker-auth") {
+		t.Fatalf("expected docker-auth in trace output from --playbook flag, got %q", got)
+	}
+	if !strings.Contains(got, "not matched") {
+		t.Fatalf("expected not matched status for unmatched playbook, got %q", got)
+	}
+}
+
+func TestTraceCommandSelectRank(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	// Use a log that triggers multiple ranked matches.
+	logPath := writeTempLog(t,
+		"pull access denied\nauthentication required\ncould not read username for 'https://github.com': terminal prompts disabled\n",
+	)
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"trace", "--select", "2", "--no-history", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute trace --select 2: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "TRACE") {
+		t.Fatalf("expected TRACE header for rank-2 result, got %q", got)
+	}
+}
+
 // ── misc ─────────────────────────────────────────────────────────────────────
+
+// ── fixtures scaffold ────────────────────────────────────────────────────────
+
+func TestFixturesScaffoldFromStdin(t *testing.T) {
+	logInput := "pull access denied\nError response from daemon: unauthorized: authentication required\n"
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--category", "auth"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	cmd.SetIn(strings.NewReader(logInput))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fixtures scaffold: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "id: auth-") {
+		t.Errorf("expected id starting with auth- in scaffold, got %q", got)
+	}
+	if !strings.Contains(got, "match:") {
+		t.Errorf("expected match section in scaffold, got %q", got)
+	}
+	if !strings.Contains(got, "TODO") {
+		t.Errorf("expected TODO placeholders in scaffold, got %q", got)
+	}
+}
+
+func TestFixturesScaffoldFromLogFile(t *testing.T) {
+	logPath := writeTempLog(t, "fatal: remote error: repository not found\nError: process completed with exit code 128\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, "--category", "network", "--max-match", "3"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fixtures scaffold --log: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "category: network") {
+		t.Errorf("expected category=network in scaffold, got %q", got)
+	}
+	if !strings.Contains(got, "match:") {
+		t.Errorf("expected match section, got %q", got)
+	}
+}
+
+func TestFixturesScaffoldIDOverride(t *testing.T) {
+	logPath := writeTempLog(t, "error: cannot find module 'react'\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, "--id", "build-missing-react-module", "--category", "build"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fixtures scaffold --id: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "id: build-missing-react-module") {
+		t.Errorf("expected explicit id in scaffold, got %q", got)
+	}
+}
+
+func TestFixturesScaffoldWritesToPackDir(t *testing.T) {
+	packDir := t.TempDir()
+	logPath := writeTempLog(t, "permission denied (publickey)\nAuthentication failed\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, "--category", "auth", "--pack-dir", packDir})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute fixtures scaffold --pack-dir: %v", err)
+	}
+	got := out.String()
+	if !strings.Contains(got, "wrote scaffold:") {
+		t.Errorf("expected 'wrote scaffold:' prefix when --pack-dir is set, got %q", got)
+	}
+}
+
+func TestFixturesScaffoldDeterministic(t *testing.T) {
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: unauthorized: authentication required\n")
+
+	run := func() string {
+		cmd := newRootCommand()
+		cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, "--category", "auth"})
+		out := &bytes.Buffer{}
+		cmd.SetOut(out)
+		cmd.SetErr(new(bytes.Buffer))
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("execute fixtures scaffold: %v", err)
+		}
+		return out.String()
+	}
+
+	first := run()
+	second := run()
+	if first != second {
+		t.Errorf("scaffold output is not deterministic:\nfirst:\n%s\nsecond:\n%s", first, second)
+	}
+}
+
+func TestFixturesScaffoldRejectsInvalidCategory(t *testing.T) {
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: unauthorized: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, "--category", "unicorn"})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected invalid category error")
+	}
+	if !strings.Contains(err.Error(), "invalid category") {
+		t.Fatalf("expected invalid category error, got %v", err)
+	}
+}
+
+func TestFixturesScaffoldRejectsMultipleInputSources(t *testing.T) {
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: unauthorized: authentication required\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"fixtures", "scaffold", "--log", logPath, logPath, "--category", "auth"})
+	cmd.SetOut(new(bytes.Buffer))
+	cmd.SetErr(new(bytes.Buffer))
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected multiple input sources error")
+	}
+	if !strings.Contains(err.Error(), "choose exactly one log source") {
+		t.Fatalf("expected multiple input sources error, got %v", err)
+	}
+}
 
 func TestVersionFlag(t *testing.T) {
 	cmd := newRootCommand()

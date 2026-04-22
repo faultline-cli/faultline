@@ -18,7 +18,10 @@ import (
 	"faultline/internal/detectors/sourcedetector"
 	enginedelta "faultline/internal/engine/delta"
 	"faultline/internal/engine/hypothesis"
+	"faultline/internal/metrics"
 	"faultline/internal/model"
+	"faultline/internal/playbooks"
+	"faultline/internal/policy"
 	"faultline/internal/repo"
 	"faultline/internal/repo/topology"
 	"faultline/internal/scoring"
@@ -58,6 +61,10 @@ type Options struct {
 	GitHubRunID int64
 	// GitHubToken authenticates GitHub Actions delta API requests.
 	GitHubToken string
+	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
+	// records used to compute FPC and PHI. When empty, only TSS is computed
+	// from the local history store.
+	MetricsHistoryFile string
 }
 
 // Engine orchestrates log analysis against loaded playbooks.
@@ -114,6 +121,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	if err != nil {
 		return nil, err
 	}
+	packProv := playbooks.ProvenanceFromPlaybooks(pbs)
 
 	lines, err := readLines(r)
 	if err != nil {
@@ -136,8 +144,9 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	if len(results) == 0 {
 		return &model.Analysis{
-			Results: []model.Result{},
-			Context: ctx,
+			Results:         []model.Result{},
+			Context:         ctx,
+			PackProvenances: packProv,
 		}, ErrNoMatch
 	}
 
@@ -184,16 +193,23 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	fp := fingerprint(results[0])
 	analysis := &model.Analysis{
-		Results:      results,
-		Context:      ctx,
-		Fingerprint:  fp,
-		Delta:        delta,
-		Differential: differential,
+		Results:         results,
+		Context:         ctx,
+		Fingerprint:     fp,
+		Delta:           delta,
+		Differential:    differential,
+		PackProvenances: packProv,
 	}
 
 	// Persist the top result so future runs can report recurrence.
 	if !e.opts.NoHistory {
 		e.history.Record(results[0])
+	}
+
+	// Compute pipeline reliability metrics (best-effort; never blocks analysis).
+	if !e.opts.NoHistory {
+		analysis.Metrics = e.computeMetrics(results[0].Playbook.ID)
+		analysis.Policy = policy.Compute(analysis.Metrics, results[0].Playbook.Severity)
 	}
 
 	// Enrich with git repo context when requested (best-effort; never blocks).
@@ -214,9 +230,10 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 	if err != nil {
 		return nil, err
 	}
+	packProv := playbooks.ProvenanceFromPlaybooks(pbs)
 	sourcePlaybooks := detectors.FilterPlaybooks(pbs, detectors.KindSource)
 	if len(sourcePlaybooks) == 0 {
-		return &model.Analysis{Results: []model.Result{}}, ErrNoMatch
+		return &model.Analysis{Results: []model.Result{}, PackProvenances: packProv}, ErrNoMatch
 	}
 	files, err := e.sourceFileStore.Load(root)
 	if err != nil {
@@ -235,7 +252,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		ChangeSet:      changeSet,
 	})
 	if len(results) == 0 {
-		return &model.Analysis{Results: []model.Result{}}, ErrNoMatch
+		return &model.Analysis{Results: []model.Result{}, PackProvenances: packProv}, ErrNoMatch
 	}
 	var (
 		snapshot *repoSnapshot
@@ -273,11 +290,12 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		e.history.Record(results[0])
 	}
 	return &model.Analysis{
-		Results:      results,
-		Fingerprint:  fingerprint(results[0]),
-		Source:       root,
-		Delta:        delta,
-		Differential: differential,
+		Results:         results,
+		Fingerprint:     fingerprint(results[0]),
+		Source:          root,
+		Delta:           delta,
+		Differential:    differential,
+		PackProvenances: packProv,
 	}, nil
 }
 
@@ -629,6 +647,27 @@ func (e *Engine) List() ([]model.Playbook, error) {
 // Explain returns the playbook identified by id, or an error if not found.
 func (e *Engine) Explain(id string) (model.Playbook, error) {
 	return e.catalog.Explain(id)
+}
+
+// computeMetrics builds pipeline reliability metrics for the given failure ID.
+// TSS is derived from the local history store. When MetricsHistoryFile is set,
+// FPC and PHI are also computed from the supplied artifact file.
+// Errors are silently discarded so metrics never block analysis output.
+func (e *Engine) computeMetrics(failureID string) *model.Metrics {
+	rawEntries := e.history.AllEntries()
+	localEntries := make([]metrics.LocalEntry, len(rawEntries))
+	for i, he := range rawEntries {
+		localEntries[i] = metrics.LocalEntry{FailureID: he.FailureID}
+	}
+	m := metrics.FromLocalHistory(failureID, localEntries)
+
+	if e.opts.MetricsHistoryFile != "" {
+		explicit, err := metrics.LoadHistoryFile(e.opts.MetricsHistoryFile)
+		if err == nil {
+			m = metrics.WithExplicitHistory(m, explicit)
+		}
+	}
+	return m
 }
 
 // ReadLines reads log input into canonicalized line values used by the matcher.

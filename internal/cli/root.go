@@ -118,29 +118,30 @@ func validateExperimentalDeltaProvider(provider string) error {
 
 func newAnalyzeCommand() *cobra.Command {
 	var (
-		jsonOut       bool
-		top           int
-		mode          string
-		format        string
-		view          string
-		playbookDir   string
-		playbookPacks []string
-		ciAnnotations bool
-		noHistory     bool
-		gitContext    bool
-		gitSince      string
-		repoPath      string
-		bayes         bool
-		traceEnabled  bool
-		tracePlaybook string
-		selectRank    int
-		showRejected  bool
-		showEvidence  bool
-		showScoring   bool
-		deltaProvider string
-		githubRepo    string
-		githubBranch  string
-		githubRunID   int64
+		jsonOut            bool
+		top                int
+		mode               string
+		format             string
+		view               string
+		playbookDir        string
+		playbookPacks      []string
+		ciAnnotations      bool
+		noHistory          bool
+		gitContext         bool
+		gitSince           string
+		repoPath           string
+		bayes              bool
+		traceEnabled       bool
+		tracePlaybook      string
+		selectRank         int
+		showRejected       bool
+		showEvidence       bool
+		showScoring        bool
+		deltaProvider      string
+		githubRepo         string
+		githubBranch       string
+		githubRunID        int64
+		metricsHistoryFile string
 	)
 
 	cmd := &cobra.Command{
@@ -194,30 +195,31 @@ func newAnalyzeCommand() *cobra.Command {
 			defer input.Close()
 
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
-				Top:               top,
-				Mode:              output.Mode(mode),
-				Format:            resolvedFormat,
-				View:              resolvedView,
-				JSON:              resolvedJSON,
-				CIAnnotations:     ciAnnotations,
-				NoHistory:         noHistory,
-				PlaybookDir:       playbookDir,
-				PlaybookPackDirs:  playbookPacks,
-				GitContextEnabled: gitContext,
-				GitSince:          gitSince,
-				RepoPath:          repoPath,
-				BayesEnabled:      bayes,
-				TraceEnabled:      traceEnabled,
-				TracePlaybook:     tracePlaybook,
-				Select:            selectRank,
-				ShowRejected:      showRejected,
-				ShowEvidence:      showEvidence,
-				ShowScoring:       showScoring,
-				DeltaProvider:     deltaProvider,
-				GitHubRepository:  firstNonEmpty(githubRepo, os.Getenv("GITHUB_REPOSITORY")),
-				GitHubBranch:      firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
-				GitHubRunID:       firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
-				GitHubToken:       firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
+				Top:                top,
+				Mode:               output.Mode(mode),
+				Format:             resolvedFormat,
+				View:               resolvedView,
+				JSON:               resolvedJSON,
+				CIAnnotations:      ciAnnotations,
+				NoHistory:          noHistory,
+				PlaybookDir:        playbookDir,
+				PlaybookPackDirs:   playbookPacks,
+				GitContextEnabled:  gitContext,
+				GitSince:           gitSince,
+				RepoPath:           repoPath,
+				BayesEnabled:       bayes,
+				TraceEnabled:       traceEnabled,
+				TracePlaybook:      tracePlaybook,
+				Select:             selectRank,
+				ShowRejected:       showRejected,
+				ShowEvidence:       showEvidence,
+				ShowScoring:        showScoring,
+				DeltaProvider:      deltaProvider,
+				GitHubRepository:   firstNonEmpty(githubRepo, os.Getenv("GITHUB_REPOSITORY")),
+				GitHubBranch:       firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
+				GitHubRunID:        firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
+				GitHubToken:        firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
+				MetricsHistoryFile: metricsHistoryFile,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -245,10 +247,12 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
 	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
 	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
+	cmd.Flags().StringVar(&metricsHistoryFile, "history-file", "", "path to a JSONL history file for FPC and PHI computation")
 	_ = cmd.Flags().MarkHidden("delta-provider")
 	_ = cmd.Flags().MarkHidden("github-repo")
 	_ = cmd.Flags().MarkHidden("github-branch")
 	_ = cmd.Flags().MarkHidden("github-run-id")
+	_ = cmd.Flags().MarkHidden("history-file")
 	return cmd
 }
 

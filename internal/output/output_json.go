@@ -11,15 +11,18 @@ import (
 
 // analysisJSON is the stable JSON schema emitted by FormatAnalysisJSON.
 type analysisJSON struct {
-	Matched      bool                         `json:"matched"`
-	Source       string                       `json:"source,omitempty"`
-	Fingerprint  string                       `json:"fingerprint,omitempty"`
-	Context      ctxJSON                      `json:"context"`
-	Results      []resultJSON                 `json:"results"`
-	RepoContext  *repoCtxJSON                 `json:"repo_context,omitempty"`
-	Delta        *model.Delta                 `json:"delta,omitempty"`
-	Differential *model.DifferentialDiagnosis `json:"differential,omitempty"`
-	Message      string                       `json:"message,omitempty"`
+	Matched        bool                         `json:"matched"`
+	Source         string                       `json:"source,omitempty"`
+	Fingerprint    string                       `json:"fingerprint,omitempty"`
+	Context        ctxJSON                      `json:"context"`
+	Results        []resultJSON                 `json:"results"`
+	RepoContext    *repoCtxJSON                 `json:"repo_context,omitempty"`
+	Delta          *model.Delta                 `json:"delta,omitempty"`
+	Differential   *model.DifferentialDiagnosis `json:"differential,omitempty"`
+	PackProvenance []model.PackProvenance       `json:"pack_provenance,omitempty"`
+	Metrics        *model.Metrics               `json:"metrics,omitempty"`
+	Policy         *model.Policy                `json:"policy,omitempty"`
+	Message        string                       `json:"message,omitempty"`
 }
 
 // ctxJSON is the stable representation of model.Context in JSON output.
@@ -102,6 +105,9 @@ func FormatAnalysisJSON(a *model.Analysis, top int) (string, error) {
 	payload.RepoContext = repoContextJSON(a.RepoContext)
 	payload.Delta = a.Delta
 	payload.Differential = a.Differential
+	payload.PackProvenance = a.PackProvenances
+	payload.Metrics = a.Metrics
+	payload.Policy = a.Policy
 
 	if !payload.Matched {
 		payload.Message = "No known playbook matched this input."
@@ -163,12 +169,15 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 	}
 
 	a := &model.Analysis{
-		Results:      make([]model.Result, 0, len(payload.Results)),
-		Source:       payload.Source,
-		Fingerprint:  payload.Fingerprint,
-		Context:      model.Context(payload.Context),
-		Delta:        payload.Delta,
-		Differential: payload.Differential,
+		Results:         make([]model.Result, 0, len(payload.Results)),
+		Source:          payload.Source,
+		Fingerprint:     payload.Fingerprint,
+		Context:         model.Context(payload.Context),
+		Delta:           payload.Delta,
+		Differential:    payload.Differential,
+		PackProvenances: payload.PackProvenance,
+		Metrics:         payload.Metrics,
+		Policy:          payload.Policy,
 	}
 	a.RepoContext = parseRepoContextJSON(payload.RepoContext)
 

@@ -156,6 +156,9 @@ type PlaybookMeta struct {
 	SchemaVersion string `yaml:"schema_version,omitempty" json:"schema_version,omitempty"`
 	PackName      string `yaml:"-" json:"pack_name,omitempty"`
 	PackRoot      string `yaml:"-" json:"pack_root,omitempty"`
+	PackVersion   string `yaml:"-" json:"pack_version,omitempty"`
+	PackSourceURL string `yaml:"-" json:"pack_source_url,omitempty"`
+	PackPinnedRef string `yaml:"-" json:"pack_pinned_ref,omitempty"`
 	SourceFile    string `yaml:"-" json:"source_file,omitempty"`
 }
 
@@ -406,14 +409,82 @@ type RepoCommit struct {
 	Date    string `json:"date"`
 }
 
+// PackProvenance records which installed pack contributed playbooks to an analysis.
+// Version and PinnedRef are empty for the bundled starter pack.
+type PackProvenance struct {
+	Name          string `json:"name"`
+	Version       string `json:"version,omitempty"`
+	SourceURL     string `json:"source_url,omitempty"`
+	PinnedRef     string `json:"pinned_ref,omitempty"`
+	PlaybookCount int    `json:"playbook_count"`
+}
+
 // Analysis is the complete output of a log analysis run.
 // Results is empty (not nil) when no playbook matched.
 type Analysis struct {
-	Results      []Result               `json:"results"`
-	Context      Context                `json:"context"`
-	Fingerprint  string                 `json:"fingerprint,omitempty"`
-	Source       string                 `json:"source,omitempty"`
-	RepoContext  *RepoContext           `json:"repo_context,omitempty"`
-	Delta        *Delta                 `json:"delta,omitempty"`
-	Differential *DifferentialDiagnosis `json:"differential,omitempty"`
+	Results         []Result               `json:"results"`
+	Context         Context                `json:"context"`
+	Fingerprint     string                 `json:"fingerprint,omitempty"`
+	Source          string                 `json:"source,omitempty"`
+	RepoContext     *RepoContext           `json:"repo_context,omitempty"`
+	Delta           *Delta                 `json:"delta,omitempty"`
+	Differential    *DifferentialDiagnosis `json:"differential,omitempty"`
+	PackProvenances []PackProvenance       `json:"pack_provenance,omitempty"`
+	Metrics         *Metrics               `json:"metrics,omitempty"`
+	Policy          *Policy                `json:"policy,omitempty"`
+}
+
+// Metrics is the machine-readable pipeline reliability summary.
+// Fields are absent (nil or zero) when insufficient data is available.
+// TSS is always the first-class metric; PHI and FPC require an explicit
+// history artifact when supplied via --history-file.
+type Metrics struct {
+	// TSS is the Trace Stability Score [0,1]: fraction of locally-stored
+	// analysis runs where the same failure pattern appeared.
+	// Absent unless local history contains at least 2 matched entries.
+	TSS *float64 `json:"tss,omitempty"`
+	// FPC is the Failure Pattern Coverage [0,1]: fraction of all runs in
+	// the supplied history file that matched a known playbook.
+	// Absent unless the history file contains at least 3 entries.
+	FPC *float64 `json:"fpc,omitempty"`
+	// PHI is the Pipeline Health Index [0,1]: composite score derived from
+	// FPC and the dominant-failure share of the supplied history.
+	// Absent unless the history file contains at least 5 entries.
+	PHI *float64 `json:"phi,omitempty"`
+	// HistoryCount is the number of local history entries used to compute TSS.
+	HistoryCount int `json:"history_count,omitempty"`
+	// DriftComponents lists factors that are degrading pipeline reliability.
+	// Populated when at least one metric falls below a warning threshold.
+	DriftComponents []string `json:"drift_components,omitempty"`
+}
+
+// MetricsHistoryEntry is a single past analysis run from an explicit history
+// file supplied via --history-file. Used to compute FPC and PHI.
+type MetricsHistoryEntry struct {
+	Matched   bool   `json:"matched"`
+	FailureID string `json:"failure_id,omitempty"`
+	Severity  string `json:"severity,omitempty"`
+}
+
+// Policy is the machine-readable advisory policy recommendation derived from
+// reliability metrics. It is purely advisory: Faultline does not trigger
+// retries, suite routing, or CI orchestration. When metrics are absent,
+// Policy is also absent.
+//
+// Recommendation values (in increasing urgency):
+//   - "ok":         metrics look healthy or there is insufficient history.
+//   - "observe":    a pattern is emerging but not yet at quarantine threshold.
+//   - "quarantine": persistent recurrence or low pipeline health; recommend
+//                   isolating the test or pipeline path for review.
+//   - "blocking":   high-confidence persistent critical failure that should
+//                   block the pipeline until resolved.
+type Policy struct {
+	// Recommendation is one of "ok", "observe", "quarantine", or "blocking".
+	Recommendation string `json:"recommendation"`
+	// Reason is a short human-readable explanation of why this recommendation
+	// was made.
+	Reason string `json:"reason,omitempty"`
+	// Basis lists the metric names that drove the recommendation (e.g. "tss",
+	// "fpc", "phi").
+	Basis []string `json:"basis,omitempty"`
 }

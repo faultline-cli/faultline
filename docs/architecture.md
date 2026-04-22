@@ -7,6 +7,8 @@ explicit deterministic layers:
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
   explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+- `internal/authoring` owns the hidden maintainer-only scaffold flow that turns
+  a sanitized log into a deterministic candidate playbook YAML.
 - `internal/compare` owns deterministic diffing of two saved analysis artifacts
   into a structured `Report` (diagnosis change, evidence delta, repo-context
   delta, and delta-signal changes).
@@ -19,10 +21,13 @@ explicit deterministic layers:
 - `internal/fixtures` owns deterministic fixture corpora, public-source
   ingestion adapters, normalization, review metadata, promotion flow, and
   regression statistics.
+- `internal/metrics` owns deterministic reliability metric calculation from
+  explicit local history and optional supplied history artifacts.
 - `internal/detectors` owns the detector registry plus the distinct `log` and
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and
   deterministic review helpers.
+- `internal/policy` owns the advisory recommendation layer derived from metrics.
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
@@ -54,6 +59,18 @@ the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
 `~/.faultline/packs/`, which is the persistent user-level install path for
 extra playbook packs. A full `--playbooks` override still resolves a single
 custom catalog root and does not combine with extra packs.
+
+Installed packs record a small manifest at install time so the analysis object
+can carry deterministic provenance:
+
+- pack name
+- version
+- source URL or local source path
+- pinned ref when available
+- playbook count contributed by that pack
+
+This provenance is additive. It does not change matching; it makes the loaded
+catalog auditable in analysis JSON and `packs list`.
 
 For local validation against an external pack checkout, the repository can use
 the ignored symlink at `playbooks/packs/extra-local` or an explicit
@@ -130,6 +147,27 @@ as `summary`, `diagnosis`, `fix`, and
 - replayed analysis artifacts support `summary|evidence|fix|raw`; trace replay requires a
   saved trace artifact or rerunning `faultline trace` on the original log
 - non-TTY and no-color environments fall back to plain output
+
+The stable analysis JSON schema is additive. Beyond the ranked results, it may
+also include:
+
+- `pack_provenance` when one or more packs contributed playbooks
+- `metrics` when sufficient explicit history exists to compute TSS, FPC, or PHI
+- `policy` when a deterministic advisory recommendation can be derived from
+  those metrics
+
+Saved analysis artifacts preserve those fields on replay and compare.
+
+Workflow artifacts are derived from the same deterministic analysis object.
+When present, JSON and text workflow output may also carry:
+
+- `ranking_hints`
+- `delta_hints`
+- `metrics_hints`
+- `policy_hints`
+
+Absent data remains absent. Faultline does not invent placeholder values for
+missing history or policy inputs.
 
 ## Compare boundary
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"faultline/internal/authoring"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
 	"faultline/internal/output"
@@ -674,6 +675,41 @@ func TestFixturesStatsEmptyRootReturnsError(t *testing.T) {
 	// We expect either an error or an empty-report output; we only verify
 	// it doesn't panic.
 	_ = err
+}
+
+func TestFixturesScaffoldSanitizesAndWritesPackFile(t *testing.T) {
+	svc := NewService()
+	packDir := t.TempDir()
+	log := "Authorization: Bearer supersecrettoken123abc\npull access denied\n"
+	var buf bytes.Buffer
+
+	err := svc.FixturesScaffold(log, authoring.ScaffoldOptions{
+		Category: "auth",
+		ID:       "auth-redacted-token",
+		PackDir:  packDir,
+		MaxMatch: 3,
+	}, &buf)
+	if err != nil {
+		t.Fatalf("FixturesScaffold: %v", err)
+	}
+	if !strings.Contains(buf.String(), "wrote scaffold:") {
+		t.Fatalf("expected write notice, got %q", buf.String())
+	}
+	if strings.Contains(buf.String(), "supersecrettoken123abc") {
+		t.Fatalf("expected scaffold output to redact secrets, got %q", buf.String())
+	}
+	if !strings.Contains(buf.String(), "<redacted>") {
+		t.Fatalf("expected scaffold output to include redacted marker, got %q", buf.String())
+	}
+
+	writtenPath := filepath.Join(packDir, "auth-redacted-token.yaml")
+	data, err := os.ReadFile(writtenPath)
+	if err != nil {
+		t.Fatalf("read scaffold file: %v", err)
+	}
+	if !strings.Contains(string(data), "id: auth-redacted-token") {
+		t.Fatalf("expected scaffold file to be written, got %q", string(data))
+	}
 }
 
 func writeServiceTempRepo(t *testing.T) string {

@@ -60,6 +60,9 @@ type AnalyzeOptions struct {
 	GitHubRunID int64
 	// GitHubToken authenticates provider-backed GitHub Actions delta resolution.
 	GitHubToken string
+	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
+	// records used to compute FPC and PHI. When empty, only TSS is computed.
+	MetricsHistoryFile string
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

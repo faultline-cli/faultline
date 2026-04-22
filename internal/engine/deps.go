@@ -15,6 +15,7 @@ type playbookCatalog interface {
 type historyRecorder interface {
 	CountSeen(failureID string) int
 	Record(result model.Result)
+	AllEntries() []historyEntry
 }
 
 type repoEnricher interface {
@@ -33,6 +34,10 @@ func (defaultHistoryRecorder) CountSeen(failureID string) int {
 
 func (defaultHistoryRecorder) Record(result model.Result) {
 	recordResult(result)
+}
+
+func (defaultHistoryRecorder) AllEntries() []historyEntry {
+	return allHistoryEntries()
 }
 
 type defaultSourceLoader struct{}
