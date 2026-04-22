@@ -1,0 +1,99 @@
+id: python-externally-managed
+title: Python externally managed environment error
+category: build
+severity: high
+base_score: 1.0
+tags: [python, pip, pep668, venv, environment, build]
+stage_hints: [build]
+summary: |-
+  pip refused to install packages because Python 3.11+ on Ubuntu 24.04 or similar distributions enforces PEP 668, marking the system Python as externally managed. Direct pip installs are blocked to prevent conflicts with system packages.
+diagnosis: |-
+  ## Diagnosis
+
+  Python 3.11+ on Ubuntu 24.04, Fedora 38+, and other recent distributions enforce PEP 668, which marks the system Python as externally managed. Running `pip install` directly on the system Python fails with:
+
+  - `error: externally managed environment`
+  - `This environment is externally managed`
+  - `PEP 668: Marked as externally managed`
+  - `Remove the system-wide pip installation first` or equivalent.
+fix: |-
+  ## Fix steps
+
+  1. Use a virtual environment instead of system Python:
+
+     ```bash
+     python -m venv .venv
+     source .venv/bin/activate
+     pip install -r requirements.txt
+     ```
+
+  2. Or use `--break-system-packages` flag (not recommended for production):
+
+     ```bash
+     pip install --break-system-packages -r requirements.txt
+     ```
+
+  3. In GitHub Actions, use the `ubuntu-latest` setup-python action which sets up pyenv:
+
+     ```yaml
+     - uses: actions/setup-python@v5
+       with:
+         python-version: '3.12'
+     ```
+
+  4. For Docker containers, use the official Python slim images or create a venv in the Dockerfile:
+
+     ```dockerfile
+     FROM python:3.12-slim
+     RUN python -m venv /opt/venv
+     ENV PATH="/opt/venv/bin:$PATH"
+     ```
+
+  5. Add `EXTERNALLY_MANAGED` marker file in the project to suppress the warning (development only):
+
+     ```bash
+     touch /opt/venv/EXTERNALLY_MANAGED
+     ```
+validation: |-
+  ## Validation
+
+  - `pip install -r requirements.txt` completes successfully without PEP 668 errors.
+  - `pip list` shows the expected installed packages.
+  - The application imports and runs without import errors.
+match:
+  any:
+    - "externally managed environment"
+    - "PEP 668"
+    - "externally managed"
+    - "Marked as externally managed"
+    - "this environment is externally managed"
+    - "remove.*system-wide pip"
+    - "break-system-packages"
+  none:
+    - "ModuleNotFoundError"
+    - "ImportError"
+    - "No module named"
+    - "THESE PACKAGES DO NOT MATCH"
+    - "Hash mismatch"
+workflow:
+  likely_files:
+    - requirements.txt
+    - pyproject.toml
+    - setup.py
+    - Dockerfile
+  local_repro:
+    - python --version
+    - pip list
+  verify:
+    - pip list | grep -E "^(package-name|Requirements)"
+why_it_matters: |-
+  ## Why it matters
+
+  PEP 668 is now enforced by default on Ubuntu 24.04 and Fedora 38+ runners. CI jobs that previously succeeded on Ubuntu 22.04 now fail with a PEP 668 error when migrating to `ubuntu-latest`. This is a common source of CI regressions after runner image upgrades.
+
+  ## Prevention
+
+  - Always use a virtual environment in CI, even for simple scripts.
+  - Pin the Ubuntu runner version in CI configs until the application is updated to use venvs.
+  - Use the official Python Docker images which handle environments correctly.
+  - Test locally with the same Python version and platform as CI.

@@ -1,259 +1,200 @@
 # Faultline Product Spec
 
-> **AGENTS: Do not derive architecture, module boundaries, or data models from this document.**
-> For implementation decisions, [`SYSTEM.md`](../../SYSTEM.md) is the single authoritative source.
-> This document describes product positioning and user-facing behavior only.
+> **AGENTS: Do not derive architecture, module boundaries, or internal data models from this document.**
+> [`SYSTEM.md`](../../SYSTEM.md) and the shipped CLI help remain authoritative for implementation details.
+> This document describes the current product shape and user-facing behavior.
 
 ## Positioning
 
-### Faultline
+Faultline is a deterministic CLI for CI failure diagnosis.
 
-Run it when CI fails. Fix it in seconds.
+Run it against a failing build log and it returns:
 
-### Core Value
+- the most likely failure class
+- evidence pulled directly from the log
+- checked-in diagnosis and fix guidance
+- stable text, markdown, JSON, and workflow artifacts for humans and automation
 
-- Deterministic CI failure detection
-- Actionable fixes
-- Works locally and in CI through Docker
-- Agent-compatible JSON output
+The product stays deliberately narrow:
 
-## Target User
+- local-first by default
+- deterministic matching remains authoritative
+- optional ranking assistance is additive, never a second matcher
+- no ML or LLM dependence in shipped product logic
 
-- IC engineers
-- Startup backend developers
-- Indie hackers
-- Teams using GitHub Actions, GitLab CI/CD, and similar systems
+## Default User Story
 
-## Core Use Case
+The release boundary is intentionally small:
 
-CI fails, the user runs Faultline against the log, and Faultline returns the most likely root cause plus an immediate fix.
+1. Run `faultline analyze <logfile>` on a failing CI log.
+2. Review the evidence-backed top diagnosis.
+3. Run `faultline workflow <logfile>` when you want a deterministic follow-up artifact.
+4. Use `faultline list`, `faultline explain <id>`, or `faultline fix <logfile>` to inspect the catalog or narrow to remediation.
 
-## V1 Feature Set
+That boundary is documented in [`docs/release-boundary.md`](../release-boundary.md) and should remain the default narrative in user-facing docs.
 
-### 1. Log Analysis
+## Command Surface
 
-Commands:
-
-```bash
-faultline analyze build.log
-cat build.log | faultline analyze
-```
-
-Text output:
+### Ship-ready core
 
 ```text
-Detected: Docker registry authentication failure (67%)
-Category: auth
-
-Cause:
-The CI job could not authenticate with the container registry before pulling or pushing an image.
-
-Fix:
-1. Verify the registry username, token, or password configured in CI.
-2. Ensure the registry login step runs before any docker pull or docker push command.
-3. Confirm the token has the correct repository scope for the image being accessed.
-
-Evidence:
-- pull access denied
-- Error response from daemon: authentication required
-```
-
-### 2. JSON Output
-
-Command:
-
-```bash
-faultline analyze build.log --json
-```
-
-Schema:
-
-```json
-{
-  "matched": true,
-  "failure_id": "docker-auth",
-  "title": "Docker registry authentication failure",
-  "category": "auth",
-  "confidence": 0.67,
-  "cause": "The CI job could not authenticate with the container registry before pulling or pushing an image.",
-  "fix": [
-    "Verify the registry username, token, or password configured in CI.",
-    "Ensure the registry login step runs before any docker pull or docker push command.",
-    "Confirm the token has the correct repository scope for the image being accessed."
-  ],
-  "evidence": [
-    "pull access denied",
-    "Error response from daemon: authentication required"
-  ]
-}
-```
-
-No-match schema:
-
-```json
-{
-  "matched": false,
-  "message": "No known failure pattern matched."
-}
-```
-
-### 3. Playbook System
-
-- YAML-based
-- Deterministic matching
-- Broad bundled coverage for high-frequency CI failures across common stacks, with additional packs reserved for deeper provider-specific and advanced workflows
-
-### 4. CLI Utilities
-
-```bash
+faultline analyze [file]
+faultline workflow [file]
 faultline list
-faultline explain docker-auth
+faultline explain <id>
+faultline fix [file]
 ```
 
-### 5. CI Integration
-
-Docker-first usage:
-
-```bash
-docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/build.log
-```
-
-Example GitHub Actions step:
-
-```yaml
-- name: Faultline analysis
-  if: failure()
-  run: |
-    docker run --rm -v ${{ github.workspace }}:/workspace faultline analyze /workspace/build.log
-```
-
-## System Architecture
-
-### High-Level Flow
+### Supported companion surfaces
 
 ```text
-[CLI]
-   ↓
-[Analyzer Engine]
-   ↓
-[Playbook Loader]
-   ↓
-[Matcher]
-   ↓
-[Scoring + Ranking]
-   ↓
-[Formatter (text/json)]
+faultline trace [file]
+faultline replay <analysis.json>
+faultline compare <left-analysis.json> <right-analysis.json>
+faultline inspect [path]
+faultline guard [path]
+faultline packs install <dir>
+faultline packs list
 ```
 
-### Modules
+### Hidden maintainer workflows
 
-1. CLI layer
-2. Engine layer
-3. Playbook layer
-4. Matcher
-5. Output layer
+The repository also includes hidden `faultline fixtures ...` workflows and a hidden scaffold helper for corpus curation and playbook authoring. These are supported for maintainers, but they are not part of the first-run product story.
 
-### Module Responsibilities
+## Core Behaviors
 
-- CLI layer: command parsing, flags, input and output handling
-- Engine layer: log ingestion, normalization, orchestration
-- Playbook layer: YAML loading, validation, structure
-- Matcher: deterministic pattern matching, evidence extraction, scoring
-- Output layer: text formatting and JSON serialization
+### 1. Log diagnosis
 
-## Data Model
+`faultline analyze` accepts a file path or stdin and returns deterministic ranked results.
 
-### Playbook
+Current user-facing characteristics:
 
-```go
-type Playbook struct {
-    ID       string
-    Title    string
-    Category string
+- terminal output supports `quick` and `detailed` modes
+- markdown output is available for CI summaries and docs snapshots
+- JSON output is stable and automation-friendly
+- focused views are supported through `--view summary|evidence|fix|raw|trace`
+- ranked drill-down is supported through `--top`, `--select`, `--trace`, and `--trace-playbook`
+- `--git` can enrich the diagnosis with recent local repository context
+- `--bayes` can rerank already-matched candidates additively
 
-    Match struct {
-        Any []string
-    }
+### 2. Deterministic workflow handoff
 
-    Explanation string
-    Fix         []string
-}
-```
+`faultline workflow` turns the top diagnosis into a follow-up plan.
 
-### Result
+Current modes:
 
-```go
-type Result struct {
-    Playbook   Playbook
-    Evidence   []string
-    Score      int
-    Confidence float64
-}
-```
+- `--mode local` for a practical local triage checklist
+- `--mode agent` for a structured agent handoff artifact
 
-### JSON Result
+The JSON workflow artifact uses `workflow.v1` and may include additive hints such as `ranking_hints`, `delta_hints`, `metrics_hints`, and `policy_hints` when the underlying analysis contains that context.
 
-```go
-type JSONResult struct {
-    Matched    bool     `json:"matched"`
-    FailureID  string   `json:"failure_id,omitempty"`
-    Title      string   `json:"title,omitempty"`
-    Category   string   `json:"category,omitempty"`
-    Confidence float64  `json:"confidence,omitempty"`
-    Cause      string   `json:"cause,omitempty"`
-    Fix        []string `json:"fix,omitempty"`
-    Evidence   []string `json:"evidence,omitempty"`
-    Message    string   `json:"message,omitempty"`
-}
-```
+### 3. Catalog inspection
 
-### Optional Future Context
+`faultline list` and `faultline explain <id>` expose the checked-in playbook catalog.
 
-```go
-type AnalysisContext struct {
-    Source    string
-    Timestamp int64
-}
-```
+The catalog is authored in YAML, stored in version control, and loaded deterministically from the bundled pack plus any explicitly configured extra packs.
 
-## File Structure
+### 4. Narrow remediation view
 
-```text
-faultline/
-  cmd/
-    main.go
-  internal/
-    engine/
-    matcher/
-    loader/
-    output/
-  playbooks/
-    *.yaml
-  Dockerfile
-  README.md
-```
+`faultline fix` prints the remediation guidance for the top diagnosis without the rest of the analysis view.
 
-## Packaging
+### 5. Companion inspection surfaces
 
-Primary bundle:
+These remain important, but they are not the first-run story:
 
-- CLI binary
-- bundled playbooks
-- docs
-- Docker instructions
+- `trace` for rule-by-rule evaluation
+- `replay` for deterministic re-rendering of saved analysis artifacts
+- `compare` for deterministic diffing of two saved analysis artifacts
+- `inspect` for source-detector findings in a repository tree
+- `guard` for quiet high-confidence prevention findings on changed files
+- `packs` for optional playbook-pack composition
 
-Delivery format:
+## Artifact Contracts
 
-- tar.gz archive
+### Analysis JSON
 
-Indicative price:
+`faultline analyze --json` and `faultline inspect --json` emit a stable additive analysis object.
 
-- $19 to $29
+At a high level, the current object includes:
 
-## Messaging
+- top-level `matched`
+- top-level `source`, `fingerprint`, and `context`
+- ranked `results`
+- optional `input_hash` and `output_hash`
+- optional `pack_provenance`
+- optional `metrics` and `policy`
 
-### Core hook
+Each ranked result currently carries fields such as:
 
-CI failed? Run this. Get the fix instantly.
+- `rank`
+- `failure_id`
+- `title`
+- `category`
+- `severity`
+- `detector`
+- `score`
+- `confidence`
+- `summary`
+- `diagnosis`
+- `why_it_matters`
+- `fix`
+- `validation`
+- `evidence`
+- `evidence_by`
+- `breakdown`
+- optional recurrence fields including `signature_hash`, `occurrence_count`, `first_seen_at`, and `last_seen_at`
 
-### Secondary message
+Absent additive fields should stay absent rather than being populated with placeholder values.
+
+### Workflow JSON
+
+`faultline workflow --json` emits a deterministic `workflow.v1` object.
+
+The current schema includes fields such as:
+
+- `schema_version`
+- `mode`
+- `failure_id`
+- `title`
+- `source`
+- `context`
+- `evidence`
+- `files`
+- `local_repro`
+- `verify`
+- `steps`
+- `agent_prompt` when `--mode agent`
+
+Additive workflow hints remain allowed, but silent renames or removals of established fields should be treated as breaking changes.
+
+## Playbook Model
+
+Faultline playbooks separate deterministic matching from operator-facing guidance:
+
+- structured fields drive matching, scoring, workflow derivation, and detector behavior
+- markdown-capable fields such as `summary`, `diagnosis`, `fix`, and `validation` carry the human guidance
+
+The current repository supports both `log` and `source` detectors. `inspect` and `guard` are the main public source-detector surfaces.
+
+## Distribution And Packaging
+
+The product ships as:
+
+- a standalone CLI binary
+- bundled playbooks under `playbooks/bundled/`
+- release tarballs
+- a Docker image build path
+
+The installer script wraps the binary with `FAULTLINE_PLAYBOOK_DIR` pointing at the bundled playbooks under the install prefix.
+
+## Product Boundaries
+
+Faultline is intentionally not:
+
+- a hosted CI platform
+- a dashboard product
+- a PR-comment bot by default
+- a generic automation engine
+- a fuzzy or semantic log analysis tool
+
+Provider-backed delta, hooks, and maintainer authoring helpers exist behind explicit or hidden paths, but they do not define the default product story.

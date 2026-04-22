@@ -1,0 +1,32 @@
+id: github-actions-upload-artifact-92-s2-8a8061d8ae23feb2
+title: Can not upload a directory that is a symlink to a directory
+fixture_class: real
+normalized_log: |-
+    - name: "Build"
+    run: nix-build -A website
+    - name: "Upload artifact to github"
+    uses: actions/upload-artifact@v2
+    with:
+    name: website
+    path: result/dummy-directory/**/*
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/92
+    repository: actions/upload-artifact
+    issue_number: 92
+    title: Can not upload a directory that is a symlink to a directory
+    labels:
+        - bug
+    author: arianvp
+    snippet: 2
+    fetched_at: "2026-04-22T09:57:33Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T11:31:32Z"
+fingerprint: 8a8061d8ae23feb2

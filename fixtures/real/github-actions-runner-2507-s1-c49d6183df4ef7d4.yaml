@@ -1,0 +1,26 @@
+id: github-actions-runner-2507-s1-c49d6183df4ef7d4
+title: Self hosted runner reports access error during registration; needs view permissions
+fixture_class: real
+normalized_log: '> Most of the time, it works great, but occasionally, I get an error during runner registration with the message: "An error occurred: Access denied. System:ServiceIdentity;DDDDDDDD-DDDD-DDDD-DDDD-DDDDDDDDDDDD needs View permissions to perform the action."'
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/2507
+    repository: actions/runner
+    issue_number: 2507
+    comment_id: "3160903492"
+    title: Self hosted runner reports access error during registration; needs view permissions
+    labels:
+        - bug
+    author: weiw05
+    snippet: 1
+    fetched_at: "2026-04-22T10:00:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T11:31:32Z"
+fingerprint: c49d6183df4ef7d4

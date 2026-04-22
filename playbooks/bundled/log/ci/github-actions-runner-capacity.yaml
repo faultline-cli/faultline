@@ -1,0 +1,60 @@
+id: github-actions-runner-capacity
+title: GitHub Actions runner capacity or queue timeout
+category: ci
+severity: medium
+base_score: 0.9
+tags: [github-actions, runner, capacity, queue, timeout, hosted]
+stage_hints: [build, test, deploy]
+summary: |-
+  The GitHub Actions job waited too long to be picked up by a runner, or the runner became unresponsive mid-job. The workflow was canceled due to the capacity or timeout condition.
+diagnosis: |-
+  ## Diagnosis
+
+  The GitHub Actions job waited too long to be picked up by a runner, or the runner became unresponsive mid-job. The workflow was canceled due to the capacity or timeout condition.
+fix: |-
+  ## Fix steps
+
+  1. Re-run the failed jobs: transient capacity issues resolve as runners free up.
+  2. For self-hosted runners: verify the runner is registered and healthy in Settings → Actions → Runners.
+  3. If jobs regularly queue: increase the runner count by adding more self-hosted runners or upgrading the GitHub plan for additional hosted runner seats.
+  4. If the workflow timeout was reached: increase `timeout-minutes` at the job or step level, or split long jobs into shorter parallel steps.
+  5. Check runner labels: ensure `runs-on` labels match a valid registered runner label exactly.
+validation: |-
+  ## Validation
+
+  - Re-run the local reproduction command after the fix.
+  - Check GitHub Settings → Actions → Runners for registered runner health
+match:
+  any:
+    - "All runners that can run this job are busy"
+    - "Waiting for a runner to pick up this job"
+    - "No runner matching the labels"
+    - "runner was lost"
+    - "The runner has received a shutdown signal"
+    - "runner.*disconnected"
+    - "Job was canceled because no runners matched"
+    - "No available runner"
+    - "exceeded the maximum workflow run time"
+    - "runner.*unresponsive"
+    - "SIGTERM.*runner"
+  none:
+    - "GitLab"
+    - "Jenkins"
+    - "CircleCI"
+    - "Buildkite"
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - "Check GitHub Settings → Actions → Runners for registered runner health"
+why_it_matters: |-
+  ## Why it matters
+
+  GitHub-hosted runners have a finite pool per organization. During peak workload or following a large merge event, jobs queue and may exceed the workflow or job timeout before a runner becomes available. For self-hosted runners, the runner process or the host can be lost (preempted, OOM-killed, or the runner agent unregistered). Jobs requiring specific runner labels with no registered runners immediately cancel.
+
+  ## Prevention
+
+  - Set explicit `timeout-minutes` on every job and step to fail fast rather than hanging indefinitely.
+  - Use autoscaling for self-hosted runners (e.g., `actions-runner-controller` on Kubernetes or ephemeral EC2 runners).
+  - Monitor the runner queue depth and alert when jobs wait longer than a threshold.

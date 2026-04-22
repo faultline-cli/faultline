@@ -290,7 +290,7 @@ func isCIConfigFile(name string) bool {
 	name = filepath.ToSlash(name)
 	base := filepath.Base(name)
 	// Paths that begin with known CI directories.
-	for _, prefix := range []string{".github/", ".circleci/", ".gitlab"} {
+	for _, prefix := range []string{".github/", ".circleci/", ".gitlab", ".buildkite/", ".semaphore/", ".tekton/"} {
 		if strings.HasPrefix(name, prefix) {
 			return true
 		}
@@ -298,7 +298,8 @@ func isCIConfigFile(name string) bool {
 	// Exact-name matches.
 	switch base {
 	case "Makefile", "Jenkinsfile", "azure-pipelines.yml", "bitbucket-pipelines.yml",
-		".gitlab-ci.yml":
+		".gitlab-ci.yml", ".drone.yml", ".travis.yml", ".woodpecker.yml",
+		"appveyor.yml", "bitrise.yml", "buildspec.yml", "cloudbuild.yaml", "cloudbuild.yml":
 		return true
 	}
 	return false

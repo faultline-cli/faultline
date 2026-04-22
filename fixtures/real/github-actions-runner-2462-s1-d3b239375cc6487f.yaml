@@ -1,0 +1,25 @@
+id: github-actions-runner-2462-s1-d3b239375cc6487f
+title: get the error "the operation was canceled" frequently
+fixture_class: real
+normalized_log: it happens in our enterprise repository.we use testcontainer to launch up several docker container as test environment, and it works normal in the past year, recently I found this errorr sometimes and I know it becuase of the application out of memory.
+expectation:
+    expected_playbook: oom-killed
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/2462
+    repository: actions/runner
+    issue_number: 2462
+    title: get the error "the operation was canceled" frequently
+    labels:
+        - bug
+    author: taojintianxia
+    snippet: 1
+    fetched_at: "2026-04-22T09:54:56Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T11:31:32Z"
+fingerprint: d3b239375cc6487f

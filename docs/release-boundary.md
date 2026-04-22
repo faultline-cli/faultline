@@ -35,10 +35,10 @@ These are supported, but they are not the first-run story. Docs and help text sh
 
 ### Gate Behind Flag
 
-- provider-backed GitHub Actions delta via `--delta-provider github-actions`
+- provider-backed GitHub Actions and GitLab CI delta via `--delta-provider github-actions|gitlab-ci`
 - constrained playbook hooks via hidden `--hooks <mode>`
 
-This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1`. It is intentionally excluded from the default help surface and release narrative until it has release-grade coverage equivalent to the core CLI flow.
+This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1` (preferred; legacy `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1` is still accepted). It is intentionally excluded from the default help surface and release narrative until it has release-grade coverage equivalent to the core CLI flow.
 
 Hooks are also intentionally hidden in the current release. They extend
 playbooks through typed, policy-gated local checks, but they are not part of

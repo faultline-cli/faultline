@@ -1,0 +1,90 @@
+id: jenkins-agent-offline
+title: Jenkins build agent went offline during job
+category: ci
+severity: critical
+base_score: 1.0
+tags: [jenkins, agent, offline, ci, connection]
+stage_hints: [build, test, deploy]
+summary: |-
+  The Jenkins build agent disconnected or went offline while running a job. The build was lost mid-execution and Jenkins cannot continue until the agent reconnects or the job is rescheduled on another agent.
+diagnosis: |-
+  ## Diagnosis
+
+  Jenkins distributes work to agents (nodes). When an agent loses its connection to the controller during a build:
+
+  - The build log shows `Agent [name] is offline` or `Connection was broken`.
+  - The build status shows as aborted or with a non-zero exit.
+  - `SSH Connection timeout`, `Remoting connection closed`, or `java.io.IOException: remoting` appear in the log.
+  - Docker-based agents may exit because the container or sidecar was killed by the container runtime.
+  - Network interruptions, JVM crashes, OOM kills on the agent, or resource limit changes on the agent host cause disconnects.
+fix: |-
+  ## Fix steps
+
+  1. Check Jenkins Controller → Manage Jenkins → Nodes → [agent name] for the last disconnect reason.
+
+  2. Review the agent log for the disconnect reason:
+
+     ```bash
+     journalctl -u jenkins-agent -n 100
+     # or check the remoting.log on the agent host
+     ```
+
+  3. If the agent was OOM-killed, increase the JVM heap on the agent or reduce concurrent job parallelism.
+
+  4. For SSH agents, verify the SSH key is still valid and the controller can reach the agent host:
+
+     ```bash
+     ssh -i ~/.ssh/jenkins_key user@agent-host "java -version"
+     ```
+
+  5. For Docker-based agents (Kubernetes or Docker plugin), confirm the pod/container has adequate resources and a stable network path to the controller.
+
+  6. Retry the build after the agent reconnects. If it fails repeatedly, investigate the agent host's resource and network health.
+validation: |-
+  ## Validation
+
+  - The agent shows as online in Jenkins → Manage Jenkins → Nodes.
+  - A re-triggered build completes without an agent disconnect error.
+match:
+  any:
+    - "Agent.*is offline"
+    - "Connection was broken"
+    - "Remoting connection closed"
+    - "Channel is already closed"
+    - "java.io.IOException: remoting"
+    - "No such slave/agent"
+    - "Node .* was taken offline"
+    - "SSH Connection timeout"
+    - "agent went offline"
+    - "build agent went offline"
+    - "jenkins.remoting.Channel"
+    - "permanently offline"
+    - "slave went offline"
+    - "jenkins.*disconnected"
+    - "jenkins.*lost communication"
+    - "Jenkins agent.*offline"
+  none:
+    - "Job's timeout exceeded"
+    - "build timed out"
+    - "ERROR: script returned exit code"
+    - "FATAL: null"
+    - "no more agents can be allocated"
+workflow:
+  likely_files:
+    - Jenkinsfile
+  local_repro:
+    - "curl -s http://jenkins:8080/computer/api/json | python3 -m json.tool"
+  verify:
+    - "curl -s http://jenkins:8080/computer/api/json | python3 -m json.tool"
+why_it_matters: |-
+  ## Why it matters
+
+  Jenkins agent disconnections cause immediate job loss — there is no mid-build checkpoint. Flapping agents can trigger cascading failures across all jobs routed to that agent, stopping deployment pipelines without a clear application error.
+
+  ## Prevention
+
+  - Monitor agent JVM memory and GC pressure; set `-Xmx` limits that leave headroom on the host.
+  - Configure a reconnect retry window in Jenkins agent settings.
+  - Use pod templates with resource requests and limits when running agents in Kubernetes.
+  - Route critical pipelines to labeled, dedicated agents so a single flapping agent cannot block unrelated work.
+  - Set up agent health pings and alert on repeated disconnects before they affect user-visible pipelines.

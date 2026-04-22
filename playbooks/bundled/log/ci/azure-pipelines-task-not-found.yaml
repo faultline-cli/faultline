@@ -1,0 +1,75 @@
+id: azure-pipelines-task-not-found
+title: Azure Pipelines task version not found or deprecated
+category: ci
+severity: medium
+base_score: 0.9
+tags: [azure-pipelines, azure-devops, task, version, deprecated, ci]
+stage_hints: [build, deploy, test]
+summary: |-
+  An Azure Pipelines job could not start because a pipeline task references a version that has been deprecated, removed, or does not exist in the organization's task catalog. The pipeline is blocked before any work runs.
+diagnosis: |-
+  ## Diagnosis
+
+  Azure Pipelines tasks are versioned (e.g., `AzureCLI@2`, `DotNetCoreCLI@3`). When a referenced version is unavailable:
+
+  - The run fails with `Task '[name]' with version '...' not found` or `Task version is not available`.
+  - Microsoft deprecates old task major versions and eventually removes them.
+  - A self-hosted agent pool may not have the agent software that ships the required task version.
+  - A custom or marketplace task may have been removed from the organization's extension catalog.
+fix: |-
+  ## Fix steps
+
+  1. Update the task to the current major version in `azure-pipelines.yml`:
+
+     ```yaml
+     # Before (deprecated)
+     - task: AzureCLI@1
+
+     # After (current)
+     - task: AzureCLI@2
+     ```
+
+  2. Check the Azure Pipelines task reference documentation for the current supported version of the task.
+
+  3. For marketplace tasks, go to Organization Settings → Extensions and verify the extension is still installed and enabled.
+
+  4. For self-hosted agent pools, update the agent to a version that ships the required built-in task.
+
+  5. Review Microsoft's deprecation announcements for the task family — some tasks require migration to a new task name, not just a version bump.
+validation: |-
+  ## Validation
+
+  - The pipeline run starts and the previously failing task step begins execution.
+  - No `Task not found` or `version is not available` message appears.
+match:
+  any:
+    - "Task not found"
+    - "task.*not found"
+    - "Task version is not available"
+    - "version .* is not available"
+    - "deprecated task"
+    - "Task '.*' is not recognized"
+    - "Could not find task"
+    - "the task is missing"
+    - "This task has been deprecated"
+    - "task does not exist"
+  none:
+    - "service connection.*not found"
+    - "AADSTS"
+    - "Failed to authenticate"
+    - "No space left on device"
+workflow:
+  likely_files:
+    - azure-pipelines.yml
+    - .azuredevops/pipelines/*.yml
+why_it_matters: |-
+  ## Why it matters
+
+  Azure Pipelines removes deprecated task versions on a rolling schedule. Pipelines that worked for months or years can suddenly fail when a task version they reference is retired without explicit migration. Because the failure happens at pipeline startup, no work runs at all.
+
+  ## Prevention
+
+  - Subscribe to Azure DevOps deprecation notices and track pipeline task versions in source control.
+  - Pin to a task version that has a documented support timeline.
+  - Review pipelines that use task versions flagged as deprecated in PR validation runs.
+  - Document which task versions are in use and include a task version review in your quarterly maintenance cycle.

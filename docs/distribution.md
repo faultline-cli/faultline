@@ -28,7 +28,7 @@ faultline workflow ci.log --json --mode agent
 If you need a pinned version instead of the latest release:
 
 ```bash
-VERSION=v0.3.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+VERSION=v0.3.1 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
 faultline analyze ci.log
 ```
 
@@ -54,7 +54,7 @@ go build -o faultline ./cmd
 Release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
-VERSION=v0.3.0
+VERSION=v0.3.1
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
@@ -63,7 +63,7 @@ cd "faultline_${VERSION}_linux_amd64"
 
 The installer places bundled playbooks under the install prefix and configures `FAULTLINE_PLAYBOOK_DIR` for the wrapper it places on `PATH`.
 
-For the provider-specific wrapper contract, see `docs/github-action-contract.md`.
+For provider-specific wrapper contracts, see `docs/github-action-contract.md` and `docs/gitlab-ci-contract.md`.
 
 ## Docker Distribution
 
@@ -87,6 +87,12 @@ Public release tarballs should contain:
 
 Archives are written to `dist/releases/<version>/` by `make release-snapshot VERSION=<tag>`.
 
+The current release snapshot script builds archives for:
+
+- `darwin/amd64`
+- `darwin/arm64`
+- `linux/amd64`
+
 ## Release Workflow
 
 Tagged releases should continue to run this sequence:
@@ -96,4 +102,3 @@ Tagged releases should continue to run this sequence:
 3. publish release archives to the GitHub release created from that tag
 
 `make release-check` already includes `make test`, `make fixture-check`, `make review`, `make release-snapshot`, and `make smoke-release`.
-

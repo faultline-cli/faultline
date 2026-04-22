@@ -59,6 +59,18 @@ type Options struct {
 	GitHubRunID int64
 	// GitHubToken authenticates GitHub Actions delta API requests.
 	GitHubToken string
+	// GitLabProject identifies the GitLab project for delta resolution.
+	GitLabProject string
+	// GitLabBranch identifies the GitLab branch or ref for delta resolution.
+	GitLabBranch string
+	// GitLabPipelineID identifies the current GitLab pipeline.
+	GitLabPipelineID int64
+	// GitLabJobID identifies the current GitLab job.
+	GitLabJobID int64
+	// GitLabToken authenticates GitLab CI delta API requests.
+	GitLabToken string
+	// GitLabAPIBaseURL overrides the GitLab API v4 base URL.
+	GitLabAPIBaseURL string
 	// MetricsHistoryFile is retained for caller compatibility; metrics are now
 	// computed by the app layer instead of the engine.
 	MetricsHistoryFile string
@@ -521,6 +533,14 @@ func (e *Engine) loadProviderDelta(currentLog string) *scoring.RepoState {
 			Branch:     e.opts.GitHubBranch,
 			RunID:      e.opts.GitHubRunID,
 			Token:      e.opts.GitHubToken,
+		},
+		GitLab: enginedelta.GitLabOptions{
+			Project:    e.opts.GitLabProject,
+			Branch:     e.opts.GitLabBranch,
+			PipelineID: e.opts.GitLabPipelineID,
+			JobID:      e.opts.GitLabJobID,
+			Token:      e.opts.GitLabToken,
+			APIBaseURL: e.opts.GitLabAPIBaseURL,
 		},
 	}, currentLog)
 	if err != nil || snapshot == nil {

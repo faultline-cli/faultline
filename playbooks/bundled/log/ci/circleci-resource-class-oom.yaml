@@ -1,0 +1,99 @@
+id: circleci-resource-class-oom
+title: CircleCI job killed — resource class memory limit exceeded
+category: ci
+severity: critical
+base_score: 1.0
+tags: [circleci, oom, memory, resource-class, ci]
+stage_hints: [build, test]
+summary: |-
+  The CircleCI job was killed because it exceeded the memory limit of the selected resource class. The process received SIGKILL or the container was OOM-killed by the kernel, and the job exited non-zero without a clear user-visible error.
+diagnosis: |-
+  ## Diagnosis
+
+  CircleCI jobs run in containers with a fixed memory ceiling determined by the resource class. When the job exceeds that ceiling, the kernel OOM killer terminates one or more processes. The failure typically appears as:
+
+  - A process exits with signal 9 (SIGKILL) or a non-zero code with no error message.
+  - The log ends abruptly or shows `Killed` without a stack trace.
+  - CircleCI emits `exit code: 137` (128 + SIGKILL).
+  - A test runner or build tool exits with `OOM Killer` or `Out of memory: Kill process`.
+
+  Common causes include: large in-memory test suites with too much parallelism, Node.js builds without a `--max-old-space-size` flag, Docker-in-Docker image pulls inside small containers, or Maven/Gradle builds that default to large JVM heap sizes.
+fix: |-
+  ## Fix steps
+
+  1. Upgrade the resource class in `.circleci/config.yml`:
+
+     ```yaml
+     jobs:
+       build:
+         resource_class: medium+   # or large, xlarge, 2xlarge
+     ```
+
+  2. For Node.js builds, cap the V8 heap explicitly:
+
+     ```yaml
+     - run: NODE_OPTIONS=--max-old-space-size=2048 npm run build
+     ```
+
+  3. For JVM-based builds (Maven, Gradle), set a bounded heap:
+
+     ```bash
+     MAVEN_OPTS="-Xmx1g" mvn package
+     GRADLE_OPTS="-Xmx1g" gradle build
+     ```
+
+  4. Reduce test parallelism so each worker uses less memory simultaneously:
+
+     ```yaml
+     parallelism: 2    # lower from 4 or 8
+     ```
+
+  5. Split long test suites across separate jobs and use CircleCI's test splitting to keep each job within budget.
+
+  6. Add a memory monitoring step before the failing command:
+
+     ```bash
+     free -h
+     ```
+validation: |-
+  ## Validation
+
+  - Re-run the job and confirm no `exit code: 137`, `Killed`, or OOM message appears.
+  - Verify `free -h` at job start shows adequate available memory for the workload.
+match:
+  any:
+    - "exit code: 137"
+    - "Out of memory: Kill process"
+    - "OOM killer"
+    - "Killed"
+    - "Process killed"
+    - "exit status 137"
+    - "SIGKILL"
+    - "java.lang.OutOfMemoryError"
+    - "JavaScript heap out of memory"
+    - "Fatal error: CALL_AND_RETRY_LAST Allocation failed"
+    - "could not be resolved because: out of memory"
+  none:
+    - "No space left on device"
+    - "disk quota exceeded"
+    - "ENOSPC"
+    - "test timed out"
+    - "go test -timeout"
+workflow:
+  likely_files:
+    - .circleci/config.yml
+  local_repro:
+    - free -h
+  verify:
+    - free -h
+why_it_matters: |-
+  ## Why it matters
+
+  CircleCI containers have hard memory ceilings per resource class. A job that exceeds the ceiling is killed without a user-friendly error message. The exit code 137 is the only reliable signal that memory — not a code bug — caused the failure.
+
+  ## Prevention
+
+  - Choose a resource class that provides headroom above the peak observed memory use.
+  - Set explicit memory caps for JVM and Node.js processes so they fail with a clear error instead of being killed silently.
+  - Use CircleCI's test splitting to distribute memory-heavy test suites across parallel containers.
+  - Monitor peak RSS in each job and set alerts when usage approaches the resource class limit.

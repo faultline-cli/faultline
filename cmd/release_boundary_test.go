@@ -29,6 +29,7 @@ func TestAnalyzeExperimentalDeltaRequiresExplicitOptIn(t *testing.T) {
 		t.Fatalf("abs playbook dir: %v", err)
 	}
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+	t.Setenv("FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA", "")
 	t.Setenv("FAULTLINE_EXPERIMENTAL_GITHUB_DELTA", "")
 
 	cmd := newRootCommand()
@@ -37,7 +38,7 @@ func TestAnalyzeExperimentalDeltaRequiresExplicitOptIn(t *testing.T) {
 	cmd.SetErr(new(bytes.Buffer))
 
 	err = cmd.Execute()
-	if err == nil || !strings.Contains(err.Error(), "FAULTLINE_EXPERIMENTAL_GITHUB_DELTA") {
+	if err == nil || !strings.Contains(err.Error(), "FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA") {
 		t.Fatalf("expected experimental opt-in error, got %v", err)
 	}
 }

@@ -20,10 +20,16 @@ func isRuntimeFile(base, file string) bool {
 
 func isCIFile(base, file string) bool {
 	switch base {
-	case ".gitlab-ci.yml", "jenkinsfile", "azure-pipelines.yml", "bitbucket-pipelines.yml":
+	case ".gitlab-ci.yml", ".drone.yml", ".travis.yml", ".woodpecker.yml",
+		"jenkinsfile", "azure-pipelines.yml", "bitbucket-pipelines.yml",
+		"appveyor.yml", "bitrise.yml", "buildspec.yml", "cloudbuild.yaml", "cloudbuild.yml":
 		return true
 	}
-	return strings.HasPrefix(file, ".github/workflows/") || strings.HasPrefix(file, ".circleci/")
+	return strings.HasPrefix(file, ".github/workflows/") ||
+		strings.HasPrefix(file, ".circleci/") ||
+		strings.HasPrefix(file, ".buildkite/") ||
+		strings.HasPrefix(file, ".semaphore/") ||
+		strings.HasPrefix(file, ".tekton/")
 }
 
 func isEnvironmentFile(base, file string) bool {

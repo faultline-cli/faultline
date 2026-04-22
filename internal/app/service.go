@@ -307,13 +307,29 @@ func (Service) Workflow(r io.Reader, source string, opts AnalyzeOptions, mode wo
 
 // Inspect scans a repository tree with source-detector playbooks.
 func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
+	changeSet := detectors.ChangeSet{}
+	if scanner, err := repo.NewScanner(root); err == nil {
+		if loaded, loadErr := repo.LoadWorktreeChangeSet(scanner); loadErr != nil {
+			return loadErr
+		} else {
+			absRoot, absErr := filepath.Abs(root)
+			if absErr != nil {
+				return absErr
+			}
+			prefix, relErr := filepath.Rel(scanner.Root, absRoot)
+			if relErr != nil {
+				return relErr
+			}
+			changeSet = repo.ChangeSetRelativeTo(loaded, prefix)
+		}
+	}
 	a, err := engine.New(engine.Options{
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
 		GitSince:         opts.GitSince,
 		RepoPath:         opts.RepoPath,
 		BayesEnabled:     opts.BayesEnabled,
-	}).AnalyzeRepository(root, detectors.ChangeSet{})
+	}).AnalyzeRepository(root, changeSet)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -383,6 +399,12 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string,
 		GitHubBranch:      opts.GitHubBranch,
 		GitHubRunID:       opts.GitHubRunID,
 		GitHubToken:       opts.GitHubToken,
+		GitLabProject:     opts.GitLabProject,
+		GitLabBranch:      opts.GitLabBranch,
+		GitLabPipelineID:  opts.GitLabPipelineID,
+		GitLabJobID:       opts.GitLabJobID,
+		GitLabToken:       opts.GitLabToken,
+		GitLabAPIBaseURL:  opts.GitLabAPIBaseURL,
 	}).AnalyzeReader(bytes.NewReader(data))
 	if a != nil {
 		a.Source = source

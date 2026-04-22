@@ -66,7 +66,10 @@ The output keeps the full evidence split for explainability:
 Source playbooks currently live under `playbooks/bundled/source/`. Use
 `faultline inspect .` to exercise the full source detector against a repository
 tree and `faultline guard .` when you only want quiet, high-confidence local
-prevention findings.
+prevention findings. When the inspected path lives inside a git worktree,
+`inspect` and `guard` also use the local diff when available so changed files
+and line-level edits can be scored as introduced or modified rather than only
+as legacy repository risk.
 
 ## Suppressions
 

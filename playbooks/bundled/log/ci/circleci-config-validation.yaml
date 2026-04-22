@@ -1,0 +1,80 @@
+id: circleci-config-validation
+title: CircleCI config.yml validation error
+category: ci
+severity: high
+base_score: 0.95
+tags: [circleci, config, yaml, validation, ci]
+stage_hints: [build, test, deploy]
+summary: |-
+  CircleCI rejected the `.circleci/config.yml` file because it contains a syntax error, references an undefined parameter or executor, or violates the CircleCI config schema. No jobs ran.
+diagnosis: |-
+  ## Diagnosis
+
+  CircleCI validates the config file before scheduling any jobs. When validation fails the pipeline is blocked immediately with an error such as:
+
+  - `Error: config compilation failed: ...`
+  - `Invalid config detected: ...`
+  - `was not accepted by the CircleCI API`
+  - An undefined anchor reference or YAML alias error.
+  - A required field (e.g., `working_directory`, `executor`, `docker`) is missing or mistyped.
+  - A version mismatch: `version: 2.1` features used in a `version: 2` file.
+fix: |-
+  ## Fix steps
+
+  1. Validate the config locally before pushing:
+
+     ```bash
+     circleci config validate .circleci/config.yml
+     ```
+
+  2. Fix any YAML syntax errors (indentation, missing colons, invalid anchors).
+
+  3. Ensure all referenced executors, commands, and orbs are declared in the same file or imported via the `orbs:` stanza.
+
+  4. Check that the `version:` key is `2.1` if you are using orbs, parameters, or reusable commands.
+
+  5. Remove or qualify any deprecated keys flagged in the validation output.
+
+  6. For orb-related errors, confirm the orb namespace and version exist at `circleci.com/developer/orbs`.
+validation: |-
+  ## Validation
+
+  - `circleci config validate .circleci/config.yml` exits 0 with no errors.
+  - The pipeline triggers and at least one job is scheduled.
+match:
+  any:
+    - "config compilation failed"
+    - "Invalid config detected"
+    - "config.yml is invalid"
+    - "was not accepted by the CircleCI API"
+    - "Error parsing config"
+    - "Configuration error"
+    - "value of type .* is not assignable to type"
+    - "Unknown executor"
+    - "Undefined parameter"
+    - "Validation failed"
+    - "error compiling config"
+    - "config is not valid"
+  none:
+    - "exit code: 137"
+    - "No space left on device"
+    - "Job's timeout exceeded"
+    - "secrets.* is not available"
+workflow:
+  likely_files:
+    - .circleci/config.yml
+  local_repro:
+    - circleci config validate .circleci/config.yml
+  verify:
+    - circleci config validate .circleci/config.yml
+why_it_matters: |-
+  ## Why it matters
+
+  A config validation error blocks the entire pipeline — no job runs, and the failure is reported at pipeline creation time rather than during a job step. Catching it locally before push using `circleci config validate` is faster than waiting for the CI system to reject it.
+
+  ## Prevention
+
+  - Run `circleci config validate` in a pre-commit hook or local gate script.
+  - Pin orb versions with `@x.y.z` references to prevent unexpected schema changes on re-run.
+  - Keep the config file linted with `yamllint` as a first-pass syntax check.
+  - Use the CircleCI VS Code extension to catch schema errors at edit time.

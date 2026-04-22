@@ -46,7 +46,7 @@ func TestIsRuntimeFile(t *testing.T) {
 		// path-based match (lowercase)
 		{"runtime.yaml", "config/runtime.yaml", true},
 		{"Dockerfile.prod", "build/dockerfile.prod", true}, // lowercase path matches
-		{"Dockerfile", "Dockerfile", false},                 // uppercase base, uppercase path — no match
+		{"Dockerfile", "Dockerfile", false},                // uppercase base, uppercase path — no match
 	}
 	for _, tc := range cases {
 		if got := isRuntimeFile(tc.base, tc.file); got != tc.want {
@@ -61,12 +61,22 @@ func TestIsCIFile(t *testing.T) {
 		want       bool
 	}{
 		{".gitlab-ci.yml", ".gitlab-ci.yml", true},
+		{".drone.yml", ".drone.yml", true},
+		{".travis.yml", ".travis.yml", true},
+		{".woodpecker.yml", ".woodpecker.yml", true},
 		{"jenkinsfile", "jenkinsfile", true},
 		{"azure-pipelines.yml", "azure-pipelines.yml", true},
 		{"bitbucket-pipelines.yml", "bitbucket-pipelines.yml", true},
+		{"appveyor.yml", "appveyor.yml", true},
+		{"bitrise.yml", "bitrise.yml", true},
+		{"buildspec.yml", "buildspec.yml", true},
+		{"cloudbuild.yaml", "cloudbuild.yaml", true},
 		// prefix-based
 		{"ci.yml", ".github/workflows/ci.yml", true},
 		{"config.yml", ".circleci/config.yml", true},
+		{"pipeline.yml", ".buildkite/pipeline.yml", true},
+		{"semaphore.yml", ".semaphore/semaphore.yml", true},
+		{"task.yaml", ".tekton/pipeline.yaml", true},
 		{"main.go", "main.go", false},
 	}
 	for _, tc := range cases {

@@ -5,12 +5,22 @@ import "faultline/internal/model"
 type Options struct {
 	Provider string
 	GitHub   GitHubOptions
+	GitLab   GitLabOptions
 }
 
 type GitHubOptions struct {
 	Repository string
 	Branch     string
 	RunID      int64
+	Token      string
+	APIBaseURL string
+}
+
+type GitLabOptions struct {
+	Project    string
+	Branch     string
+	PipelineID int64
+	JobID      int64
 	Token      string
 	APIBaseURL string
 }

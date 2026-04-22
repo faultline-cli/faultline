@@ -26,13 +26,27 @@ func NewResolver(client *http.Client) Resolver {
 }
 
 func (r Resolver) Resolve(ctx context.Context, opts Options, currentLog string) (*Snapshot, error) {
-	switch strings.TrimSpace(strings.ToLower(opts.Provider)) {
+	switch normalizeProvider(opts.Provider) {
 	case "", "none":
 		return nil, nil
 	case "github-actions":
 		return r.resolveGitHubActions(ctx, opts.GitHub, currentLog)
+	case "gitlab-ci":
+		return r.resolveGitLabCI(ctx, opts.GitLab, currentLog)
 	default:
 		return nil, fmt.Errorf("unsupported delta provider %q", opts.Provider)
+	}
+}
+
+func normalizeProvider(provider string) string {
+	provider = strings.TrimSpace(strings.ToLower(provider))
+	switch provider {
+	case "github", "github-actions", "gha":
+		return "github-actions"
+	case "gitlab", "gitlab-ci", "gitlab-cicd", "gl":
+		return "gitlab-ci"
+	default:
+		return provider
 	}
 }
 

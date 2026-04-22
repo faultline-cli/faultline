@@ -14,6 +14,7 @@ import (
 	"faultline/internal/workflow"
 )
 
+const experimentalProviderDeltaEnv = "FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA"
 const experimentalGitHubDeltaEnv = "FAULTLINE_EXPERIMENTAL_GITHUB_DELTA"
 const storeEnv = "FAULTLINE_STORE"
 
@@ -112,10 +113,13 @@ func validateExperimentalDeltaProvider(provider string) error {
 	if provider == "" {
 		return nil
 	}
-	if strings.TrimSpace(os.Getenv(experimentalGitHubDeltaEnv)) != "1" {
-		return fmt.Errorf("--delta-provider is experimental; set %s=1 to enable it explicitly", experimentalGitHubDeltaEnv)
+	if strings.TrimSpace(os.Getenv(experimentalProviderDeltaEnv)) == "1" {
+		return nil
 	}
-	return nil
+	if strings.TrimSpace(os.Getenv(experimentalGitHubDeltaEnv)) == "1" {
+		return nil
+	}
+	return fmt.Errorf("--delta-provider is experimental; set %s=1 (preferred) or %s=1 (legacy) to enable it explicitly", experimentalProviderDeltaEnv, experimentalGitHubDeltaEnv)
 }
 
 func validateHookMode(value string) (model.HookMode, error) {
@@ -158,6 +162,11 @@ func newAnalyzeCommand() *cobra.Command {
 		githubRepo         string
 		githubBranch       string
 		githubRunID        int64
+		gitlabProject      string
+		gitlabBranch       string
+		gitlabPipelineID   int64
+		gitlabJobID        int64
+		gitlabAPIBaseURL   string
 		metricsHistoryFile string
 		hookMode           string
 	)
@@ -241,6 +250,12 @@ func newAnalyzeCommand() *cobra.Command {
 				GitHubBranch:       firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
 				GitHubRunID:        firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
 				GitHubToken:        firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
+				GitLabProject:      firstNonEmpty(gitlabProject, os.Getenv("CI_PROJECT_ID"), os.Getenv("CI_PROJECT_PATH")),
+				GitLabBranch:       firstNonEmpty(gitlabBranch, os.Getenv("CI_COMMIT_REF_NAME")),
+				GitLabPipelineID:   firstInt64(gitlabPipelineID, os.Getenv("CI_PIPELINE_ID")),
+				GitLabJobID:        firstInt64(gitlabJobID, os.Getenv("CI_JOB_ID")),
+				GitLabToken:        firstNonEmpty(os.Getenv("GITLAB_TOKEN"), os.Getenv("GITLAB_PRIVATE_TOKEN"), os.Getenv("CI_JOB_TOKEN")),
+				GitLabAPIBaseURL:   firstNonEmpty(gitlabAPIBaseURL, os.Getenv("CI_API_V4_URL"), deriveGitLabAPIBaseURL(os.Getenv("CI_SERVER_URL"))),
 				MetricsHistoryFile: metricsHistoryFile,
 				Store:              firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				HookMode:           resolvedHookMode,
@@ -269,21 +284,39 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context in trace output")
 	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix when supported")
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail when supported")
-	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions)")
+	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions|gitlab-ci)")
 	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
 	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
 	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
+	cmd.Flags().StringVar(&gitlabProject, "gitlab-project", "", "GitLab project path or numeric project ID for --delta-provider gitlab-ci (defaults to CI_PROJECT_ID/CI_PROJECT_PATH)")
+	cmd.Flags().StringVar(&gitlabBranch, "gitlab-branch", "", "GitLab ref for --delta-provider gitlab-ci (defaults to CI_COMMIT_REF_NAME)")
+	cmd.Flags().Int64Var(&gitlabPipelineID, "gitlab-pipeline-id", 0, "GitLab pipeline ID for --delta-provider gitlab-ci (defaults to CI_PIPELINE_ID)")
+	cmd.Flags().Int64Var(&gitlabJobID, "gitlab-job-id", 0, "GitLab job ID for --delta-provider gitlab-ci (defaults to CI_JOB_ID)")
+	cmd.Flags().StringVar(&gitlabAPIBaseURL, "gitlab-api-base-url", "", "GitLab API v4 base URL for --delta-provider gitlab-ci (defaults to CI_API_V4_URL)")
 	cmd.Flags().StringVar(&metricsHistoryFile, "history-file", "", "path to a JSONL history file for FPC and PHI computation")
 	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
 	_ = cmd.Flags().MarkHidden("delta-provider")
 	_ = cmd.Flags().MarkHidden("github-repo")
 	_ = cmd.Flags().MarkHidden("github-branch")
 	_ = cmd.Flags().MarkHidden("github-run-id")
+	_ = cmd.Flags().MarkHidden("gitlab-project")
+	_ = cmd.Flags().MarkHidden("gitlab-branch")
+	_ = cmd.Flags().MarkHidden("gitlab-pipeline-id")
+	_ = cmd.Flags().MarkHidden("gitlab-job-id")
+	_ = cmd.Flags().MarkHidden("gitlab-api-base-url")
 	_ = cmd.Flags().MarkHidden("history-file")
 	_ = cmd.Flags().MarkHidden("hooks")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
+}
+
+func deriveGitLabAPIBaseURL(serverURL string) string {
+	serverURL = strings.TrimSpace(serverURL)
+	if serverURL == "" {
+		return ""
+	}
+	return strings.TrimRight(serverURL, "/") + "/api/v4"
 }
 
 func firstNonEmpty(values ...string) string {

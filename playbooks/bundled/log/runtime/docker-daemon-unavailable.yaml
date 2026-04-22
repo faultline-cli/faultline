@@ -61,6 +61,11 @@ match:
     - "failed to connect to the Docker daemon"
     - "failed to connect to docker daemon"
     - "unable to connect to the Docker daemon"
+    - "dockerd failed to start"
+    - "dockerd.*not ready"
+    - "containerd failed"
+    - "timeout waiting for containerd"
+    - "daemon.*not running"
   none:
     - "permission denied while trying to connect to the Docker daemon socket"
     - "pull access denied"

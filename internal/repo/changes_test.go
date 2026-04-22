@@ -34,6 +34,9 @@ func TestLoadWorktreeChangeSet(t *testing.T) {
 	if _, ok := changeSet.ChangedFiles["main.go"]; !ok {
 		t.Fatalf("expected main.go in change set, got %#v", changeSet.ChangedFiles)
 	}
+	if len(changeSet.ChangedFiles["main.go"].Lines) == 0 {
+		t.Fatalf("expected line-level diff info for main.go, got %#v", changeSet.ChangedFiles["main.go"])
+	}
 }
 
 func TestSortedChangedFilesReturnsAlphabeticOrder(t *testing.T) {
@@ -82,4 +85,77 @@ func TestNormalizeChangeStatusClassifiesCorrectly(t *testing.T) {
 			t.Errorf("normalizeChangeStatus(%q) = %q, want %q", tc.status, got, tc.want)
 		}
 	}
+}
+
+func TestLoadWorktreeChangeSetIncludesStagedAndUnstagedLineRanges(t *testing.T) {
+	dir := initTempRepo(t)
+	mainPath := filepath.Join(dir, "main.go")
+	utilPath := filepath.Join(dir, "internal", "util.go")
+	if err := os.MkdirAll(filepath.Dir(utilPath), 0o755); err != nil {
+		t.Fatalf("mkdir util dir: %v", err)
+	}
+	if err := os.WriteFile(mainPath, []byte("package main\n\nfunc main() {\n\tprintln(\"hello\")\n}\n"), 0o644); err != nil {
+		t.Fatalf("write main.go: %v", err)
+	}
+	if err := os.WriteFile(utilPath, []byte("package internal\n\nfunc Util() string {\n\treturn \"ok\"\n}\n"), 0o644); err != nil {
+		t.Fatalf("write util.go: %v", err)
+	}
+	runGit(t, dir, nil, "add", ".")
+	runGit(t, dir, nil, "commit", "--quiet", "-m", "baseline")
+
+	if err := os.WriteFile(mainPath, []byte("package main\n\nfunc main() {\n\tprintln(\"changed\")\n}\n"), 0o644); err != nil {
+		t.Fatalf("rewrite main.go: %v", err)
+	}
+	if err := os.WriteFile(utilPath, []byte("package internal\n\nfunc Util() string {\n\tprintln(\"staged\")\n\treturn \"ok\"\n}\n"), 0o644); err != nil {
+		t.Fatalf("rewrite util.go: %v", err)
+	}
+	runGit(t, dir, nil, "add", "internal/util.go")
+
+	scanner, err := NewScanner(dir)
+	if err != nil {
+		t.Fatalf("NewScanner: %v", err)
+	}
+	changeSet, err := LoadWorktreeChangeSet(scanner)
+	if err != nil {
+		t.Fatalf("LoadWorktreeChangeSet: %v", err)
+	}
+
+	if !hasLine(changeSet.ChangedFiles["main.go"].Lines, 4) {
+		t.Fatalf("expected unstaged line 4 in main.go diff, got %#v", changeSet.ChangedFiles["main.go"])
+	}
+	if !hasLine(changeSet.ChangedFiles["internal/util.go"].Lines, 4) {
+		t.Fatalf("expected staged line 4 in internal/util.go diff, got %#v", changeSet.ChangedFiles["internal/util.go"])
+	}
+}
+
+func TestChangeSetRelativeToScopesToSubdirectory(t *testing.T) {
+	changeSet := detectors.ChangeSet{
+		ChangedFiles: map[string]detectors.FileChange{
+			"api/handler.go": {
+				Status: "added",
+				Lines:  map[int]struct{}{3: {}},
+			},
+			"deploy/healthcheck.yaml": {
+				Status: "modified",
+				Lines:  map[int]struct{}{1: {}},
+			},
+		},
+	}
+
+	trimmed := ChangeSetRelativeTo(changeSet, "api")
+	if len(trimmed.ChangedFiles) != 1 {
+		t.Fatalf("expected 1 scoped file, got %#v", trimmed.ChangedFiles)
+	}
+	change, ok := trimmed.ChangedFiles["handler.go"]
+	if !ok {
+		t.Fatalf("expected handler.go after rebasing, got %#v", trimmed.ChangedFiles)
+	}
+	if change.Status != "added" || !hasLine(change.Lines, 3) {
+		t.Fatalf("expected rebased change metadata to survive, got %#v", change)
+	}
+}
+
+func hasLine(lines map[int]struct{}, want int) bool {
+	_, ok := lines[want]
+	return ok
 }

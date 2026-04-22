@@ -63,6 +63,18 @@ type AnalyzeOptions struct {
 	GitHubRunID int64
 	// GitHubToken authenticates provider-backed GitHub Actions delta resolution.
 	GitHubToken string
+	// GitLabProject identifies the GitLab project for provider-backed delta resolution.
+	GitLabProject string
+	// GitLabBranch identifies the GitLab ref for provider-backed delta resolution.
+	GitLabBranch string
+	// GitLabPipelineID identifies the current GitLab pipeline for provider-backed delta resolution.
+	GitLabPipelineID int64
+	// GitLabJobID identifies the current GitLab job for provider-backed delta resolution.
+	GitLabJobID int64
+	// GitLabToken authenticates provider-backed GitLab CI delta resolution.
+	GitLabToken string
+	// GitLabAPIBaseURL overrides the GitLab API v4 base URL for provider-backed delta resolution.
+	GitLabAPIBaseURL string
 	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
 	// records used to compute FPC and PHI. When empty, only TSS is computed.
 	MetricsHistoryFile string

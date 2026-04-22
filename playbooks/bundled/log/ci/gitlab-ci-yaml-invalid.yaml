@@ -1,0 +1,56 @@
+id: gitlab-ci-yaml-invalid
+title: GitLab CI pipeline configuration invalid
+category: ci
+severity: high
+base_score: 1.0
+tags: [gitlab, gitlab-ci, yaml, lint, pipeline, ci]
+stage_hints: [build]
+summary: |-
+  The `.gitlab-ci.yml` configuration failed GitLab's built-in YAML and schema validation. No pipeline was started.
+diagnosis: |-
+  ## Diagnosis
+
+  The `.gitlab-ci.yml` configuration failed GitLab's built-in YAML and schema validation. No pipeline was started.
+fix: |-
+  ## Fix steps
+
+  1. Run the GitLab CI Lint API to get a detailed error: visit `<gitlab-url>/-/ci/lint` and paste your config.
+  2. Use the GitLab CLI: `glab ci lint .gitlab-ci.yml` for local validation.
+  3. Validate the YAML structure first: `yamllint .gitlab-ci.yml`.
+  4. Check the exact line in the error — `needs:` jobs must exist in the same or a prior stage.
+  5. Ensure every stage referenced by a job is declared in the top-level `stages:` list.
+  6. For `include:` directives, verify the referenced file path, project, or URL is accessible to the runner.
+validation: |-
+  ## Validation
+
+  - Re-run the failing workflow step.
+  - Confirm the original failure signature for GitLab CI pipeline configuration invalid is gone.
+match:
+  any:
+    - "ERROR: Config file is not valid"
+    - "ERROR: Job is invalid"
+    - ".gitlab-ci.yml"
+    - "config validation error"
+    - "jobs:.*config contains unknown keys"
+    - "Included file"
+    - "error validating"
+    - "did you mean"
+    - "needs.*not defined"
+    - "keyword.*invalid"
+    - "script should be a list or a"
+    - "stage does not exist"
+workflow:
+  likely_files:
+    - .gitlab-ci.yml
+    - .gitlab/
+why_it_matters: |-
+  ## Why it matters
+
+  GitLab CI validates pipeline configurations against its own schema before execution. Common causes include invalid YAML indentation, using unknown or renamed job keywords, referencing a stage not declared in the `stages` list, a `needs:` entry pointing to a job that doesn't exist, or an included file that cannot be resolved.
+
+  ## Prevention
+
+  - Add `glab ci lint` or the GitLab API lint endpoint as a pre-commit hook or merge request pipeline step.
+  - Use the GitLab Web IDE which provides live `.gitlab-ci.yml` validation in the editor.
+  - Use YAML anchors and aliases carefully — GitLab supports them but errors can be subtle.
+  - Validate included external files with their own lint job to catch cross-file dependency errors.

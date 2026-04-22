@@ -1,0 +1,77 @@
+id: jenkins-plugin-missing
+title: Jenkins required plugin missing or incompatible
+category: ci
+severity: high
+base_score: 0.9
+tags: [jenkins, plugin, dependency, ci, missing]
+stage_hints: [build, deploy]
+summary: |-
+  A Jenkins job or pipeline step failed because a required plugin is not installed, is disabled, or has an incompatible version. Jenkins cannot execute the affected step.
+diagnosis: |-
+  ## Diagnosis
+
+  Jenkins pipelines use plugins to provide steps, node labels, and integration features. When a required plugin is absent or incompatible:
+
+  - The Jenkinsfile stage fails with `No such DSL method` or `No such step`.
+  - Jenkins logs `Plugin [name] is not installed` or `Required plugin [name] [version] is not satisfied`.
+  - A step that previously worked starts failing after a Jenkins upgrade changed plugin compatibility.
+  - The job configuration page shows a warning banner about a missing or inactive plugin.
+fix: |-
+  ## Fix steps
+
+  1. Identify the missing plugin from the error message, then install it via Jenkins → Manage Jenkins → Plugins → Available:
+
+     ```groovy
+     // Jenkinsfile step referencing a missing plugin will fail like:
+     // ERROR: No such DSL method 'withCredentials' found
+     // → Install the 'credentials-binding' plugin
+     ```
+
+  2. After installing, restart Jenkins if prompted.
+
+  3. For version incompatibilities: check Manage Jenkins → Plugins → Installed for the affected plugin, and update it or pin it to a known-good version using the Plugin Manager's advanced settings.
+
+  4. For Configuration-as-Code or JCasC deployments, add the plugin to your `plugins.txt` or `installPlugins:` section in the CasC YAML.
+
+  5. Confirm plugin dependencies are satisfied — some plugins require other plugins at minimum version thresholds.
+validation: |-
+  ## Validation
+
+  - Manage Jenkins → Plugins → Installed shows the plugin as active.
+  - The previously failing Jenkinsfile step runs without a DSL or missing-plugin error.
+match:
+  any:
+    - "No such DSL method"
+    - "No such step"
+    - "is not installed"
+    - "Plugin .* is not installed"
+    - "Required plugin"
+    - "unable to find plugin"
+    - "ClassNotFoundException.*plugin"
+    - "Cannot resolve class"
+    - "Could not load plugin"
+    - "plugin not found"
+    - "Unsatisfied dependency"
+    - "Plugin version .* is required"
+  none:
+    - "Agent.*is offline"
+    - "Connection was broken"
+    - "Job's timeout exceeded"
+    - "No space left on device"
+workflow:
+  likely_files:
+    - Jenkinsfile
+    - plugins.txt
+  verify:
+    - "curl -s http://jenkins:8080/pluginManager/api/json?depth=1 | python3 -m json.tool | grep -i shortName"
+why_it_matters: |-
+  ## Why it matters
+
+  Jenkins pipelines couple feature steps tightly to installed plugins. Adding a new step without installing the plugin, or upgrading Jenkins without verifying plugin compatibility, causes immediate hard failures that look like code problems but are actually infrastructure misconfigurations.
+
+  ## Prevention
+
+  - Maintain a version-pinned `plugins.txt` checked into source control.
+  - Test plugin updates in a staging Jenkins instance before applying to production.
+  - Use the Jenkins Plugin Bill of Materials (BOM) to track compatible plugin version sets.
+  - Run `jte` or a Jenkinsfile linter in CI to catch DSL errors before they reach the controller.

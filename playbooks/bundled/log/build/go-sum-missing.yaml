@@ -11,6 +11,9 @@ match:
     - go.sum file is not up to date
     - verifying module
     - no required module provides
+    - "go.sum entry missing"
+    - "go.sum entry not in vendor"
+    - "partial content"
 hypothesis:
   supports:
     - signal: dependency.go.sum.missing

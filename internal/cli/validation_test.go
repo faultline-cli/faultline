@@ -115,24 +115,50 @@ func TestValidateSelect(t *testing.T) {
 
 func TestValidateExperimentalDeltaProvider(t *testing.T) {
 	t.Run("disabled by default", func(t *testing.T) {
+		t.Setenv(experimentalProviderDeltaEnv, "")
 		t.Setenv(experimentalGitHubDeltaEnv, "")
 		err := validateExperimentalDeltaProvider("github-actions")
-		if err == nil || !strings.Contains(err.Error(), experimentalGitHubDeltaEnv) {
+		if err == nil || !strings.Contains(err.Error(), experimentalProviderDeltaEnv) {
 			t.Fatalf("expected experimental env error, got %v", err)
 		}
 	})
 
-	t.Run("enabled explicitly", func(t *testing.T) {
+	t.Run("enabled explicitly via preferred env", func(t *testing.T) {
+		t.Setenv(experimentalProviderDeltaEnv, "1")
+		t.Setenv(experimentalGitHubDeltaEnv, "")
+		if err := validateExperimentalDeltaProvider("github-actions"); err != nil {
+			t.Fatalf("expected provider to be allowed, got %v", err)
+		}
+		if err := validateExperimentalDeltaProvider("gitlab-ci"); err != nil {
+			t.Fatalf("expected gitlab provider to be allowed, got %v", err)
+		}
+	})
+
+	t.Run("enabled explicitly via legacy env", func(t *testing.T) {
+		t.Setenv(experimentalProviderDeltaEnv, "")
 		t.Setenv(experimentalGitHubDeltaEnv, "1")
 		if err := validateExperimentalDeltaProvider("github-actions"); err != nil {
 			t.Fatalf("expected provider to be allowed, got %v", err)
 		}
+		if err := validateExperimentalDeltaProvider("gitlab-ci"); err != nil {
+			t.Fatalf("expected gitlab provider to be allowed, got %v", err)
+		}
 	})
 
 	t.Run("empty provider passes", func(t *testing.T) {
+		t.Setenv(experimentalProviderDeltaEnv, "")
 		t.Setenv(experimentalGitHubDeltaEnv, "")
 		if err := validateExperimentalDeltaProvider(""); err != nil {
 			t.Fatalf("expected empty provider to pass, got %v", err)
 		}
 	})
+}
+
+func TestDeriveGitLabAPIBaseURL(t *testing.T) {
+	if got := deriveGitLabAPIBaseURL("https://gitlab.example.com"); got != "https://gitlab.example.com/api/v4" {
+		t.Fatalf("unexpected derived base URL: %q", got)
+	}
+	if got := deriveGitLabAPIBaseURL(""); got != "" {
+		t.Fatalf("expected empty input to stay empty, got %q", got)
+	}
 }

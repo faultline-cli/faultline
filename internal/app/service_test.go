@@ -631,6 +631,46 @@ match:
 	}
 }
 
+func TestInspectUsesScopedWorktreeDiffForSubdirectory(t *testing.T) {
+	svc := NewService()
+	repoDir := writeServiceGuardRepo(t)
+	opts := baseOpts()
+	opts.JSON = true
+	var buf bytes.Buffer
+
+	err := svc.Inspect(filepath.Join(repoDir, "api"), opts, &buf)
+	if err != nil {
+		t.Fatalf("Inspect subdir: %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal inspect json: %v", err)
+	}
+	results, ok := payload["results"].([]any)
+	if !ok || len(results) == 0 {
+		t.Fatalf("expected inspect results, got %#v", payload["results"])
+	}
+	first, ok := results[0].(map[string]any)
+	if !ok {
+		t.Fatalf("expected first result object, got %#v", results[0])
+	}
+	if first["failure_id"] != "panic-in-http-handler" {
+		t.Fatalf("expected panic-in-http-handler, got %#v", first["failure_id"])
+	}
+	if first["change_status"] != "introduced" {
+		t.Fatalf("expected introduced change status, got %#v", first["change_status"])
+	}
+	delta, ok := payload["delta"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected delta payload, got %#v", payload["delta"])
+	}
+	files, ok := delta["files_changed"].([]any)
+	if !ok || len(files) != 1 || files[0] != "handler.go" {
+		t.Fatalf("expected subdir-scoped changed file, got %#v", delta["files_changed"])
+	}
+}
+
 func TestGuardQuietOnCleanRepo(t *testing.T) {
 	svc := NewService()
 	repoDir := writeServiceTempRepo(t)
