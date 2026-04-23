@@ -130,3 +130,16 @@ why_it_matters: |-
 
   - Enable `errcheck` and `staticcheck` in the CI linting step.
   - Use a shared wrapper for common I/O operations that always checks and propagates their errors.
+workflow:
+  likely_files:
+    - service.go
+    - handler.go
+    - client.go
+    - repository.go
+    - cmd/*.go
+  local_repro:
+    - faultline inspect .
+    - rg -n "_ =|err :=|err = nil|db.Exec\\(|cmd.Run\\(|tx.Commit\\(|rows.Close\\(" .
+  verify:
+    - go test ./...
+    - go vet ./...

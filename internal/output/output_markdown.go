@@ -161,6 +161,9 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 
 func formatMatchSummaryMarkdown(pb model.Playbook) string {
 	var sections []string
+	if section := markdownListSection("### match.use", pb.Match.Use); section != "" {
+		sections = append(sections, section)
+	}
 	if section := markdownListSection("### match.any", pb.Match.Any); section != "" {
 		sections = append(sections, section)
 	}
@@ -168,6 +171,9 @@ func formatMatchSummaryMarkdown(pb model.Playbook) string {
 		sections = append(sections, section)
 	}
 	if section := markdownListSection("### match.none", pb.Match.None); section != "" {
+		sections = append(sections, section)
+	}
+	if section := markdownListSection("### match.partial", partialMatchLines(pb.Match.Partial)); section != "" {
 		sections = append(sections, section)
 	}
 	if section := markdownListSection("### workflow.verify", pb.Workflow.Verify); section != "" {
@@ -193,6 +199,26 @@ func bulletLines(lines []string) string {
 		trimmed[i] = "- " + line
 	}
 	return strings.Join(trimmed, "\n")
+}
+
+func partialMatchLines(groups []model.PartialMatchGroup) []string {
+	if len(groups) == 0 {
+		return nil
+	}
+	lines := make([]string, 0, len(groups))
+	for _, group := range groups {
+		label := strings.TrimSpace(group.Label)
+		if label == "" {
+			label = strings.TrimSpace(group.ID)
+		}
+		patterns := strings.Join(group.Patterns, " | ")
+		if label == "" {
+			lines = append(lines, fmt.Sprintf("%d-of-%d: %s", group.Minimum, len(group.Patterns), patterns))
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%s (%d-of-%d): %s", label, group.Minimum, len(group.Patterns), patterns))
+	}
+	return lines
 }
 
 func trimmedLines(lines []string) []string {

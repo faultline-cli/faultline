@@ -17,6 +17,16 @@ func TestIngestionPipelineSkillMatchesPromptContract(t *testing.T) {
 	assertIngestionContract(t, body)
 }
 
+func TestRefineSourcePlaybookPromptCoversInspectAndGuard(t *testing.T) {
+	body := readRepoDoc(t, filepath.Join("..", "..", "prompts", "refine-source-playbook-from-repo.md"))
+	assertSourcePlaybookContract(t, body)
+}
+
+func TestSourcePlaybookRefinementSkillMatchesPromptContract(t *testing.T) {
+	body := readRepoDoc(t, filepath.Join("..", "..", "agents", "skills", "source-playbook-refinement", "SKILL.md"))
+	assertSourcePlaybookContract(t, body)
+}
+
 func readRepoDoc(t *testing.T, rel string) string {
 	t.Helper()
 
@@ -47,6 +57,29 @@ func assertIngestionContract(t *testing.T, body string) {
 	for _, fragment := range required {
 		if !strings.Contains(lowerBody, strings.ToLower(fragment)) {
 			t.Fatalf("expected ingestion contract to mention %q", fragment)
+		}
+	}
+}
+
+func assertSourcePlaybookContract(t *testing.T, body string) {
+	t.Helper()
+
+	required := []string{
+		"faultline inspect .",
+		"faultline guard .",
+		"faultline explain <id>",
+		"make review",
+		"make test",
+		"make build",
+		"make cli-smoke",
+		"internal/engine/testdata/source/",
+		"source-playbook",
+	}
+
+	lowerBody := strings.ToLower(body)
+	for _, fragment := range required {
+		if !strings.Contains(lowerBody, strings.ToLower(fragment)) {
+			t.Fatalf("expected source-playbook contract to mention %q", fragment)
 		}
 	}
 }

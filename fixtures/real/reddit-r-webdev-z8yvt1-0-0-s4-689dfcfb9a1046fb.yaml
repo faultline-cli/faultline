@@ -1,0 +1,54 @@
+id: reddit-r-webdev-z8yvt1-0-0-s4-689dfcfb9a1046fb
+title: Intermittent JavaScript heap out of memory error when building Angular app. We get this error about once every dozen times the build runs, whether it's on an Azure DevOps build agent or on a local machine.
+fixture_class: real
+normalized_log: |-
+    Description : Run a Bash script on macOS, Linux, or Windows
+    Version : 3.201.1
+    Author : Microsoft Corporation
+    Help : https://docs.microsoft.com/azure/devops/pipelines/tasks/utility/bash
+    ==============================================================================
+    Generating script.
+    Script contents:
+    ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA
+    ========================== Starting Command Output ===========================
+    /usr/bin/bash /home/vsts/work/_temp/<id>.sh
+    Browserslist: caniuse-lite is outdated. Please run the following command: `npx browserslist --update-db`
+    <--- Last few GCs --->
+    [2118:0x4b47290] 1415553 ms: Scavenge (reduce) 6447.2 (6702.7) -> 6447.0 (6702.7) MB, 18.6 / 0.0 ms (average mu = 0.207, current mu = 0.123) allocation failure
+    [2118:0x4b47290] 1415577 ms: Scavenge (reduce) 6447.5 (6702.7) -> 6447.0 (6702.7) MB, 21.0 / 0.0 ms (average mu = 0.207, current mu = 0.123) allocation failure
+    [2118:0x4b47290] 1415602 ms: Scavenge (reduce) 6447.9 (6702.7) -> 6447.2 (6702.7) MB, 13.8 / 0.0 ms (average mu = 0.207, current mu = 0.123) allocation failure
+    <--- JS stacktrace --->
+    FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+    1: 0xb00e10 node::Abort() [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    2: 0xa1823b node::FatalError(char const*, char const*) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    3: 0xcee09e v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, bool) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    4: 0xcee417 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, bool) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    5: 0xea65d5 [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    6: 0xea70b6 [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    7: 0xeb4fee [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    8: 0xeb5a30 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    9: 0xeb89ae v8::internal::Heap::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    10: 0xe79dda v8::internal::Factory::NewFillerObject(int, bool, v8::internal::AllocationType, v8::internal::AllocationOrigin) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    11: 0x11f33d6 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    12: 0x15e7cf9 [ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA]
+    /home/vsts/work/_temp/<id>.sh: line 1: 2118 Aborted (core dumped) ng build --configuration=sandbox --aot --index=/projects/ManagementPortal-SPA/src/index-pages/sandbox/index.html --project ManagementPortal-SPA
+    ##[error]Bash exited with code '134'.
+expectation:
+    expected_playbook: node-out-of-memory
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/webdev/comments/z8yvt1/
+    repository: r/webdev
+    comment_id: "0"
+    title: Intermittent JavaScript heap out of memory error when building Angular app. We get this error about once every dozen times the build runs, whether it's on an Azure DevOps build agent or on a local machine.
+    author: Edg-R
+    snippet: 4
+    fetched_at: "2026-04-23T08:21:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:22:01Z"
+fingerprint: 689dfcfb9a1046fb

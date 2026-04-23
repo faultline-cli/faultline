@@ -63,7 +63,7 @@ func TestExampleMarkdownSnapshots(t *testing.T) {
 	for _, tc := range cases {
 		tc := tc
 		t.Run(filepath.Base(tc.logPath), func(t *testing.T) {
-			out := runRootCommand(t, repoRoot, "analyze", "--format", "markdown", "--no-history", tc.logPath)
+			out := runRootCommand(t, repoRoot, "analyze", "--format", "markdown", "--no-history", "--git=false", tc.logPath)
 
 			want, readErr := os.ReadFile(filepath.Join(repoRoot, tc.expectedPath))
 			if readErr != nil {
@@ -90,7 +90,7 @@ func TestExampleWorkflowSnapshots(t *testing.T) {
 	}
 
 	t.Run("local text", func(t *testing.T) {
-		got := runRootCommandWithStdin(t, repoRoot, string(logData), "workflow", "--no-history")
+		got := runRootCommandWithStdin(t, repoRoot, string(logData), "workflow", "--no-history", "--git=false")
 		want, readErr := os.ReadFile(filepath.Join(repoRoot, "examples/missing-executable.workflow.local.txt"))
 		if readErr != nil {
 			t.Fatalf("read local workflow snapshot: %v", readErr)
@@ -101,7 +101,7 @@ func TestExampleWorkflowSnapshots(t *testing.T) {
 	})
 
 	t.Run("agent json", func(t *testing.T) {
-		got := runRootCommandWithStdin(t, repoRoot, string(logData), "workflow", "--json", "--mode", "agent", "--no-history")
+		got := runRootCommandWithStdin(t, repoRoot, string(logData), "workflow", "--json", "--mode", "agent", "--no-history", "--git=false")
 		want, readErr := os.ReadFile(filepath.Join(repoRoot, "examples/missing-executable.workflow.agent.json"))
 		if readErr != nil {
 			t.Fatalf("read agent workflow snapshot: %v", readErr)

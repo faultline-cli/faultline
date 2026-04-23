@@ -16,6 +16,20 @@ Local repro:
   - ls -l <expected-path>
 Verify:
   - command -v <tool>
+Remediation commands:
+  - [local-repro] command -v <tool>
+  - [local-repro] ls -l <expected-path>
+  - [verify] command -v <tool>
+Patch suggestions:
+  - Dockerfile: Adjust the likely failure surface for missing-executable.
+  - .github/workflows/*.yml: Adjust the likely failure surface for missing-executable.
+  - .github/workflows/*.yaml: Adjust the likely failure surface for missing-executable.
+  - .gitlab-ci.yml: Adjust the likely failure surface for missing-executable.
+  - docker-compose*.yml: Adjust the likely failure surface for missing-executable.
+CI config diffs:
+  - .github/workflows/*.yml: Update CI configuration to reflect the diagnosed remediation path.
+  - .github/workflows/*.yaml: Update CI configuration to reflect the diagnosed remediation path.
+  - .gitlab-ci.yml: Update CI configuration to reflect the diagnosed remediation path.
 Next steps:
   1. Confirm the top diagnosis `missing-executable` by reproducing the failure from the same command or CI step if possible.
   2. Use the matched evidence lines as the starting point for triage: exec /__e/node20/bin/node: no such file or directory.

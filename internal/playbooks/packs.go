@@ -62,6 +62,10 @@ func ProvenanceFromPlaybooks(pbs []model.Playbook) []model.PackProvenance {
 func LoadPacks(packs []Pack) ([]model.Playbook, error) {
 	merged := make([]model.Playbook, 0)
 	seen := make(map[string]string)
+	matchCatalogs, err := loadPackMatchCatalogs(packs)
+	if err != nil {
+		return nil, err
+	}
 	hookCatalogs, err := loadPackHookCatalogs(packs)
 	if err != nil {
 		return nil, err
@@ -90,6 +94,14 @@ func LoadPacks(packs []Pack) ([]model.Playbook, error) {
 			seen[pb.ID] = pack.Name
 			merged = append(merged, pb)
 		}
+	}
+	merged, err = resolvePlaybookInheritance(merged)
+	if err != nil {
+		return nil, err
+	}
+	merged, err = applyMatchCatalogs(merged, matchCatalogs)
+	if err != nil {
+		return nil, err
 	}
 	merged, err = applyHookCatalogs(merged, hookCatalogs)
 	if err != nil {

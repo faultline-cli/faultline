@@ -51,7 +51,8 @@ Explicit companion surfaces now read from the same local store:
 
 ## What Is Stored
 
-Schema v1 keeps five small tables:
+Schema v2 keeps five small tables plus one additive artifact snapshot column on
+the main run record:
 
 - `analysis_runs`
 - `findings`
@@ -65,6 +66,8 @@ Stored data is intentionally minimal:
 - `signature_hash`
 - normalized signature material
 - `input_hash` and `output_hash`
+- first-class `artifact_json` snapshots for replay, compare, and deterministic
+  remediation handoff
 - first-seen and last-seen times
 - small evidence excerpts
 - structured hook facts and hook evidence excerpts when hooks run
@@ -119,6 +122,7 @@ When the store is active, Faultline includes:
 
 - top-level `input_hash`
 - top-level `output_hash`
+- top-level `artifact`
 - result-level `signature_hash`
 - recurrence fields such as `seen_before`, `occurrence_count`,
   `first_seen_at`, and `last_seen_at`

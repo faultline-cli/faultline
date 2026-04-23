@@ -70,6 +70,12 @@ func FindPatternConflicts(pbs []model.Playbook) []PatternConflict {
 		for _, pattern := range pb.Match.None {
 			add(pattern, pb.ID, "match.none", false)
 		}
+		for i, group := range pb.Match.Partial {
+			section := fmt.Sprintf("match.partial[%d]", i)
+			for _, pattern := range group.Patterns {
+				add(pattern, pb.ID, section, true)
+			}
+		}
 	}
 
 	conflicts := make([]PatternConflict, 0)

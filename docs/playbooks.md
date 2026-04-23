@@ -193,6 +193,124 @@ time in `faultline-pack.yaml`. When available, Faultline preserves:
 `PINNED REF` columns, and analysis JSON includes additive `pack_provenance`
 entries so downstream automation can audit which catalog inputs were active.
 
+## Playbook Inheritance
+
+Playbooks can now inherit from an earlier playbook in the composed pack set:
+
+```yaml
+id: repo-node-runtime-mismatch
+extends: runtime-mismatch
+title: Repository Node runtime mismatch
+match:
+  all:
+    - "error.*requires node"
+workflow:
+  local_repro:
+    - "node --version"
+```
+
+Use inheritance when the underlying failure mechanism is the same, but a later
+pack needs to add repo-, team-, or environment-specific constraints and
+guidance without copying the full base rule.
+
+Deterministic merge rules:
+
+- inheritance resolves after pack loading and before match or hook overlays are applied
+- parents must already exist in the composed pack graph
+- inheritance cycles are rejected
+- scalar metadata such as `title`, `severity`, `category`, `summary`, `fix`,
+  and workflow strings are overridden by the child when present
+- list-style matching fields such as `match.any`, `match.all`, `match.none`,
+  `match.use`, `match.partial`, tags, stage hints, workflow command lists, and
+  hypothesis signals compose by appending the child entries after the inherited
+  entries
+- hook inheritance is additive, with child `disable` entries removing inherited
+  hook IDs before any child hooks are appended
+
+Practical layering model:
+
+- bundled playbook: shared root-cause boundary and default operator guidance
+- org pack playbook: inherited policy, defaults, or verification tuned for a
+  team-wide environment
+- repo pack playbook: the narrowest local override for one repository
+
+Prefer inheritance over copy-paste when the base root cause is still correct.
+Create a new playbook instead when the detection boundary or remediation path
+is genuinely different.
+
+## Match Catalog Composition
+
+Teams can now define reusable deterministic match fragments at the pack root in
+`faultline-matchers.yaml` and compose them into playbooks through `match.use`.
+
+```yaml
+schema_version: matchers.v1
+
+named_matches:
+  runtime-base:
+    any:
+      - "runtime error"
+
+  node-env:
+    partial:
+      - id: node-env-signals
+        label: Node environment signals
+        minimum: 2
+        patterns:
+          - ".nvmrc"
+          - "engines.node"
+          - "node version"
+```
+
+Playbooks can then compose those fragments directly:
+
+```yaml
+id: runtime-node
+title: Node runtime mismatch
+category: runtime
+severity: medium
+summary: |
+  Node runtime mismatch.
+diagnosis: |
+  Node runtime mismatch.
+fix: |
+  Fix the runtime mismatch.
+validation: |
+  Re-run node --version.
+match:
+  use:
+    - runtime-base
+    - node-env
+  any:
+    - "node version mismatch"
+```
+
+Supported composition edges:
+
+- bare `match.use` entries reference named fragments from `faultline-matchers.yaml`
+- `playbook:<id>` entries reuse the fully composed match graph of another playbook
+- named fragments may themselves compose other named fragments through `use`
+
+Partial match groups are the deterministic sub-pattern primitive:
+
+- each group defines a list of patterns plus `minimum`
+- the group becomes satisfied once at least that many patterns match
+- matched patterns still contribute additive score even before the threshold is
+  reached, which keeps near-miss traces explainable without creating a hidden
+  second matcher
+
+Deterministic composition rules:
+
+- pack order applies here too: later packs override earlier named fragment IDs
+- composition resolves after playbook inheritance and before hook overlays
+- cycles across named fragments or `playbook:` references are rejected
+- expanded patterns become part of the final playbook match set used by
+  `analyze`, `trace`, `workflow`, and `make review`
+
+Use named fragments when you want reusable sub-patterns shared across multiple
+rules. Use playbook inheritance when you want to extend a whole diagnosis and
+its operator guidance.
+
 ## Hook Catalog Overlays
 
 Team-specific hooks should usually live in a pack-level overlay file instead of

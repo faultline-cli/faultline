@@ -74,7 +74,8 @@ Current user-facing characteristics:
 - JSON output is stable and automation-friendly
 - focused views are supported through `--view summary|evidence|fix|raw|trace`
 - ranked drill-down is supported through `--top`, `--select`, `--trace`, and `--trace-playbook`
-- `--git` can enrich the diagnosis with recent local repository context
+- recent local repository context is included by default, with `--git=false`
+  available for narrow deterministic snapshot cases
 - `--bayes` can rerank already-matched candidates additively
 
 ### 2. Deterministic workflow handoff
@@ -85,6 +86,8 @@ Current modes:
 
 - `--mode local` for a practical local triage checklist
 - `--mode agent` for a structured agent handoff artifact
+- both modes now carry a first-class failure artifact and additive remediation
+  plan derived from the same deterministic diagnosis
 
 The JSON workflow artifact uses `workflow.v1` and may include additive hints such as `ranking_hints`, `delta_hints`, `metrics_hints`, and `policy_hints` when the underlying analysis contains that context.
 

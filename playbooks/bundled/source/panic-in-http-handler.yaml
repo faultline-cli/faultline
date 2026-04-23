@@ -115,3 +115,16 @@ why_it_matters: |-
   - Apply a recovery middleware globally at the outermost router layer.
   - Lint for `panic` calls in non-test source files using `go vet` or a custom staticcheck rule.
   - Code review: flag any `panic` in a function reachable from an HTTP or gRPC handler.
+workflow:
+  likely_files:
+    - handler.go
+    - router.go
+    - middleware.go
+    - http.go
+    - server.go
+  local_repro:
+    - faultline inspect .
+    - rg -n "panic\\(|recover\\(|http.HandleFunc|gin.Recovery|middleware.Recover" .
+  verify:
+    - go test ./...
+    - go vet ./...

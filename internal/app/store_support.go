@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"faultline/internal/artifact"
 	"faultline/internal/metrics"
 	"faultline/internal/model"
 	"faultline/internal/output"
@@ -46,6 +47,8 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 
 	withoutCurrent := applyHistorySnapshots(prepared, snapshots, now, false)
 	withCurrent := applyHistorySnapshots(prepared, snapshots, now, persist && historyEnabled)
+	withoutCurrent = artifact.Sync(withoutCurrent)
+	withCurrent = artifact.Sync(withCurrent)
 
 	withoutCurrent.Metrics = buildMetricsFromHistory(withoutCurrent, previousFailures, opts.MetricsHistoryFile, false)
 	if withoutCurrent.Metrics != nil && len(withoutCurrent.Results) > 0 {

@@ -1,0 +1,68 @@
+id: github-actions-upload-artifact-232-s2-69b62b6c921aca19
+title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+fixture_class: real
+normalized_log: |-
+    name: Deploy to GitHub Pages
+    on:
+    push:
+    branches:
+    - master
+    jobs:
+    build_site:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+    uses: actions/checkout@v3
+    - name: Install Node.js
+    uses: actions/setup-node@v3
+    with:
+    node-version: 18
+    cache: 'npm'
+    - name: Install dependencies
+    run: npm install
+    - name: build
+    env:
+    BASE_PATH: '/socketopp.github.io'
+    run: |
+    npm run build
+    touch build/.nojekyll
+    - name: Upload Artifacts
+    uses: actions/upload-artifact@v2
+    with:
+    name: build-artifact
+    path: 'build/'
+    deploy:
+    needs: build_site
+    runs-on: ubuntu-latest
+    permissions:
+    pages: write
+    id-token: write
+    environment:
+    name: github-pages
+    url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - name: Deploy
+    id: deployment
+    uses: actions/deploy-pages@v2
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/232
+    repository: actions/upload-artifact
+    issue_number: 232
+    comment_id: "1683058581"
+    title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+    labels:
+        - bug
+    author: benknab
+    snippet: 2
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:21:50Z"
+fingerprint: 69b62b6c921aca19

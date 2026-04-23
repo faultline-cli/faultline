@@ -94,15 +94,21 @@ func (s *sqliteStore) CompleteRun(ctx context.Context, handle RunHandle, params 
 	}()
 
 	var topFailureID, topSignatureHash, fingerprint string
+	artifactJSON := ""
 	if len(analysis.Results) > 0 {
 		top := analysis.Results[0]
 		topFailureID = top.Playbook.ID
 		topSignatureHash = strings.TrimSpace(top.SignatureHash)
 		fingerprint = strings.TrimSpace(analysis.Fingerprint)
 	}
+	if analysis.Artifact != nil {
+		if data, merr := json.Marshal(analysis.Artifact); merr == nil {
+			artifactJSON = string(data)
+		}
+	}
 	_, err = tx.ExecContext(ctx, `
 UPDATE analysis_runs
-SET matched = ?, output_hash = ?, top_failure_id = ?, top_signature_hash = ?, fingerprint = ?, completed_at = ?
+SET matched = ?, output_hash = ?, top_failure_id = ?, top_signature_hash = ?, fingerprint = ?, artifact_json = ?, completed_at = ?
 WHERE id = ?
 `,
 		boolToInt(len(analysis.Results) > 0),
@@ -110,6 +116,7 @@ WHERE id = ?
 		nullableString(topFailureID),
 		nullableString(topSignatureHash),
 		nullableString(fingerprint),
+		nullableString(artifactJSON),
 		completedAt.UTC().Format(time.RFC3339),
 		handle.ID,
 	)

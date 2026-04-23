@@ -57,6 +57,8 @@ func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []m
 //
 //   - Each matched any-pattern  → +weight (1/N where N = playbooks sharing that pattern)
 //   - Each matched all-pattern  → +1.5 (flat; AND semantics already discriminate)
+//   - Each matched partial-group pattern → +0.75
+//   - Partial group threshold met → +1.0 bonus
 //   - All all-patterns matched  → +2.0 bonus
 //   - Stage hint matches ctx    → +0.75
 //   - Playbook base_score       → added unconditionally when patterns match
@@ -116,6 +118,33 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 		}
 	}
 
+	partialScore := 0.0
+	partialHits := 0
+	for _, group := range pb.Match.Partial {
+		hits := 0
+		for _, pat := range group.Patterns {
+			norm := normalize(pat)
+			if norm == "" {
+				continue
+			}
+			for _, line := range lines {
+				if strings.Contains(line.Normalized, norm) {
+					hits++
+					addEvidence(line.Original)
+					break
+				}
+			}
+		}
+		if hits == 0 {
+			continue
+		}
+		partialHits += hits
+		partialScore += float64(hits) * 0.75
+		if hits >= group.Minimum {
+			partialScore += 1.0
+		}
+	}
+
 	for _, pat := range pb.Match.None {
 		norm := normalize(pat)
 		if norm == "" {
@@ -128,11 +157,11 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 		}
 	}
 
-	if anyScore == 0 && allHits == 0 {
+	if anyScore == 0 && allHits == 0 && partialHits == 0 {
 		return model.Result{} // no match
 	}
 
-	score := pb.BaseScore + anyScore + float64(allHits)*1.5
+	score := pb.BaseScore + anyScore + float64(allHits)*1.5 + partialScore
 	if allComplete {
 		score += compoundBonus(allComplete)
 	}
@@ -153,7 +182,7 @@ func matchPlaybook(pb model.Playbook, lines []model.Line, ctx model.Context, wei
 			TriggeredBy: evidence,
 		},
 		Breakdown: model.ScoreBreakdown{
-			BaseSignalScore:     math.Round((pb.BaseScore+anyScore+float64(allHits)*1.5)*100) / 100,
+			BaseSignalScore:     math.Round((pb.BaseScore+anyScore+float64(allHits)*1.5+partialScore)*100) / 100,
 			CompoundSignalBonus: math.Round(compoundBonus(allComplete)*100) / 100,
 			HotPathMultiplier:   math.Round(stageBonus(pb, ctx)*100) / 100,
 			FinalScore:          math.Round(score*100) / 100,

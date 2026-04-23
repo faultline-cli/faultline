@@ -1,0 +1,31 @@
+id: stackexchange-stackoverflow-34902663-s1-6c90d7aad1a14ed8
+title: Permission denied inside Docker container
+fixture_class: real
+normalized_log: |-
+    I have a started container gigantic_booth and I want to create the directory /etc/test :
+    # docker exec -it gigantic_booth /bin/bash
+    $ mkdir /etc/test
+    $ mkdir: cannot create directory '/etc/test': Permission denied
+    And sudo command is not found. I don't want to create this directory in image-build-time but once is started.
+    How can I do?
+    Thanks :)
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/34902663
+    repository: stackoverflow
+    issue_number: 34902663
+    comment_id: "0"
+    title: Permission denied inside Docker container
+    author: H&#233;ctor Valls
+    snippet: 1
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:21:50Z"
+fingerprint: 6c90d7aad1a14ed8

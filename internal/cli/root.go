@@ -180,9 +180,9 @@ func newAnalyzeCommand() *cobra.Command {
 		Long: strings.Join([]string{
 			"Analyze a CI log and rank matching playbooks using deterministic rules.",
 			"",
-			"When --git is enabled, Faultline also inspects recent local git history",
-			"to correlate the likely failure with recently changed files, commits,",
-			"churn hotspots, and simple hotfix or drift signals.",
+			"Faultline inspects recent local git history by default to correlate the",
+			"likely failure with recently changed files, commits, churn hotspots,",
+			"and simple hotfix or drift signals.",
 		}, "\n"),
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
@@ -277,7 +277,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
-	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
+	cmd.Flags().BoolVar(&gitContext, "git", true, "enrich results with recent local git repository context (enabled by default; pass --git=false to disable)")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
@@ -379,13 +379,14 @@ func newFixCommand() *cobra.Command {
 			defer input.Close()
 
 			return app.NewService().Fix(input.Reader, input.Source, app.AnalyzeOptions{
-				Top:              1,
-				Format:           resolvedFormat,
-				NoHistory:        noHistory || noStore,
-				PlaybookDir:      playbookDir,
-				PlaybookPackDirs: playbookPacks,
-				Store:            firstNonEmpty(storePath, os.Getenv(storeEnv)),
-				BayesEnabled:     bayes,
+				Top:               1,
+				Format:            resolvedFormat,
+				NoHistory:         noHistory || noStore,
+				PlaybookDir:       playbookDir,
+				PlaybookPackDirs:  playbookPacks,
+				Store:             firstNonEmpty(storePath, os.Getenv(storeEnv)),
+				GitContextEnabled: true,
+				BayesEnabled:      bayes,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -576,7 +577,7 @@ func newTraceCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
-	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich results with recent local git repository context")
+	cmd.Flags().BoolVar(&gitContext, "git", true, "enrich results with recent local git repository context (enabled by default; pass --git=false to disable)")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
@@ -817,7 +818,7 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
-	cmd.Flags().BoolVar(&gitContext, "git", false, "enrich the workflow with recent local git repository context")
+	cmd.Flags().BoolVar(&gitContext, "git", true, "enrich the workflow with recent local git repository context (enabled by default; pass --git=false to disable)")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")

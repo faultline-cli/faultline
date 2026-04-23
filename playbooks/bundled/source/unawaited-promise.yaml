@@ -1,0 +1,95 @@
+id: unawaited-promise
+title: Unawaited promise in async JavaScript or TypeScript code
+category: runtime
+severity: high
+detector: source
+base_score: 1.0
+tags: [source, javascript, typescript, async, promise, unhandled-rejection]
+source:
+  triggers:
+    - id: async_wrapper
+      label: async function or callback
+      patterns:
+        - "async () =>"
+        - "async function"
+      weight: 1.1
+    - id: promise_call
+      label: promise-returning call
+      patterns:
+        - "fetch("
+        - "axios."
+        - "client.request("
+        - "new Promise("
+        - "Promise.all("
+        - "Promise.race("
+      weight: 1.2
+  mitigations:
+    - id: awaited_promise
+      label: promise is awaited
+      patterns:
+        - "await "
+        - "return await"
+      weight: 1.8
+    - id: handled_rejection
+      label: rejection is handled explicitly
+      patterns:
+        - ".catch("
+        - "try {"
+        - "} catch ("
+      weight: 1.2
+  compound_signals:
+    - id: async_fire_and_forget
+      label: async wrapper calling a promise without an obvious await
+      require: [async_wrapper, promise_call]
+      scope: function
+      bonus: 2.0
+  safe_context:
+    - id: test_files_safer
+      label: test-only path
+      paths: [_test.js, tests/, test/]
+      discount: 1.5
+summary: |-
+  An async JavaScript or TypeScript function starts a promise-returning operation but never awaits or catches it. The rejection can escape the call site, turning a real failure into an unhandled rejection or a race that is hard to reproduce.
+diagnosis: |-
+  ## Diagnosis
+
+  An async JavaScript or TypeScript function starts a promise-returning operation but never awaits or catches it. The rejection can escape the call site, turning a real failure into an unhandled rejection or a race that is hard to reproduce.
+fix: |-
+  ## Fix steps
+
+  1. `await` the promise at the call site so the failure propagates through the current function.
+  2. If the work is intentionally detached, attach an explicit `.catch(...)` that logs or forwards the error.
+  3. Prefer returning the promise instead of dropping it when the caller should own the lifecycle.
+  4. Add a regression test for the async path so the missing await does not come back.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .` against the repository.
+  - Confirm the unawaited promise finding is resolved and the top source playbook still points at the intended file.
+workflow:
+  likely_files:
+    - src/**/*.ts
+    - src/**/*.js
+    - handlers/**/*.ts
+    - handlers/**/*.js
+    - services/**/*.ts
+    - services/**/*.js
+  local_repro:
+    - faultline inspect .
+    - rg -n "async \\(|async function|fetch\\(|Promise\\.|\\.then\\(" src handlers services
+  verify:
+    - faultline guard .
+    - npm test
+scoring:
+  blast_radius_bonus: 1.0
+  hot_path_bonus: 1.1
+why_it_matters: |-
+  ## Why it matters
+
+  Unawaited promises are one of the easiest ways to hide a real failure in JavaScript and TypeScript. The caller can continue as if the work succeeded, while the rejection is routed to global handlers, logged too late, or lost entirely. In CI and server code, that can turn a bad response, a timeout, or a rejected network call into flaky behavior that is hard to trace back to the original line.
+
+  ## Prevention
+
+  - Use `await` by default in async functions.
+  - If work must be detached, centralize the fire-and-forget boundary and log failures there.
+  - Keep promise-returning helper functions small so tests can assert the returned rejection path directly.

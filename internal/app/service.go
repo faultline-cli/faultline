@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"faultline/internal/artifact"
 	"faultline/internal/authoring"
 	analysiscompare "faultline/internal/compare"
 	"faultline/internal/detectors"
@@ -128,6 +129,7 @@ func (Service) Replay(r io.Reader, opts AnalyzeOptions, w io.Writer) error {
 	if err != nil {
 		return err
 	}
+	a = artifact.Sync(a)
 	if opts.View == output.ViewTrace {
 		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
 	}
@@ -151,10 +153,12 @@ func (Service) Compare(left, right io.Reader, opts AnalyzeOptions, w io.Writer) 
 	if err != nil {
 		return err
 	}
+	leftAnalysis = artifact.Sync(leftAnalysis)
 	rightAnalysis, err := output.ParseAnalysisJSON(rightData)
 	if err != nil {
 		return err
 	}
+	rightAnalysis = artifact.Sync(rightAnalysis)
 
 	report := analysiscompare.Build(leftAnalysis, rightAnalysis)
 	switch {

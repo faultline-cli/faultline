@@ -13,20 +13,25 @@ import (
 
 // analysisJSON is the stable JSON schema emitted by FormatAnalysisJSON.
 type analysisJSON struct {
-	Matched        bool                         `json:"matched"`
-	Source         string                       `json:"source,omitempty"`
-	Fingerprint    string                       `json:"fingerprint,omitempty"`
-	InputHash      string                       `json:"input_hash,omitempty"`
-	OutputHash     string                       `json:"output_hash,omitempty"`
-	Context        ctxJSON                      `json:"context"`
-	Results        []resultJSON                 `json:"results"`
-	RepoContext    *repoCtxJSON                 `json:"repo_context,omitempty"`
-	Delta          *model.Delta                 `json:"delta,omitempty"`
-	Differential   *model.DifferentialDiagnosis `json:"differential,omitempty"`
-	PackProvenance []model.PackProvenance       `json:"pack_provenance,omitempty"`
-	Metrics        *model.Metrics               `json:"metrics,omitempty"`
-	Policy         *model.Policy                `json:"policy,omitempty"`
-	Message        string                       `json:"message,omitempty"`
+	Matched               bool                         `json:"matched"`
+	Status                model.ArtifactStatus         `json:"status,omitempty"`
+	Source                string                       `json:"source,omitempty"`
+	Fingerprint           string                       `json:"fingerprint,omitempty"`
+	InputHash             string                       `json:"input_hash,omitempty"`
+	OutputHash            string                       `json:"output_hash,omitempty"`
+	Context               ctxJSON                      `json:"context"`
+	Results               []resultJSON                 `json:"results"`
+	RepoContext           *repoCtxJSON                 `json:"repo_context,omitempty"`
+	Delta                 *model.Delta                 `json:"delta,omitempty"`
+	Differential          *model.DifferentialDiagnosis `json:"differential,omitempty"`
+	PackProvenance        []model.PackProvenance       `json:"pack_provenance,omitempty"`
+	Metrics               *model.Metrics               `json:"metrics,omitempty"`
+	Policy                *model.Policy                `json:"policy,omitempty"`
+	CandidateClusters     []model.CandidateCluster     `json:"candidate_clusters,omitempty"`
+	DominantSignals       []string                     `json:"dominant_signals,omitempty"`
+	SuggestedPlaybookSeed *model.SuggestedPlaybookSeed `json:"suggested_playbook_seed,omitempty"`
+	Artifact              *model.FailureArtifact       `json:"artifact,omitempty"`
+	Message               string                       `json:"message,omitempty"`
 }
 
 // ctxJSON is the stable representation of model.Context in JSON output.
@@ -120,17 +125,22 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 	}
 
 	a := &model.Analysis{
-		Results:         make([]model.Result, 0, len(payload.Results)),
-		Source:          payload.Source,
-		Fingerprint:     payload.Fingerprint,
-		InputHash:       payload.InputHash,
-		OutputHash:      payload.OutputHash,
-		Context:         model.Context(payload.Context),
-		Delta:           payload.Delta,
-		Differential:    payload.Differential,
-		PackProvenances: payload.PackProvenance,
-		Metrics:         payload.Metrics,
-		Policy:          payload.Policy,
+		Results:               make([]model.Result, 0, len(payload.Results)),
+		Source:                payload.Source,
+		Fingerprint:           payload.Fingerprint,
+		InputHash:             payload.InputHash,
+		OutputHash:            payload.OutputHash,
+		Context:               model.Context(payload.Context),
+		Delta:                 payload.Delta,
+		Differential:          payload.Differential,
+		PackProvenances:       payload.PackProvenance,
+		Metrics:               payload.Metrics,
+		Policy:                payload.Policy,
+		Status:                payload.Status,
+		CandidateClusters:     payload.CandidateClusters,
+		DominantSignals:       payload.DominantSignals,
+		SuggestedPlaybookSeed: payload.SuggestedPlaybookSeed,
+		Artifact:              payload.Artifact,
 	}
 	a.RepoContext = parseRepoContextJSON(payload.RepoContext)
 
@@ -195,6 +205,32 @@ func stableHashAnalysis(a *model.Analysis) *model.Analysis {
 	}
 	clone := *a
 	clone.Results = append([]model.Result(nil), a.Results...)
+	clone.CandidateClusters = append([]model.CandidateCluster(nil), a.CandidateClusters...)
+	clone.DominantSignals = append([]string(nil), a.DominantSignals...)
+	if a.SuggestedPlaybookSeed != nil {
+		seed := *a.SuggestedPlaybookSeed
+		clone.SuggestedPlaybookSeed = &seed
+	}
+	if a.Artifact != nil {
+		artifact := *a.Artifact
+		clone.Artifact = &artifact
+		if a.Artifact.MatchedPlaybook != nil {
+			matched := *a.Artifact.MatchedPlaybook
+			clone.Artifact.MatchedPlaybook = &matched
+		}
+		if a.Artifact.HistoryContext != nil {
+			history := *a.Artifact.HistoryContext
+			clone.Artifact.HistoryContext = &history
+		}
+		if a.Artifact.SuggestedPlaybookSeed != nil {
+			seed := *a.Artifact.SuggestedPlaybookSeed
+			clone.Artifact.SuggestedPlaybookSeed = &seed
+		}
+		if a.Artifact.Remediation != nil {
+			remediation := *a.Artifact.Remediation
+			clone.Artifact.Remediation = &remediation
+		}
+	}
 	clone.Metrics = nil
 	clone.Policy = nil
 	for i := range clone.Results {
@@ -206,6 +242,14 @@ func stableHashAnalysis(a *model.Analysis) *model.Analysis {
 		result.LastSeenAt = ""
 		result.HookHistorySummary = nil
 		clone.Results[i] = result
+	}
+	if clone.Artifact != nil && clone.Artifact.HistoryContext != nil {
+		clone.Artifact.HistoryContext.SeenCount = 0
+		clone.Artifact.HistoryContext.SeenBefore = false
+		clone.Artifact.HistoryContext.OccurrenceCount = 0
+		clone.Artifact.HistoryContext.FirstSeenAt = ""
+		clone.Artifact.HistoryContext.LastSeenAt = ""
+		clone.Artifact.HistoryContext.HookHistorySummary = nil
 	}
 	return &clone
 }
@@ -222,6 +266,7 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	}
 
 	payload.Source = a.Source
+	payload.Status = a.Status
 	payload.Fingerprint = a.Fingerprint
 	payload.InputHash = a.InputHash
 	payload.OutputHash = a.OutputHash
@@ -236,6 +281,10 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.PackProvenance = a.PackProvenances
 	payload.Metrics = a.Metrics
 	payload.Policy = a.Policy
+	payload.CandidateClusters = a.CandidateClusters
+	payload.DominantSignals = a.DominantSignals
+	payload.SuggestedPlaybookSeed = a.SuggestedPlaybookSeed
+	payload.Artifact = a.Artifact
 
 	if !payload.Matched {
 		payload.Message = "No known playbook matched this input."

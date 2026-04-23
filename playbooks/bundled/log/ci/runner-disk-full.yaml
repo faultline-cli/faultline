@@ -38,12 +38,14 @@ match:
     - "out of disk space"
     - "Disk is full"
     - "Error processing tar file"
+    - "executor_docker.go"
     - "buildkit-mount"
     - "failed to copy files"
     - "docker build -t"
   none:
     - "file system is full"
     - "no space remaining"
+    - "permission denied"
 workflow:
   likely_files:
     - .dockerignore

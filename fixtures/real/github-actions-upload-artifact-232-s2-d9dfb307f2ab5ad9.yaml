@@ -1,0 +1,42 @@
+id: github-actions-upload-artifact-232-s2-d9dfb307f2ab5ad9
+title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+fixture_class: real
+normalized_log: |-
+    jobs:
+    build:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    steps:
+    - name: Upload artifacts for deployment job
+    uses: actions/upload-artifact@v4
+    with:
+    name: next-build
+    path: |
+    ${{ github.workspace }}/.next
+    ${{ github.workspace }}/.next/standalone
+    ${{ github.workspace }}/.env.local
+    include-hidden-files: true
+    if-no-files-found: error
+    compression-level: 9
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/232
+    repository: actions/upload-artifact
+    issue_number: 232
+    comment_id: "2528519761"
+    title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+    labels:
+        - bug
+    author: benknab
+    snippet: 2
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:21:50Z"
+fingerprint: d9dfb307f2ab5ad9

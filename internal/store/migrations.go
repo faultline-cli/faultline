@@ -122,4 +122,11 @@ CREATE INDEX IF NOT EXISTS idx_hook_results_playbook_id
 	ON hook_results(playbook_id);
 `,
 	},
+	{
+		version: 2,
+		name:    "analysis-artifact",
+		sql: `
+ALTER TABLE analysis_runs ADD COLUMN artifact_json TEXT;
+`,
+	},
 }

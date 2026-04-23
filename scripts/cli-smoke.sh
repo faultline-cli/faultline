@@ -36,16 +36,16 @@ FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/doc
 grep -F "docker-auth" "$TMP_DIR/analyze.txt" >/dev/null
 
 run_compare "docker-auth.expected.md" "$ROOT_DIR/examples/docker-auth.expected.md" \
-	"$BINARY" analyze "$ROOT_DIR/examples/docker-auth.log" --format markdown --no-history
+	"$BINARY" analyze "$ROOT_DIR/examples/docker-auth.log" --format markdown --no-history --git=false
 run_compare "missing-executable.expected.md" "$ROOT_DIR/examples/missing-executable.expected.md" \
-	"$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --format markdown --no-history
+	"$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --format markdown --no-history --git=false
 run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.expected.md" \
-	"$BINARY" analyze "$ROOT_DIR/examples/runtime-mismatch.log" --format markdown --no-history
+	"$BINARY" analyze "$ROOT_DIR/examples/runtime-mismatch.log" --format markdown --no-history --git=false
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history >"$TMP_DIR/missing.analysis.json"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/missing.analysis.json"
 cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history >"$TMP_DIR/runtime.analysis.json"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/runtime.analysis.json"
 
 run_compare "missing-executable.replay.expected.md" "$ROOT_DIR/examples/missing-executable.replay.expected.md" \
 	"$BINARY" replay --format markdown --mode detailed "$TMP_DIR/missing.analysis.json"
@@ -53,15 +53,15 @@ run_compare "missing-vs-runtime.compare.expected.md" "$ROOT_DIR/examples/missing
 	"$BINARY" compare --format markdown "$TMP_DIR/missing.analysis.json" "$TMP_DIR/runtime.analysis.json"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history >"$TMP_DIR/missing.trace.md"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history --git=false >"$TMP_DIR/missing.trace.md"
 cmp -s "$TMP_DIR/missing.trace.md" "$ROOT_DIR/examples/missing-executable.trace.expected.md"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --no-history >"$TMP_DIR/workflow.local.txt"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --no-history --git=false >"$TMP_DIR/workflow.local.txt"
 cmp -s "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executable.workflow.local.txt"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history >"$TMP_DIR/workflow.agent.json"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false >"$TMP_DIR/workflow.agent.json"
 cmp -s "$TMP_DIR/workflow.agent.json" "$ROOT_DIR/examples/missing-executable.workflow.agent.json"
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" explain docker-auth >"$TMP_DIR/explain.txt"

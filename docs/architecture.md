@@ -7,6 +7,8 @@ explicit deterministic layers:
   and handing structured options into the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
   explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+- `internal/artifact` owns construction of the first-class `FailureArtifact`
+  used for replay, compare, storage, and remediation handoff.
 - `internal/store` owns optional durable local forensic memory, deterministic
   signature hashing, SQLite persistence, and explicit schema migrations.
 - `internal/authoring` owns the hidden maintainer-only scaffold flow that turns
@@ -87,6 +89,30 @@ baseline so `inspect` is useful without an extra install. Extra packs can
 concentrate on provider-specific depth, advanced deployment or operations
 workflows, and deeper source or security rules.
 
+Playbooks can now also form a deterministic inheritance graph across the
+composed pack set through `extends: <playbook-id>`. The boundary stays narrow:
+
+- inheritance is local to the already-loaded pack graph
+- duplicate playbook IDs are still rejected
+- child playbooks inherit and extend structured match, workflow, scoring, and
+  explanatory content from the parent
+- pack order still matters because later packs may contribute inheriting rules
+  that target earlier bundled or team playbooks
+
+The same pack boundary can also carry a deterministic match-fragment graph
+through `faultline-matchers.yaml`. Those overlays:
+
+- define reusable named match fragments for `match.any`, `match.all`,
+  `match.none`, and `match.partial`
+- let playbooks compose those fragments through `match.use`
+- support explicit `playbook:<id>` references when a playbook should reuse the
+  fully composed match graph of another rule
+- resolve after inheritance, reject composition cycles, and expand back into a
+  flat deterministic playbook match set before ranking
+
+This keeps reusable sub-patterns first-class without turning the matcher into a
+runtime DSL or a second hidden decision engine.
+
 The same pack boundary now carries optional hook overlays through
 `faultline-hooks.yaml` at the pack root. Those overlays:
 
@@ -148,6 +174,7 @@ The store records durable forensic memory such as:
 
 - top-diagnosis recurrence by `signature_hash`
 - run-level `input_hash` and `output_hash`
+- first-class `artifact_json` snapshots for replayable failure artifacts
 - ranked playbook matches for longitudinal review
 - hook execution results when hooks are enabled
 
@@ -206,6 +233,18 @@ also include:
 
 Saved analysis artifacts preserve those fields on replay and compare.
 
+Analysis JSON now also carries an additive first-class `artifact` object that
+collapses the winning diagnosis or structured unknown state into one stable
+unit of computation. The artifact records:
+
+- fingerprint
+- matched playbook identity when present
+- evidence and confidence
+- environment and history context
+- fix steps
+- structured unknown clusters and playbook seed hints when unmatched
+- remediation commands, patch suggestions, and CI config diff hints
+
 When hook execution is enabled, result JSON may also include additive `hooks`
 reports. These reports record:
 
@@ -223,6 +262,8 @@ When present, JSON and text workflow output may also carry:
 - `delta_hints`
 - `metrics_hints`
 - `policy_hints`
+- the embedded failure `artifact`
+- a structured `remediation` block with commands, patch suggestions, and CI config diff hints
 
 Absent data remains absent. Faultline does not invent placeholder values for
 missing history or policy inputs.

@@ -138,6 +138,41 @@ func TestRankPartialAllPatterns(t *testing.T) {
 	}
 }
 
+func TestRankPartialGroupThreshold(t *testing.T) {
+	pb := model.Playbook{
+		ID:    "partial-group",
+		Title: "Partial Group",
+		Match: model.MatchSpec{
+			Partial: []model.PartialMatchGroup{
+				{
+					ID:      "node-env",
+					Minimum: 2,
+					Patterns: []string{
+						".nvmrc",
+						"engines.node",
+						"node version",
+					},
+				},
+			},
+		},
+	}
+	lines := []model.Line{
+		{Original: "project has .nvmrc checked in", Normalized: "project has .nvmrc checked in"},
+		{Original: "package.json engines.node requires 20", Normalized: "package.json engines.node requires 20"},
+	}
+
+	results := Rank([]model.Playbook{pb}, lines, model.Context{})
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].Score != 2.5 {
+		t.Fatalf("expected score 2.5, got %v", results[0].Score)
+	}
+	if len(results[0].Evidence) != 2 {
+		t.Fatalf("expected 2 evidence lines, got %d", len(results[0].Evidence))
+	}
+}
+
 func TestRankNonePatternExcludesPlaybook(t *testing.T) {
 	playbooks := []model.Playbook{
 		{

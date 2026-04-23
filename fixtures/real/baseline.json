@@ -1,6 +1,6 @@
 {
   "class": "real",
-  "fixture_count": 126,
+  "fixture_count": 132,
   "top_1_rate": 1,
   "top_3_rate": 1,
   "unmatched_rate": 0,
@@ -13,6 +13,6 @@
     "max_false_positive": 0.35,
     "max_weak_match": 0.15
   },
-  "generated_at": "2026-04-23T08:15:05Z",
-  "fingerprint": "e04fe1dd27cf1eb5"
+  "generated_at": "2026-04-23T08:25:05Z",
+  "fingerprint": "e96da844af978b59"
 }

@@ -1,0 +1,31 @@
+id: gitlab-gitlab-org-gitlab-215620-s1-0e09dd0962d58e66
+title: CI/CD pipeline fails - no space left on device
+fixture_class: real
+normalized_log: |-
+    My CI/CD pipelines are failing from last 2 days. The error while running the job is:
+    "no space left on device (executor_docker.go:924:0s)"
+expectation:
+    expected_playbook: runner-disk-full
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab/-/issues/215620
+    repository: gitlab-org/gitlab
+    issue_number: 215620
+    title: CI/CD pipeline fails - no space left on device
+    labels:
+        - '[Deprecated] Category:Runner'
+        - devops::verify
+        - group::runner core
+        - severity::2
+        - type::bug
+    author: anzalansari
+    snippet: 1
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:21:50Z"
+fingerprint: 0e09dd0962d58e66

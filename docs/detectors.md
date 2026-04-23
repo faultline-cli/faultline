@@ -3,7 +3,7 @@
 Faultline now supports multiple deterministic detector modules behind a shared
 result model.
 
-The bundled catalog currently splits into 98 log playbooks and 2 source
+The bundled catalog currently splits into 98 log playbooks and 3 source
 playbooks.
 
 ## Built-in detectors
@@ -72,6 +72,10 @@ and line-level edits can be scored as introduced or modified rather than only
 as legacy repository risk. Positive and mitigated repository fixtures for the
 shipped source rules live under `internal/engine/testdata/source/` and are
 validated in `internal/engine/source_playbook_fixtures_test.go`.
+
+Shipped source playbooks should also carry deterministic `workflow.likely_files`,
+`workflow.local_repro`, and `workflow.verify` hints so source findings hand off
+cleanly to the next maintainer or agent.
 
 ## Suppressions
 

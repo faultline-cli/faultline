@@ -102,7 +102,26 @@ func TestFormatAnalysisJSONMatched(t *testing.T) {
 }
 
 func TestFormatAnalysisJSONNoMatch(t *testing.T) {
-	data, err := FormatAnalysisJSON(nil, 1)
+	a := &model.Analysis{
+		Status:            model.ArtifactStatusUnknown,
+		Fingerprint:       "abc12345",
+		CandidateClusters: []model.CandidateCluster{{Key: "build", Summary: "cluster"}},
+		DominantSignals:   []string{"unknown signal"},
+		SuggestedPlaybookSeed: &model.SuggestedPlaybookSeed{
+			Category: "build",
+			Title:    "Observed build failure signature",
+			MatchAny: []string{"unknown signal"},
+		},
+		Artifact: &model.FailureArtifact{
+			SchemaVersion: "failure_artifact.v1",
+			Status:        model.ArtifactStatusUnknown,
+			Fingerprint:   "abc12345",
+			DominantSignals: []string{
+				"unknown signal",
+			},
+		},
+	}
+	data, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
 		t.Fatalf("format json no match: %v", err)
 	}
@@ -113,6 +132,15 @@ func TestFormatAnalysisJSONNoMatch(t *testing.T) {
 	}
 	if out["matched"] != false {
 		t.Errorf("expected matched=false, got %v", out["matched"])
+	}
+	if out["status"] != "unknown" {
+		t.Errorf("expected status=unknown, got %v", out["status"])
+	}
+	if _, ok := out["artifact"].(map[string]interface{}); !ok {
+		t.Fatalf("expected artifact object for no-match, got %v", out["artifact"])
+	}
+	if _, ok := out["candidate_clusters"].([]interface{}); !ok {
+		t.Fatalf("expected candidate_clusters for no-match, got %v", out["candidate_clusters"])
 	}
 	if out["message"] == "" {
 		t.Error("expected a message field for no-match")
@@ -194,6 +222,34 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 		FailedCount:   1,
 		LastSeenAt:    "2026-04-22T12:00:00Z",
 	}
+	a.Artifact = &model.FailureArtifact{
+		SchemaVersion: "failure_artifact.v1",
+		Status:        model.ArtifactStatusMatched,
+		Fingerprint:   "artifact123",
+		MatchedPlaybook: &model.ArtifactPlaybook{
+			ID: "docker-auth",
+		},
+		Evidence:   []string{"authentication required"},
+		Confidence: 0.72,
+		Environment: model.ArtifactEnvironment{
+			Source: "stdin",
+			Context: model.Context{
+				Stage: "deploy",
+			},
+		},
+		HistoryContext: &model.ArtifactHistoryContext{
+			SignatureHash:   "sig123",
+			OccurrenceCount: 3,
+		},
+		FixSteps: []string{"Fix the registry credentials."},
+		Remediation: &model.RemediationPlan{
+			Commands: []model.RemediationCommand{{
+				ID:      "verify-1",
+				Phase:   "verify",
+				Command: []string{"docker", "login"},
+			}},
+		},
+	}
 
 	data, err := FormatAnalysisJSON(a, 1)
 	if err != nil {
@@ -229,6 +285,12 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	}
 	if parsed.Results[0].SignatureHash != "sig123" || parsed.Results[0].OccurrenceCount != 3 || parsed.Results[0].HookHistorySummary == nil {
 		t.Fatalf("expected history fields to survive round trip, got %#v", parsed.Results[0])
+	}
+	if parsed.Artifact == nil || parsed.Artifact.Fingerprint != "artifact123" {
+		t.Fatalf("expected artifact to survive round trip, got %#v", parsed.Artifact)
+	}
+	if parsed.Artifact.Remediation == nil || len(parsed.Artifact.Remediation.Commands) != 1 {
+		t.Fatalf("expected remediation to survive round trip, got %#v", parsed.Artifact)
 	}
 }
 
@@ -988,12 +1050,24 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	plan := workflow.Plan{
 		SchemaVersion: "workflow.v1",
 		Mode:          workflow.ModeLocal,
+		Status:        model.ArtifactStatusMatched,
 		FailureID:     "snapshot-mismatch",
 		Title:         "Snapshot or golden-file mismatch",
 		MetricsHints:  []string{"TSS 0.40 (5 runs)"},
 		PolicyHints:   []string{"policy: observe"},
 		Verify:        []string{"go test ./..."},
 		Steps:         []string{"Inspect the diff."},
+		Artifact: &model.FailureArtifact{
+			SchemaVersion: "failure_artifact.v1",
+			Status:        model.ArtifactStatusMatched,
+		},
+		Remediation: &model.RemediationPlan{
+			Commands: []model.RemediationCommand{{
+				ID:      "verify-1",
+				Phase:   "verify",
+				Command: []string{"go", "test", "./..."},
+			}},
+		},
 	}
 	data, err := FormatWorkflowJSON(plan)
 	if err != nil {
@@ -1009,10 +1083,19 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	if out["schema_version"] != "workflow.v1" {
 		t.Fatalf("expected schema_version, got %v", out["schema_version"])
 	}
+	if out["status"] != "matched" {
+		t.Fatalf("expected status in workflow JSON, got %v", out["status"])
+	}
 	if _, ok := out["metrics_hints"].([]interface{}); !ok {
 		t.Fatalf("expected metrics_hints in workflow JSON, got %v", out["metrics_hints"])
 	}
 	if _, ok := out["policy_hints"].([]interface{}); !ok {
 		t.Fatalf("expected policy_hints in workflow JSON, got %v", out["policy_hints"])
+	}
+	if _, ok := out["artifact"].(map[string]interface{}); !ok {
+		t.Fatalf("expected artifact in workflow JSON, got %v", out["artifact"])
+	}
+	if _, ok := out["remediation"].(map[string]interface{}); !ok {
+		t.Fatalf("expected remediation in workflow JSON, got %v", out["remediation"])
 	}
 }

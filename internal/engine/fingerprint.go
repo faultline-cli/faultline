@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"hash/fnv"
+	"strings"
 
 	"faultline/internal/model"
 )
@@ -19,6 +20,22 @@ func fingerprint(result model.Result) string {
 	}
 	for _, evidence := range result.Evidence[:limit] {
 		h.Write([]byte(evidence))
+	}
+	return fmt.Sprintf("%08x", h.Sum32())
+}
+
+func fingerprintUnknown(signals []string, ctx model.Context) string {
+	h := fnv.New32a()
+	h.Write([]byte("unknown"))
+	h.Write([]byte(ctx.Stage))
+	h.Write([]byte(ctx.CommandHint))
+	h.Write([]byte(ctx.Step))
+	limit := 3
+	if len(signals) < limit {
+		limit = len(signals)
+	}
+	for _, signal := range signals[:limit] {
+		h.Write([]byte(strings.TrimSpace(signal)))
 	}
 	return fmt.Sprintf("%08x", h.Sum32())
 }

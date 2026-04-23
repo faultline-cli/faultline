@@ -93,8 +93,16 @@ type rawHypothesisDiscriminator struct {
 	Weight      float64 `yaml:"weight"`
 }
 
+type rawPartialMatchGroup struct {
+	ID       string   `yaml:"id"`
+	Label    string   `yaml:"label"`
+	Minimum  int      `yaml:"minimum"`
+	Patterns []string `yaml:"patterns"`
+}
+
 type raw struct {
 	ID         string   `yaml:"id"`
+	Extends    string   `yaml:"extends"`
 	Title      string   `yaml:"title"`
 	Category   string   `yaml:"category"`
 	Severity   string   `yaml:"severity"`
@@ -103,9 +111,11 @@ type raw struct {
 	Tags       []string `yaml:"tags"`
 	StageHints []string `yaml:"stage_hints"`
 	Match      struct {
-		Any  []string `yaml:"any"`
-		All  []string `yaml:"all"`
-		None []string `yaml:"none"`
+		Any     []string               `yaml:"any"`
+		All     []string               `yaml:"all"`
+		None    []string               `yaml:"none"`
+		Use     []string               `yaml:"use"`
+		Partial []rawPartialMatchGroup `yaml:"partial"`
 	} `yaml:"match"`
 	Source struct {
 		Triggers          []rawSignalMatcher   `yaml:"triggers"`
@@ -230,7 +240,7 @@ func LoadDir(dir string) ([]model.Playbook, error) {
 			return nil
 		}
 		name := d.Name()
-		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName && name != HookCatalogFileName {
+		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName && name != HookCatalogFileName && name != MatchCatalogFileName {
 			files = append(files, path)
 		}
 		return nil
@@ -279,6 +289,7 @@ func loadFile(path string) (model.Playbook, error) {
 	}
 	return model.Playbook{
 		ID:         r.ID,
+		Extends:    strings.TrimSpace(r.Extends),
 		Title:      r.Title,
 		Category:   r.Category,
 		Severity:   r.Severity,
@@ -287,9 +298,11 @@ func loadFile(path string) (model.Playbook, error) {
 		Tags:       r.Tags,
 		StageHints: r.StageHints,
 		Match: model.MatchSpec{
-			Any:  r.Match.Any,
-			All:  r.Match.All,
-			None: r.Match.None,
+			Any:     r.Match.Any,
+			All:     r.Match.All,
+			None:    r.Match.None,
+			Use:     trimStrings(r.Match.Use),
+			Partial: convertPartialMatchGroups(r.Match.Partial),
 		},
 		Source:        convertSourceSpec(r),
 		Summary:       normalizeMarkdownBlock(r.Summary),
@@ -357,43 +370,56 @@ func normalizeMarkdownBlock(value string) string {
 }
 
 func validate(r raw, path string) error {
+	inherits := strings.TrimSpace(r.Extends) != ""
 	if strings.TrimSpace(r.ID) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'id'", path)
 	}
-	if strings.TrimSpace(r.Title) == "" {
+	if !inherits && strings.TrimSpace(r.Title) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'title'", path)
 	}
-	if strings.TrimSpace(r.Summary) == "" {
+	if !inherits && strings.TrimSpace(r.Summary) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'summary'", path)
 	}
-	if strings.TrimSpace(r.Diagnosis) == "" {
+	if !inherits && strings.TrimSpace(r.Diagnosis) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'diagnosis'", path)
 	}
-	if strings.TrimSpace(r.Fix) == "" {
+	if !inherits && strings.TrimSpace(r.Fix) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'fix'", path)
 	}
-	if strings.TrimSpace(r.Validation) == "" {
+	if !inherits && strings.TrimSpace(r.Validation) == "" {
 		return fmt.Errorf("playbook %s: missing required field 'validation'", path)
 	}
 	detector := normalizeDetector(r.Detector)
-	if detector == "" {
+	if detector == "" && !inherits {
 		detector = "log"
 	}
-	if detector == "log" && len(r.Match.Any) == 0 && len(r.Match.All) == 0 {
+	if detector == "log" && !inherits && len(r.Match.Any) == 0 && len(r.Match.All) == 0 && len(r.Match.Use) == 0 && len(r.Match.Partial) == 0 {
 		return fmt.Errorf(
-			"playbook %s: must define at least one pattern in match.any or match.all",
+			"playbook %s: must define at least one matcher in match.any, match.all, match.use, or match.partial",
 			path,
 		)
 	}
 	switch detector {
 	case "log":
-		if err := validatePatterns(r.Match.Any, "match.any", path); err != nil {
+		if len(r.Match.Any) > 0 {
+			if err := validatePatterns(r.Match.Any, "match.any", path); err != nil {
+				return err
+			}
+		}
+		if len(r.Match.All) > 0 {
+			if err := validatePatterns(r.Match.All, "match.all", path); err != nil {
+				return err
+			}
+		}
+		if len(r.Match.None) > 0 {
+			if err := validatePatterns(r.Match.None, "match.none", path); err != nil {
+				return err
+			}
+		}
+		if err := validateMatchRefs(r.Match.Use, path); err != nil {
 			return err
 		}
-		if err := validatePatterns(r.Match.All, "match.all", path); err != nil {
-			return err
-		}
-		if err := validatePatterns(r.Match.None, "match.none", path); err != nil {
+		if err := validatePartialMatchGroups(r.Match.Partial, path); err != nil {
 			return err
 		}
 		if err := validateExclusions(r.Match.Any, r.Match.All, r.Match.None, path); err != nil {
@@ -402,6 +428,10 @@ func validate(r raw, path string) error {
 	case "source":
 		if err := validateSource(r, path); err != nil {
 			return err
+		}
+	case "":
+		if !inherits {
+			return fmt.Errorf("playbook %s: unknown detector %q", path, detector)
 		}
 	default:
 		return fmt.Errorf("playbook %s: unknown detector %q", path, detector)
@@ -489,6 +519,34 @@ func validatePatterns(patterns []string, section, path string) error {
 		norm := normalizePattern(pattern)
 		if norm == "" {
 			return fmt.Errorf("playbook %s: %s[%d] must not be empty", path, section, i)
+		}
+	}
+	return nil
+}
+
+func validateMatchRefs(refs []string, path string) error {
+	for i, ref := range refs {
+		if strings.TrimSpace(ref) == "" {
+			return fmt.Errorf("playbook %s: match.use[%d] must not be empty", path, i)
+		}
+	}
+	return nil
+}
+
+func validatePartialMatchGroups(groups []rawPartialMatchGroup, path string) error {
+	for i, group := range groups {
+		section := fmt.Sprintf("match.partial[%d]", i)
+		if len(group.Patterns) == 0 {
+			return fmt.Errorf("playbook %s: %s must define at least one pattern", path, section)
+		}
+		if err := validatePatterns(group.Patterns, section+".patterns", path); err != nil {
+			return err
+		}
+		if group.Minimum <= 0 {
+			return fmt.Errorf("playbook %s: %s.minimum must be greater than zero", path, section)
+		}
+		if group.Minimum > len(group.Patterns) {
+			return fmt.Errorf("playbook %s: %s.minimum exceeds pattern count", path, section)
 		}
 	}
 	return nil
@@ -626,6 +684,34 @@ func convertSafeContextRules(items []rawSafeContextRule) []model.SafeContextRule
 	out := make([]model.SafeContextRule, 0, len(items))
 	for _, item := range items {
 		out = append(out, model.SafeContextRule(item))
+	}
+	return out
+}
+
+func convertPartialMatchGroups(items []rawPartialMatchGroup) []model.PartialMatchGroup {
+	out := make([]model.PartialMatchGroup, 0, len(items))
+	for _, item := range items {
+		out = append(out, model.PartialMatchGroup{
+			ID:       strings.TrimSpace(item.ID),
+			Label:    strings.TrimSpace(item.Label),
+			Minimum:  item.Minimum,
+			Patterns: append([]string(nil), item.Patterns...),
+		})
+	}
+	return out
+}
+
+func trimStrings(items []string) []string {
+	if len(items) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		out = append(out, item)
 	}
 	return out
 }

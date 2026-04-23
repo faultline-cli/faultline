@@ -16,6 +16,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - JSON output for agents and automation.
 - Optional workflow output for local and agentic follow-up.
 - Optional quiet guard output for high-confidence local prevention checks.
+- First-class failure artifacts for storage, replay, compare, and remediation handoff.
 - Docker-first distribution for portable CI usage.
 
 ## Main Workflow
@@ -27,8 +28,9 @@ Given a build log from a local run or CI job, Faultline should identify the most
 5. Match deterministic patterns against the normalized log.
 6. Score and rank matches using explicit, stable rules, with optional deterministic evidence-fusion reranking when enabled.
 7. Build a deterministic differential diagnosis across the top competing playbooks using supporting, contradictory, and excluding signals.
-8. Optionally enrich the likely diagnosis with recent local git repository context.
-9. Return the result as formatted text or JSON.
+8. Enrich the diagnosis with recent local git repository context and explicit change signals when available.
+9. Materialize a first-class failure artifact with evidence, environment, history context, and remediation structure.
+10. Return the result as formatted text or JSON.
 
 ## Primary Commands
 
@@ -121,9 +123,28 @@ type Analysis struct {
     Context     Context          // Stage, CommandHint, Step
     Source      string
     Fingerprint string
-    RepoContext *RepoContext     // Populated when --git is enabled
+    RepoContext *RepoContext     // Populated by default local repo enrichment unless disabled
     Delta       *Delta           // Populated when repo-aware scoring has explicit change or git context
     Differential *DifferentialDiagnosis
+    Artifact    *FailureArtifact // Stable unit for replay, compare, storage, and remediation handoff
+}
+```
+
+### FailureArtifact
+
+```go
+type FailureArtifact struct {
+    Fingerprint         string
+    MatchedPlaybook     *ArtifactPlaybook
+    Evidence            []string
+    Confidence          float64
+    Environment         ArtifactEnvironment
+    HistoryContext      *ArtifactHistoryContext
+    FixSteps            []string
+    CandidateClusters   []CandidateCluster
+    DominantSignals     []string
+    SuggestedPlaybookSeed *SuggestedPlaybookSeed
+    Remediation         *RemediationPlan
 }
 ```
 
@@ -150,12 +171,12 @@ type Ranking struct {
 - Playbook loading order must be stable.
 - Deterministic detectors stay authoritative for matching.
 - Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
-- Delta hints require explicit repo-aware context such as `--git` or changed-file analysis.
+- Local repo-aware enrichment is part of the default analysis loop; explicit flags may still disable it for narrow cases.
 - Provider-backed CI delta is experimental, requires explicit opt-in, and may call the provider API only when enabled.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.
-- Workflow output should stay deterministic and derived only from analysis results plus local repo context.
+- Workflow output should stay deterministic and derived only from the analysis artifact plus local repo context.
 - Playbook review output should be deterministic and should highlight exact shared patterns and exclusions.
 - Docker execution should not require runtime dependencies beyond the container image.
 

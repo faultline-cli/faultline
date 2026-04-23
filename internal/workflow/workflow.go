@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	artifactpkg "faultline/internal/artifact"
 	"faultline/internal/model"
 )
 
@@ -29,22 +30,25 @@ type BuildOptions struct {
 
 // Plan is a deterministic next-step plan derived from the top diagnosis.
 type Plan struct {
-	SchemaVersion string        `json:"schema_version"`
-	Mode          Mode          `json:"mode"`
-	FailureID     string        `json:"failure_id,omitempty"`
-	Title         string        `json:"title,omitempty"`
-	Source        string        `json:"source,omitempty"`
-	Context       model.Context `json:"context"`
-	Evidence      []string      `json:"evidence"`
-	Files         []string      `json:"files,omitempty"`
-	LocalRepro    []string      `json:"local_repro,omitempty"`
-	Verify        []string      `json:"verify,omitempty"`
-	RankingHints  []string      `json:"ranking_hints,omitempty"`
-	DeltaHints    []string      `json:"delta_hints,omitempty"`
-	MetricsHints  []string      `json:"metrics_hints,omitempty"`
-	PolicyHints   []string      `json:"policy_hints,omitempty"`
-	Steps         []string      `json:"steps"`
-	AgentPrompt   string        `json:"agent_prompt,omitempty"`
+	SchemaVersion string                 `json:"schema_version"`
+	Mode          Mode                   `json:"mode"`
+	Status        model.ArtifactStatus   `json:"status,omitempty"`
+	FailureID     string                 `json:"failure_id,omitempty"`
+	Title         string                 `json:"title,omitempty"`
+	Source        string                 `json:"source,omitempty"`
+	Context       model.Context          `json:"context"`
+	Evidence      []string               `json:"evidence"`
+	Files         []string               `json:"files,omitempty"`
+	LocalRepro    []string               `json:"local_repro,omitempty"`
+	Verify        []string               `json:"verify,omitempty"`
+	RankingHints  []string               `json:"ranking_hints,omitempty"`
+	DeltaHints    []string               `json:"delta_hints,omitempty"`
+	MetricsHints  []string               `json:"metrics_hints,omitempty"`
+	PolicyHints   []string               `json:"policy_hints,omitempty"`
+	Steps         []string               `json:"steps"`
+	AgentPrompt   string                 `json:"agent_prompt,omitempty"`
+	Artifact      *model.FailureArtifact `json:"artifact,omitempty"`
+	Remediation   *model.RemediationPlan `json:"remediation,omitempty"`
 }
 
 // Build returns a workflow plan for the top-ranked diagnosis.
@@ -65,18 +69,31 @@ func BuildWithOptions(a *model.Analysis, mode Mode, opts BuildOptions) Plan {
 		Steps:         []string{},
 	}
 	if a == nil {
+		plan.Status = model.ArtifactStatusUnknown
 		plan.Steps = append(plan.Steps, "Run `faultline analyze <logfile>` first to produce a diagnosis.")
 		return plan
 	}
+	a = artifactpkg.Sync(a)
 
 	plan.Source = a.Source
 	plan.Context = a.Context
+	plan.Status = a.Status
+	plan.Artifact = a.Artifact
+	if a.Artifact != nil {
+		plan.Remediation = a.Artifact.Remediation
+	}
 	if len(a.Results) == 0 {
+		if a.Artifact != nil {
+			plan.Evidence = append(plan.Evidence, a.Artifact.DominantSignals...)
+		}
 		plan.Steps = append(plan.Steps,
 			"No deterministic playbook matched this log yet.",
-			"Run `faultline list` to inspect existing coverage and add a new playbook for the observed failure signature.",
+			"Use the dominant unmatched signals and candidate clusters to decide whether the nearest bundled playbook should be refined or a new playbook seed is warranted.",
 			"Capture a short failing log excerpt and reduce it to stable evidence lines before extending the library.",
 		)
+		if a.Artifact != nil && len(a.Artifact.FixSteps) > 0 {
+			plan.Steps = append(plan.Steps, a.Artifact.FixSteps...)
+		}
 		return plan
 	}
 
@@ -109,6 +126,9 @@ func BuildWithOptions(a *model.Analysis, mode Mode, opts BuildOptions) Plan {
 	plan.Steps = append(plan.Steps, baseSteps(a, top, plan)...)
 	if mode == ModeAgent {
 		plan.AgentPrompt = buildAgentPrompt(a, top, plan)
+	}
+	if plan.Remediation == nil && a.Artifact != nil {
+		plan.Remediation = a.Artifact.Remediation
 	}
 	return plan
 }

@@ -144,27 +144,32 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	if err != nil {
 		return nil, err
 	}
+	deltaState := e.loadProviderDelta(currentLog)
+	var snapshot *repoSnapshot
+	if e.opts.GitContextEnabled {
+		snapshot = e.loadRepoSnapshot()
+	}
 	results := logDetector.Detect(detectors.FilterPlaybooks(pbs, detectors.KindLog), detectors.Target{
 		LogLines:   lines,
 		LogContext: ctx,
 	})
 
 	if len(results) == 0 {
+		clusters, dominantSignals, seed := buildUnknownDiagnosis(lines, ctx)
 		return &model.Analysis{
-			Results:         []model.Result{},
-			Context:         ctx,
-			PackProvenances: packProv,
+			Results:               []model.Result{},
+			Context:               ctx,
+			Fingerprint:           fingerprintUnknown(dominantSignals, ctx),
+			RepoContext:           snapshotContext(snapshot),
+			PackProvenances:       packProv,
+			Status:                model.ArtifactStatusUnknown,
+			CandidateClusters:     clusters,
+			DominantSignals:       dominantSignals,
+			SuggestedPlaybookSeed: seed,
 		}, ErrNoMatch
 	}
 
-	var (
-		snapshot *repoSnapshot
-		delta    *model.Delta
-	)
-	deltaState := e.loadProviderDelta(currentLog)
-	if e.opts.GitContextEnabled {
-		snapshot = e.loadRepoSnapshot()
-	}
+	var delta *model.Delta
 	repoState := mergeRepoStates(repoStateFromSnapshot(snapshot), deltaState)
 	if !e.opts.BayesEnabled {
 		delta = scoring.DiagnoseDelta(repoState)
@@ -199,6 +204,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		Delta:           delta,
 		Differential:    differential,
 		PackProvenances: packProv,
+		Status:          model.ArtifactStatusMatched,
 	}
 
 	// Enrich with git repo context when requested (best-effort; never blocks).
@@ -207,6 +213,8 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 			analysis.RepoContext = rc
 		} else if rc := e.repoEnricher.Enrich(results[0]); rc != nil {
 			analysis.RepoContext = rc
+		} else {
+			analysis.RepoContext = snapshotContext(snapshot)
 		}
 	}
 
@@ -222,7 +230,11 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 	packProv := playbooks.ProvenanceFromPlaybooks(pbs)
 	sourcePlaybooks := detectors.FilterPlaybooks(pbs, detectors.KindSource)
 	if len(sourcePlaybooks) == 0 {
-		return &model.Analysis{Results: []model.Result{}, PackProvenances: packProv}, ErrNoMatch
+		return &model.Analysis{
+			Results:         []model.Result{},
+			PackProvenances: packProv,
+			Status:          model.ArtifactStatusUnknown,
+		}, ErrNoMatch
 	}
 	files, err := e.sourceFileStore.Load(root)
 	if err != nil {
@@ -241,7 +253,11 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		ChangeSet:      changeSet,
 	})
 	if len(results) == 0 {
-		return &model.Analysis{Results: []model.Result{}, PackProvenances: packProv}, ErrNoMatch
+		return &model.Analysis{
+			Results:         []model.Result{},
+			PackProvenances: packProv,
+			Status:          model.ArtifactStatusUnknown,
+		}, ErrNoMatch
 	}
 	var (
 		snapshot *repoSnapshot
@@ -279,6 +295,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		Delta:           delta,
 		Differential:    differential,
 		PackProvenances: packProv,
+		Status:          model.ArtifactStatusMatched,
 	}, nil
 }
 
@@ -394,6 +411,37 @@ func correlateSnapshot(snapshot *repoSnapshot, result model.Result) *model.RepoC
 		repoCtx.Topology = toModelTopologySignals(snapshot.state.TopologySignals)
 	}
 	return &repoCtx
+}
+
+func snapshotContext(snapshot *repoSnapshot) *model.RepoContext {
+	if snapshot == nil || snapshot.root == "" {
+		return nil
+	}
+	ctx := &model.RepoContext{
+		RepoRoot:           snapshot.root,
+		RecentFiles:        recentFilesFromCommits(snapshot.commits, 10),
+		HotspotDirectories: hotspotDirsFromSignals(snapshot.signals, 5),
+		HotfixSignals:      hotfixSignalsFromSignals(snapshot.signals, 5),
+		DriftSignals:       driftSignalsFromSignals(snapshot.signals, 5),
+	}
+	commitLimit := 5
+	if len(snapshot.commits) < commitLimit {
+		commitLimit = len(snapshot.commits)
+	}
+	if commitLimit > 0 {
+		ctx.RelatedCommits = make([]model.RepoCommit, 0, commitLimit)
+		for _, commit := range snapshot.commits[:commitLimit] {
+			ctx.RelatedCommits = append(ctx.RelatedCommits, model.RepoCommit{
+				Hash:    commit.Hash,
+				Subject: commit.Subject,
+				Date:    commit.Time.Format("2006-01-02"),
+			})
+		}
+	}
+	if snapshot.state != nil && len(snapshot.state.TopologySignals) > 0 {
+		ctx.Topology = toModelTopologySignals(snapshot.state.TopologySignals)
+	}
+	return ctx
 }
 
 // loadTopologySignals parses CODEOWNERS from root, builds an ownership graph,

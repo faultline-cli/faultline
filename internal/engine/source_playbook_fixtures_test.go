@@ -26,6 +26,11 @@ func TestBundledSourcePlaybookFixtures(t *testing.T) {
 			dir:    filepath.Join("testdata", "source", "panic-in-http-handler-positive"),
 			wantID: "panic-in-http-handler",
 		},
+		{
+			name:   "unawaited promise",
+			dir:    filepath.Join("testdata", "source", "unawaited-promise-positive"),
+			wantID: "unawaited-promise",
+		},
 	}
 
 	for _, tc := range tests {
@@ -68,6 +73,12 @@ func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
 			playbook:  "panic-in-http-handler",
 			unsafeDir: filepath.Join("testdata", "source", "panic-in-http-handler-positive"),
 			safeDir:   filepath.Join("testdata", "source", "panic-in-http-handler-safe"),
+		},
+		{
+			name:      "unawaited promise",
+			playbook:  "unawaited-promise",
+			unsafeDir: filepath.Join("testdata", "source", "unawaited-promise-positive"),
+			safeDir:   filepath.Join("testdata", "source", "unawaited-promise-safe"),
 		},
 	}
 

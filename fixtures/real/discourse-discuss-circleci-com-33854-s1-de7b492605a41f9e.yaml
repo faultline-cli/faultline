@@ -1,0 +1,26 @@
+id: discourse-discuss-circleci-com-33854-s1-de7b492605a41f9e
+title: No space left on device
+fixture_class: real
+normalized_log: |-
+    Hi there, today our builds started failing:
+    failed to register layer: Error processing tar file(exit status 1): write /usr/local/bundle/gems/mysql2-0.4.10/ext/mysql2/mysql2.so: no space left on device
+expectation:
+    expected_playbook: runner-disk-full
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/no-space-left-on-device/33854
+    repository: discuss.circleci.com
+    issue_number: 33854
+    comment_id: "72410"
+    title: No space left on device
+    author: grioadam
+    snippet: 1
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:21:50Z"
+fingerprint: de7b492605a41f9e

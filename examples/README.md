@@ -68,14 +68,14 @@ To refresh the checked-in example outputs after a renderer, workflow, or playboo
 
 ```bash
 ./bin/faultline analyze examples/docker-auth.log --format markdown --no-history > examples/docker-auth.expected.md
-./bin/faultline analyze examples/missing-executable.log --format markdown --no-history > examples/missing-executable.expected.md
-./bin/faultline analyze examples/runtime-mismatch.log --format markdown --no-history > examples/runtime-mismatch.expected.md
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history > examples/missing-executable.workflow.local.txt
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history > examples/missing-executable.workflow.agent.json
-cat examples/missing-executable.log | ./bin/faultline analyze --json --no-history > /tmp/missing.analysis.json
-cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --no-history > /tmp/runtime.analysis.json
+./bin/faultline analyze examples/missing-executable.log --format markdown --no-history --git=false > examples/missing-executable.expected.md
+./bin/faultline analyze examples/runtime-mismatch.log --format markdown --no-history --git=false > examples/runtime-mismatch.expected.md
+cat examples/missing-executable.log | ./bin/faultline workflow --no-history --git=false > examples/missing-executable.workflow.local.txt
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history --git=false > examples/missing-executable.workflow.agent.json
+cat examples/missing-executable.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/missing.analysis.json
+cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/runtime.analysis.json
 ./bin/faultline replay --format markdown --mode detailed /tmp/missing.analysis.json > examples/missing-executable.replay.expected.md
-cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --no-history > examples/missing-executable.trace.expected.md
+cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --no-history --git=false > examples/missing-executable.trace.expected.md
 ./bin/faultline compare --format markdown /tmp/missing.analysis.json /tmp/runtime.analysis.json > examples/missing-vs-runtime.compare.expected.md
 ```
 
@@ -93,7 +93,7 @@ For a quiet high-confidence local prevention check in a repository:
 
 ## Coverage snapshot
 
-The bundled catalog currently includes 100 playbooks across 98 log diagnoses and 2 source-detector rules. Representative diagnoses include:
+The bundled catalog currently includes 101 playbooks across 98 log diagnoses and 3 source-detector rules. Representative diagnoses include:
 
 - `docker-auth`, `git-auth`, `ssh-key-auth`, `aws-credentials`
 - `missing-executable`, `runtime-mismatch`, `dependency-drift`, `npm-ci-lockfile`, `poetry-lockfile-drift`

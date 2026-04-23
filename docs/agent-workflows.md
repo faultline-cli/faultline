@@ -33,6 +33,7 @@ Added:
 - [`prompts/triage-unmatched-log.md`](../prompts/triage-unmatched-log.md)
 - [`prompts/curate-fixture-corpus.md`](../prompts/curate-fixture-corpus.md)
 - [`prompts/refine-playbook-from-fixture.md`](../prompts/refine-playbook-from-fixture.md)
+- [`prompts/refine-source-playbook-from-repo.md`](../prompts/refine-source-playbook-from-repo.md)
 - [`prompts/verify-deterministic-change.md`](../prompts/verify-deterministic-change.md)
 - [`prompts/collect-coverage-evidence.md`](../prompts/collect-coverage-evidence.md)
 - [`prompts/author-new-playbook.md`](../prompts/author-new-playbook.md)
@@ -42,13 +43,14 @@ These are narrower, but they are more useful: they tell an agent exactly how to 
 
 ## Repo Skills
 
-The repository now ships five repo-local skills under [`agents/skills/`](../agents/skills/):
+The repository now ships six repo-local skills under [`agents/skills/`](../agents/skills/):
 
 - [`ingestion-pipeline`](../agents/skills/ingestion-pipeline/SKILL.md) for public-source fixture intake, staging review, promotion, and baseline validation
 - [`playbook-refinement`](../agents/skills/playbook-refinement/SKILL.md) for fixture-driven playbook tightening and workflow-field improvement
 - [`coverage-evidence`](../agents/skills/coverage-evidence/SKILL.md) for auditing playbook coverage against a broad, stratified sample of real CI failures from independent sources
 - [`new-playbook-authoring`](../agents/skills/new-playbook-authoring/SKILL.md) for authoring a new playbook after a gap has been explicitly justified, including pattern discipline, fixture pairing, and full validation
 - [`baseline-regression`](../agents/skills/baseline-regression/SKILL.md) for isolating and resolving a failing `make fixture-check` gate without weakening the baseline
+- [`source-playbook-refinement`](../agents/skills/source-playbook-refinement/SKILL.md) for repository-local source-detector refinement and bundled source-playbook authoring
 
 This location is intentionally agent-neutral so the same skill files can be used from Codex, Copilot, or any other repository-aware assistant workflow.
 
@@ -68,6 +70,8 @@ faultline workflow ci.log --json --mode agent
 Why this matters:
 - `analyze` establishes the deterministic diagnosis and evidence
 - `workflow` turns the same result into a bounded next-step artifact for an engineer or another agent
+- that workflow handoff now includes the first-class failure artifact plus
+  additive remediation commands, patch suggestions, and CI config diff hints
 - workflow artifacts may carry additive `ranking_hints`, `delta_hints`,
   `metrics_hints`, and `policy_hints` when the underlying analysis has enough
   explicit context
@@ -123,7 +127,26 @@ Why this matters:
 - most catalog quality improvements should come from tightening an existing rule
 - new playbooks should be the exception, not the default
 
-### 5. Author Only After Justification
+### 5. Refine Repository-Local Source Findings
+
+Use this when `inspect` or `guard` surfaces a bundled source-detector finding in a repository tree.
+
+```bash
+faultline inspect .
+faultline guard .
+faultline explain <candidate-source-playbook>
+make review
+make test
+make build
+make cli-smoke
+```
+
+Why this matters:
+- source findings belong in the bundled `source` catalog, not the real log corpus
+- the source workflow should stay fixture-backed and deterministic
+- inspect and guard need the same repeatable refinement loop that ingestion uses for public log evidence
+
+### 6. Author Only After Justification
 
 Use this after `triage-unmatched-log` or `collect-coverage-evidence` has confirmed a gap warrants a new playbook.
 
@@ -140,7 +163,7 @@ Why this matters:
 - pattern authoring without fixture pairing is how false positives are introduced
 - `make review` is the only way to see whether a new pattern silently outcompetes an existing one
 
-### 6. Investigate A Failing Gate
+### 7. Investigate A Failing Gate
 
 Use this when `make fixture-check` exits non-zero after a repository change.
 
@@ -158,7 +181,7 @@ Why this matters:
 - isolating the regressed fixture before acting prevents cascading changes
 - every regression has exactly one correct outcome: fix forward, fix expectations, or revert
 
-### 7. Close The Loop
+### 8. Close The Loop
 
 Use this before considering a repository change complete.
 
@@ -178,7 +201,7 @@ make build
 Why this matters:
 - Faultline's trust boundary is checked-in evidence, not optimistic reasoning
 
-### 8. Prepare A Release Candidate
+### 9. Prepare A Release Candidate
 
 Use this when consolidating the repository for a tagged cut.
 

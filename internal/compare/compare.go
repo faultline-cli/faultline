@@ -25,10 +25,13 @@ type Report struct {
 	RightSource      string      `json:"right_source,omitempty"`
 	Changed          bool        `json:"changed"`
 	DiagnosisChanged bool        `json:"diagnosis_changed"`
+	StatusChanged    bool        `json:"status_changed"`
 	Previous         *Candidate  `json:"previous,omitempty"`
 	Current          *Candidate  `json:"current,omitempty"`
 	Summary          []string    `json:"summary,omitempty"`
 	Evidence         StringDelta `json:"evidence,omitempty"`
+	FixSteps         StringDelta `json:"fix_steps,omitempty"`
+	DominantSignals  StringDelta `json:"dominant_signals,omitempty"`
 	RepoFiles        StringDelta `json:"repo_files,omitempty"`
 	DeltaFiles       StringDelta `json:"delta_files,omitempty"`
 	DeltaTests       StringDelta `json:"delta_tests,omitempty"`
@@ -46,14 +49,20 @@ func Build(left, right *model.Analysis) Report {
 	report.Previous = leftTop
 	report.Current = rightTop
 	report.DiagnosisChanged = diagnosisChanged(leftTop, rightTop)
+	report.StatusChanged = analysisStatus(left) != analysisStatus(right)
 	report.Evidence = diffStrings(topEvidence(left), topEvidence(right))
+	report.FixSteps = diffStrings(fixSteps(left), fixSteps(right))
+	report.DominantSignals = diffStrings(dominantSignals(left), dominantSignals(right))
 	report.RepoFiles = diffStrings(repoFiles(left), repoFiles(right))
 	report.DeltaFiles = diffStrings(deltaFiles(left), deltaFiles(right))
 	report.DeltaTests = diffStrings(deltaTests(left), deltaTests(right))
 	report.DeltaErrors = diffStrings(deltaErrors(left), deltaErrors(right))
 	report.Summary = buildSummary(report)
 	report.Changed = report.DiagnosisChanged ||
+		report.StatusChanged ||
 		hasDelta(report.Evidence) ||
+		hasDelta(report.FixSteps) ||
+		hasDelta(report.DominantSignals) ||
 		hasDelta(report.RepoFiles) ||
 		hasDelta(report.DeltaFiles) ||
 		hasDelta(report.DeltaTests) ||
@@ -75,6 +84,9 @@ func buildSummary(report Report) []string {
 	default:
 		lines = append(lines, fmt.Sprintf("top diagnosis stayed the same: %s", report.Current.FailureID))
 	}
+	if report.StatusChanged {
+		lines = append(lines, "artifact status changed between matched and unknown")
+	}
 
 	if len(report.Evidence.Added) > 0 {
 		lines = append(lines, fmt.Sprintf("%d new top-diagnosis evidence line(s) appeared", len(report.Evidence.Added)))
@@ -82,10 +94,13 @@ func buildSummary(report Report) []string {
 	if len(report.Evidence.Removed) > 0 {
 		lines = append(lines, fmt.Sprintf("%d prior top-diagnosis evidence line(s) disappeared", len(report.Evidence.Removed)))
 	}
+	if len(report.DominantSignals.Added) > 0 || len(report.DominantSignals.Removed) > 0 {
+		lines = append(lines, "dominant unmatched signals changed")
+	}
 	if len(report.DeltaFiles.Added) > 0 || len(report.DeltaTests.Added) > 0 || len(report.DeltaErrors.Added) > 0 {
 		lines = append(lines, "current delta context contains new changed files, failing tests, or added errors")
 	}
-	if len(lines) == 1 && !hasDelta(report.Evidence) && !hasDelta(report.RepoFiles) && !hasDelta(report.DeltaFiles) && !hasDelta(report.DeltaTests) && !hasDelta(report.DeltaErrors) {
+	if len(lines) == 1 && !hasDelta(report.Evidence) && !hasDelta(report.FixSteps) && !hasDelta(report.DominantSignals) && !hasDelta(report.RepoFiles) && !hasDelta(report.DeltaFiles) && !hasDelta(report.DeltaTests) && !hasDelta(report.DeltaErrors) {
 		lines = append(lines, "no material differences were found in the compared artifacts")
 	}
 	return lines
@@ -106,10 +121,27 @@ func topCandidate(a *model.Analysis) *Candidate {
 }
 
 func topEvidence(a *model.Analysis) []string {
+	if a != nil && a.Artifact != nil && len(a.Artifact.Evidence) > 0 {
+		return append([]string(nil), a.Artifact.Evidence...)
+	}
 	if a == nil || len(a.Results) == 0 {
 		return nil
 	}
 	return append([]string(nil), a.Results[0].Evidence...)
+}
+
+func fixSteps(a *model.Analysis) []string {
+	if a == nil || a.Artifact == nil {
+		return nil
+	}
+	return append([]string(nil), a.Artifact.FixSteps...)
+}
+
+func dominantSignals(a *model.Analysis) []string {
+	if a == nil || a.Artifact == nil {
+		return nil
+	}
+	return append([]string(nil), a.Artifact.DominantSignals...)
 }
 
 func repoFiles(a *model.Analysis) []string {
@@ -188,6 +220,16 @@ func analysisSource(a *model.Analysis) string {
 		return ""
 	}
 	return a.Source
+}
+
+func analysisStatus(a *model.Analysis) model.ArtifactStatus {
+	if a == nil {
+		return ""
+	}
+	if a.Artifact != nil && a.Artifact.Status != "" {
+		return a.Artifact.Status
+	}
+	return a.Status
 }
 
 func hasDelta(delta StringDelta) bool {

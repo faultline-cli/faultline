@@ -5,27 +5,31 @@ import (
 	"fmt"
 	"strings"
 
+	"faultline/internal/model"
 	"faultline/internal/workflow"
 )
 
 // workflowJSON is the stable schema emitted by FormatWorkflowJSON.
 type workflowJSON struct {
-	SchemaVersion string   `json:"schema_version"`
-	Mode          string   `json:"mode"`
-	FailureID     string   `json:"failure_id,omitempty"`
-	Title         string   `json:"title,omitempty"`
-	Source        string   `json:"source,omitempty"`
-	Context       ctxJSON  `json:"context"`
-	Evidence      []string `json:"evidence"`
-	Files         []string `json:"files,omitempty"`
-	LocalRepro    []string `json:"local_repro,omitempty"`
-	Verify        []string `json:"verify,omitempty"`
-	RankingHints  []string `json:"ranking_hints,omitempty"`
-	DeltaHints    []string `json:"delta_hints,omitempty"`
-	MetricsHints  []string `json:"metrics_hints,omitempty"`
-	PolicyHints   []string `json:"policy_hints,omitempty"`
-	Steps         []string `json:"steps"`
-	AgentPrompt   string   `json:"agent_prompt,omitempty"`
+	SchemaVersion string                 `json:"schema_version"`
+	Mode          string                 `json:"mode"`
+	Status        string                 `json:"status,omitempty"`
+	FailureID     string                 `json:"failure_id,omitempty"`
+	Title         string                 `json:"title,omitempty"`
+	Source        string                 `json:"source,omitempty"`
+	Context       ctxJSON                `json:"context"`
+	Evidence      []string               `json:"evidence"`
+	Files         []string               `json:"files,omitempty"`
+	LocalRepro    []string               `json:"local_repro,omitempty"`
+	Verify        []string               `json:"verify,omitempty"`
+	RankingHints  []string               `json:"ranking_hints,omitempty"`
+	DeltaHints    []string               `json:"delta_hints,omitempty"`
+	MetricsHints  []string               `json:"metrics_hints,omitempty"`
+	PolicyHints   []string               `json:"policy_hints,omitempty"`
+	Steps         []string               `json:"steps"`
+	AgentPrompt   string                 `json:"agent_prompt,omitempty"`
+	Artifact      *model.FailureArtifact `json:"artifact,omitempty"`
+	Remediation   *model.RemediationPlan `json:"remediation,omitempty"`
 }
 
 // FormatWorkflowText formats a deterministic workflow follow-up plan as text.
@@ -100,6 +104,26 @@ func FormatWorkflowText(plan workflow.Plan) string {
 			fmt.Fprintf(&b, "  - %s\n", item)
 		}
 	}
+	if plan.Remediation != nil {
+		if len(plan.Remediation.Commands) > 0 {
+			fmt.Fprintln(&b, "Remediation commands:")
+			for _, cmd := range plan.Remediation.Commands {
+				fmt.Fprintf(&b, "  - [%s] %s\n", cmd.Phase, strings.Join(cmd.Command, " "))
+			}
+		}
+		if len(plan.Remediation.PatchSuggestions) > 0 {
+			fmt.Fprintln(&b, "Patch suggestions:")
+			for _, item := range plan.Remediation.PatchSuggestions {
+				fmt.Fprintf(&b, "  - %s: %s\n", item.TargetFile, item.Summary)
+			}
+		}
+		if len(plan.Remediation.CIConfigDiffs) > 0 {
+			fmt.Fprintln(&b, "CI config diffs:")
+			for _, item := range plan.Remediation.CIConfigDiffs {
+				fmt.Fprintf(&b, "  - %s: %s\n", item.TargetFile, item.Summary)
+			}
+		}
+	}
 	fmt.Fprintln(&b, "Next steps:")
 	for i, step := range plan.Steps {
 		fmt.Fprintf(&b, "  %d. %s\n", i+1, step)
@@ -116,6 +140,7 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 	payload := workflowJSON{
 		SchemaVersion: plan.SchemaVersion,
 		Mode:          string(plan.Mode),
+		Status:        string(plan.Status),
 		FailureID:     plan.FailureID,
 		Title:         plan.Title,
 		Source:        plan.Source,
@@ -134,6 +159,8 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 		PolicyHints:  plan.PolicyHints,
 		Steps:        plan.Steps,
 		AgentPrompt:  plan.AgentPrompt,
+		Artifact:     plan.Artifact,
+		Remediation:  plan.Remediation,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {

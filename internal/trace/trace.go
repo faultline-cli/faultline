@@ -139,7 +139,7 @@ func resolvePlaybook(analysis *model.Analysis, playbooks []model.Playbook, playb
 }
 
 func buildRules(pb model.Playbook, lines []model.Line) []Rule {
-	rules := make([]Rule, 0, len(pb.Match.Any)+len(pb.Match.All)+len(pb.Match.None))
+	rules := make([]Rule, 0, len(pb.Match.Any)+len(pb.Match.All)+len(pb.Match.None)+len(pb.Match.Partial))
 	for i, pattern := range pb.Match.Any {
 		lineMatches := matchLines(pattern, lines)
 		rules = append(rules, Rule{
@@ -180,6 +180,19 @@ func buildRules(pb model.Playbook, lines []model.Line) []Rule {
 			LineMatches: lineMatches,
 		})
 	}
+	for i, group := range pb.Match.Partial {
+		lineMatches, hits := matchLinesForPatterns(group.Patterns, lines)
+		rules = append(rules, Rule{
+			Group:       "match.partial",
+			Index:       i,
+			Pattern:     partialRulePattern(group),
+			Status:      matchedStatus(hits >= group.Minimum),
+			Matched:     hits >= group.Minimum,
+			Relevance:   "partial",
+			Note:        partialRuleNote(group, hits),
+			LineMatches: lineMatches,
+		})
+	}
 	return rules
 }
 
@@ -205,6 +218,9 @@ func buildWhy(result model.Result, rules []Rule) []string {
 	if matchedAll > 0 {
 		reasons = append(reasons, fmt.Sprintf("%d required rule(s) matched", matchedAll))
 	}
+	if matchedPartial := countGroup(rules, "match.partial", StatusMatched); matchedPartial > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d partial group(s) reached their threshold", matchedPartial))
+	}
 	if clearNone > 0 {
 		reasons = append(reasons, fmt.Sprintf("%d exclusion rule(s) stayed clear", clearNone))
 	}
@@ -227,6 +243,9 @@ func buildUnmatchedWhy(rules []Rule) []string {
 	}
 	if missingAll > 0 {
 		reasons = append(reasons, fmt.Sprintf("%d required rule(s) were missing", missingAll))
+	}
+	if missingPartial := countGroup(rules, "match.partial", StatusMissing); missingPartial > 0 {
+		reasons = append(reasons, fmt.Sprintf("%d partial group(s) did not reach their threshold", missingPartial))
 	}
 	if blockedNone > 0 {
 		reasons = append(reasons, fmt.Sprintf("%d exclusion rule(s) blocked the playbook", blockedNone))
@@ -300,6 +319,23 @@ func matchLines(pattern string, lines []model.Line) []LineMatch {
 	return matches
 }
 
+func matchLinesForPatterns(patterns []string, lines []model.Line) ([]LineMatch, int) {
+	var matches []LineMatch
+	hits := 0
+	seen := make(map[int]struct{})
+	for _, pattern := range patterns {
+		for _, line := range matchLines(pattern, lines) {
+			hits++
+			if _, ok := seen[line.Number]; ok {
+				continue
+			}
+			seen[line.Number] = struct{}{}
+			matches = append(matches, line)
+		}
+	}
+	return matches, hits
+}
+
 func matchedStatus(matched bool) RuleStatus {
 	if matched {
 		return StatusMatched
@@ -343,4 +379,23 @@ func noneRuleNote(blocked bool) string {
 		return "exclusion rule matched and blocks the playbook"
 	}
 	return "exclusion rule stayed clear"
+}
+
+func partialRulePattern(group model.PartialMatchGroup) string {
+	label := strings.TrimSpace(group.Label)
+	if label == "" {
+		label = strings.TrimSpace(group.ID)
+	}
+	patterns := strings.Join(group.Patterns, " | ")
+	if label == "" {
+		return fmt.Sprintf("%d-of-%d: %s", group.Minimum, len(group.Patterns), patterns)
+	}
+	return fmt.Sprintf("%s (%d-of-%d): %s", label, group.Minimum, len(group.Patterns), patterns)
+}
+
+func partialRuleNote(group model.PartialMatchGroup, hits int) string {
+	if hits >= group.Minimum {
+		return fmt.Sprintf("partial group reached threshold with %d/%d matched patterns", hits, len(group.Patterns))
+	}
+	return fmt.Sprintf("partial group matched %d/%d patterns and stayed below the %d-pattern threshold", hits, len(group.Patterns), group.Minimum)
 }

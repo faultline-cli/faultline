@@ -733,6 +733,261 @@ playbook_hooks:
 	}
 }
 
+func TestLoadPacksResolvesPlaybookInheritance(t *testing.T) {
+	base := t.TempDir()
+	overlay := t.TempDir()
+
+	writePlaybookFixture(t, base, "base.yaml", `
+id: runtime-base
+title: Runtime Base
+category: runtime
+severity: medium
+match:
+  any:
+    - "runtime error"
+workflow:
+  likely_files:
+    - Dockerfile
+`)
+	writePlaybookFixture(t, overlay, "child.yaml", `
+id: runtime-node
+extends: runtime-base
+title: Node Runtime
+match:
+  any:
+    - "node version mismatch"
+workflow:
+  verify:
+    - node --version
+`)
+
+	pbs, err := LoadPacks([]Pack{
+		{Name: "starter", Root: base},
+		{Name: "team", Root: overlay},
+	})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+
+	var child model.Playbook
+	for _, pb := range pbs {
+		if pb.ID == "runtime-node" {
+			child = pb
+			break
+		}
+	}
+	if child.ID == "" {
+		t.Fatal("expected inherited playbook to load")
+	}
+	if child.Category != "runtime" || child.Severity != "medium" {
+		t.Fatalf("expected inherited category and severity, got %#v", child)
+	}
+	if len(child.Match.Any) != 2 || child.Match.Any[0] != "runtime error" || child.Match.Any[1] != "node version mismatch" {
+		t.Fatalf("expected inherited match.any patterns, got %#v", child.Match.Any)
+	}
+	if len(child.Workflow.LikelyFiles) != 1 || child.Workflow.LikelyFiles[0] != "Dockerfile" {
+		t.Fatalf("expected inherited likely files, got %#v", child.Workflow.LikelyFiles)
+	}
+	if len(child.Workflow.Verify) != 1 || child.Workflow.Verify[0] != "node --version" {
+		t.Fatalf("expected child verify command, got %#v", child.Workflow.Verify)
+	}
+}
+
+func TestLoadPacksRejectsPlaybookInheritanceCycles(t *testing.T) {
+	dir := t.TempDir()
+
+	writePlaybookFixture(t, dir, "a.yaml", `
+id: playbook-a
+extends: playbook-b
+match:
+  any:
+    - "alpha error"
+`)
+	writePlaybookFixture(t, dir, "b.yaml", `
+id: playbook-b
+extends: playbook-a
+match:
+  any:
+    - "beta error"
+`)
+
+	_, err := LoadPacks([]Pack{{Name: "starter", Root: dir}})
+	if err == nil {
+		t.Fatal("expected inheritance cycle to fail")
+	}
+	if !strings.Contains(err.Error(), "inheritance cycle") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadPacksAppliesNamedMatchCatalogComposition(t *testing.T) {
+	dir := t.TempDir()
+
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: runtime-node
+title: Node runtime mismatch
+category: runtime
+severity: medium
+summary: |
+  Node runtime mismatch.
+diagnosis: |
+  Node runtime mismatch.
+fix: |
+  Fix the runtime mismatch.
+validation: |
+  Re-run node --version.
+match:
+  use:
+    - runtime-base
+    - node-env
+  any:
+    - "node version mismatch"
+`)
+	if err := os.WriteFile(filepath.Join(dir, MatchCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: matchers.v1
+named_matches:
+  runtime-base:
+    any:
+      - "runtime error"
+  node-env:
+    use:
+      - runtime-base
+    partial:
+      - id: node-env-signals
+        label: Node environment signals
+        minimum: 2
+        patterns:
+          - ".nvmrc"
+          - "engines.node"
+          - "node version"
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write match catalog: %v", err)
+	}
+
+	pbs, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+	if len(pbs) != 1 {
+		t.Fatalf("expected one playbook, got %d", len(pbs))
+	}
+	got := pbs[0]
+	if len(got.Match.Use) != 2 || got.Match.Use[0] != "runtime-base" || got.Match.Use[1] != "node-env" {
+		t.Fatalf("expected original match.use refs to be preserved, got %#v", got.Match.Use)
+	}
+	if len(got.Match.Any) != 2 || got.Match.Any[0] != "runtime error" || got.Match.Any[1] != "node version mismatch" {
+		t.Fatalf("expected composed match.any patterns, got %#v", got.Match.Any)
+	}
+	if len(got.Match.Partial) != 1 {
+		t.Fatalf("expected one partial group, got %#v", got.Match.Partial)
+	}
+	if got.Match.Partial[0].Minimum != 2 || len(got.Match.Partial[0].Patterns) != 3 {
+		t.Fatalf("expected composed partial group, got %#v", got.Match.Partial[0])
+	}
+}
+
+func TestLoadPacksSupportsPlaybookMatchComposition(t *testing.T) {
+	dir := t.TempDir()
+
+	writePlaybookFixture(t, dir, "base.yaml", `
+id: runtime-base
+title: Runtime base
+category: runtime
+severity: medium
+summary: |
+  Base runtime issue.
+diagnosis: |
+  Base runtime issue.
+fix: |
+  Fix the base runtime issue.
+validation: |
+  Re-run the runtime check.
+match:
+  any:
+    - "runtime error"
+`)
+	writePlaybookFixture(t, dir, "child.yaml", `
+id: runtime-node
+title: Node runtime mismatch
+category: runtime
+severity: medium
+summary: |
+  Node runtime mismatch.
+diagnosis: |
+  Node runtime mismatch.
+fix: |
+  Fix the runtime mismatch.
+validation: |
+  Re-run node --version.
+match:
+  use:
+    - playbook:runtime-base
+  any:
+    - "node version mismatch"
+`)
+
+	pbs, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err != nil {
+		t.Fatalf("LoadPacks: %v", err)
+	}
+
+	var child model.Playbook
+	for _, pb := range pbs {
+		if pb.ID == "runtime-node" {
+			child = pb
+			break
+		}
+	}
+	if child.ID == "" {
+		t.Fatal("expected runtime-node playbook to load")
+	}
+	if len(child.Match.Any) != 2 || child.Match.Any[0] != "runtime error" || child.Match.Any[1] != "node version mismatch" {
+		t.Fatalf("expected playbook-composed match.any patterns, got %#v", child.Match.Any)
+	}
+}
+
+func TestLoadPacksRejectsNamedMatchCycles(t *testing.T) {
+	dir := t.TempDir()
+
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: runtime-node
+title: Node runtime mismatch
+category: runtime
+severity: medium
+summary: |
+  Node runtime mismatch.
+diagnosis: |
+  Node runtime mismatch.
+fix: |
+  Fix the runtime mismatch.
+validation: |
+  Re-run node --version.
+match:
+  use:
+    - alpha
+`)
+	if err := os.WriteFile(filepath.Join(dir, MatchCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: matchers.v1
+named_matches:
+  alpha:
+    use:
+      - beta
+  beta:
+    use:
+      - alpha
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write match catalog: %v", err)
+	}
+
+	_, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err == nil {
+		t.Fatal("expected named match cycle to fail")
+	}
+	if !strings.Contains(err.Error(), "composition cycle") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestLoadPacksRejectsUnknownHookPlaybookTarget(t *testing.T) {
 	dir := t.TempDir()
 	writePlaybookFixture(t, dir, "rule.yaml", `

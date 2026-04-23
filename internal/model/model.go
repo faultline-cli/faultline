@@ -6,6 +6,7 @@ package model
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
 	ID               string          `yaml:"id" json:"id"`
+	Extends          string          `yaml:"extends,omitempty" json:"extends,omitempty"`
 	Title            string          `yaml:"title" json:"title"`
 	Category         string          `yaml:"category" json:"category"`
 	Severity         string          `yaml:"severity" json:"severity"`
@@ -67,9 +68,21 @@ type TopologySignals struct {
 // Any is matched as OR: at least one pattern must appear in the log.
 // All is matched as AND: every pattern must appear in the log.
 type MatchSpec struct {
-	Any  []string `yaml:"any" json:"any"`
-	All  []string `yaml:"all" json:"all"`
-	None []string `yaml:"none" json:"none,omitempty"`
+	Any     []string            `yaml:"any" json:"any"`
+	All     []string            `yaml:"all" json:"all"`
+	None    []string            `yaml:"none" json:"none,omitempty"`
+	Use     []string            `yaml:"use,omitempty" json:"use,omitempty"`
+	Partial []PartialMatchGroup `yaml:"partial,omitempty" json:"partial,omitempty"`
+}
+
+// PartialMatchGroup defines a deterministic sub-pattern cluster where a
+// configurable minimum number of patterns must match before the group is
+// considered satisfied.
+type PartialMatchGroup struct {
+	ID       string   `yaml:"id,omitempty" json:"id,omitempty"`
+	Label    string   `yaml:"label,omitempty" json:"label,omitempty"`
+	Minimum  int      `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Patterns []string `yaml:"patterns,omitempty" json:"patterns,omitempty"`
 }
 
 // SourceSpec defines a reusable source-code detection schema.
@@ -492,7 +505,8 @@ type Result struct {
 }
 
 // RepoContext holds git repository context enrichment from a recent commit window.
-// Only populated when the --git flag is used.
+// It is populated whenever git enrichment is enabled; the shipped CLI surfaces
+// enable that path by default and allow `--git=false` to disable it.
 type RepoContext struct {
 	RepoRoot           string       `json:"repo_root"`
 	RecentFiles        []string     `json:"recent_files,omitempty"`
@@ -530,21 +544,122 @@ type PackProvenance struct {
 	PlaybookCount int    `json:"playbook_count"`
 }
 
+type ArtifactStatus string
+
+const (
+	ArtifactStatusMatched ArtifactStatus = "matched"
+	ArtifactStatusUnknown ArtifactStatus = "unknown"
+)
+
+type ArtifactPlaybook struct {
+	ID       string `json:"id,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Category string `json:"category,omitempty"`
+	Severity string `json:"severity,omitempty"`
+	Detector string `json:"detector,omitempty"`
+	Pack     string `json:"pack,omitempty"`
+}
+
+type ArtifactEnvironment struct {
+	Source         string           `json:"source,omitempty"`
+	Context        Context          `json:"context"`
+	RepoRoot       string           `json:"repo_root,omitempty"`
+	DeltaProvider  string           `json:"delta_provider,omitempty"`
+	PackProvenance []PackProvenance `json:"pack_provenance,omitempty"`
+	RecentFiles    []string         `json:"recent_files,omitempty"`
+	RelatedCommits []RepoCommit     `json:"related_commits,omitempty"`
+}
+
+type ArtifactHistoryContext struct {
+	SeenCount          int                 `json:"seen_count,omitempty"`
+	SignatureHash      string              `json:"signature_hash,omitempty"`
+	SeenBefore         bool                `json:"seen_before,omitempty"`
+	OccurrenceCount    int                 `json:"occurrence_count,omitempty"`
+	FirstSeenAt        string              `json:"first_seen_at,omitempty"`
+	LastSeenAt         string              `json:"last_seen_at,omitempty"`
+	HookHistorySummary *HookHistorySummary `json:"hook_history_summary,omitempty"`
+}
+
+type CandidateCluster struct {
+	Key            string   `json:"key,omitempty"`
+	Summary        string   `json:"summary,omitempty"`
+	LikelyCategory string   `json:"likely_category,omitempty"`
+	Confidence     float64  `json:"confidence,omitempty"`
+	Signals        []string `json:"signals,omitempty"`
+	Evidence       []string `json:"evidence,omitempty"`
+}
+
+type SuggestedPlaybookSeed struct {
+	Category  string       `json:"category,omitempty"`
+	Title     string       `json:"title,omitempty"`
+	MatchAny  []string     `json:"match_any,omitempty"`
+	MatchNone []string     `json:"match_none,omitempty"`
+	Workflow  WorkflowSpec `json:"workflow,omitempty"`
+}
+
+type RemediationCommand struct {
+	ID        string   `json:"id,omitempty"`
+	Phase     string   `json:"phase,omitempty"`
+	Command   []string `json:"command,omitempty"`
+	WorkDir   string   `json:"workdir,omitempty"`
+	Rationale string   `json:"rationale,omitempty"`
+}
+
+type PatchSuggestion struct {
+	TargetFile string   `json:"target_file,omitempty"`
+	Summary    string   `json:"summary,omitempty"`
+	Actions    []string `json:"actions,omitempty"`
+}
+
+type CIConfigDiff struct {
+	TargetFile string   `json:"target_file,omitempty"`
+	Summary    string   `json:"summary,omitempty"`
+	Before     []string `json:"before,omitempty"`
+	After      []string `json:"after,omitempty"`
+}
+
+type RemediationPlan struct {
+	Commands         []RemediationCommand `json:"commands,omitempty"`
+	PatchSuggestions []PatchSuggestion    `json:"patch_suggestions,omitempty"`
+	CIConfigDiffs    []CIConfigDiff       `json:"ci_config_diffs,omitempty"`
+}
+
+type FailureArtifact struct {
+	SchemaVersion         string                  `json:"schema_version,omitempty"`
+	Status                ArtifactStatus          `json:"status,omitempty"`
+	Fingerprint           string                  `json:"fingerprint,omitempty"`
+	MatchedPlaybook       *ArtifactPlaybook       `json:"matched_playbook,omitempty"`
+	Evidence              []string                `json:"evidence,omitempty"`
+	Confidence            float64                 `json:"confidence,omitempty"`
+	Environment           ArtifactEnvironment     `json:"environment"`
+	HistoryContext        *ArtifactHistoryContext `json:"history_context,omitempty"`
+	FixSteps              []string                `json:"fix_steps,omitempty"`
+	CandidateClusters     []CandidateCluster      `json:"candidate_clusters,omitempty"`
+	DominantSignals       []string                `json:"dominant_signals,omitempty"`
+	SuggestedPlaybookSeed *SuggestedPlaybookSeed  `json:"suggested_playbook_seed,omitempty"`
+	Remediation           *RemediationPlan        `json:"remediation,omitempty"`
+}
+
 // Analysis is the complete output of a log analysis run.
 // Results is empty (not nil) when no playbook matched.
 type Analysis struct {
-	Results         []Result               `json:"results"`
-	Context         Context                `json:"context"`
-	Fingerprint     string                 `json:"fingerprint,omitempty"`
-	InputHash       string                 `json:"input_hash,omitempty"`
-	OutputHash      string                 `json:"output_hash,omitempty"`
-	Source          string                 `json:"source,omitempty"`
-	RepoContext     *RepoContext           `json:"repo_context,omitempty"`
-	Delta           *Delta                 `json:"delta,omitempty"`
-	Differential    *DifferentialDiagnosis `json:"differential,omitempty"`
-	PackProvenances []PackProvenance       `json:"pack_provenance,omitempty"`
-	Metrics         *Metrics               `json:"metrics,omitempty"`
-	Policy          *Policy                `json:"policy,omitempty"`
+	Results               []Result               `json:"results"`
+	Context               Context                `json:"context"`
+	Fingerprint           string                 `json:"fingerprint,omitempty"`
+	InputHash             string                 `json:"input_hash,omitempty"`
+	OutputHash            string                 `json:"output_hash,omitempty"`
+	Source                string                 `json:"source,omitempty"`
+	RepoContext           *RepoContext           `json:"repo_context,omitempty"`
+	Delta                 *Delta                 `json:"delta,omitempty"`
+	Differential          *DifferentialDiagnosis `json:"differential,omitempty"`
+	PackProvenances       []PackProvenance       `json:"pack_provenance,omitempty"`
+	Metrics               *Metrics               `json:"metrics,omitempty"`
+	Policy                *Policy                `json:"policy,omitempty"`
+	Status                ArtifactStatus         `json:"status,omitempty"`
+	CandidateClusters     []CandidateCluster     `json:"candidate_clusters,omitempty"`
+	DominantSignals       []string               `json:"dominant_signals,omitempty"`
+	SuggestedPlaybookSeed *SuggestedPlaybookSeed `json:"suggested_playbook_seed,omitempty"`
+	Artifact              *FailureArtifact       `json:"artifact,omitempty"`
 }
 
 // Metrics is the machine-readable pipeline reliability summary.

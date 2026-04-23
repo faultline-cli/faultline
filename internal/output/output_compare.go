@@ -25,6 +25,12 @@ func FormatCompareText(report analysiscompare.Report) string {
 	if body := compareDeltaText("Evidence Changes", report.Evidence); body != "" {
 		sections = append(sections, joinCompareSection("Evidence Changes", body))
 	}
+	if body := compareDeltaText("Fix Step Changes", report.FixSteps); body != "" {
+		sections = append(sections, joinCompareSection("Fix Step Changes", body))
+	}
+	if body := compareDeltaText("Dominant Signal Changes", report.DominantSignals); body != "" {
+		sections = append(sections, joinCompareSection("Dominant Signal Changes", body))
+	}
 	if body := compareDeltaText("Repo Context Changes", report.RepoFiles); body != "" {
 		sections = append(sections, joinCompareSection("Repo Context Changes", body))
 	}
@@ -58,6 +64,12 @@ func FormatCompareMarkdown(report analysiscompare.Report) string {
 	}
 	if body := compareDeltaMarkdown(report.Evidence); body != "" {
 		sections = append(sections, "", "## Evidence Changes", "", body)
+	}
+	if body := compareDeltaMarkdown(report.FixSteps); body != "" {
+		sections = append(sections, "", "## Fix Step Changes", "", body)
+	}
+	if body := compareDeltaMarkdown(report.DominantSignals); body != "" {
+		sections = append(sections, "", "## Dominant Signal Changes", "", body)
 	}
 	if body := compareDeltaMarkdown(report.RepoFiles); body != "" {
 		sections = append(sections, "", "## Repo Context Changes", "", body)
@@ -95,6 +107,11 @@ func compareOverviewText(report analysiscompare.Report) string {
 	} else {
 		lines = append(lines, "Diagnosis changed: no")
 	}
+	if report.StatusChanged {
+		lines = append(lines, "Artifact status changed: yes")
+	} else {
+		lines = append(lines, "Artifact status changed: no")
+	}
 	return strings.Join(lines, "\n")
 }
 
@@ -110,6 +127,11 @@ func compareOverviewMarkdown(report analysiscompare.Report) string {
 		lines = append(lines, "Diagnosis changed: yes")
 	} else {
 		lines = append(lines, "Diagnosis changed: no")
+	}
+	if report.StatusChanged {
+		lines = append(lines, "Artifact status changed: yes")
+	} else {
+		lines = append(lines, "Artifact status changed: no")
 	}
 	return bulletLines(lines)
 }

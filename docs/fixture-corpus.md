@@ -4,7 +4,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 100
+- Bundled playbooks: 101
 - Accepted real fixtures: 126
 - Top-1 match rate: 100% (126/126)
 - Top-3 match rate: 100% (126/126)
@@ -14,7 +14,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
-- Source-detector regression fixtures: 4 repository scenarios under `internal/engine/testdata/source/`
+- Source-detector regression fixtures: 6 repository scenarios under `internal/engine/testdata/source/`
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 
