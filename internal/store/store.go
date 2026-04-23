@@ -40,6 +40,9 @@ type Info struct {
 type Store interface {
 	BeginRun(context.Context, BeginRunParams) (RunHandle, error)
 	CompleteRun(context.Context, RunHandle, CompleteRunParams) error
+	RecordWorkflowExecution(context.Context, *model.WorkflowExecutionRecord) (*model.WorkflowExecutionRecord, error)
+	GetWorkflowExecution(context.Context, string) (*model.WorkflowExecutionRecord, error)
+	ListWorkflowExecutions(context.Context, int) ([]model.WorkflowExecutionSummary, error)
 	LookupSignatureHistory(context.Context, string) (SignatureHistory, error)
 	CountSeenFailure(context.Context, string) (int, error)
 	RecentTopFailures(context.Context, int) ([]string, error)

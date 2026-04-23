@@ -1,13 +1,21 @@
 # Faultline
 
-Deterministic CI failure diagnosis. No guesswork. No AI.
+CI failures waste time because the log is noisy and the diagnosis usually is not.
 
-Faultline reads failing CI logs, matches them against checked-in playbooks, and returns evidence-backed diagnoses with stable output for humans and automation. It is local-first, deterministic, and built to turn a noisy failure into a concrete next step without guessing.
+Faultline is a deterministic diagnosis layer for CI systems.
+It reads failing CI logs, matches them against explicit, versioned, checked-in playbooks, and returns evidence-backed diagnoses with stable output for humans and automation.
+Same log in, same result out. No guesswork. No AI.
 
-- 🔁 Deterministic results: same input, same output
+- 🔁 Determinism is the contract: same log and playbook set, same result
 - 🔍 Evidence-backed diagnoses: matched lines, not generated summaries
+- 📦 First-class failure artifacts: replayable, comparable, and handoff-ready
 - 🏠 Local-first by default: your logs stay on your machine
 - 🤖 Automation-friendly output: stable JSON and workflow artifacts
+
+```text
+# input: ci.log
+exec /__e/node20/bin/node: no such file or directory
+```
 
 ```text
 $ faultline analyze ci.log
@@ -21,7 +29,9 @@ Fix:
   - Pin the runner to an image that includes the expected binary
 ```
 
-Built on 100 bundled playbooks and 118 accepted real-fixture regression proofs. Same input, same result.
+Run `faultline analyze ci.log --json` for the same diagnosis in stable JSON. Same log and playbook set in, same result out.
+
+Built on 100 bundled playbooks and 126 accepted real fixtures.
 
 ## Try it now 🚀
 
@@ -31,13 +41,14 @@ faultline analyze ci.log
 faultline workflow ci.log --json --mode agent
 ```
 
-That is the default path: diagnose the failing log first, then turn the winning diagnosis into a deterministic handoff artifact. Use `faultline analyze ci.log --json` when you want machine-readable diagnosis output.
+Default path: diagnose the failing log, then turn the winning diagnosis into a deterministic handoff artifact. Use `faultline analyze ci.log --json` for stable machine-readable output.
 
-You can think of the output modes like this:
+Output modes:
 
 - 👩‍💻 `faultline analyze ci.log` for a human-readable diagnosis with evidence and fix steps
-- 🤖 `faultline analyze ci.log --json` for stable machine-readable diagnosis output
-- 🧭 `faultline workflow ci.log --json --mode agent` for a deterministic next-step artifact
+- 🤖 `faultline analyze ci.log --json` for stable diagnosis JSON
+- 🧭 `faultline workflow ci.log --json --mode agent` for a stable handoff artifact
+- 🛠 `faultline workflow explain ci.log` and `faultline workflow apply ci.log --dry-run` for the typed remediation workflow layer
 
 ```json
 {
@@ -54,26 +65,28 @@ You can think of the output modes like this:
 }
 ```
 
+Determinism is the point, not a feature flag. The same matched evidence and playbook set produce the same diagnosis and artifacts.
+
 `--bayes` is optional and assistive: it reranks already-matched candidates and explains the ranking, but it never creates new matches.
 
 ## Why trust it ✅
 
-- 🔁 Same log input and playbook set produce the same result every time.
-- 🔍 Evidence is pulled directly from matched log lines.
-- 📚 Diagnoses and fix steps come from checked-in playbooks, not generated guesses.
+- 🔁 Same log and playbook set produce the same diagnosis and artifacts every time.
+- 🔍 Every diagnosis is backed by matched log lines.
+- 📚 Diagnoses and fix steps come from explicit, versioned, inspectable playbooks checked into the repo.
+- 🛠 Teams can extend those playbooks without turning diagnosis into a black box.
 - 🧪 The shipped catalog is backed by 100 bundled playbooks and 126 accepted real fixtures.
 - 🏠 Faultline runs locally by default, so build logs stay on your machine unless you choose otherwise.
-- 🤖 JSON output and workflow artifacts stay stable enough for automation and agent handoff.
 
 Some companion commands are supported but not part of the first-run story, and provider-backed delta remains experimental. The current boundary is documented in [docs/release-boundary.md](docs/release-boundary.md).
 
 ## Core workflow 🧭
 
-The default path is intentionally small:
+The default path is small:
 
 - `faultline analyze <logfile>` diagnoses a failing log from a file or stdin.
 - `faultline workflow <logfile>` turns the winning diagnosis into a deterministic follow-up plan.
-- `faultline list` and `faultline explain <id>` help you inspect the bundled catalog.
+- `faultline list` and `faultline explain <id>` let you inspect the bundled, versioned catalog.
 - `faultline fix <logfile>` prints the remediation steps for the top diagnosis.
 
 For a fast local run:
@@ -84,7 +97,7 @@ faultline analyze ci.log --json
 faultline workflow ci.log --json --mode agent
 ```
 
-Common follow-through looks like this:
+Typical flow:
 
 1. Run `faultline analyze` on the failing log.
 2. Check the matched evidence lines and the top remediation steps.
@@ -100,11 +113,11 @@ Common follow-through looks like this:
 - 🔐 Permission, filesystem, and working-directory errors
 - 🌐 DNS, TLS, timeout, and other network failures
 
-Faultline is intentionally narrow: it aims to be reliable on failures it knows, not broad in a hand-wavy way.
+Faultline is intentionally narrow: better on failures it knows than vague on everything else.
 
 ## CI integration 🔁
 
-After the local flow works for you, the same commands drop into CI unchanged:
+The same commands run in CI unchanged:
 
 ```yaml
 name: ci
@@ -126,7 +139,7 @@ jobs:
           faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
-This keeps the same deterministic CLI contract in CI that you use locally, which is the main reason Faultline fits cleanly into automation.
+That preserves the same deterministic CLI contract in CI that you use locally.
 
 ## Examples and snapshots 🧪
 
@@ -202,7 +215,7 @@ cd "faultline_${VERSION}_linux_amd64"
 - [docs/github-action-contract.md](docs/github-action-contract.md) for the GitHub Actions wrapper contract
 - [docs/gitlab-ci-contract.md](docs/gitlab-ci-contract.md) for the GitLab CI wrapper contract
 - [docs/fixture-corpus.md](docs/fixture-corpus.md) for regression corpus details and coverage snapshots
-- [docs/playbooks.md](docs/playbooks.md) for playbook authoring and pack composition
+- [docs/playbooks.md](docs/playbooks.md) for playbook authoring, team extensions, and pack composition
 - [docs/release-boundary.md](docs/release-boundary.md) for core vs companion vs experimental surfaces
 
 ## Development 👩‍💻

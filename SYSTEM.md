@@ -2,9 +2,9 @@
 
 ## Core Thesis
 
-Faultline is a deterministic CLI for CI failure analysis.
+Faultline is a deterministic failure reasoning engine for CI failures.
 
-Given a build log from a local run or CI job, Faultline should identify the most likely failure pattern, explain the root cause in plain language, and return a concrete fix with evidence pulled directly from the log.
+Given a build log from a local run or CI job, Faultline should identify the most likely failure pattern, explain the root cause in plain language, materialize a structured failure artifact, and return a concrete fix with evidence pulled directly from the log.
 
 ## Product Shape
 
@@ -21,16 +21,12 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 ## Main Workflow
 
-1. Read log input from a file path or stdin.
-2. Normalize the raw log into stable lines for matching.
-3. Load bundled YAML playbooks.
-4. Validate playbook structure and review overlap conflicts before matching.
-5. Match deterministic patterns against the normalized log.
-6. Score and rank matches using explicit, stable rules, with optional deterministic evidence-fusion reranking when enabled.
-7. Build a deterministic differential diagnosis across the top competing playbooks using supporting, contradictory, and excluding signals.
-8. Enrich the diagnosis with recent local git repository context and explicit change signals when available.
-9. Materialize a first-class failure artifact with evidence, environment, history context, and remediation structure.
-10. Return the result as formatted text or JSON.
+1. Observe: read log input from a file path or stdin, then normalize the raw log into stable lines for matching.
+2. Resolve: load bundled YAML playbooks, validate playbook structure, and match deterministic patterns against the normalized log.
+3. Materialize: score and rank matches using explicit, stable rules, then build a deterministic differential diagnosis and first-class failure artifact.
+4. Enrich: attach recent local git repository context, explicit change signals, and local history when available.
+5. Act: return the result as formatted text, JSON, workflow output, or a remediation handoff.
+6. Learn: refine playbooks through deterministic fixtures, overlap review, and regression gates so future failures resolve faster.
 
 ## Primary Commands
 
@@ -65,7 +61,9 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
 - `internal/scoring` owns optional Bayesian-inspired evidence fusion, additive ranking explanations, and delta diagnosis.
 - `internal/output` owns text formatting and JSON serialization.
-- `internal/workflow` owns deterministic next-step planning for local and agentic workflows.
+- `internal/workflow` owns typed remediation workflow schemas, binding,
+  dry-run planning, policy-gated execution, verification, and persisted
+  workflow execution records.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
 - `internal/repo/topology` owns CODEOWNERS parsing, repository ownership graph construction, and topology signal derivation.
 - `internal/fixtures` owns deterministic fixture corpora, source adapters, curation workflow, and regression gates.

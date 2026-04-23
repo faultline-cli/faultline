@@ -1,5 +1,48 @@
 # Release Boundary
 
+## Locked Product Boundary
+
+Faultline uses an open-core product boundary:
+
+- Core (free): "What failed?"
+- Team (paid): "What keeps failing, who owns it, and what do we do about it?"
+
+This boundary is intentional and should remain stable unless explicitly revised.
+
+### Core (free)
+
+Core remains local-first, deterministic, and useful on a single log without
+history or team state.
+
+Core includes:
+
+- CLI analysis surfaces (`analyze`, `workflow`, `list`, `explain`, `fix`)
+- deterministic playbook matching and ranking
+- local playbook system and pack composition
+- baseline hooks support as local deterministic companion behavior
+- thin diff and deterministic artifact generation
+
+### Team (paid)
+
+Team is the coordination and memory layer across repeated runs, repositories,
+and engineers.
+
+Team includes:
+
+- failure history and aggregation across runs
+- recurring failure detection over time
+- org-level policy enforcement
+- shared playbook layering (org base + repo override)
+- team automation hooks and managed execution context
+- aggregated reporting and trend insights
+- stable integration contracts, schema versioning, and sync surfaces
+
+Rule of thumb:
+
+- If a feature works on one log without history, it belongs in Core.
+- If a feature aggregates, coordinates, enforces, or learns across runs, it
+  belongs in Team.
+
 Faultline ships a deliberately narrow default experience for the next release:
 
 - Diagnose a failing CI log with `faultline analyze`
@@ -8,6 +51,9 @@ Faultline ships a deliberately narrow default experience for the next release:
 - Use `faultline fix` when only the top remediation steps are needed
 
 Everything else should either be a bounded companion surface with explicit verification or a hidden maintainer workflow.
+
+Team commands and Team-enriched modes are intentionally outside this default
+onboarding narrative.
 
 ## Scope Classification
 
@@ -46,6 +92,22 @@ playbooks through typed, policy-gated local checks, but they are not part of
 the default onboarding path and should stay additive to `analyze` and `trace`
 rather than becoming a generic automation surface.
 
+### Team-Gated Commands (Planned)
+
+These commands or modes require Team auth and backend state once shipped:
+
+- `faultline report`
+- `faultline sync`
+- `faultline policy apply`
+- `faultline analyze <log> --report` (enriched mode)
+
+Expected behavior pattern:
+
+- without Team auth: deterministic local output only
+- with Team auth: deterministic local output plus Team enrichment
+
+Core flags should not be license-gated when they only operate on local input.
+
 ### Defer Or Remove From Default Narrative
 
 - broad "CI automation platform" framing
@@ -70,6 +132,18 @@ The current roadmap for v0.4 should extend this boundary rather than replace it:
   `trace`
 - keep history value explicit in output and companion commands rather than
   turning recurrence into hidden ranking behavior
+
+## Team Layer Delivery Contract
+
+When Team features are implemented, preserve these constraints:
+
+- CLI remains local-first and usable without login
+- auth is upgrade-driven and only required for Team surfaces
+- Team state is tied to team context, not individual user state
+- paid value comes from persistent coordination and aggregation, not from
+  crippling local diagnosis
+- default analysis path keeps deterministic no-runtime-network behavior unless
+  explicit Team sync/report mode is requested
 
 ## Release-Readiness Contract
 

@@ -26,6 +26,7 @@ type Playbook struct {
 	RequiresTopology bool            `yaml:"requires_topology,omitempty" json:"requires_topology,omitempty"`
 	TopologyBoost    []TopologyBoost `yaml:"topology_boost,omitempty" json:"topology_boost,omitempty"`
 	Workflow         WorkflowSpec    `yaml:"workflow" json:"workflow"`
+	Remediation      RemediationSpec `yaml:"remediation,omitempty" json:"remediation,omitempty"`
 	Hooks            PlaybookHooks   `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 	Metadata         PlaybookMeta    `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 	Scoring          ScoringConfig   `yaml:"scoring,omitempty" json:"scoring,omitempty"`
@@ -196,6 +197,26 @@ type WorkflowSpec struct {
 	LikelyFiles []string `yaml:"likely_files" json:"likely_files,omitempty"`
 	LocalRepro  []string `yaml:"local_repro" json:"local_repro,omitempty"`
 	Verify      []string `yaml:"verify" json:"verify,omitempty"`
+}
+
+// RemediationSpec declares one or more typed remediation workflows that can be
+// recommended for a matched playbook.
+type RemediationSpec struct {
+	Workflows []RemediationWorkflowRef `yaml:"workflows,omitempty" json:"workflows,omitempty"`
+}
+
+// RemediationWorkflowRef points at a static workflow definition and declares
+// how workflow inputs should be resolved from the analysis artifact.
+type RemediationWorkflowRef struct {
+	Ref    string                             `yaml:"ref,omitempty" json:"ref,omitempty"`
+	Inputs map[string]RemediationInputBinding `yaml:"inputs,omitempty" json:"inputs,omitempty"`
+}
+
+// RemediationInputBinding resolves a workflow input either from a stable
+// artifact/context path or from a literal authored value.
+type RemediationInputBinding struct {
+	From  string `yaml:"from,omitempty" json:"from,omitempty"`
+	Value string `yaml:"value,omitempty" json:"value,omitempty"`
 }
 
 type HookCategory string
@@ -624,20 +645,27 @@ type RemediationPlan struct {
 	CIConfigDiffs    []CIConfigDiff       `json:"ci_config_diffs,omitempty"`
 }
 
+type ArtifactWorkflowRecommendation struct {
+	Ref    string            `json:"ref,omitempty"`
+	Inputs map[string]string `json:"inputs,omitempty"`
+}
+
 type FailureArtifact struct {
-	SchemaVersion         string                  `json:"schema_version,omitempty"`
-	Status                ArtifactStatus          `json:"status,omitempty"`
-	Fingerprint           string                  `json:"fingerprint,omitempty"`
-	MatchedPlaybook       *ArtifactPlaybook       `json:"matched_playbook,omitempty"`
-	Evidence              []string                `json:"evidence,omitempty"`
-	Confidence            float64                 `json:"confidence,omitempty"`
-	Environment           ArtifactEnvironment     `json:"environment"`
-	HistoryContext        *ArtifactHistoryContext `json:"history_context,omitempty"`
-	FixSteps              []string                `json:"fix_steps,omitempty"`
-	CandidateClusters     []CandidateCluster      `json:"candidate_clusters,omitempty"`
-	DominantSignals       []string                `json:"dominant_signals,omitempty"`
-	SuggestedPlaybookSeed *SuggestedPlaybookSeed  `json:"suggested_playbook_seed,omitempty"`
-	Remediation           *RemediationPlan        `json:"remediation,omitempty"`
+	SchemaVersion           string                           `json:"schema_version,omitempty"`
+	Status                  ArtifactStatus                   `json:"status,omitempty"`
+	Fingerprint             string                           `json:"fingerprint,omitempty"`
+	MatchedPlaybook         *ArtifactPlaybook                `json:"matched_playbook,omitempty"`
+	Evidence                []string                         `json:"evidence,omitempty"`
+	Confidence              float64                          `json:"confidence,omitempty"`
+	Environment             ArtifactEnvironment              `json:"environment"`
+	HistoryContext          *ArtifactHistoryContext          `json:"history_context,omitempty"`
+	FixSteps                []string                         `json:"fix_steps,omitempty"`
+	CandidateClusters       []CandidateCluster               `json:"candidate_clusters,omitempty"`
+	DominantSignals         []string                         `json:"dominant_signals,omitempty"`
+	Facts                   map[string]string                `json:"facts,omitempty"`
+	SuggestedPlaybookSeed   *SuggestedPlaybookSeed           `json:"suggested_playbook_seed,omitempty"`
+	Remediation             *RemediationPlan                 `json:"remediation,omitempty"`
+	WorkflowRecommendations []ArtifactWorkflowRecommendation `json:"workflow_recommendations,omitempty"`
 }
 
 // Analysis is the complete output of a log analysis run.
@@ -715,4 +743,74 @@ type Policy struct {
 	// Basis lists the metric names that drove the recommendation (e.g. "tss",
 	// "fpc", "phi").
 	Basis []string `json:"basis,omitempty"`
+}
+
+type WorkflowExecutionMode string
+
+const (
+	WorkflowExecutionModeExplain WorkflowExecutionMode = "explain"
+	WorkflowExecutionModeDryRun  WorkflowExecutionMode = "dry-run"
+	WorkflowExecutionModeApply   WorkflowExecutionMode = "apply"
+)
+
+type WorkflowExecutionStatus string
+
+const (
+	WorkflowExecutionStatusPlanned   WorkflowExecutionStatus = "planned"
+	WorkflowExecutionStatusSucceeded WorkflowExecutionStatus = "succeeded"
+	WorkflowExecutionStatusFailed    WorkflowExecutionStatus = "failed"
+	WorkflowExecutionStatusBlocked   WorkflowExecutionStatus = "blocked"
+	WorkflowExecutionStatusSkipped   WorkflowExecutionStatus = "skipped"
+)
+
+type WorkflowVerificationStatus string
+
+const (
+	WorkflowVerificationStatusPending WorkflowVerificationStatus = "pending"
+	WorkflowVerificationStatusPassed  WorkflowVerificationStatus = "passed"
+	WorkflowVerificationStatusFailed  WorkflowVerificationStatus = "failed"
+)
+
+type WorkflowStepResult struct {
+	Phase              string                     `json:"phase,omitempty"`
+	StepID             string                     `json:"step_id,omitempty"`
+	StepType           string                     `json:"step_type,omitempty"`
+	SafetyClass        string                     `json:"safety_class,omitempty"`
+	Status             WorkflowExecutionStatus    `json:"status,omitempty"`
+	VerificationStatus WorkflowVerificationStatus `json:"verification_status,omitempty"`
+	StartedAt          string                     `json:"started_at,omitempty"`
+	FinishedAt         string                     `json:"finished_at,omitempty"`
+	Changed            *bool                      `json:"changed,omitempty"`
+	Message            string                     `json:"message,omitempty"`
+	Outputs            map[string]string          `json:"outputs,omitempty"`
+	Error              string                     `json:"error,omitempty"`
+}
+
+type WorkflowExecutionRecord struct {
+	SchemaVersion      string                     `json:"schema_version,omitempty"`
+	ExecutionID        string                     `json:"execution_id,omitempty"`
+	WorkflowID         string                     `json:"workflow_id,omitempty"`
+	Title              string                     `json:"title,omitempty"`
+	Mode               WorkflowExecutionMode      `json:"mode,omitempty"`
+	SourceFingerprint  string                     `json:"source_fingerprint,omitempty"`
+	SourceFailureID    string                     `json:"source_failure_id,omitempty"`
+	StartedAt          string                     `json:"started_at,omitempty"`
+	FinishedAt         string                     `json:"finished_at,omitempty"`
+	ResolvedInputs     map[string]string          `json:"resolved_inputs,omitempty"`
+	StepResults        []WorkflowStepResult       `json:"step_results,omitempty"`
+	VerificationStatus WorkflowVerificationStatus `json:"verification_status,omitempty"`
+	Status             WorkflowExecutionStatus    `json:"status,omitempty"`
+}
+
+type WorkflowExecutionSummary struct {
+	ExecutionID        string                     `json:"execution_id,omitempty"`
+	WorkflowID         string                     `json:"workflow_id,omitempty"`
+	Title              string                     `json:"title,omitempty"`
+	Mode               WorkflowExecutionMode      `json:"mode,omitempty"`
+	SourceFingerprint  string                     `json:"source_fingerprint,omitempty"`
+	SourceFailureID    string                     `json:"source_failure_id,omitempty"`
+	StartedAt          string                     `json:"started_at,omitempty"`
+	FinishedAt         string                     `json:"finished_at,omitempty"`
+	VerificationStatus WorkflowVerificationStatus `json:"verification_status,omitempty"`
+	Status             WorkflowExecutionStatus    `json:"status,omitempty"`
 }

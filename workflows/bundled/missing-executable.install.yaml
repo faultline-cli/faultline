@@ -1,0 +1,31 @@
+schema_version: workflow.v1
+workflow_id: missing-executable.install
+title: Install missing executable
+description: Install the missing executable detected by the failure artifact and verify it is available in PATH.
+inputs:
+  missing_executable:
+    type: string
+    required: true
+    description: Executable name extracted from the matched failure artifact.
+steps:
+  - id: detect-manager
+    type: detect_package_manager
+    args: {}
+  - id: install-tool
+    type: install_package
+    args:
+      package: ${inputs.missing_executable}
+      manager: ${steps.detect-manager.manager}
+      check_command: ${inputs.missing_executable}
+verification:
+  - id: verify-tool
+    type: which_command
+    args:
+      command: ${inputs.missing_executable}
+    expect:
+      found: true
+policy:
+  requires:
+    - environment_mutation
+  notes:
+    - Review the detected package manager and package name before applying environment changes.

@@ -71,6 +71,7 @@ Stored data is intentionally minimal:
 - first-seen and last-seen times
 - small evidence excerpts
 - structured hook facts and hook evidence excerpts when hooks run
+- typed workflow execution records for `faultline workflow apply`
 
 ## What Is Not Stored By Default
 
@@ -200,6 +201,13 @@ dashboard product:
 - hook total/executed/passed/failed/blocked counts
 - average hook confidence delta so maintainers can spot noisy hooks that add
   little value
+
+Workflow execution history is intentionally narrow too:
+
+- `faultline workflow history` lists recent persisted remediation runs
+- `faultline workflow show <execution-id>` loads the full execution record
+- records include resolved inputs, per-step results, verification status, and
+  final status
 
 These views are intentionally local, inspectable, and bounded. They are meant
 to guide catalog maintenance, not to create hosted analytics.

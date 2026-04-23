@@ -19,6 +19,9 @@ explicit deterministic layers:
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, source loading, and
   git enrichment. It does not own persistence.
+- `internal/workflow` owns typed remediation workflow schemas, binding,
+  deterministic dry-run planning, policy-gated execution, verification, and
+  workflow execution rendering.
 - `internal/engine/delta` owns explicit provider-backed failure delta
   resolution and minimal cross-run extraction such as changed files and newly
   failing tests.
@@ -112,6 +115,18 @@ through `faultline-matchers.yaml`. Those overlays:
 
 This keeps reusable sub-patterns first-class without turning the matcher into a
 runtime DSL or a second hidden decision engine.
+
+This is the intended scaling path for playbooks:
+
+- reuse signal fragments for shared evidence instead of repeating literal
+  patterns
+- inherit a parent playbook when the diagnosis stays the same and only the
+  surrounding constraints or remediation need to specialize
+- use partial groups for signal clusters that are individually weak but
+  collectively decisive
+
+That keeps the catalog composable without losing the deterministic one-rule,
+one-root-cause discipline.
 
 The same pack boundary now carries optional hook overlays through
 `faultline-hooks.yaml` at the pack root. Those overlays:

@@ -11,6 +11,40 @@ Structured fields decide; markdown explains.
 
 Do not hide matching logic, ranking hints, or machine-important state inside prose.
 
+## Scaling model
+
+Playbooks should scale by composition, inheritance, and partial matching rather
+than copy-paste:
+
+- compose reusable signal fragments with `match.use` or `faultline-matchers.yaml`
+- inherit a full diagnosis with `extends` when the root cause is the same but
+  the environment, repo, or remediation needs a narrower override
+- use `match.partial` when several weak signals only become decisive together
+- keep constraints explicit with `tags`, `stage_hints`, `context_filters`, and
+  `source` fields instead of hiding them in prose
+
+That gives you a deterministic equivalent of "components" without adding a
+second matching language.
+
+Good decomposition usually looks like this:
+
+1. a shared base playbook for the root cause
+2. one or more reusable signal fragments for common evidence
+3. a child playbook that adds environment-specific constraints and guidance
+4. one or more partial groups that combine soft signals into a stable threshold
+
+For example, a Node-related failure family can be expressed as:
+
+- `missing-executable` for the generic binary-launch failure
+- `runtime-base` for shared runtime evidence
+- `node-env` for Node-specific partial signals such as `.nvmrc`, `engines.node`,
+  and version messages
+- `node-missing-executable` as the child playbook that inherits the generic
+  executable failure and adds Node-specific match and remediation details
+
+The important rule is that the shared root cause stays in one place. The child
+playbook should add only the signals and guidance that make the rule narrower.
+
 ## Recommended content fields
 
 Use these markdown-capable string fields for operator-facing guidance:
@@ -64,6 +98,32 @@ hooks:
 Use inline hooks sparingly. They belong in the playbook when the extra
 verification or evidence is part of the same rule definition and should travel
 with the playbook itself.
+
+## Remediation Workflows
+
+Playbooks can now recommend typed remediation workflows in addition to the
+legacy `workflow` checklist metadata:
+
+```yaml
+remediation:
+  workflows:
+    - ref: missing-executable.install
+      inputs:
+        missing_executable:
+          from: artifact.facts.missing_executable
+```
+
+Use this when the remediation path can be expressed as a deterministic,
+registry-backed workflow definition under `workflows/`.
+
+Guidelines:
+
+- keep workflow refs explicit and versioned
+- bind inputs only from stable artifact facts or literal values
+- avoid hiding machine-important branching logic in markdown prose
+- preserve the older `workflow.likely_files`, `workflow.local_repro`, and
+  `workflow.verify` fields until a typed workflow fully covers the same
+  operator story
 
 Optional delta-aware ranking fields:
 

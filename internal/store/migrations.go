@@ -129,4 +129,33 @@ CREATE INDEX IF NOT EXISTS idx_hook_results_playbook_id
 ALTER TABLE analysis_runs ADD COLUMN artifact_json TEXT;
 `,
 	},
+	{
+		version: 3,
+		name:    "workflow-runs",
+		sql: `
+CREATE TABLE IF NOT EXISTS workflow_runs (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	execution_id TEXT UNIQUE,
+	workflow_id TEXT NOT NULL,
+	title TEXT,
+	mode TEXT NOT NULL,
+	source_fingerprint TEXT,
+	source_failure_id TEXT,
+	started_at TEXT NOT NULL,
+	finished_at TEXT NOT NULL,
+	verification_status TEXT NOT NULL,
+	status TEXT NOT NULL,
+	record_json TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_runs_execution_id
+	ON workflow_runs(execution_id);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_runs_workflow_id
+	ON workflow_runs(workflow_id);
+
+CREATE INDEX IF NOT EXISTS idx_workflow_runs_finished_at
+	ON workflow_runs(finished_at DESC);
+`,
+	},
 }

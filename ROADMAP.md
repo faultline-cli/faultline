@@ -1,5 +1,21 @@
 # Faultline Roadmap
 
+## Locked Commercial Boundary
+
+Product packaging is locked to this model:
+
+- Core (free): deterministic local diagnosis of "what failed"
+- Team (paid): cross-run coordination for "what keeps failing, who owns it,
+  and what to do about it"
+
+Faultline should mirror the Git/GitHub split:
+
+- CLI product = local deterministic substrate
+- Team layer = persistence, aggregation, and organizational coordination
+
+This means monetization should track persistent team value, not local parsing
+or one-off diagnosis.
+
 ## Current Position
 
 Faultline already ships the deterministic CLI foundations that the roadmap
@@ -14,6 +30,55 @@ should build on:
 The next release should not restart the story from "basic log analyzer."
 It should extend the shipped CLI into a fleet-safe deterministic operations
 layer without weakening the local-first trust boundary.
+
+## Team Plan (v1)
+
+The first paid layer should ship as a lean, text-first extension of current
+CLI workflows.
+
+### Team Capabilities
+
+1. Failure history and aggregation
+2. Recurring failure detection
+3. Org-level policy enforcement
+4. Shared playbook layering (org + repo)
+5. Basic failure insights (`faultline report`)
+6. Team-level hooks automation
+7. Versioned integration and schema contract
+
+### MVP Build Order
+
+Phase 1 (sellable baseline):
+
+- local history store (SQLite)
+- `faultline report` basic aggregation output
+- policy enforcement evaluator
+- playbook inheritance merge rules
+
+Phase 2:
+
+- hooks execution for Team automation paths
+- recurring detection thresholds
+- simple sync path (push-only first)
+
+Phase 3:
+
+- hosted aggregation backend
+- optional dashboards and richer hosted surfaces
+
+### Team Auth and Gating Model
+
+- local diagnosis commands remain available without auth
+- Team commands prompt upgrade flow when unauthenticated
+- login should be optional and only introduced on Team command use
+- token storage and refresh should be local and transparent after setup
+
+### Team Unit of Sale
+
+Sell to teams, not users:
+
+- user, team, membership, and optional project entities
+- per-team pricing first; seat complexity can follow later
 
 ## v0.4 Theme
 
@@ -36,6 +101,10 @@ The proposed v0.4 ordering is:
 3. Authoring Assistant (Knowledge Codification)
 4. Pipeline Reliability Metrics (PHI, TSS, FPC)
 5. Deterministic Quarantine Policy
+
+This v0.4 engineering order remains valid and should compose with the Team
+plan above. Team work should be added as a coordination layer over the same
+deterministic substrate, not as a replacement architecture.
 
 This order matches the repository shape:
 
@@ -160,6 +229,13 @@ Planned additive interface changes for v0.4:
 - authoring assistance remains hidden and should compose with the existing
   `fixtures` and playbook-authoring workflows rather than redefine the command
   maturity model
+
+Planned additive Team-facing command surfaces:
+
+- `faultline report` for aggregated text-first insights
+- `faultline sync` for explicit Team state push/sync
+- `faultline policy apply` for org-level deterministic policy evaluation
+- `faultline analyze <log> --report` for mixed local + Team enrichment mode
 
 Defaults to preserve:
 

@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -24,6 +25,8 @@ import (
 	"faultline/internal/repo"
 	tracereport "faultline/internal/trace"
 	"faultline/internal/workflow"
+	workflowexec "faultline/internal/workflow/execute"
+	workflowrender "faultline/internal/workflow/render"
 )
 
 // Service owns app-level orchestration for CLI commands.
@@ -283,7 +286,7 @@ func (Service) InstallPack(srcDir, name string, force bool, w io.Writer) error {
 	return err
 }
 
-// Workflow analyzes the log and emits a deterministic follow-up workflow.
+// Workflow analyzes the log and emits the legacy deterministic follow-up workflow.
 func (Service) Workflow(r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
 	a, err := analyzeLog(r, source, opts, "workflow", false)
 	if errors.Is(err, engine.ErrNoInput) {
@@ -306,6 +309,122 @@ func (Service) Workflow(r io.Reader, source string, opts AnalyzeOptions, mode wo
 	}
 
 	_, err = fmt.Fprint(w, output.FormatWorkflowText(plan))
+	return err
+}
+
+func (Service) WorkflowExplain(r io.Reader, source string, opts AnalyzeOptions, workflowRef string, jsonOut bool, w io.Writer) error {
+	analysis, err := loadWorkflowAnalysis(r, source, opts)
+	if err != nil {
+		return err
+	}
+	doc, err := workflow.Explain(context.Background(), analysis, workflow.Options{
+		WorkflowRef: workflowRef,
+		RepoPath:    opts.RepoPath,
+	})
+	if err != nil {
+		return err
+	}
+	if jsonOut {
+		data, err := workflow.MarshalPlanJSON(doc)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
+		return err
+	}
+	_, err = fmt.Fprint(w, workflowrender.PlanText(doc))
+	return err
+}
+
+func (Service) WorkflowApply(r io.Reader, source string, opts AnalyzeOptions, workflowRef string, dryRun bool, policy workflowexec.Policy, jsonOut bool, w io.Writer) error {
+	analysis, err := loadWorkflowAnalysis(r, source, opts)
+	if err != nil {
+		return err
+	}
+	if dryRun {
+		doc, err := workflow.DryRun(context.Background(), analysis, workflow.Options{
+			WorkflowRef: workflowRef,
+			RepoPath:    opts.RepoPath,
+		})
+		if err != nil {
+			return err
+		}
+		if jsonOut {
+			data, err := workflow.MarshalPlanJSON(doc)
+			if err != nil {
+				return err
+			}
+			_, err = fmt.Fprint(w, data)
+			return err
+		}
+		_, err = fmt.Fprint(w, workflowrender.PlanText(doc))
+		return err
+	}
+	record, err := workflow.Apply(context.Background(), analysis, workflow.Options{
+		WorkflowRef: workflowRef,
+		RepoPath:    opts.RepoPath,
+	}, policy)
+	if record == nil && err != nil {
+		return err
+	}
+	record, persistErr := persistWorkflowExecution(record, opts)
+	if persistErr != nil {
+		return persistErr
+	}
+	if jsonOut {
+		data, err := workflow.MarshalExecutionJSON(record)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
+		return err
+	}
+	_, writeErr := fmt.Fprint(w, workflowrender.ExecutionText(record))
+	if err != nil {
+		return err
+	}
+	return writeErr
+}
+
+func (Service) WorkflowShow(executionID string, opts AnalyzeOptions, jsonOut bool, w io.Writer) error {
+	record, err := loadWorkflowExecution(executionID, opts)
+	if err != nil {
+		return err
+	}
+	if record == nil {
+		return fmt.Errorf("workflow execution %s not found", executionID)
+	}
+	if jsonOut {
+		data, err := workflow.MarshalExecutionJSON(record)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprint(w, data)
+		return err
+	}
+	_, err = fmt.Fprint(w, workflowrender.ExecutionText(record))
+	return err
+}
+
+func (Service) WorkflowHistory(opts AnalyzeOptions, limit int, jsonOut bool, w io.Writer) error {
+	st, _, err := openWorkflowStore(opts)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	items, err := st.ListWorkflowExecutions(context.Background(), limit)
+	if err != nil {
+		return err
+	}
+	if jsonOut {
+		data, err := json.Marshal(items)
+		if err != nil {
+			return err
+		}
+		_, err = fmt.Fprintf(w, "%s\n", data)
+		return err
+	}
+	_, err = fmt.Fprint(w, workflowrender.HistoryText(items))
 	return err
 }
 

@@ -606,6 +606,118 @@ WHERE input_hash = ? AND output_hash IS NOT NULL AND output_hash != ''
 	return summary, nil
 }
 
+func (s *sqliteStore) RecordWorkflowExecution(ctx context.Context, record *model.WorkflowExecutionRecord) (*model.WorkflowExecutionRecord, error) {
+	if record == nil {
+		return nil, nil
+	}
+	data, err := json.Marshal(record)
+	if err != nil {
+		return nil, fmt.Errorf("marshal workflow execution record: %w", err)
+	}
+	result, err := s.db.ExecContext(ctx, `
+INSERT INTO workflow_runs (
+	workflow_id, title, mode, source_fingerprint, source_failure_id,
+	started_at, finished_at, verification_status, status, record_json
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`,
+		nullableString(record.WorkflowID),
+		nullableString(record.Title),
+		nullableString(string(record.Mode)),
+		nullableString(record.SourceFingerprint),
+		nullableString(record.SourceFailureID),
+		nullableString(record.StartedAt),
+		nullableString(record.FinishedAt),
+		nullableString(string(record.VerificationStatus)),
+		nullableString(string(record.Status)),
+		string(data),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("insert workflow execution: %w", err)
+	}
+	rowID, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("resolve workflow execution row id: %w", err)
+	}
+	executionID := fmt.Sprintf("wf-%06d", rowID)
+	if _, err := s.db.ExecContext(ctx, `UPDATE workflow_runs SET execution_id = ? WHERE id = ?`, executionID, rowID); err != nil {
+		return nil, fmt.Errorf("update workflow execution id: %w", err)
+	}
+	clone := *record
+	clone.ExecutionID = executionID
+	data, err = json.Marshal(&clone)
+	if err != nil {
+		return nil, fmt.Errorf("marshal workflow execution record: %w", err)
+	}
+	if _, err := s.db.ExecContext(ctx, `UPDATE workflow_runs SET record_json = ? WHERE id = ?`, string(data), rowID); err != nil {
+		return nil, fmt.Errorf("update workflow execution record: %w", err)
+	}
+	return &clone, nil
+}
+
+func (s *sqliteStore) GetWorkflowExecution(ctx context.Context, executionID string) (*model.WorkflowExecutionRecord, error) {
+	executionID = strings.TrimSpace(executionID)
+	if executionID == "" {
+		return nil, nil
+	}
+	var raw string
+	err := s.db.QueryRowContext(ctx, `SELECT record_json FROM workflow_runs WHERE execution_id = ?`, executionID).Scan(&raw)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("load workflow execution %s: %w", executionID, err)
+	}
+	var record model.WorkflowExecutionRecord
+	if err := json.Unmarshal([]byte(raw), &record); err != nil {
+		return nil, fmt.Errorf("decode workflow execution %s: %w", executionID, err)
+	}
+	return &record, nil
+}
+
+func (s *sqliteStore) ListWorkflowExecutions(ctx context.Context, limit int) ([]model.WorkflowExecutionSummary, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	rows, err := s.db.QueryContext(ctx, `
+SELECT execution_id, workflow_id, title, mode, source_fingerprint, source_failure_id, started_at, finished_at, verification_status, status
+FROM workflow_runs
+ORDER BY finished_at DESC, id DESC
+LIMIT ?
+`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list workflow executions: %w", err)
+	}
+	defer rows.Close()
+
+	var out []model.WorkflowExecutionSummary
+	for rows.Next() {
+		var item model.WorkflowExecutionSummary
+		var mode, verificationStatus, status string
+		if err := rows.Scan(
+			&item.ExecutionID,
+			&item.WorkflowID,
+			&item.Title,
+			&mode,
+			&item.SourceFingerprint,
+			&item.SourceFailureID,
+			&item.StartedAt,
+			&item.FinishedAt,
+			&verificationStatus,
+			&status,
+		); err != nil {
+			return nil, fmt.Errorf("scan workflow execution summary: %w", err)
+		}
+		item.Mode = model.WorkflowExecutionMode(mode)
+		item.VerificationStatus = model.WorkflowVerificationStatus(verificationStatus)
+		item.Status = model.WorkflowExecutionStatus(status)
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate workflow execution summaries: %w", err)
+	}
+	return out, nil
+}
+
 func (s *sqliteStore) Close() error {
 	return s.db.Close()
 }

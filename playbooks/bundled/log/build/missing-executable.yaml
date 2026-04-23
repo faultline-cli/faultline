@@ -74,3 +74,9 @@ workflow:
     - ls -l <expected-path>
   verify:
     - command -v <tool>
+remediation:
+  workflows:
+    - ref: missing-executable.install
+      inputs:
+        missing_executable:
+          from: artifact.facts.missing_executable

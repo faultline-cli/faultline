@@ -991,6 +991,54 @@ func TestWorkflowCommandBayesJSONIncludesHints(t *testing.T) {
 	}
 }
 
+func TestWorkflowExplainCommandJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"workflow", "explain", "--json", "--no-history", "--git=false", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute workflow explain: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal workflow explain json: %v", err)
+	}
+	if payload["workflow_id"] != "missing-executable.install" {
+		t.Fatalf("expected missing-executable.install, got %v", payload["workflow_id"])
+	}
+}
+
+func TestWorkflowApplyDryRunCommandJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"workflow", "apply", "--dry-run", "--json", "--no-history", "--git=false", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute workflow apply --dry-run: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal workflow apply dry-run json: %v", err)
+	}
+	if payload["mode"] != "dry-run" {
+		t.Fatalf("expected dry-run mode, got %v", payload["mode"])
+	}
+}
+
 func TestGuardCommandQuietOnCleanRepo(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	repoDir := writeTempRepo(t)

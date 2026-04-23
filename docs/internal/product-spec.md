@@ -6,13 +6,14 @@
 
 ## Positioning
 
-Faultline is a deterministic CLI for CI failure diagnosis.
+Faultline is a deterministic failure reasoning engine for CI failures.
 
 Run it against a failing build log and it returns:
 
 - the most likely failure class
 - evidence pulled directly from the log
 - checked-in diagnosis and fix guidance
+- a structured failure artifact that can be replayed, compared, and handed off
 - stable text, markdown, JSON, and workflow artifacts for humans and automation
 
 The product stays deliberately narrow:
@@ -21,6 +22,15 @@ The product stays deliberately narrow:
 - deterministic matching remains authoritative
 - optional ranking assistance is additive, never a second matcher
 - no ML or LLM dependence in shipped product logic
+
+The product loop is intentionally explicit:
+
+1. Observe raw signals from logs and command output.
+2. Resolve them to a known failure class with deterministic matching.
+3. Materialize a failure artifact.
+4. Enrich that artifact with repo history, ownership, change surface, and prior occurrences when available.
+5. Act through human fixes, automated workflows, or agent execution.
+6. Learn through fixtures, review gates, and playbook refinement.
 
 ## Default User Story
 

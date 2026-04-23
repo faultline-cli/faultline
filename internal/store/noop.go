@@ -1,6 +1,10 @@
 package store
 
-import "context"
+import (
+	"context"
+
+	"faultline/internal/model"
+)
 
 type noopStore struct{}
 
@@ -14,6 +18,18 @@ func (noopStore) BeginRun(context.Context, BeginRunParams) (RunHandle, error) {
 
 func (noopStore) CompleteRun(context.Context, RunHandle, CompleteRunParams) error {
 	return nil
+}
+
+func (noopStore) RecordWorkflowExecution(_ context.Context, record *model.WorkflowExecutionRecord) (*model.WorkflowExecutionRecord, error) {
+	return record, nil
+}
+
+func (noopStore) GetWorkflowExecution(context.Context, string) (*model.WorkflowExecutionRecord, error) {
+	return nil, nil
+}
+
+func (noopStore) ListWorkflowExecutions(context.Context, int) ([]model.WorkflowExecutionSummary, error) {
+	return nil, nil
 }
 
 func (noopStore) LookupSignatureHistory(context.Context, string) (SignatureHistory, error) {

@@ -259,6 +259,49 @@ func TestSQLiteStoreListsHistorySummaries(t *testing.T) {
 	}
 }
 
+func TestSQLiteStorePersistsWorkflowExecutions(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "faultline.db")
+	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
+	if err != nil {
+		t.Fatalf("OpenBestEffort: %v", err)
+	}
+	defer st.Close()
+
+	record, err := st.RecordWorkflowExecution(context.Background(), &model.WorkflowExecutionRecord{
+		SchemaVersion:      "workflow_execution.v1",
+		WorkflowID:         "missing-executable.install",
+		Title:              "Install missing executable",
+		Mode:               model.WorkflowExecutionModeApply,
+		SourceFingerprint:  "fp-1",
+		SourceFailureID:    "missing-executable",
+		StartedAt:          time.Date(2026, 4, 23, 10, 0, 0, 0, time.UTC).Format(time.RFC3339),
+		FinishedAt:         time.Date(2026, 4, 23, 10, 0, 1, 0, time.UTC).Format(time.RFC3339),
+		ResolvedInputs:     map[string]string{"missing_executable": "node"},
+		VerificationStatus: model.WorkflowVerificationStatusPassed,
+		Status:             model.WorkflowExecutionStatusSucceeded,
+	})
+	if err != nil {
+		t.Fatalf("RecordWorkflowExecution: %v", err)
+	}
+	if record.ExecutionID == "" {
+		t.Fatalf("expected execution id, got %#v", record)
+	}
+	loaded, err := st.GetWorkflowExecution(context.Background(), record.ExecutionID)
+	if err != nil {
+		t.Fatalf("GetWorkflowExecution: %v", err)
+	}
+	if loaded == nil || loaded.WorkflowID != "missing-executable.install" {
+		t.Fatalf("unexpected loaded record: %#v", loaded)
+	}
+	items, err := st.ListWorkflowExecutions(context.Background(), 10)
+	if err != nil {
+		t.Fatalf("ListWorkflowExecutions: %v", err)
+	}
+	if len(items) != 1 || items[0].ExecutionID != record.ExecutionID {
+		t.Fatalf("unexpected workflow history: %#v", items)
+	}
+}
+
 func TestSQLiteStorePlaybookStatsIncludeMatchCountsAndAverageRank(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "faultline.db")
 	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
