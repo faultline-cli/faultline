@@ -1,0 +1,35 @@
+id: stackexchange-stackoverflow-62759216-s1-42363f49daf320d0
+title: 'Gitlab CI: Fail pipeline if variable not set?'
+fixture_class: real
+normalized_log: |-
+    Testing the options environment variable in the script is one possibility. Another is to use the options variable to include (or exclude) a "killer" job from the pipeline. For example:
+    verify-options-set:
+    stage: .pre
+    image: node:20
+    tags:
+    - linux-docker
+    rules:
+    - if: '$options == null'
+    script:
+    - echo "Define "options" to run the pipeline!"
+    - exit 1
+    If the options environment variable is not set, this job (which always fails) is included in the pipeline. If it is set, the job is ignored.
+expectation:
+    expected_playbook: env-var-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/62759216
+    repository: stackoverflow
+    issue_number: 62759216
+    comment_id: "78119152"
+    title: 'Gitlab CI: Fail pipeline if variable not set?'
+    author: Petter Hesselberg
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:35Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:46:21Z"
+fingerprint: 42363f49daf320d0

@@ -112,9 +112,9 @@ func TestOwnersFor_wildcardExtension(t *testing.T) {
 func TestBuildGraph_simpleTree(t *testing.T) {
 	t.Parallel()
 	fsys := fstest.MapFS{
-		"cmd/main.go":          &fstest.MapFile{},
+		"cmd/main.go":           &fstest.MapFile{},
 		"internal/auth/auth.go": &fstest.MapFile{},
-		"docs/index.md":        &fstest.MapFile{},
+		"docs/index.md":         &fstest.MapFile{},
 	}
 
 	rules := []OwnerRule{
@@ -154,8 +154,8 @@ func TestBuildGraph_simpleTree(t *testing.T) {
 func TestDeriveSignals_boundaryCrossed(t *testing.T) {
 	t.Parallel()
 	fsys := fstest.MapFS{
-		"frontend/app.ts":         &fstest.MapFile{},
-		"backend/server.go":       &fstest.MapFile{},
+		"frontend/app.ts":   &fstest.MapFile{},
+		"backend/server.go": &fstest.MapFile{},
 	}
 	rules := []OwnerRule{
 		{Pattern: "frontend/", Owners: []string{"@team-fe"}},
@@ -196,7 +196,7 @@ func TestDeriveSignals_upstreamChanged(t *testing.T) {
 
 	// No ownership needed for this signal - only directory ancestry matters.
 	sigs := DeriveSignals(graph,
-		[]string{"lib/core/util.go"},       // changed: ancestor of failing file
+		[]string{"lib/core/util.go"},        // changed: ancestor of failing file
 		[]string{"lib/core/api/handler.go"}, // failed: inside lib/core/
 	)
 	if !sigs.UpstreamChanged {

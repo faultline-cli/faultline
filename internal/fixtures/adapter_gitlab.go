@@ -38,7 +38,7 @@ func (a GitLabIssueAdapter) Fetch(ctx context.Context, rawURL string, client *ht
 	client = defaultHTTPClient(client)
 	projectRef := url.PathEscape(project)
 	requestOpts := jsonRequestOptions{
-		AcceptHeader:       "application/json",
+		AcceptHeader:        "application/json",
 		OptionalStatusCodes: []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
 	}
 

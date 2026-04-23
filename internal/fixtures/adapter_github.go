@@ -37,7 +37,7 @@ func (a GitHubIssueAdapter) Fetch(ctx context.Context, rawURL string, client *ht
 	}
 	client = defaultHTTPClient(client)
 	requestOpts := jsonRequestOptions{
-		AcceptHeader:       "application/vnd.github+json, application/json",
+		AcceptHeader:        "application/vnd.github+json, application/json",
 		OptionalStatusCodes: []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
 	}
 

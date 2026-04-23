@@ -1,0 +1,38 @@
+id: discourse-discuss-circleci-com-32689-s1-38b2e1a127e9f890
+title: PostgreSQL server cannot bind to any port; "Address already in use"
+fixture_class: real
+normalized_log: |-
+    I run the following command to install PostgreSQL 11
+    - run:
+    name: Install PostgreSQL
+    command: |
+    sudo apt-get install -y postgresql-11 postgresql-contrib
+    echo 'export PATH=/usr/lib/postgresql/11/bin/:$PATH' >> $BASH_ENV
+    I modify $PATH to make initdb available; the tests need to create, start, and stop clusters themselves.
+    I have tried stopping the service with sudo pg_dropcluster --stop 11 main right after installing postgresql-11 but I can’t tell if that even does anything.
+    <timestamp> UTC [2215] LOG: could not bind IPv4 address "127.0.0.1": Address already in use
+    <timestamp> UTC [2215] HINT: Is another postmaster already running on port 5433? If not, wait a few seconds and retry.
+    <timestamp> UTC [2215] LOG: could not bind IPv6 address "::1": Cannot assign requested address
+    <timestamp> UTC [2215] HINT: Is another postmaster already running on port 5433? If not, wait a few seconds and retry.
+    All efforts end the same no matter what port I try.
+    I’m using the circleci/node:12.10 docker image.
+expectation:
+    expected_playbook: port-in-use
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/postgresql-server-cannot-bind-to-any-port-address-already-in-use/32689
+    repository: discuss.circleci.com
+    issue_number: 32689
+    comment_id: "70533"
+    title: PostgreSQL server cannot bind to any port; "Address already in use"
+    author: BrandonZacharie
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:45:27Z"
+fingerprint: 38b2e1a127e9f890

@@ -1,0 +1,42 @@
+id: gitlab-gitlab-org-gitlab-runner-29198-s1-72228dd57b39f384
+title: 'connect: network is unreachable in k8s runner job'
+fixture_class: real
+normalized_log: |-
+    image: docker:20.10.7
+    services:
+    - docker:20.10.7-dind
+    stages: # List of stages for jobs, and their order of execution
+    - build
+    before_script:
+    - export APP_VERSION="${CI_COMMIT_TAG:-${CI_COMMIT_SHA::8}}"
+    build-job: # This job runs in the build stage, which runs first.
+    only:
+    - /^release-/
+    stage: build
+    image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
+    script:
+    - echo $APP_VERSION
+    - docker build -t tenon-go-api:$APP_VERSION --build-arg ENDPOINT=tenon --build-arg env=dev -t tenon . # just cmd go build in Dockerfile
+expectation:
+    expected_playbook: runner-disk-full
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/29198
+    repository: gitlab-org/gitlab-runner
+    issue_number: 29198
+    title: 'connect: network is unreachable in k8s runner job'
+    labels:
+        - Category:Runner Core
+        - devops::verify
+        - group::runner core
+        - section::ops
+    author: 0xg0pher
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:52Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:46:17Z"
+fingerprint: 72228dd57b39f384

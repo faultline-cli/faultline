@@ -1,0 +1,36 @@
+id: github-docker-desktop-feedback-182-s1-ee683aa32ec04ef9
+title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+fixture_class: real
+normalized_log: |-
+    Client:
+    Version: 28.5.1
+    API version: 1.51
+    Go version: go1.24.8
+    Git commit: e180ab8
+    Built: Wed Oct 8 <timestamp> 2025
+    OS/Arch: darwin/arm64
+    Context: desktop-linux
+    Cannot connect to the Docker daemon at unix:///Users/user1/.docker/run/docker.sock. Is the docker daemon running?
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/desktop-feedback/issues/182
+    repository: docker/desktop-feedback
+    issue_number: 182
+    title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+    labels:
+        - area/network
+        - platform/macos
+        - version/4.58.1
+    author: pranav-raft
+    snippet: 1
+    fetched_at: "2026-04-23T21:24:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T21:37:34Z"
+fingerprint: ee683aa32ec04ef9

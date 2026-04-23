@@ -41,7 +41,7 @@ func (a StackExchangeQuestionAdapter) Fetch(ctx context.Context, rawURL string, 
 	}
 	client = defaultHTTPClient(client)
 	requestOpts := jsonRequestOptions{
-		AcceptHeader:       "application/json",
+		AcceptHeader:        "application/json",
 		OptionalStatusCodes: []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound},
 	}
 

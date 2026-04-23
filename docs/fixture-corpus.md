@@ -5,9 +5,9 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 ## Current Snapshot
 
 - Bundled playbooks: 101
-- Accepted real fixtures: 135
-- Top-1 match rate: 100% (135/135)
-- Top-3 match rate: 100% (135/135)
+- Accepted real fixtures: 145
+- Top-1 match rate: 100% (145/145)
+- Top-3 match rate: 100% (145/145)
 - Unmatched fixtures: 0
 - False positives: 0
 - Weak matches: 0 (0.0%)
@@ -34,7 +34,7 @@ Bundled playbook coverage by category (from `playbooks/bundled/`):
 | build | 33 |
 | ci | 20 |
 | test | 13 |
-| runtime | 11 |
+| runtime | 14 |
 | deploy | 8 |
 | auth | 7 |
 | network | 6 |
@@ -43,12 +43,12 @@ Accepted real fixtures mapped through expected playbooks (from `fixtures/real/`)
 
 | Category | Accepted Real Fixtures |
 | --- | --- |
-| build | 37 |
+| build | 38 |
 | network | 29 |
-| ci | 30 |
-| runtime | 17 |
-| auth | 9 |
-| deploy | 7 |
+| ci | 32 |
+| runtime | 21 |
+| auth | 10 |
+| deploy | 9 |
 | test | 6 |
 
 This table is intended as public proof coverage, not a claim that unknown failures are solved.
@@ -67,14 +67,14 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-23 ingestion pass | 100 | 120 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-23 mixed-source ingestion pass | 100 | 123 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-23 auth-and-lock ingestion pass | 100 | 126 | 32 | 100% | 100% | 0 | 0 |
-| 2026-04-24 mixed-source ingestion + source-boundary refinement | 101 | 135 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-24 mixed-source ingestion + source-boundary refinement | 101 | 145 | 32 | 100% | 100% | 0 | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The shipped corpus is still strongest on build, network, and CI failures, with 96 of 135 accepted fixtures concentrated in those three categories.
-- Provider diversity is still uneven: the accepted real corpus is 84 GitHub fixtures, 22 Stack Exchange fixtures, 12 GitLab fixtures, 9 Reddit fixtures, and 8 Discourse fixtures.
+- The shipped corpus is still strongest on build, network, and CI failures, with 99 of 145 accepted fixtures concentrated in those three categories.
+- Provider diversity is still uneven: the accepted real corpus is 87 GitHub fixtures, 25 Stack Exchange fixtures, 14 GitLab fixtures, 9 Reddit fixtures, and 10 Discourse fixtures.
 - The `test` category is no longer a single-fixture blind spot, but it is still the thinnest accepted real slice relative to the 13 bundled test playbooks. Future ingestion should keep biasing toward high-signal test failures before adding more test rules.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through

@@ -64,13 +64,13 @@ func TestDuplicateStatusSkipsSelf(t *testing.T) {
 
 func TestBaselineFingerprintIsDeterministic(t *testing.T) {
 	r := Report{
-		Class:             ClassMinimal,
-		FixtureCount:      10,
-		Top1Count:         9,
-		Top3Count:         10,
-		UnmatchedCount:    0,
+		Class:              ClassMinimal,
+		FixtureCount:       10,
+		Top1Count:          9,
+		Top3Count:          10,
+		UnmatchedCount:     0,
 		FalsePositiveCount: 0,
-		RecurringPatterns: map[string]int{"npm-peer": 3},
+		RecurringPatterns:  map[string]int{"npm-peer": 3},
 	}
 	fp1 := r.BaselineFingerprint()
 	fp2 := r.BaselineFingerprint()

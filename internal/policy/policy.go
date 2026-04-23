@@ -6,9 +6,9 @@
 //   - "ok":         metrics look healthy or there is insufficient history.
 //   - "observe":    a recurring pattern is emerging (TSS ≥ 0.3).
 //   - "quarantine": persistent recurrence (TSS ≥ 0.5) or low pipeline
-//                   health (FPC < 0.5 or PHI < 0.4).
+//     health (FPC < 0.5 or PHI < 0.4).
 //   - "blocking":   high-confidence persistent critical/high-severity failure
-//                   (TSS ≥ 0.8 and severity is "critical" or "high").
+//     (TSS ≥ 0.8 and severity is "critical" or "high").
 //
 // Absent metrics yield an absent (nil) policy — Faultline does not invent
 // recommendations when the required data is not available.

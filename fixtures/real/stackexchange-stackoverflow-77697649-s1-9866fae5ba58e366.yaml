@@ -1,0 +1,33 @@
+id: stackexchange-stackoverflow-77697649-s1-9866fae5ba58e366
+title: using CI_JOB_TOKEN for API call inside CI pipeline returns 404
+fixture_class: real
+normalized_log: |-
+    You need to create personal access token or project access token. The problem is that you will need to re-create such tokens once per year (internal gitlab policy). Of course you will forget about that token and your script will loose ability to access gitlab api.
+    Job token is created for each job automatically, but you can't access some api endpoints. And you can't force gitlab to add more privileges to this token.
+    So you need to do rotation of your token and write it to the env variable using gitlab api:
+    test_job:
+    image: bash:latest
+    stage: test
+    script:
+    - apk add curl jq
+    - |
+    curl --header "PRIVATE-TOKEN: ${CI_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/jobs"
+expectation:
+    expected_playbook: env-var-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/77697649
+    repository: stackoverflow
+    issue_number: 77697649
+    comment_id: "79582222"
+    title: using CI_JOB_TOKEN for API call inside CI pipeline returns 404
+    author: puchu
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:46:25Z"
+fingerprint: 9866fae5ba58e366

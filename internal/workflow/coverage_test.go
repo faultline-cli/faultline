@@ -206,9 +206,9 @@ func TestBuildWithOptionsWhyItMattersStep(t *testing.T) {
 		Results: []model.Result{
 			{
 				Playbook: model.Playbook{
-					ID:    "docker-auth",
-					Title: "Docker auth",
-					Fix:   "1. Run `docker login`.",
+					ID:           "docker-auth",
+					Title:        "Docker auth",
+					Fix:          "1. Run `docker login`.",
 					WhyItMatters: "## Prevention\n\n- Store Docker credentials as a CI secret.",
 				},
 			},

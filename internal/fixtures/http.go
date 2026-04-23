@@ -12,7 +12,7 @@ import (
 )
 
 type jsonRequestOptions struct {
-	AcceptHeader       string
+	AcceptHeader        string
 	OptionalStatusCodes []int
 }
 

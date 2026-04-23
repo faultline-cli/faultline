@@ -1,0 +1,27 @@
+id: github-sgl-project-sglang-10856-s1-9fd5b4c45cdc6293
+title: '[Bug] Health check failed. Server couldn''t get a response from detokenizer for last 20 seconds. tic start time: 05:49:14. last_heartbeat time: 05:42:53'
+fixture_class: real
+normalized_log: |-
+    <timestamp>] Health check failed. Server couldn't get a response from detokenizer for last 20 seconds. tic start time: <timestamp>. last_heartbeat time: <timestamp>
+    [<timestamp>] INFO: 10.109.14.1:60098 - "GET /health HTTP/1.1" 503 Service Unavailable
+    [<timestamp>] INFO: 10.109.14.1:43954 - "POST /v1/chat/completions HTTP/1.1" 200 OK
+    [<timestamp>] Health check failed. Server couldn't get a response from detokenizer for last 20 seconds. tic start time: <timestamp>. last_heartbeat time: <timestamp>
+    [<timestamp>] INFO: 10.109.14.1:40244 - "GET /health HTTP/1.1" 503 Service Unavailable
+expectation:
+    expected_playbook: health-check-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/sgl-project/sglang/issues/10856
+    repository: sgl-project/sglang
+    issue_number: 10856
+    title: '[Bug] Health check failed. Server couldn''t get a response from detokenizer for last 20 seconds. tic start time: 05:49:14. last_heartbeat time: 05:42:53'
+    author: zhaotyer
+    snippet: 1
+    fetched_at: "2026-04-23T20:45:03Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:45:39Z"
+fingerprint: 9fd5b4c45cdc6293

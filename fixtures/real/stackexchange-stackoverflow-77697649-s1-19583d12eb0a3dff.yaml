@@ -1,0 +1,44 @@
+id: stackexchange-stackoverflow-77697649-s1-19583d12eb0a3dff
+title: using CI_JOB_TOKEN for API call inside CI pipeline returns 404
+fixture_class: real
+normalized_log: |-
+    test_job:
+    image: bash:latest
+    stage: test
+    script:
+    - apk add curl
+    - |
+    curl --header "Job-Token: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/jobs"
+    My problem is that the second job returns a 404.
+    {
+    "message": "404 Project Not Found"
+    }
+    This has to be because of authorization issues as the project defintely exists. However I am trying to access the project via API from itself and according to docs :
+    "By default, the allowlist of any project only includes itself."
+    Which means that CI_JOB_TOKEN should have sufficient access.
+    Further, which confuses me even more, when I replace "Job-Token: $CI_JOB_TOKEN" with "Private-Token: $CI_JOB_TOKEN" , the curl command returns:
+    {
+    "error": "invalid_token",
+    "error_description": "Token was revoked. You have to re-authorize from the user."
+    }
+    What setings could be set incorrectly or am I using the API wrong?
+    Note: I tested the curl with a personal access token and it worked as expected
+expectation:
+    expected_playbook: oidc-token-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/77697649
+    repository: stackoverflow
+    issue_number: 77697649
+    comment_id: "0"
+    title: using CI_JOB_TOKEN for API call inside CI pipeline returns 404
+    author: Cake
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:46:29Z"
+fingerprint: 19583d12eb0a3dff

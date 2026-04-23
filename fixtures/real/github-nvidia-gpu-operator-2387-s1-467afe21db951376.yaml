@@ -1,0 +1,30 @@
+id: github-nvidia-gpu-operator-2387-s1-467afe21db951376
+title: '[Bug]:'
+fixture_class: real
+normalized_log: |-
+    % oc get pods -n nvidia-gpu-operator
+    NAME READY STATUS RESTARTS AGE
+    nvidia-cuda-validator-6zgzf 0/1 Init:CrashLoopBackOff 3 (40s ago) 86s
+    nvidia-cuda-validator-9dcgj 0/1 Init:CrashLoopBackOff 2 (25s ago) 41s
+expectation:
+    expected_playbook: k8s-crashloopbackoff
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/NVIDIA/gpu-operator/issues/2387
+    repository: NVIDIA/gpu-operator
+    issue_number: 2387
+    title: '[Bug]:'
+    labels:
+        - bug
+        - needs-triage
+    author: raviar
+    snippet: 1
+    fetched_at: "2026-04-23T21:26:06Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T21:36:34Z"
+fingerprint: 467afe21db951376

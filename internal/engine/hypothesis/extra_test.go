@@ -18,8 +18,8 @@ func TestValidSignalKnownSignals(t *testing.T) {
 
 func TestValidSignalPrefixedForms(t *testing.T) {
 	cases := []struct {
-		signal  string
-		wantOK  bool
+		signal string
+		wantOK bool
 	}{
 		{"log.contains:error", true},
 		{"log.contains:  ", false}, // blank value after prefix

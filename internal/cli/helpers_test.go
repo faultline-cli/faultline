@@ -4,9 +4,9 @@ import "testing"
 
 func TestFirstNonEmpty(t *testing.T) {
 	cases := []struct {
-		name   string
-		input  []string
-		want   string
+		name  string
+		input []string
+		want  string
 	}{
 		{"first non-empty wins", []string{"a", "b"}, "a"},
 		{"skips empty strings", []string{"", "b"}, "b"},
