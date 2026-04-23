@@ -12,7 +12,7 @@ Faultline is currently implemented as a CLI-first deterministic product with bot
 - log and source detector implementations in [`internal/detectors/`](../../internal/detectors)
 - terminal, markdown, JSON, workflow, replay, compare, and trace rendering in [`internal/output/`](../../internal/output) and [`internal/renderer/`](../../internal/renderer)
 - local repository enrichment in [`internal/repo/`](../../internal/repo)
-- optional local forensic history in [`internal/store/`](../../internal/store) and recurrence signatures in [`internal/signature/`](../../internal/signature)
+- optional single-repo local history in [`internal/store/`](../../internal/store) and recurrence signatures in [`internal/signature/`](../../internal/signature)
 - additive workflow hints, metrics, and policy outputs in [`internal/workflow/`](../../internal/workflow), [`internal/metrics/`](../../internal/metrics), and [`internal/policy/`](../../internal/policy)
 - fixture ingestion, sanitization, review, promotion, and stats in [`internal/fixtures/`](../../internal/fixtures)
 - hidden maintainer authoring scaffold support in [`internal/authoring/`](../../internal/authoring)
@@ -54,5 +54,7 @@ The repository is in the expected current state when these remain true:
 ## Notes On Scope
 
 - Faultline is no longer a service or frontend product; the CLI is the product.
-- Faultline does now include local forensic history and recurrence tracking through the optional local store.
+- The repository includes local single-repo history/store support, but the
+  locked product boundary treats cross-repo correlation, aggregation,
+  reporting, and recurring-failure coordination as Team-layer value.
 - Experimental or hidden paths such as provider-backed delta, hooks, and authoring helpers remain outside the default onboarding story even though their implementation exists in the repository.

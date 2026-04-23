@@ -22,13 +22,17 @@ The product stays deliberately narrow:
 - deterministic matching remains authoritative
 - optional ranking assistance is additive, never a second matcher
 - no ML or LLM dependence in shipped product logic
+- open-core packaging: the free CLI answers "what failed", while Faultline
+  Team answers "what keeps failing, who owns it, and what do we do about it?"
 
 The product loop is intentionally explicit:
 
 1. Observe raw signals from logs and command output.
 2. Resolve them to a known failure class with deterministic matching.
 3. Materialize a failure artifact.
-4. Enrich that artifact with repo history, ownership, change surface, and prior occurrences when available.
+4. Enrich that artifact with repo history, ownership, change surface, and
+   optional single-repo local history in the core path; cross-repo recurrence
+   and correlation belong to the Team layer.
 5. Act through human fixes, automated workflows, or agent execution.
 6. Learn through fixtures, review gates, and playbook refinement.
 
@@ -155,7 +159,7 @@ Each ranked result currently carries fields such as:
 - `evidence`
 - `evidence_by`
 - `breakdown`
-- optional recurrence fields including `signature_hash`, `occurrence_count`, `first_seen_at`, and `last_seen_at`
+- optional additive metadata reserved for companion or Team-enriched flows
 
 Absent additive fields should stay absent rather than being populated with placeholder values.
 
@@ -209,5 +213,14 @@ Faultline is intentionally not:
 - a PR-comment bot by default
 - a generic automation engine
 - a fuzzy or semantic log analysis tool
+
+Faultline Team is the paid coordination layer for:
+
+- failure history and aggregation
+- recurring failure detection
+- org-level policy enforcement
+- shared playbook layering
+- team automation hooks
+- reporting, sync, and versioned integration contracts
 
 Provider-backed delta, hooks, and maintainer authoring helpers exist behind explicit or hidden paths, but they do not define the default product story.

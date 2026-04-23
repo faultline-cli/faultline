@@ -15,12 +15,7 @@ source:
         - "_ = err"
         - "err = nil"
       weight: 1.3
-    - id: error_shadowed
-      label: error assigned but not checked
-      patterns:
-        - "err :="
-        - "err ="
-      weight: 0.8
+  amplifiers:
     - id: side_effect_call
       label: side-effecting call
       patterns:
@@ -37,25 +32,6 @@ source:
         - "resp.Body.Close("
         - "rows.Close("
       weight: 1.2
-  amplifiers:
-    - id: no_return_check
-      label: no if-err check after call
-      patterns:
-        - "if err != nil"
-        - "if err =="
-        - "errors.Is("
-        - "errors.As("
-        - "return.*err"
-      weight: 1.1
-    - id: missing_log
-      label: no error logged
-      patterns:
-        - "log.Error"
-        - "log.Warn"
-        - "logger.Error"
-        - "fmt.Errorf"
-        - "slog.Error"
-      weight: 0.9
   mitigations:
     - id: error_checked
       label: error is checked
@@ -72,6 +48,8 @@ source:
         - "fmt.Errorf(\"%w\""
         - "errors.Wrap("
         - "log.Error("
+        - "log.Warn("
+        - "logger.Error("
         - "slog.Error("
       weight: 1.2
   compound_signals:

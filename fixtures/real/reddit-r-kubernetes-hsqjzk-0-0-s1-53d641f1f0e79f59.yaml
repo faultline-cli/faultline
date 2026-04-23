@@ -1,0 +1,33 @@
+id: reddit-r-kubernetes-hsqjzk-0-0-s1-53d641f1f0e79f59
+title: It fails pulling image with certificate signed by unknown authority when I'm creating
+fixture_class: real
+normalized_log: |-
+    Events:
+    Type Reason Age From Message
+    ---- ------ ---- ---- -------
+    Normal Scheduled <unknown> default-scheduler Successfully assigned default/nodejs-deployment-c4f4f7b8-94vzh to minikube
+    Normal Pulling 5m19s (x4 over 6m47s) kubelet, minikube Pulling image "192.168.1.92/nodejsk8s:1.0"
+    Warning Failed 5m19s (x4 over 6m47s) kubelet, minikube Failed to pull image "192.168.1.92/nodejsk8s:1.0": rpc error: code = Unknown desc = Error response from daemon: Get https://192.168.1.92/v2/: x509: certificate signed by unknown authority
+    Warning Failed 5m19s (x4 over 6m47s) kubelet, minikube Error: ErrImagePull
+    Warning Failed 5m4s (x7 over 6m46s) kubelet, minikube Error: ImagePullBackOff
+    Normal BackOff 106s (x21 over 6m46s) kubelet, minikube Back-off pulling image "192.168.1.92/nodejsk8s:1.0"
+expectation:
+    expected_playbook: image-pull-backoff
+    top_n: 3
+    expected_stage: deploy
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/kubernetes/comments/hsqjzk/
+    repository: r/kubernetes
+    comment_id: "0"
+    title: It fails pulling image with certificate signed by unknown authority when I'm creating
+    author: Oxffff0000
+    snippet: 1
+    fetched_at: "2026-04-23T20:16:19Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:23:07Z"
+fingerprint: 53d641f1f0e79f59

@@ -310,6 +310,7 @@ func newAnalyzeCommand() *cobra.Command {
 	_ = cmd.Flags().MarkHidden("gitlab-api-base-url")
 	_ = cmd.Flags().MarkHidden("history-file")
 	_ = cmd.Flags().MarkHidden("hooks")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -399,6 +400,7 @@ func newFixCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -589,6 +591,7 @@ func newTraceCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail")
 	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
 	_ = cmd.Flags().MarkHidden("hooks")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -648,6 +651,7 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic findings with the Bayesian-inspired scoring layer")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -784,7 +788,6 @@ func newWorkflowCommand() *cobra.Command {
 			"  faultline workflow explain build.log --json",
 			"  faultline workflow apply build.log --dry-run",
 			"  faultline workflow apply build.log --allow-environment-mutation",
-			"  faultline workflow show wf-000001",
 		}, "\n"),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -822,6 +825,7 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 
@@ -948,6 +952,7 @@ func newWorkflowShowCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading the local forensic store")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -976,6 +981,7 @@ func newWorkflowHistoryCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().IntVar(&limit, "limit", 20, "maximum number of executions to show")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
@@ -993,6 +999,7 @@ func addWorkflowInputFlags(cmd *cobra.Command, playbookDir *string, playbookPack
 	cmd.Flags().StringVar(gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")
+	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 }
@@ -1105,6 +1112,7 @@ func newSignaturesCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().IntVar(&limit, "limit", 20, "maximum number of signatures to show")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
+	cmd.Hidden = true
 	return cmd
 }
 
@@ -1135,5 +1143,6 @@ func newVerifyDeterminismCommand() *cobra.Command {
 
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
+	cmd.Hidden = true
 	return cmd
 }

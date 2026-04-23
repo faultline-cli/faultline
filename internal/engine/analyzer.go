@@ -728,8 +728,7 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 			return walkErr
 		}
 		if info.IsDir() {
-			name := info.Name()
-			if name == ".git" || name == "node_modules" || name == "vendor" {
+			if shouldSkipSourceDir(info.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -761,6 +760,15 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 		return files[i].Path < files[j].Path
 	})
 	return files, nil
+}
+
+func shouldSkipSourceDir(name string) bool {
+	switch name {
+	case ".git", "node_modules", "vendor", ".venv", "venv":
+		return true
+	default:
+		return false
+	}
 }
 
 func looksLikeSourceFile(path string) bool {

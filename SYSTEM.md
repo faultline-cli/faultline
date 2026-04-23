@@ -24,7 +24,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 1. Observe: read log input from a file path or stdin, then normalize the raw log into stable lines for matching.
 2. Resolve: load bundled YAML playbooks, validate playbook structure, and match deterministic patterns against the normalized log.
 3. Materialize: score and rank matches using explicit, stable rules, then build a deterministic differential diagnosis and first-class failure artifact.
-4. Enrich: attach recent local git repository context, explicit change signals, and local history when available.
+4. Enrich: attach recent local git repository context, explicit change signals, and optional single-repo local history; cross-repo correlation belongs to the Team layer rather than the default local product contract.
 5. Act: return the result as formatted text, JSON, workflow output, or a remediation handoff.
 6. Learn: refine playbooks through deterministic fixtures, overlap review, and regression gates so future failures resolve faster.
 
@@ -42,10 +42,6 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline workflow <logfile>`
 - `faultline workflow <logfile> --bayes`
 - `faultline guard <path>`
-- `faultline history`
-- `faultline history --signature <hash>`
-- `faultline signatures`
-- `faultline verify-determinism <logfile>`
 - `faultline fixtures ingest`
 - `faultline fixtures review`
 - `faultline fixtures promote`
@@ -183,6 +179,7 @@ type Ranking struct {
 - No hosted webhook service.
 - No PR comments or provider integrations in V1.
 - No dashboards or frontend UI.
+- No free-core cross-repo correlation, reporting, or team aggregation product story.
 - No speculative rule engine abstractions.
 - No fuzzy or semantic matching.
 - No runtime network calls during analysis unless explicit provider-backed delta resolution is enabled.

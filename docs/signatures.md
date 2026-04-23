@@ -1,7 +1,11 @@
 # Signature Hashing
 
-Faultline uses `signature_hash` to track recurring failure instances across
-local analysis runs.
+Faultline uses `signature_hash` as a deterministic recurrence key.
+
+Under the locked product boundary, cross-repo recurrence and team-level
+correlation belong to Faultline Team. This document describes the hashing
+contract itself, which remains useful for single-repo history, Team
+aggregation, and deterministic validation.
 
 The goal is narrow and deterministic:
 

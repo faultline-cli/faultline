@@ -72,6 +72,9 @@ and line-level edits can be scored as introduced or modified rather than only
 as legacy repository risk. Positive and mitigated repository fixtures for the
 shipped source rules live under `internal/engine/testdata/source/` and are
 validated in `internal/engine/source_playbook_fixtures_test.go`.
+The repository scan skips dependency trees such as `.git/`, `node_modules/`,
+`vendor/`, `.venv/`, and `venv/` so `inspect` and `guard` stay focused on the
+repository's own source rather than bundled tooling copies.
 
 Shipped source playbooks should also carry deterministic `workflow.likely_files`,
 `workflow.local_repro`, and `workflow.verify` hints so source findings hand off

@@ -475,6 +475,30 @@ func TestLoadSourceFilesSkipsGitDir(t *testing.T) {
 	}
 }
 
+func TestLoadSourceFilesSkipsVirtualEnvDir(t *testing.T) {
+	dir := t.TempDir()
+	venvDir := filepath.Join(dir, ".venv", "lib", "python3.13", "site-packages", "pip")
+	if err := os.MkdirAll(venvDir, 0o755); err != nil {
+		t.Fatalf("mkdir .venv: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(venvDir, "service.go"), []byte("package pip\n"), 0o644); err != nil {
+		t.Fatalf("write service.go: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "app.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("write app.go: %v", err)
+	}
+
+	files, err := loadSourceFiles(dir)
+	if err != nil {
+		t.Fatalf("loadSourceFiles: %v", err)
+	}
+	for _, f := range files {
+		if strings.Contains(f.Path, ".venv/") {
+			t.Errorf("expected .venv directory to be skipped, got %q", f.Path)
+		}
+	}
+}
+
 func TestAnalyzeReaderEmptyInput(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
 	_, err := e.AnalyzeReader(strings.NewReader(""))

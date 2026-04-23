@@ -12,6 +12,11 @@ Same log in, same result out. No guesswork. No AI.
 - 🏠 Local-first by default: your logs stay on your machine
 - 🤖 Automation-friendly output: stable JSON and workflow artifacts
 
+Product boundary:
+
+- Core (free): "What failed?"
+- Team (paid): "What keeps failing, who owns it, and what do we do about it?"
+
 ```text
 # input: ci.log
 exec /__e/node20/bin/node: no such file or directory
@@ -31,7 +36,7 @@ Fix:
 
 Run `faultline analyze ci.log --json` for the same diagnosis in stable JSON. Same log and playbook set in, same result out.
 
-Built on 100 bundled playbooks and 126 accepted real fixtures.
+Built on 101 bundled playbooks and 135 accepted real fixtures.
 
 ## Try it now 🚀
 
@@ -75,8 +80,12 @@ Determinism is the point, not a feature flag. The same matched evidence and play
 - 🔍 Every diagnosis is backed by matched log lines.
 - 📚 Diagnoses and fix steps come from explicit, versioned, inspectable playbooks checked into the repo.
 - 🛠 Teams can extend those playbooks without turning diagnosis into a black box.
-- 🧪 The shipped catalog is backed by 100 bundled playbooks and 126 accepted real fixtures.
+- 🧪 The shipped catalog is backed by 101 bundled playbooks and 135 accepted real fixtures.
 - 🏠 Faultline runs locally by default, so build logs stay on your machine unless you choose otherwise.
+
+Paid value is intentionally tied to coordination across runs and repositories:
+correlation, aggregation, policies, shared playbooks, reporting, and sync
+belong to the Team layer rather than the free local diagnosis path.
 
 Some companion commands are supported but not part of the first-run story, and provider-backed delta remains experimental. The current boundary is documented in [docs/release-boundary.md](docs/release-boundary.md).
 
@@ -147,7 +156,7 @@ The repository includes runnable sample logs and checked-in outputs if you want 
 
 ```bash
 ./bin/faultline analyze examples/missing-executable.log
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow
 ./bin/faultline analyze examples/runtime-mismatch.log
 ./bin/faultline analyze examples/docker-auth.log
 ```
@@ -216,7 +225,7 @@ cd "faultline_${VERSION}_linux_amd64"
 - [docs/gitlab-ci-contract.md](docs/gitlab-ci-contract.md) for the GitLab CI wrapper contract
 - [docs/fixture-corpus.md](docs/fixture-corpus.md) for regression corpus details and coverage snapshots
 - [docs/playbooks.md](docs/playbooks.md) for playbook authoring, team extensions, and pack composition
-- [docs/release-boundary.md](docs/release-boundary.md) for core vs companion vs experimental surfaces
+- [docs/release-boundary.md](docs/release-boundary.md) for the locked Core vs Team boundary
 
 ## Development 👩‍💻
 

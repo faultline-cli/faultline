@@ -32,9 +32,9 @@ automation agents.
   Resolve bindings and render the concrete execution plan without mutation.
 - `faultline workflow apply <log-or-artifact> --allow-environment-mutation`
   Apply the workflow under explicit policy flags.
-- `faultline workflow show <execution-id>`
+- hidden `faultline workflow show <execution-id>`
   Show a persisted execution record.
-- `faultline workflow history`
+- hidden `faultline workflow history`
   List persisted workflow executions.
 
 `faultline workflow explain` and `apply` accept either a raw log or a saved
@@ -159,7 +159,8 @@ record includes:
 - verification status
 - final status
 
-Use `faultline workflow show` and `faultline workflow history` to inspect them.
+Maintainers and compatibility paths can use the hidden `faultline workflow
+show` and `faultline workflow history` commands to inspect them.
 
 ## Non-Goals
 

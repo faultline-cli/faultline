@@ -1,14 +1,18 @@
-# Local Store
+# Local Store Groundwork
 
-Faultline now has an optional local forensic store.
+Faultline currently contains an optional local forensic store implementation.
 
-The goal is narrow and practical: keep enough durable local memory to answer
-questions like "have we seen this failure signature before?" without changing
-Faultline into a service, dashboard, or analytics system.
+Important product-boundary note: local single-repo history can remain part of
+the product, but aggregation, reporting, and cross-repo recurring-failure
+coordination are locked to Faultline Team.
+
+The goal of the local store is narrow and practical: support single-repo
+forensic recall, deterministic validation, and maintainers' investigation
+without turning Faultline into a service, dashboard, or analytics system.
 
 ## Purpose
 
-The store exists to support:
+The local store implementation exists to support:
 
 - recurrence tracking by normalized `signature_hash`
 - first-seen and last-seen timestamps
@@ -42,7 +46,7 @@ Advanced CLI configuration is available through the hidden store controls:
 
 `--no-history` remains a compatibility switch and also disables the store.
 
-Explicit companion surfaces now read from the same local store:
+Single-repo companion surfaces can read from the same local store:
 
 - `faultline history`
 - `faultline history --signature <hash>`
@@ -128,9 +132,10 @@ When the store is active, Faultline includes:
 - recurrence fields such as `seen_before`, `occurrence_count`,
   `first_seen_at`, and `last_seen_at`
 
-The human-readable `analyze` and `trace` surfaces also show a compact history
-summary when local history exists for the winning result. That enrichment is
-explicit and additive: it does not silently rerank the diagnosis.
+When enabled, the human-readable `analyze` and `trace` surfaces may also show
+a compact history summary when local history exists for the winning result.
+That enrichment is explicit and additive: it does not silently rerank the
+diagnosis.
 
 That history summary is intentionally concise:
 
@@ -164,7 +169,7 @@ Interpret the fields narrowly:
 `occurrence_count` is not a hidden severity score, and it does not change the
 detector result by itself.
 
-## History Commands
+## Transitional History Commands
 
 `faultline history` shows three additive views from the local store:
 
@@ -210,7 +215,8 @@ Workflow execution history is intentionally narrow too:
   final status
 
 These views are intentionally local, inspectable, and bounded. They are meant
-to guide catalog maintenance, not to create hosted analytics.
+to guide single-repo diagnosis and catalog maintenance, not to define the
+Team-layer commercial boundary.
 
 ## Privacy
 
@@ -220,6 +226,16 @@ It prefers hashes and normalized excerpts over raw inputs so it can be useful
 without turning into a second copy of your CI log archive.
 
 If you need stricter handling, disable it with `--no-store` or `--no-history`.
+
+## Boundary Note
+
+Going forward:
+
+- Core should not expand its product promise around local persistence
+- Team should own cross-repo history correlation, aggregation, reporting, org
+  policy, shared playbooks, and sync
+- any remaining local-store behavior should stay hidden, companion-only, or
+  maintainer-oriented unless the product boundary is explicitly revised
 
 ## Deferred Work
 

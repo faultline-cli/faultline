@@ -1,0 +1,31 @@
+id: stackexchange-stackoverflow-58195130-s3-1c4cc84350c96aa7
+title: 'gitlab-ci.yml: &#39;script: -pytest cannot find any tests to check&#39;'
+fixture_class: real
+normalized_log: |-
+    CI/CD terminal output
+    $ pytest
+    === test session starts ===
+    platform linux -- Python 3.6.9, pytest-5.2.0, py-1.8.0, pluggy-0.13.0
+    rootdir: /builds/kunov/gitlab_ci
+    collected 0 items
+expectation:
+    expected_playbook: pytest-no-tests
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/58195130
+    repository: stackoverflow
+    issue_number: 58195130
+    comment_id: "0"
+    title: 'gitlab-ci.yml: &#39;script: -pytest cannot find any tests to check&#39;'
+    author: kunov
+    snippet: 3
+    fetched_at: "2026-04-23T20:16:19Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:23:07Z"
+fingerprint: 1c4cc84350c96aa7

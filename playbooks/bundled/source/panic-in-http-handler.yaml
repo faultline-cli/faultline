@@ -11,6 +11,7 @@ source:
       label: HTTP or RPC handler function
       patterns:
         - "func.*Handler"
+        - "handler("
         - "func.*Handle("
         - "func(w http.ResponseWriter, r *http.Request)"
         - "func(w http.ResponseWriter, req *http.Request)"
@@ -33,18 +34,12 @@ source:
         - "gin.GET"
         - "grpc.*Handler"
       weight: 1.2
+  amplifiers:
     - id: panic_call
       label: explicit panic call
       patterns:
         - "panic("
       weight: 1.5
-  amplifiers:
-    - id: no_recover
-      label: no recover present in handler
-      patterns:
-        - "recover()"
-        - "defer.*recover"
-      weight: 1.4
     - id: force_unwrap
       label: unsafe dereference or type assertion
       patterns:
@@ -60,7 +55,7 @@ source:
         - "defer func()"
         - "recover()"
         - "if r := recover"
-      weight: 2.0
+      weight: 6.0
     - id: recovery_middleware
       label: recovery middleware applied
       patterns:
@@ -72,7 +67,7 @@ source:
         - "negroni.Recovery"
         - "gin.Recovery()"
         - "echo.WrapMiddleware"
-      weight: 1.8
+      weight: 5.0
   compound_signals:
     - id: handler_panic_no_recover
       label: panic inside handler with no recovery
@@ -83,7 +78,12 @@ source:
     - id: test_files_safer
       label: test-only path
       paths: [_test.go, tests/, test/]
-      discount: 1.5
+      discount: 6.0
+  suppressions:
+    - style: test-only path
+      paths: [_test.go, tests/, test/]
+      suppress_all: true
+      reason: unit-test panic scaffolding is not a production handler risk
 summary: |-
   A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
 diagnosis: |-

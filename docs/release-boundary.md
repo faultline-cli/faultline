@@ -12,15 +12,21 @@ This boundary is intentional and should remain stable unless explicitly revised.
 ### Core (free)
 
 Core remains local-first, deterministic, and useful on a single log without
-history or team state.
+team state.
 
 Core includes:
 
 - CLI analysis surfaces (`analyze`, `workflow`, `list`, `explain`, `fix`)
 - deterministic playbook matching and ranking
 - local playbook system and pack composition
+- optional single-repo local history and forensic recall
 - baseline hooks support as local deterministic companion behavior
 - thin diff and deterministic artifact generation
+
+Core may include persistence when it remains local and scoped to a single
+repository. If a feature depends on cross-repo state, organizational
+coordination, hosted context, or correlation across multiple repositories, it
+should not be presented as part of the free default story.
 
 ### Team (paid)
 
@@ -31,17 +37,23 @@ Team includes:
 
 - failure history and aggregation across runs
 - recurring failure detection over time
+- cross-repo correlation and ownership-aware recurrence
 - org-level policy enforcement
 - shared playbook layering (org base + repo override)
 - team automation hooks and managed execution context
 - aggregated reporting and trend insights
 - stable integration contracts, schema versioning, and sync surfaces
 
+Team is the thing sold and billed, not the individual command user. The CLI may
+stay local-first, but the paid value comes from persistent coordination state
+tied to a team context.
+
 Rule of thumb:
 
-- If a feature works on one log without history, it belongs in Core.
-- If a feature aggregates, coordinates, enforces, or learns across runs, it
-  belongs in Team.
+- If a feature works on one log or within one repository without cross-repo
+  correlation, it belongs in Core.
+- If a feature aggregates, correlates across repositories, coordinates,
+  enforces, or learns across team-wide runs, it belongs in Team.
 
 Faultline ships a deliberately narrow default experience for the next release:
 
@@ -73,12 +85,23 @@ onboarding narrative.
 - `trace` as an advanced deterministic companion for rule-by-rule evaluation and rejection context
 - `replay` as a deterministic companion for re-rendering saved analysis artifacts
 - `compare` as a deterministic companion for diffing saved analysis artifacts
-- `history`, `signatures`, and `verify-determinism` as deterministic forensic-memory companions
+- `history`, `signatures`, and `verify-determinism` as single-repo forensic-memory companions
 - `inspect` and `guard` as advanced local-prevention companions
 - `packs install` and `packs list` for optional extra catalog composition
 - hidden `fixtures` commands for corpus curation and maintainer workflows
 
 These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis plus workflow handoff.
+
+### Transitional Groundwork (Hidden / Non-default)
+
+The repository still contains narrower store-backed plumbing that should remain
+non-default for now:
+
+- persisted workflow execution inspection
+
+Treat these as transitional groundwork or maintainer-oriented plumbing. They
+may remain available for compatibility paths, but they should not define the
+commercial boundary going forward.
 
 ### Gate Behind Flag
 
@@ -105,6 +128,13 @@ Expected behavior pattern:
 
 - without Team auth: deterministic local output only
 - with Team auth: deterministic local output plus Team enrichment
+
+Auth and upgrade model:
+
+- login remains optional until a Team surface is used
+- `faultline login` should feel like an upgrade path, not a prerequisite
+- stored credentials should make later Team usage invisible after setup
+- team context, not user identity alone, is the unit of state and billing
 
 Core flags should not be license-gated when they only operate on local input.
 
@@ -144,6 +174,8 @@ When Team features are implemented, preserve these constraints:
   crippling local diagnosis
 - default analysis path keeps deterministic no-runtime-network behavior unless
   explicit Team sync/report mode is requested
+- initial pricing and packaging should optimize for per-team value before
+  introducing seat-based complexity
 
 ## Release-Readiness Contract
 

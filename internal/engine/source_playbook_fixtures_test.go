@@ -63,18 +63,6 @@ func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
 		safeDir   string
 	}{
 		{
-			name:      "missing error propagation",
-			playbook:  "missing-error-propagation",
-			unsafeDir: filepath.Join("testdata", "source", "missing-error-propagation-positive"),
-			safeDir:   filepath.Join("testdata", "source", "missing-error-propagation-safe"),
-		},
-		{
-			name:      "panic in http handler",
-			playbook:  "panic-in-http-handler",
-			unsafeDir: filepath.Join("testdata", "source", "panic-in-http-handler-positive"),
-			safeDir:   filepath.Join("testdata", "source", "panic-in-http-handler-safe"),
-		},
-		{
 			name:      "unawaited promise",
 			playbook:  "unawaited-promise",
 			unsafeDir: filepath.Join("testdata", "source", "unawaited-promise-positive"),
@@ -96,6 +84,78 @@ func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestMissingErrorPropagationSafeFixtureDoesNotMatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	analysis, err := e.AnalyzeRepository(
+		filepath.Join("testdata", "source", "missing-error-propagation-safe"),
+		detectors.ChangeSet{},
+	)
+	if err != ErrNoMatch {
+		t.Fatalf("expected ErrNoMatch for checked error fixture, got %v", err)
+	}
+	if analysis == nil {
+		t.Fatal("expected non-nil analysis for checked error fixture")
+	}
+	if len(analysis.Results) != 0 {
+		t.Fatalf("expected checked error fixture to stay unmatched, got %v", resultIDs(analysis.Results))
+	}
+}
+
+func TestPanicInHTTPHandlerSafeFixtureDoesNotMatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	analysis, err := e.AnalyzeRepository(
+		filepath.Join("testdata", "source", "panic-in-http-handler-safe"),
+		detectors.ChangeSet{},
+	)
+	if err != ErrNoMatch {
+		t.Fatalf("expected ErrNoMatch for recovered handler fixture, got %v", err)
+	}
+	if analysis == nil {
+		t.Fatal("expected non-nil analysis for recovered handler fixture")
+	}
+	if len(analysis.Results) != 0 {
+		t.Fatalf("expected recovered handler fixture to stay unmatched, got %v", resultIDs(analysis.Results))
+	}
+}
+
+func TestAnalyzeRepositoryIgnoresVirtualEnvNoise(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	analysis, err := e.AnalyzeRepository(
+		filepath.Join("testdata", "source", "missing-error-propagation-venv-noise"),
+		detectors.ChangeSet{},
+	)
+	if err != ErrNoMatch {
+		t.Fatalf("expected ErrNoMatch for virtualenv-only source risk, got %v", err)
+	}
+	if analysis == nil {
+		t.Fatal("expected non-nil analysis for ignored virtualenv noise fixture")
+	}
+	if len(analysis.Results) != 0 {
+		t.Fatalf("expected no source results for virtualenv noise fixture, got %v", resultIDs(analysis.Results))
+	}
+}
+
+func TestAnalyzeRepositoryIgnoresTestOnlyPanicNoise(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	analysis, err := e.AnalyzeRepository(
+		filepath.Join("testdata", "source", "panic-in-http-handler-test-only-safe"),
+		detectors.ChangeSet{},
+	)
+	if err != ErrNoMatch {
+		t.Fatalf("expected ErrNoMatch for test-only panic fixture, got %v", err)
+	}
+	if analysis == nil {
+		t.Fatal("expected non-nil analysis for test-only panic fixture")
+	}
+	if len(analysis.Results) != 0 {
+		t.Fatalf("expected no source results for test-only panic fixture, got %v", resultIDs(analysis.Results))
 	}
 }
 

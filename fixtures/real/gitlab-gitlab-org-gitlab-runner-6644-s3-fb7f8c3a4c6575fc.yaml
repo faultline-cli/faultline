@@ -1,0 +1,60 @@
+id: gitlab-gitlab-org-gitlab-runner-6644-s3-fb7f8c3a4c6575fc
+title: Gitlab runner - could not resolve host
+fixture_class: real
+normalized_log: |-
+    1 Running with gitlab-runner 12.7.1 (003fe500)
+    2 on gitlab-runner-all-develop-gitlab-runner-ff99c489d-7br7w B7HYCxmV
+    3
+    Using Kubernetes namespace: gitlab-runner-all-develop
+    00:00
+    4 Using Kubernetes executor with image docker:19.03.0 ...
+    6
+    Waiting for pod gitlab-runner-all-develop/runner-b7hycxmv-project-80-concurrent-08vcld to be running, status is Pending
+    00:03
+    7 Running on runner-b7hycxmv-project-80-concurrent-08vcld via gitlab-runner-all-develop-gitlab-runner-ff99c489d-7br7w...
+    9
+    Fetching changes with git depth set to 1...
+    00:06
+    10 Initialized empty Git repository in /builds/ads/signo/api/cache/.git/
+    11 Created fresh repository.
+    12 fatal: unable to access 'https://git.stefanini.io/ads/signo/api/cache.git/': Could not resolve host: git.stefanini.io
+    15 ERROR: Job failed: command terminated with exit code 1
+expectation:
+    expected_playbook: dns-resolution
+    top_n: 3
+    expected_stage: build
+    strict_top1: true
+    min_confidence: 0.35
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/6644
+    repository: gitlab-org/gitlab-runner
+    issue_number: 6644
+    title: Gitlab runner - could not resolve host
+    labels:
+        - Category:Runner Core
+        - customer
+        - devops::verify
+        - group::runner core
+        - missed:17.10
+        - missed:17.11
+        - missed:17.2
+        - missed:17.3
+        - missed:17.5
+        - missed:17.9
+        - needs investigation
+        - priority::3
+        - runner::core
+        - section::ci
+        - severity::3
+        - support request
+        - type::bug
+        - workflow::planning breakdown
+    author: lpsm-dev
+    snippet: 3
+    fetched_at: "2026-04-23T20:16:19Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T20:23:13Z"
+fingerprint: fb7f8c3a4c6575fc
