@@ -1,0 +1,38 @@
+id: discourse-discuss-circleci-com-24038-s2-b241d992254ca284
+title: '''Exited with code 137'' on free plan'
+fixture_class: real
+normalized_log: |-
+    Hint: Exit code 137 typically means the process is killed because it was running out of memory
+    Hint: Check if you can optimize the memory usage in your app
+    Hint: Max memory usage of this container is 67182592
+    according to /sys/fs/cgroup/memory/memory.max_usage_in_bytes
+    The tests are relatively complex and rely on a number of microservices. There is no way to decrease the memory usage of any of the containers. I have tried every suggestion I have found on the internet to no avail. For example I have added the following to the top of my test:
+    docker:
+    - image: my-base-image
+    restart: on-failure # Restart the container if it exits due to an error
+    environment:
+    MAX_HEAP_SIZE: 4096m
+    HEAP_NEWSIZE: 1024m
+    It may also be relevant to know that I am running - setup_remote_docker to run multiple docker containers in my tests.
+    Is there any way to fix this issue? Am I required to pay for a package for my team to increase the memory resources available to us?
+    Your help will be much appreciated.
+expectation:
+    expected_playbook: oom-killed
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/exited-with-code-137-on-free-plan/24038
+    repository: discuss.circleci.com
+    issue_number: 24038
+    comment_id: "51965"
+    title: '''Exited with code 137'' on free plan'
+    author: JasoonS
+    snippet: 2
+    fetched_at: "2026-04-23T03:01:06Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T03:02:48Z"
+fingerprint: b241d992254ca284

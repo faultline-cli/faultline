@@ -223,9 +223,29 @@ The signature suite covers:
 - multiline evidence handling
 - canonical payload snapshot coverage
 - stability across equivalent noisy variants
+- fixture-driven variant matrices across CI-style path, timestamp, and runner
+  noise
+- store-backed end-to-end recurrence checks that run noisy variants through
+  `analyze`, persistence, `history`, and `verify-determinism`
+- distinctness checks for meaningfully different causes that still map to the
+  same playbook family
 - distinctness for unrelated failures
 - fixture-driven end-to-end checks using real CI logs
 - trace output assertions for signature inspectability
+
+The dedicated noisy-variant matrix now covers cases such as:
+
+- same missing-executable failure across Linux, Windows, and hosted-toolcache
+  path variants
+- same `npm ci` lockfile mismatch across runner and workspace differences
+- same Node.js version mismatch across workspace, temp-path, and toolcache
+  wrapper noise
+- same missing environment variable across GitHub Actions and Windows runner
+  path variants
+- different missing environment variables that stay distinct even though they
+  map to the same `env-var-missing` playbook
+- same dependency-drift playbook with different conflicting packages, which
+  should stay distinct instead of collapsing into one signature
 
 ## Known Limitations
 

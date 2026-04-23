@@ -4,16 +4,17 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 77
-- Accepted real fixtures: 103
-- Top-1 match rate: 100% (103/103)
-- Top-3 match rate: 100% (103/103)
+- Bundled playbooks: 100
+- Accepted real fixtures: 126
+- Top-1 match rate: 100% (126/126)
+- Top-3 match rate: 100% (126/126)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 11 (10.7%)
+- Weak matches: 0 (0.0%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
-- Test corpus files: 30 (release-gated through `corpus_test.go`)
+- Test corpus files: 32 (release-gated through `corpus_test.go`)
+- Source-detector regression fixtures: 4 repository scenarios under `internal/engine/testdata/source/`
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
 
@@ -30,25 +31,25 @@ Bundled playbook coverage by category (from `playbooks/bundled/`):
 
 | Category | Bundled Playbooks |
 | --- | --- |
-| build | 29 |
-| runtime | 13 |
-| test | 10 |
-| ci | 8 |
+| build | 33 |
+| ci | 20 |
+| test | 13 |
+| runtime | 11 |
+| deploy | 8 |
+| auth | 7 |
 | network | 6 |
-| deploy | 6 |
-| auth | 5 |
 
 Accepted real fixtures mapped through expected playbooks (from `fixtures/real/`):
 
 | Category | Accepted Real Fixtures |
 | --- | --- |
-| build | 33 |
+| build | 36 |
 | network | 28 |
-| ci | 19 |
-| runtime | 11 |
-| auth | 7 |
-| deploy | 4 |
-| test | 1 |
+| ci | 26 |
+| runtime | 16 |
+| auth | 9 |
+| deploy | 6 |
+| test | 5 |
 
 This table is intended as public proof coverage, not a claim that unknown failures are solved.
 
@@ -60,8 +61,25 @@ Starting snapshot table for release-over-release tracking:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-04-17 baseline (`fixtures/real/baseline.json`) | 77 | 103 | 16 | 100% | 100% | 0 | 0 |
 | 2026-04-18 corpus expansion | 77 | 103 | 30 | 100% | 100% | 0 | 0 |
+| 2026-04-22 v0.4 refinement pass | 100 | 113 | 30 | 100% | 100% | 0 | 0 |
+| 2026-04-22 test-gap closure pass | 100 | 116 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-22 adapter-diversity pass | 100 | 118 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-23 ingestion pass | 100 | 120 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-23 mixed-source ingestion pass | 100 | 123 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-23 auth-and-lock ingestion pass | 100 | 126 | 32 | 100% | 100% | 0 | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
+
+## Coverage Observations
+
+- The shipped corpus is still strongest on build, network, and CI failures, with 90 of 126 accepted fixtures concentrated in those three categories.
+- Provider diversity is still uneven: the accepted real corpus is 82 GitHub fixtures, 20 Stack Exchange fixtures, 10 GitLab fixtures, 7 Reddit fixtures, and 7 Discourse fixtures.
+- The `test` category is no longer a single-fixture blind spot, but it is still the thinnest accepted real slice relative to the 13 bundled test playbooks. Future ingestion should keep biasing toward high-signal test failures before adding more test rules.
+- Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML.
+- Signature and recurrence behavior is also pressure-tested separately through
+  the noisy variant corpus under `internal/signature/testdata/variants/` plus
+  store-backed app tests. That keeps recurrence grouping and output
+  determinism reviewable without inflating the release-gated real corpus.
 
 ## Contribution Prompt
 
@@ -174,7 +192,9 @@ Verify the bundled catalog size exposed by the CLI:
 
 - Bundled playbooks live under `playbooks/bundled/`.
 - Accepted real fixtures live under `fixtures/real/`.
+- Source-detector regression fixtures live under `internal/engine/testdata/source/`.
 - Test corpus files live under `internal/engine/testdata/corpus/`.
+- Signature and recurrence variant fixtures live under `internal/signature/testdata/variants/`.
 - The test corpus validates playbook matching through `corpus_test.go` as part of `make test`.
 - The checked-in regression baseline is `fixtures/real/baseline.json`.
 - The fixture commands are wired through `faultline fixtures stats`.

@@ -69,6 +69,13 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			wantStage: "test",
 		},
 		{
+			name:      "pytest fixture error noisy test log",
+			file:      "pytest-fixture-error-noisy.log",
+			wantTopID: "pytest-fixture-error",
+			wantStage: "test",
+			absentIDs: []string{"pytest-no-tests"},
+		},
+		{
 			name:      "missing test fixture noisy test log",
 			file:      "missing-test-fixture-noisy.log",
 			wantTopID: "missing-test-fixture",
@@ -125,6 +132,13 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			file:      "test-timeout-noisy.log",
 			wantTopID: "test-timeout",
 			wantStage: "test",
+		},
+		{
+			name:      "testcontainer startup noisy test log",
+			file:      "testcontainer-startup-noisy.log",
+			wantTopID: "testcontainer-startup",
+			wantStage: "test",
+			absentIDs: []string{"docker-daemon-unavailable"},
 		},
 		{
 			name:      "go data race noisy test log",

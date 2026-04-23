@@ -1,0 +1,11 @@
+$ mvn test failsafe:integration-test failsafe:verify -DskipTests=false -DskipITs=false
+[INFO] -------------------------------------------------------
+[INFO] T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running TestContainerExampleTest
+TestContainerExampleTest > initializationError FAILED
+java.lang.IllegalStateException at DockerClientProviderStrategy.java:215
+[INFO] Results:
+[INFO] Tests run: 0, Failures: 0, Errors: 1, Skipped: 0
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE

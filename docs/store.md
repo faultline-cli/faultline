@@ -42,6 +42,13 @@ Advanced CLI configuration is available through the hidden store controls:
 
 `--no-history` remains a compatibility switch and also disables the store.
 
+Explicit companion surfaces now read from the same local store:
+
+- `faultline history`
+- `faultline history --signature <hash>`
+- `faultline signatures`
+- `faultline verify-determinism <logfile>`
+
 ## What Is Stored
 
 Schema v1 keeps five small tables:
@@ -116,6 +123,83 @@ When the store is active, Faultline includes:
 - recurrence fields such as `seen_before`, `occurrence_count`,
   `first_seen_at`, and `last_seen_at`
 
+The human-readable `analyze` and `trace` surfaces also show a compact history
+summary when local history exists for the winning result. That enrichment is
+explicit and additive: it does not silently rerank the diagnosis.
+
+That history summary is intentionally concise:
+
+- a short `signature_hash` prefix so users can pivot into `faultline history --signature <hash>`
+- a recurrence line such as `seen 3 times over 7d in local history`
+- explicit `first seen` and `last seen` timestamps
+- hook verification history only when hooks have actually run for that signature
+
+To keep repeated-run verification useful, `output_hash` is computed from the
+stable diagnosis payload before local-history counters and policy summaries are
+applied. That means repeated runs of the same input can still be compared even
+while `occurrence_count`, `first_seen_at`, or history-derived policy context
+change over time.
+
+## Reading History
+
+History is intended to answer explicit questions:
+
+- have we seen this exact normalized failure signature before?
+- how often has this failure class won recently?
+- which hooks are consistently helping or failing?
+- did the same input produce stable structured output over time?
+
+Interpret the fields narrowly:
+
+- `signature_hash`: recurring normalized instance identity
+- `occurrence_count`: number of stored top-ranked findings for that signature
+- `first_seen_at` / `last_seen_at`: first and most recent stored occurrence
+- `seen_before`: shorthand that the signature already existed before this run
+
+`occurrence_count` is not a hidden severity score, and it does not change the
+detector result by itself.
+
+## History Commands
+
+`faultline history` shows three additive views from the local store:
+
+- recurring signatures
+- playbook selection frequency, total match frequency, and recurring-run counts
+- hook execution and pass/fail/blocked summaries
+
+`faultline history --signature <hash>` focuses on one signature and shows:
+
+- recurrence metadata
+- recent stored findings for that signature
+- aggregated hook history for the matching playbook/signature pair
+
+`faultline signatures` is the narrowest surface: it just lists stored
+signatures with counts and timestamps so users can pivot into
+`faultline history --signature ...`.
+
+`faultline verify-determinism <logfile>` computes the same canonical
+`input_hash` used during analysis and reports whether stored runs of that input
+produced one stable `output_hash` or drifted across multiple outputs.
+
+## Maintainer Quality Feedback
+
+The store now exposes lightweight maintainers' summaries rather than a
+dashboard product:
+
+- recurring signature counts to spot over-grouping or fragmentation regressions
+- playbook `selected_count` and `matched_count` so maintainers can see when a
+  rule often appears but rarely wins
+- `non_selected_count` and `avg_rank` to highlight noisy runners-up that may
+  need better exclusions or narrower wording
+- recurring-run counts to show which rules are repeatedly winning on real inputs
+- average selected confidence by playbook
+- hook total/executed/passed/failed/blocked counts
+- average hook confidence delta so maintainers can spot noisy hooks that add
+  little value
+
+These views are intentionally local, inspectable, and bounded. They are meant
+to guide catalog maintenance, not to create hosted analytics.
+
 ## Privacy
 
 The store is local-first and inspectable.
@@ -131,7 +215,6 @@ The current store is groundwork for future features, but those are not all
 shipped now:
 
 - retention policies
-- explicit history and batch commands
 - flaky/stability heuristics beyond recurrence groundwork
 - richer determinism verification across Faultline versions
 - deeper inspect/guard-specific persistence policy

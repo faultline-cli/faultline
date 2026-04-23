@@ -1,0 +1,4 @@
+2026-04-22T10:22:00Z build bootstrap
+ReferenceError: process.env.API_BASE_URL is undefined
+/workspace/app/scripts/build.sh:18 required environment variable API_BASE_URL is not set
+request id 9fd46ec5-6c4f-4f0c-a11d-f3c96f172d63

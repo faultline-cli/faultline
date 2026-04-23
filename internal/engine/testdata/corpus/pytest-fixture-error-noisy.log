@@ -1,0 +1,17 @@
+$ pytest -x --setup-show tests/test_capture.py
+platform linux -- Python 3.12.2, pytest-8.3.0, pluggy-1.5.0
+collected 1 item
+
+tests/test_capture.py::TestCapture::test_stdout ERROR
+
+==================================== ERRORS ====================================
+________________ ERROR at setup of TestCapture.test_stdout _________________
+
+@pytest.fixture(scope="class")
+def my_fixture(capfd):
+    yield
+
+ScopeMismatch: You tried to access the function scoped fixture capfd with a class scoped request object
+
+=========================== short test summary info ============================
+ERROR tests/test_capture.py::TestCapture::test_stdout

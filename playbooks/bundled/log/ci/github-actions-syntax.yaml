@@ -1,16 +1,16 @@
 id: github-actions-syntax
-title: GitHub Actions workflow YAML syntax error
+title: GitHub Actions workflow validation or action reference error
 category: ci
 severity: high
 base_score: 1.0
 tags: [github-actions, yaml, syntax, workflow, ci]
 stage_hints: [build]
 summary: |-
-  The GitHub Actions workflow YAML file contains a syntax error. GitHub rejected the workflow before any job could run.
+  GitHub Actions rejected the workflow definition or could not resolve a referenced action, so the workflow could not validate cleanly before the intended job logic ran.
 diagnosis: |-
   ## Diagnosis
 
-  The GitHub Actions workflow YAML file contains a syntax error. GitHub rejected the workflow before any job could run.
+  GitHub Actions failed while validating the workflow file or resolving a referenced action revision. Common causes include malformed YAML, invalid expressions, and action references that point to a missing tag, branch, or commit.
 fix: |-
   ## Fix steps
 
@@ -18,7 +18,8 @@ fix: |-
   2. Use the GitHub Actions VS Code extension which provides schema validation in the editor.
   3. Check the exact line number from the error message and inspect indentation carefully.
   4. Ensure expressions like `${{ secrets.TOKEN }}` are quoted when they appear in string values.
-  5. Verify `on:` trigger syntax using the GitHub Actions documentation.
+  5. Verify action references such as `uses: actions/checkout@v4` point to a real released ref and are not being truncated or templated into an invalid value.
+  6. Verify `on:` trigger syntax using the GitHub Actions documentation.
 validation: |-
   ## Validation
 
@@ -38,6 +39,11 @@ match:
     - "Unexpected value"
     - "yaml: unmarshal errors"
     - "The workflow is not valid"
+    - "Failed to fetch action metadata"
+    - "No commit found for the ref"
+  none:
+    - CircleCI
+    - ".circleci/config"
 workflow:
   likely_files:
     - .github/workflows/
@@ -50,7 +56,7 @@ workflow:
 why_it_matters: |-
   ## Why it matters
 
-  Workflow YAML files must follow strict GitHub Actions schema rules. Common causes include incorrect indentation, unquoted expressions containing colons, invalid `on:` trigger syntax, missing required fields, or extra whitespace characters.
+  Workflow YAML files and referenced actions must validate before GitHub can schedule the job. Common causes include incorrect indentation, unquoted expressions containing colons, invalid `on:` trigger syntax, missing required fields, or an action ref that points at a missing tag or partial value.
 
   ## Prevention
 

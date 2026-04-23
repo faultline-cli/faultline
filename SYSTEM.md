@@ -44,6 +44,10 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline workflow <logfile>`
 - `faultline workflow <logfile> --bayes`
 - `faultline guard <path>`
+- `faultline history`
+- `faultline history --signature <hash>`
+- `faultline signatures`
+- `faultline verify-determinism <logfile>`
 - `faultline fixtures ingest`
 - `faultline fixtures review`
 - `faultline fixtures promote`

@@ -1,0 +1,3 @@
+2026-04-23T07:15:44Z Starting GitHub Actions step
+D:\a\faultline\faultline\.github\workflows\ci.yml:241: exec /__e/node20/bin/node: no such file or directory
+worker 981 failed for commit 71E944493FA59840

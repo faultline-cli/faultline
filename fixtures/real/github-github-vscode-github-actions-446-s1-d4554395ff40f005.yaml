@@ -1,0 +1,33 @@
+id: github-github-vscode-github-actions-446-s1-d4554395ff40f005
+title: '`Failed to fetch action metadata for actions/c/undefined: ''Not Found''`'
+fixture_class: real
+normalized_log: |-
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/c/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/d/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/c/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/ch/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/che/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/chec/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/check/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/checko/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/checkou/undefined: 'Not Found'
+    [Error - <timestamp> AM] Failed to fetch action metadata for actions/checkout/v: 'No commit found for the ref v'
+expectation:
+    expected_playbook: github-actions-syntax
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/github/vscode-github-actions/issues/446
+    repository: github/vscode-github-actions
+    issue_number: 446
+    comment_id: "2704285270"
+    title: '`Failed to fetch action metadata for actions/c/undefined: ''Not Found''`'
+    author: jsoref
+    snippet: 1
+    fetched_at: "2026-04-22T12:17:46Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T12:23:39Z"
+fingerprint: d4554395ff40f005

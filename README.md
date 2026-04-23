@@ -21,7 +21,7 @@ Fix:
   - Pin the runner to an image that includes the expected binary
 ```
 
-Built on 77 bundled playbooks and 103 accepted real-fixture regression proofs. Same input, same result.
+Built on 100 bundled playbooks and 118 accepted real-fixture regression proofs. Same input, same result.
 
 ## Try it now 🚀
 
@@ -61,7 +61,7 @@ You can think of the output modes like this:
 - 🔁 Same log input and playbook set produce the same result every time.
 - 🔍 Evidence is pulled directly from matched log lines.
 - 📚 Diagnoses and fix steps come from checked-in playbooks, not generated guesses.
-- 🧪 The shipped catalog is backed by 77 bundled playbooks and 103 accepted real fixtures.
+- 🧪 The shipped catalog is backed by 100 bundled playbooks and 126 accepted real fixtures.
 - 🏠 Faultline runs locally by default, so build logs stay on your machine unless you choose otherwise.
 - 🤖 JSON output and workflow artifacts stay stable enough for automation and agent handoff.
 

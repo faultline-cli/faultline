@@ -1,0 +1,62 @@
+id: gradle-build
+title: Gradle build failure
+category: build
+severity: high
+base_score: 1.0
+tags: [gradle, java, kotlin, android, build]
+stage_hints: [build]
+summary: |-
+  Gradle exited with a non-zero status, indicating one or more tasks failed. The `FAILURE:` block in the output identifies the first task that failed and the root cause.
+diagnosis: |-
+  ## Diagnosis
+
+  Gradle exited with a non-zero status, indicating one or more tasks failed. The `FAILURE:` block in the output identifies the first task that failed and the root cause.
+fix: |-
+  ## Fix steps
+
+  1. Read the `What went wrong:` block. It usually contains the direct cause and file location.
+  2. For `Could not resolve`: check the repository URL and any private repo credentials.
+  3. For `Execution failed for task ':compileJava'`: fix the Java or Kotlin compilation errors listed below.
+  4. Run `./gradlew <task> --stacktrace` locally for the full exception chain.
+  5. For daemon issues, run `./gradlew --no-daemon` once to rule out cached state.
+validation: |-
+  ## Validation
+
+  - `./gradlew build --stacktrace` completes successfully.
+  - The CI build step exits zero without repeating the original `FAILURE:` block.
+match:
+  any:
+    - "FAILURE: Build failed with an exception"
+    - "What went wrong:"
+    - "Could not resolve"
+    - "Could not download"
+    - "Execution failed for task"
+    - "Gradle build daemon"
+    - "Could not GET"
+    - "compileSdkVersion"
+    - "Gradle version"
+  none:
+    - "BUILD SUCCESS"
+    - "imported and not used"
+    - "declared and not used"
+    - "undefined: "
+workflow:
+  likely_files:
+    - build.gradle
+    - build.gradle.kts
+    - settings.gradle
+    - gradlew
+  local_repro:
+    - ./gradlew build --stacktrace
+  verify:
+    - ./gradlew build --stacktrace
+why_it_matters: |-
+  ## Why it matters
+
+  Gradle failures can stem from dependency resolution errors, Android SDK drift, wrapper incompatibility, or a failing compile/test task. Because Gradle is often the outer build orchestrator, the first failure block is the shortest path to the real root cause.
+
+  ## Prevention
+
+  - Cache `~/.gradle/caches` between CI runs to avoid repeated dependency downloads.
+  - Pin the Gradle wrapper version in `gradle/wrapper/gradle-wrapper.properties`.
+  - Enable `--build-cache` in CI to reuse task outputs across runs.

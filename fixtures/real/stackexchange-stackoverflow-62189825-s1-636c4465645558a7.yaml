@@ -1,0 +1,39 @@
+id: stackexchange-stackoverflow-62189825-s1-636c4465645558a7
+title: 'Error acquiring the state lock: ConditionalCheckFailedException'
+fixture_class: real
+normalized_log: |-
+    I got the following error during a terraform plan which occured in my pipeline:
+    Error: Error locking state: Error acquiring the state lock: ConditionalCheckFailedException: The conditional request failed
+    Lock Info:
+    ID: <id>
+    Path: ...
+    Operation: OperationTypePlan
+    Who: ...
+    Version: 0.12.25
+    Created: <timestamp> +0000 UTC
+    Info:
+    Terraform acquires a state lock to protect the state from being written
+    by multiple users at the same time. Please resolve the issue above and try
+    again. For most commands, you can disable locking with the "-lock=false"
+    flag, but this is not recommended.
+    It is weird because I'm sure there is no other concurrent plan. Is there a way to deal with this? How should I remove this lock?
+expectation:
+    expected_playbook: terraform-state-lock
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/62189825
+    repository: stackoverflow
+    issue_number: 62189825
+    comment_id: "0"
+    title: 'Error acquiring the state lock: ConditionalCheckFailedException'
+    author: veben
+    snippet: 1
+    fetched_at: "2026-04-23T08:12:00Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T08:12:49Z"
+fingerprint: 636c4465645558a7

@@ -1,0 +1,78 @@
+id: stackexchange-stackoverflow-66973433-s4-52f19765e92d43ae
+title: Integration tests pipeline doesn&#39;t fail when testcontainer fails to start
+fixture_class: real
+normalized_log: |-
+    (I know the fixed host port is deprecated and against the philosophy of the testcontainers authors, but I have not found a solution for that yet. I want to get rid of it but will leave that issue for another question.)
+    If the container starts, the tests run as intended. But if it doesn't, 0 tests are run and the pipeline succeeds. I can run the tests locally, if the container starts normally the tests are executed, if the container fails to start it also lists 0 tests run and "build success". How do I let this fail so we will notice there is an issue with our setup? I'm not even sure in which of the moving parts I should be fixing the issue.
+    This is the relevant part of the output, I think.
+    [INFO] -------------------------------------------------------
+    [INFO] T E S T S
+    [INFO] -------------------------------------------------------
+    [INFO] Running <my class IT>
+    [<timestamp>] INFO - Image name substitution will be performed by: DefaultImageNameSubstitutor (ConfigurationFileImageNameSubstitutor)
+    [<timestamp>] INFO - Pulling docker image: our-own-registry/testimage:latest. Please be patient; this may take some time but only needs to be done once.
+    [<timestamp>] INFO - Loaded org.testcontainers.dockerclient.UnixSocketClientProviderStrategy from ~/.testcontainers.properties, will try it first
+    [<timestamp>] INFO - Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+    [<timestamp>] INFO - Docker host IP address is localhost
+    [<timestamp>] INFO - Connected to docker:
+    Server Version: 20.10.5
+    API Version: 1.41
+    Operating System: Docker Desktop
+    Total Memory: 7964 MB
+    [<timestamp>] INFO - Credential helper/store (docker-credential-desktop) does not have credentials for index.docker.io
+    [<timestamp>] INFO - Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+    [<timestamp>] INFO - Checking the system...
+    [<timestamp>] INFO - ✔︎ Docker server version should be at least 1.6.0
+    [<timestamp>] INFO - ✔︎ Docker environment should have more than 2GB free disk space
+    [<timestamp>] INFO - Starting to pull image
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 0 downloaded, 0 extracted, (0 bytes/0 bytes)
+    [<timestamp>] INFO - Pulling image layers: 3 pending, 1 downloaded, 0 extracted, (16 KB/? MB)
+    [<timestamp>] INFO - Pulling image layers: 2 pending, 2 downloaded, 0 extracted, (103 KB/? MB)
+    [<timestamp>] INFO - Pulling image layers: 1 pending, 3 downloaded, 0 extracted, (54 MB/? MB)
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 4 downloaded, 0 extracted, (946 MB/946 MB)
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 4 downloaded, 1 extracted, (946 MB/946 MB)
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 4 downloaded, 2 extracted, (946 MB/946 MB)
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 4 downloaded, 3 extracted, (946 MB/946 MB)
+    [<timestamp>] INFO - Pulling image layers: 0 pending, 4 downloaded, 4 extracted, (946 MB/946 MB)
+    [<timestamp>] INFO - Pull complete. 4 layers, pulled in 408s (downloaded 946 MB at 2 MB/s)
+    [<timestamp>] INFO - Creating container for image:our-own-registry/testimage:latest
+    [<timestamp>] INFO - Starting container with ID: e3af36da30714eb78811220592299472d690ff36ad9b527c457a8f4d7aeec45b
+    [<timestamp>] INFO - Container our-own-registry/testimage:latest is starting: e3af36da30714eb78811220592299472d690ff36ad9b527c457a8f4d7aeec45b
+    [<timestamp>] INFO - /priceless_varahamihira: Waiting for 420 seconds for URL: http://localhost:3000/api/v4/projects
+    [<timestamp>] ERROR - Could not start container
+    <logging of a very good reason to not start the container>
+    [INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 835.217 s - in nl.sig.uploadunpacker.GitConnectorIT
+    [INFO]
+    [INFO] Results:
+    [INFO]
+    [INFO] Tests run: 0, Failures: 0, Errors: 0, Skipped: 0
+    [INFO]
+    [INFO]
+    [INFO] --- maven-failsafe-plugin:3.0.0-M4:verify (default-cli) @ UploadUnpacker ---
+    [INFO] ------------------------------------------------------------------------
+    [INFO] BUILD SUCCESS
+    [INFO] ------------------------------------------------------------------------
+    [INFO] Total time: 13:58 min
+    [INFO] Finished at: <timestamp>
+    [INFO] ------------------------------------------------------------------------
+expectation:
+    expected_playbook: testcontainer-startup
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66973433
+    repository: stackoverflow
+    issue_number: 66973433
+    comment_id: "0"
+    title: Integration tests pipeline doesn&#39;t fail when testcontainer fails to start
+    author: Ashala
+    snippet: 4
+    fetched_at: "2026-04-22T20:59:31Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T21:01:53Z"
+fingerprint: 52f19765e92d43ae

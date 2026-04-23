@@ -1,0 +1,27 @@
+id: discourse-discuss-circleci-com-54445-s1-74ce45c91ab06f8b
+title: Job rejected due to not a valid resource class with machine image ubuntu-2404:2026.02.2
+fixture_class: real
+normalized_log: |-
+    We are trying to upgrade the machine image we use for the Micrometer build from ubuntu-2404:2025.09.1 to ubuntu-2404:2026.02.2 . However, the job fails to run with an error message like the following:
+    Job was rejected because resource class medium, image ubuntu-2404:2026.02.2 is not a valid resource class
+    We didn’t explicitly specify a resource class, but we have since tried specifying a variety of resource classes. All fail with a similar message. Is there some issue on the CircleCI side or with our configuration?
+expectation:
+    expected_playbook: circleci-resource-class-invalid
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/job-rejected-due-to-not-a-valid-resource-class-with-machine-image-ubuntu-2404-2026-02-2/54445
+    repository: discuss.circleci.com
+    issue_number: 54445
+    comment_id: "107690"
+    title: Job rejected due to not a valid resource class with machine image ubuntu-2404:2026.02.2
+    author: shakuzen
+    snippet: 1
+    fetched_at: "2026-04-22T11:51:37Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T02:54:32Z"
+fingerprint: 74ce45c91ab06f8b

@@ -1,0 +1,26 @@
+id: reddit-r-devops-i4c2nq-0-0-s4-39a9e3890cbbdb0e
+title: Circle CI Pytest Error
+fixture_class: real
+normalized_log: |-
+    /bin/bash: line 4: pytest: command not found
+    Exited with code exit status 127
+expectation:
+    expected_playbook: missing-executable
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/devops/comments/i4c2nq/
+    repository: r/devops
+    comment_id: "0"
+    title: Circle CI Pytest Error
+    author: da_chosen1
+    snippet: 4
+    fetched_at: "2026-04-22T21:07:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T21:09:53Z"
+fingerprint: 39a9e3890cbbdb0e

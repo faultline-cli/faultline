@@ -29,7 +29,6 @@ match:
   any:
     - "ERROR: Config file is not valid"
     - "ERROR: Job is invalid"
-    - ".gitlab-ci.yml"
     - "config validation error"
     - "jobs:.*config contains unknown keys"
     - "Included file"

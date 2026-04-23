@@ -121,6 +121,9 @@ func formatAnalysisMarkdownResult(a *model.Analysis, result model.Result, rank, 
 	if summary := strings.TrimSpace(result.Playbook.Summary); summary != "" {
 		sections = append(sections, "", "## Summary", "", summary)
 	}
+	if history := markdownListSection("## History", historySummaryMarkdownLines(result)); history != "" {
+		sections = append(sections, "", history)
+	}
 	if detailed {
 		if evidence := markdownListSection("## Evidence", result.Evidence); evidence != "" {
 			sections = append(sections, "", evidence)
@@ -225,6 +228,49 @@ func sharesLine(left, right []string) bool {
 		}
 	}
 	return false
+}
+
+func historySummaryMarkdownLines(result model.Result) []string {
+	var lines []string
+	switch {
+	case result.OccurrenceCount > 1:
+		lines = append(lines, fmt.Sprintf("seen %d times in local history", result.OccurrenceCount))
+	case result.OccurrenceCount == 1:
+		lines = append(lines, "first recorded occurrence in local history")
+	}
+	if result.FirstSeenAt != "" {
+		lines = append(lines, "first seen: "+result.FirstSeenAt)
+	}
+	if result.LastSeenAt != "" {
+		lines = append(lines, "last seen: "+result.LastSeenAt)
+	}
+	if result.HookHistorySummary != nil && result.HookHistorySummary.TotalCount > 0 {
+		lines = append(lines, hookHistoryMarkdownLine(result.HookHistorySummary))
+	}
+	return lines
+}
+
+func hookHistoryMarkdownLine(summary *model.HookHistorySummary) string {
+	parts := []string{fmt.Sprintf("hook history: %d run(s)", summary.TotalCount)}
+	if summary.ExecutedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d executed", summary.ExecutedCount))
+	}
+	if summary.PassedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d passed", summary.PassedCount))
+	}
+	if summary.FailedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d failed", summary.FailedCount))
+	}
+	if summary.BlockedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d blocked", summary.BlockedCount))
+	}
+	if summary.SkippedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d skipped", summary.SkippedCount))
+	}
+	if summary.LastSeenAt != "" {
+		parts = append(parts, "last "+summary.LastSeenAt)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func differentialLines(a *model.Analysis) []string {

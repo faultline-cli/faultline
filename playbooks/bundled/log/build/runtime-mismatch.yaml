@@ -53,6 +53,11 @@ match:
     - setup-node
     - java version mismatch
     - unsupportedclassversionerror
+    - "Cannot connect to the Docker daemon"
+    - "permission denied while trying to connect to the Docker daemon socket"
+    - "pull access denied"
+    - "may require 'docker login'"
+    - docker.sock
 hypothesis:
   supports:
     - signal: runtime.language.version.mismatch

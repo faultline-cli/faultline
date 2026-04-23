@@ -171,6 +171,38 @@ func TestFormatTraceMarkdownShowsSignatureSection(t *testing.T) {
 	}
 }
 
+func TestFormatTraceTextShowsHistoryWindowAndSignature(t *testing.T) {
+	report := makeTraceReport(true)
+	sig := signature.ForResult(model.Result{
+		Playbook: model.Playbook{ID: "docker-auth"},
+		Detector: "log",
+		Evidence: []string{"authentication required"},
+	})
+	report.Signature = &sig
+	report.OccurrenceCount = 3
+	report.FirstSeenAt = "2026-04-20T10:00:00Z"
+	report.LastSeenAt = "2026-04-23T12:00:00Z"
+	report.HookHistory = &model.HookHistorySummary{
+		TotalCount:    3,
+		ExecutedCount: 3,
+		PassedCount:   2,
+		FailedCount:   1,
+		LastSeenAt:    "2026-04-23T12:00:00Z",
+	}
+
+	out := FormatTraceText(report, false, false, false)
+	for _, want := range []string{
+		"History",
+		"History available for signature " + sig.Hash[:12],
+		"Seen 3 times over 3d in local history",
+		"Hook verification history: 3 run(s)",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("expected %q in trace output, got:\n%s", want, out)
+		}
+	}
+}
+
 func TestFormatTraceMarkdownScoreInHeader(t *testing.T) {
 	report := makeTraceReport(true)
 	report.Score = 2.5

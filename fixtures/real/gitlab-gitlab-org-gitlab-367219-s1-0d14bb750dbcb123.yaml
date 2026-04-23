@@ -1,0 +1,41 @@
+id: gitlab-gitlab-org-gitlab-367219-s1-0d14bb750dbcb123
+title: Testcontainers CI Pipeline not working when using Docker in Docker feature
+fixture_class: real
+normalized_log: |-
+    TestContainerExampleTest > initializationError FAILED
+    java.lang.IllegalStateException at DockerClientProviderStrategy.java:215
+expectation:
+    expected_playbook: testcontainer-startup
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab/-/issues/367219
+    repository: gitlab-org/gitlab
+    issue_number: 367219
+    title: Testcontainers CI Pipeline not working when using Docker in Docker feature
+    labels:
+        - Category:Continuous Integration
+        - auto closed
+        - automation:ml
+        - backend
+        - backlog::to-be-closed
+        - bug::functional
+        - devops::verify
+        - group::pipeline execution
+        - priority::4
+        - section::ci
+        - severity::4
+        - stale
+        - type::bug
+        - vintage
+    author: popovici.gabriel
+    snippet: 1
+    fetched_at: "2026-04-22T20:59:31Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T21:01:53Z"
+fingerprint: 0d14bb750dbcb123

@@ -42,6 +42,9 @@ match:
     - "no-unused-vars"
   none:
     - "SyntaxError:"
+    - "ERR_PNPM_OUTDATED_LOCKFILE"
+    - "ERR_PNPM_FROZEN_LOCKFILE"
+    - "pnpm-lock.yaml"
 workflow:
   likely_files:
     - .eslintrc.js

@@ -1,0 +1,3 @@
+2026-04-23T04:09:00Z failed to resolve dependencies
+service-a has conflicting requirements: google.golang.org/grpc 1.60.0 and google.golang.org/grpc 1.54.0
+toolkit requires a different version of google.golang.org/grpc than service-a

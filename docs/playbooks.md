@@ -250,6 +250,30 @@ Deterministic merge rules:
 This keeps hook customization inside the existing pack boundary, which means
 teams can extend shipped playbooks without copying the original playbook files.
 
+### Customization Proof Pattern
+
+The smallest realistic customization stack is:
+
+1. one org-level shared pack that defines named hooks such as
+   `repo.node-version` or `repo.registry-config`
+2. one repo-specific pack layered after it with a narrow override
+3. one targeted `disable:` entry to remove a noisy inherited hook
+4. one `use:` site that reattaches the replacement hook to the shipped
+   playbook
+
+That gives teams a concrete inheritance story without turning Faultline into a
+runtime extension marketplace:
+
+- the bundled catalog stays the default baseline
+- the org pack carries shared policy and hook definitions
+- the repo pack only overrides the local edge cases it can justify
+- the final behavior remains inspectable through pack order, hook metadata, and
+  trace output
+
+If a team needs a repo-specific override, prefer adding a later pack with
+`playbook_hooks.<id>.disable` plus a replacement `verify:` hook rather than
+copying the full playbook YAML into a forked catalog.
+
 ## Hook Execution Modes
 
 Hooks never run unless the user enables them explicitly with the hidden

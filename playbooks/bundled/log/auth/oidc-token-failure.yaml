@@ -1,0 +1,63 @@
+id: oidc-token-failure
+title: OIDC token request failed or token invalid
+category: auth
+severity: high
+base_score: 1.0
+tags: [oidc, jwt, token, federated, aws, gcp, azure, github-actions]
+stage_hints: [build, deploy]
+summary: |-
+  An OIDC token request failed or the issued token was rejected by the cloud provider. Federated authentication to AWS, GCP, or Azure cannot proceed.
+diagnosis: |-
+  ## Diagnosis
+
+  An OIDC token request failed or the issued token was rejected by the cloud provider. Federated authentication to AWS, GCP, or Azure cannot proceed.
+fix: |-
+  ## Fix steps
+
+  1. In GitHub Actions, ensure the job has `permissions: id-token: write`.
+  2. Decode the OIDC token and inspect `iss`, `sub`, `aud`, and repository claims to confirm they match the cloud-side trust policy.
+  3. For AWS, verify the IAM role trust policy `StringLike` condition matches the actual `sub` claim.
+  4. For GCP, check the Workload Identity Pool provider attribute mapping and condition logic.
+  5. For Azure, confirm the federated credential issuer, subject, and audience are correct.
+  6. For token audience mismatch errors, set the expected audience explicitly in the workflow step or provider configuration.
+validation: |-
+  ## Validation
+
+  - Re-run the failing workflow step with debug logging enabled.
+  - Confirm `ACTIONS_ID_TOKEN_REQUEST_URL` is present when the workflow expects GitHub-issued OIDC.
+match:
+  any:
+    - "OIDC token"
+    - "id_token"
+    - "Unable to get OIDC token"
+    - "JWT"
+    - "token is expired"
+    - "aud claim"
+    - "Request claims do not match"
+    - "Error getting token from GitHub's OIDC provider"
+    - "openid-configuration"
+    - "jwks"
+    - "ACTIONS_ID_TOKEN_REQUEST_URL"
+    - "invalid_grant"
+    - "token audience mismatch"
+  none:
+    - "no basic auth credentials"
+    - "pull access denied"
+workflow:
+  likely_files:
+    - .github/workflows/
+    - .gitlab-ci.yml
+  local_repro:
+    - printenv ACTIONS_ID_TOKEN_REQUEST_URL
+  verify:
+    - printenv ACTIONS_ID_TOKEN_REQUEST_URL
+why_it_matters: |-
+  ## Why it matters
+
+  OIDC-based workload identity fails when the trust relationship between the CI provider and the cloud is misconfigured, the token audience does not match the expected audience, or the workflow does not request the token correctly.
+
+  ## Prevention
+
+  - Document OIDC trust configuration alongside the workflow files.
+  - Use least-privilege IAM conditions that are specific about the repository and branch.
+  - Test OIDC auth in a separate validation job before using the credentials in deploy jobs.

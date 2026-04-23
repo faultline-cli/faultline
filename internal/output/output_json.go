@@ -179,7 +179,7 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 }
 
 func HashAnalysisOutput(a *model.Analysis) (string, error) {
-	payload := analysisPayload(a, 0)
+	payload := analysisPayload(stableHashAnalysis(a), 0)
 	payload.OutputHash = ""
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -187,6 +187,27 @@ func HashAnalysisOutput(a *model.Analysis) (string, error) {
 	}
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:]), nil
+}
+
+func stableHashAnalysis(a *model.Analysis) *model.Analysis {
+	if a == nil {
+		return nil
+	}
+	clone := *a
+	clone.Results = append([]model.Result(nil), a.Results...)
+	clone.Metrics = nil
+	clone.Policy = nil
+	for i := range clone.Results {
+		result := clone.Results[i]
+		result.SeenCount = 0
+		result.SeenBefore = false
+		result.OccurrenceCount = 0
+		result.FirstSeenAt = ""
+		result.LastSeenAt = ""
+		result.HookHistorySummary = nil
+		clone.Results[i] = result
+	}
+	return &clone
 }
 
 func analysisPayload(a *model.Analysis, top int) analysisJSON {

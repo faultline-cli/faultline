@@ -1,0 +1,40 @@
+id: gitlab-gitlab-org-gitlab-runner-27664-s4-04e28a8881bdaa2f
+title: 'Image pull failed: Back-off pulling image (Kubernetes Executor)'
+fixture_class: real
+normalized_log: |-
+    ERROR: Job failed (system failure): prepare environment: image pull failed: Back-off pulling image "registry.example.net/tests/issue-image:1.0.0". Check https://docs.gitlab.com/runner/shells/index.html#shell-profile-loading for more information duration=2m54.750286918s job=22436 project=550 runner=aDykLRhX
+    WARNING: Failed to process runner builds=18 error=prepare environment: image pull failed: Back-off pulling image "registry.example.net/tests/issue-image:1.0.0". Check https://docs.gitlab.com/runner/shells/index.html#shell-profile-loading for more information executor=kubernetes runner=aDykLRhX
+expectation:
+    expected_playbook: image-pull-backoff
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/27664
+    repository: gitlab-org/gitlab-runner
+    issue_number: 27664
+    title: 'Image pull failed: Back-off pulling image (Kubernetes Executor)'
+    labels:
+        - Category:Runner Core
+        - SLO::Missed
+        - '[Deprecated] Category:Runner'
+        - customer
+        - devops::verify
+        - executor::kubernetes
+        - group::runner core
+        - missed:14.10
+        - needs investigation
+        - priority::2
+        - runner::core
+        - section::ops
+        - severity::2
+        - type::bug
+    author: ajoux.ac
+    snippet: 4
+    fetched_at: "2026-04-23T03:01:39Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T03:02:48Z"
+fingerprint: 04e28a8881bdaa2f

@@ -1,0 +1,4 @@
+2026-04-24T11:02:00Z test bootstrap
+ReferenceError: process.env.DATABASE_URL is undefined
+/workspace/service/scripts/test.sh:27 required environment variable DATABASE_URL is not set
+request id a1d46ec5-6c4f-4f0c-a11d-f3c96f172d63

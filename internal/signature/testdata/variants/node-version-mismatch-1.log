@@ -1,0 +1,4 @@
+2026-04-22T09:10:15Z Starting dependency install
+Expected node version >=20 but found v18.19.0
+/home/runner/work/app/app/.nvmrc:1 pinned for commit 8b1d97d88758b4303
+wrapper state recorded in /tmp/build-9812/setup-node.sh:44

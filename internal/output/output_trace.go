@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"faultline/internal/model"
 	"faultline/internal/signature"
@@ -36,6 +37,9 @@ func FormatTraceText(report tracereport.Report, showEvidence, showScoring, showR
 	}
 	if sig := renderTraceSignatureText(report.Signature); sig != "" {
 		sections = append(sections, joinTraceSection("Signature", sig))
+	}
+	if history := renderTraceHistoryText(report); history != "" {
+		sections = append(sections, joinTraceSection("History", history))
 	}
 	if hooks := renderTraceHooksText(report.Hooks); hooks != "" {
 		sections = append(sections, joinTraceSection("Hooks", hooks))
@@ -91,6 +95,9 @@ func FormatTraceMarkdown(report tracereport.Report, showEvidence, showScoring, s
 	if sig := renderTraceSignatureMarkdown(report.Signature); sig != "" {
 		sections = append(sections, "", "## Signature", "", sig)
 	}
+	if history := renderTraceHistoryMarkdown(report); history != "" {
+		sections = append(sections, "", "## History", "", history)
+	}
 	if hooks := renderTraceHooksMarkdown(report.Hooks); hooks != "" {
 		sections = append(sections, "", "## Hooks", "", hooks)
 	}
@@ -126,6 +133,7 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		Confidence  float64                 `json:"confidence,omitempty"`
 		Detector    string                  `json:"detector,omitempty"`
 		Signature   interface{}             `json:"signature,omitempty"`
+		History     interface{}             `json:"history,omitempty"`
 		Rules       []tracereport.Rule      `json:"rules"`
 		Why         []string                `json:"why,omitempty"`
 		Hooks       *model.HookReport       `json:"hooks,omitempty"`
@@ -144,6 +152,7 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		Confidence:  report.Confidence,
 		Detector:    fallback(report.Detector, fallback(report.Playbook.Detector, "log")),
 		Signature:   traceSignatureJSON(report.Signature),
+		History:     traceHistoryJSON(report),
 		Rules:       report.Rules,
 		Why:         report.Why,
 		Hooks:       report.Hooks,
@@ -248,6 +257,102 @@ func renderTraceSignatureMarkdown(sig *signature.ResultSignature) string {
 	}, "\n")
 }
 
+func renderTraceHistoryText(report tracereport.Report) string {
+	return strings.Join(traceHistoryLines(report), "\n")
+}
+
+func renderTraceHistoryMarkdown(report tracereport.Report) string {
+	return bulletLines(traceHistoryLines(report))
+}
+
+func traceHistoryLines(report tracereport.Report) []string {
+	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" && report.HookHistory == nil {
+		return nil
+	}
+	var lines []string
+	if sig := shortTraceSignature(report.Signature); sig != "" {
+		lines = append(lines, "History available for signature "+sig)
+	}
+	switch {
+	case report.OccurrenceCount > 1:
+		if span := traceHistoryWindow(report.FirstSeenAt, report.LastSeenAt); span != "" {
+			lines = append(lines, fmt.Sprintf("Seen %d times over %s in local history", report.OccurrenceCount, span))
+		} else {
+			lines = append(lines, fmt.Sprintf("Seen %d times in local history", report.OccurrenceCount))
+		}
+	case report.OccurrenceCount == 1:
+		lines = append(lines, "First recorded occurrence in local history")
+	case report.SeenBefore:
+		lines = append(lines, "Seen before in local history")
+	}
+	if report.FirstSeenAt != "" {
+		lines = append(lines, "First seen: "+report.FirstSeenAt)
+	}
+	if report.LastSeenAt != "" {
+		lines = append(lines, "Last seen: "+report.LastSeenAt)
+	}
+	if report.HookHistory != nil && report.HookHistory.TotalCount > 0 {
+		lines = append(lines, hookHistoryTraceLine(report.HookHistory))
+	}
+	return lines
+}
+
+func hookHistoryTraceLine(summary *model.HookHistorySummary) string {
+	parts := []string{fmt.Sprintf("Hook verification history: %d run(s)", summary.TotalCount)}
+	if summary.ExecutedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d executed", summary.ExecutedCount))
+	}
+	if summary.PassedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d passed", summary.PassedCount))
+	}
+	if summary.FailedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d failed", summary.FailedCount))
+	}
+	if summary.BlockedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d blocked", summary.BlockedCount))
+	}
+	if summary.SkippedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d skipped", summary.SkippedCount))
+	}
+	if summary.LastSeenAt != "" {
+		parts = append(parts, "last "+summary.LastSeenAt)
+	}
+	return strings.Join(parts, ", ")
+}
+
+func traceHistoryWindow(firstSeenAt, lastSeenAt string) string {
+	start, err := time.Parse(time.RFC3339, strings.TrimSpace(firstSeenAt))
+	if err != nil {
+		return ""
+	}
+	end, err := time.Parse(time.RFC3339, strings.TrimSpace(lastSeenAt))
+	if err != nil || end.Before(start) {
+		return ""
+	}
+	duration := end.Sub(start)
+	switch {
+	case duration >= 48*time.Hour:
+		return fmt.Sprintf("%dd", int(duration.Hours()/24))
+	case duration >= time.Hour:
+		return fmt.Sprintf("%dh", int(duration.Hours()))
+	case duration >= time.Minute:
+		return fmt.Sprintf("%dm", int(duration.Minutes()))
+	default:
+		return ""
+	}
+}
+
+func shortTraceSignature(sig *signature.ResultSignature) string {
+	if sig == nil {
+		return ""
+	}
+	value := strings.TrimSpace(sig.Hash)
+	if len(value) > 12 {
+		return value[:12]
+	}
+	return value
+}
+
 func renderTraceEvidenceText(report tracereport.Report) string {
 	seen := make(map[string]struct{})
 	var lines []string
@@ -315,6 +420,25 @@ func traceSignatureJSON(sig *signature.ResultSignature) interface{} {
 		Version:    sig.Version,
 		Payload:    sig.Payload,
 		Normalized: sig.Normalized,
+	}
+}
+
+func traceHistoryJSON(report tracereport.Report) interface{} {
+	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" && report.HookHistory == nil {
+		return nil
+	}
+	return struct {
+		SeenBefore      bool                      `json:"seen_before,omitempty"`
+		OccurrenceCount int                       `json:"occurrence_count,omitempty"`
+		FirstSeenAt     string                    `json:"first_seen_at,omitempty"`
+		LastSeenAt      string                    `json:"last_seen_at,omitempty"`
+		HookHistory     *model.HookHistorySummary `json:"hook_history,omitempty"`
+	}{
+		SeenBefore:      report.SeenBefore,
+		OccurrenceCount: report.OccurrenceCount,
+		FirstSeenAt:     report.FirstSeenAt,
+		LastSeenAt:      report.LastSeenAt,
+		HookHistory:     report.HookHistory,
 	}
 }
 

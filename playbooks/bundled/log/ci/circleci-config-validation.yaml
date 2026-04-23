@@ -55,6 +55,10 @@ match:
     - "Validation failed"
     - "error compiling config"
     - "config is not valid"
+    - "Unable to parse YAML"
+    - "mapping values are not allowed here"
+    - "while parsing a block mapping"
+    - "from the CircleCI"
   none:
     - "exit code: 137"
     - "No space left on device"

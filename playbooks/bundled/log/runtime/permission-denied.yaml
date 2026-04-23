@@ -39,6 +39,9 @@ match:
     - "Uploading artifacts to coordinator... forbidden"
     - "No files were found with the provided path"
     - "No artifacts will be uploaded"
+    - "(publickey)"
+    - "Host key verification failed"
+    - "Could not read from remote repository"
 why_it_matters: |-
   ## Why it matters
 

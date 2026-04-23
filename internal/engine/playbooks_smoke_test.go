@@ -23,7 +23,7 @@ func TestBundledPlaybooksSmoke(t *testing.T) {
 		pb := pb
 		t.Run(pb.ID, func(t *testing.T) {
 			if pb.Detector == "source" {
-				t.Skip("source playbooks are covered by repository inspection tests")
+				t.Skip("source playbooks are covered by dedicated repository fixture tests")
 			}
 			log := fixtureLogForPlaybook(pb)
 			lines, err := readLines(strings.NewReader(log))

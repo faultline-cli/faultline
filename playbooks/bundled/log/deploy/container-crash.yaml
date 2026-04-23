@@ -43,6 +43,11 @@ match:
     - The build agent was unable to allocate
     - "exit code 137"
     - OOMKilled
+    - "cannot stat"
+    - "no such file or directory"
+    - "Uploading artifacts..."
+    - "artifacts to coordinator"
+    - "No artifacts will be uploaded"
 why_it_matters: |-
   ## Why it matters
 

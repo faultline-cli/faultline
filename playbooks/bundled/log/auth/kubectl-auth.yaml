@@ -1,0 +1,61 @@
+id: kubectl-auth
+title: Kubernetes cluster authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [kubernetes, kubectl, auth, kubeconfig]
+stage_hints: [deploy]
+summary: |-
+  `kubectl` could not authenticate with the Kubernetes API server. This prevents cluster operations such as `apply`, `rollout`, or `get`.
+diagnosis: |-
+  ## Diagnosis
+
+  `kubectl` could not authenticate with the Kubernetes API server. This prevents cluster operations such as `apply`, `rollout`, or `get`.
+fix: |-
+  ## Fix steps
+
+  1. Decode and export the kubeconfig from the CI secret: `echo "$KUBECONFIG_B64" | base64 -d > ~/.kube/config && chmod 600 ~/.kube/config`.
+  2. Verify the active context and cluster endpoint with `kubectl config current-context && kubectl config view --minify`.
+  3. Test connectivity before deploy steps with `kubectl cluster-info`.
+  4. For expired certificate credentials, regenerate the kubeconfig from the cloud provider CLI.
+  5. For service account token auth, confirm the token is still valid and attached to the job context you expect.
+  6. For RBAC errors immediately after auth succeeds, switch to the `k8s-rbac-forbidden` diagnosis instead.
+validation: |-
+  ## Validation
+
+  - `kubectl cluster-info` succeeds.
+  - `kubectl auth whoami` or an equivalent access check confirms the expected identity.
+  - `kubectl get pods -n <namespace> --request-timeout=10s` returns successfully.
+match:
+  any:
+    - "error: you must be logged in"
+    - "You must be logged in to the server"
+    - "unable to connect to the server"
+    - "no configuration has been provided"
+    - "error loading config file"
+    - "context not found"
+    - "kubectl cluster-info"
+  none:
+    - "forbidden"
+    - "is forbidden"
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - kubeconfig
+    - k8s/**/*.yaml
+  local_repro:
+    - kubectl cluster-info
+    - kubectl config current-context
+  verify:
+    - kubectl cluster-info
+why_it_matters: |-
+  ## Why it matters
+
+  The kubeconfig file may be missing, point to an expired credential, or reference a cluster that the CI environment cannot reach. Authentication failures stop the deployment before manifest correctness even matters.
+
+  ## Prevention
+
+  - Rotate kubeconfig credentials on a fixed schedule.
+  - Prefer OIDC or short-lived token authentication over long-lived kubeconfig certificates.
+  - Test cluster connectivity in a dedicated pre-flight step before running deployment jobs.

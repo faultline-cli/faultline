@@ -36,9 +36,11 @@ match:
     - "No artifact found"
     - "Unable to find artifact"
     - "download artifact"
+    - "Uploading artifacts..."
     - "No files were found with the provided path"
     - "No artifacts will be uploaded"
     - "Uploading artifacts to coordinator... forbidden"
+    - "responseStatus=403 Forbidden"
   none:
     - "artifacts have expired"
     - "expired artifact"

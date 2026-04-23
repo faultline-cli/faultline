@@ -39,6 +39,11 @@ match:
     - host port
     - EADDRINUSE
     - cannot assign requested address
+    - "x509:"
+    - certificate
+    - "tls handshake"
+    - "ssl connection"
+    - "concurrent/futures"
 hypothesis:
   supports:
     - signal: test.parallel.resource_conflict

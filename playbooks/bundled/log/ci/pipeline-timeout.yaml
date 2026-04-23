@@ -53,6 +53,8 @@ match:
   any:
     - "Job's timeout exceeded"
     - "execution timeout"
+    - "timeout was exceeded"
+    - "execution took longer than"
     - "exceeded the maximum execution time"
     - "build timed out"
     - "pipeline timed out"

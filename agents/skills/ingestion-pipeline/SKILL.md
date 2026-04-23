@@ -28,29 +28,33 @@ Do not use it for general coding work, broad repository review, or playbook auth
 ## Workflow
 
 1. Confirm the source material is public and appropriate for ingestion.
-2. Prefer a mixed batch across multiple adapters when possible:
+2. Inspect the current real-corpus mix first:
+   - `./bin/faultline fixtures stats --class real --json`
+   - bias the run toward underrepresented adapters or failure classes when the checked-in corpus is skewed
+3. Prefer a mixed batch across multiple adapters when possible:
    - `github-issue`
    - `gitlab-issue`
    - `stackexchange-question`
    - `discourse-topic`
    - `reddit-post`
-3. Prefer breadth over depth:
+4. Prefer breadth over depth:
    - take one or two strong URLs from a source before returning to the same thread family
    - do not over-harvest a single issue or discussion unless it is producing clearly distinct failure signatures
-4. Run `faultline fixtures ingest --adapter ... --url ...` for each chosen URL.
-5. Run `faultline fixtures review`.
-6. Classify staged results:
+5. Run `faultline fixtures ingest --adapter ... --url ...` for each chosen URL.
+6. Run `faultline fixtures review`.
+7. Classify staged results:
    - reject duplicates
    - reject near-duplicates without meaningful new signal
    - reject setup-only or workaround-only snippets
    - reject anything that still needs sanitization
    - keep only candidates with a credible expected playbook and useful regression value
-7. Promote accepted cases with `faultline fixtures promote <staging-id> --expected-playbook <id>`.
-8. Add `--strict-top-1`, `--expected-stage`, or `--disallow` only when the boundary needs that extra protection.
-9. Run:
+8. Promote accepted cases with `faultline fixtures promote <staging-id> --expected-playbook <id>`.
+9. Add `--strict-top-1`, `--expected-stage`, or `--disallow` only when the boundary needs that extra protection.
+10. Run:
    - `make build`
    - `./bin/faultline fixtures stats --class real --check-baseline`
-10. If the new fixture exposes weak matching or a confusable neighbor, switch to the `playbook-refinement` skill before stopping.
+11. If the new fixture exposes weak matching or a confusable neighbor, switch to the `playbook-refinement` skill before stopping.
+12. If the investigation uncovers a repository-local risk that belongs to a bundled `source` playbook, add repository fixtures under `internal/engine/testdata/source/` and extend the source-playbook regression tests in the same pass instead of treating it as real-log corpus growth.
 
 ## Guardrails
 
@@ -59,6 +63,7 @@ Do not use it for general coding work, broad repository review, or playbook auth
 - Do not add new product logic when the task is really corpus curation.
 - Keep the output deterministic and grounded in checked-in expectations.
 - Do not confuse "more snippets" with "more coverage"; repeated-source snippets must earn their place.
+- Do not force repository-inspection findings into `fixtures/real/` when they are better represented as source-playbook regression fixtures.
 
 ## Deliverable
 
@@ -68,3 +73,4 @@ Report:
 - the source mix used
 - promoted or rejected fixture IDs
 - any follow-on playbook refinement work required
+- any source-playbook fixture or regression follow-up required

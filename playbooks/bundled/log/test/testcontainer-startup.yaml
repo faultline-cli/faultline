@@ -1,0 +1,58 @@
+id: testcontainer-startup
+title: Testcontainers container failed to start
+category: test
+severity: medium
+base_score: 1.0
+tags: [testcontainers, docker, test, integration, container]
+stage_hints: [test]
+summary: |-
+  A test using Testcontainers could not start the required Docker container. This usually means Docker is unavailable on the CI runner, or the runner cannot access the Docker socket.
+diagnosis: |-
+  ## Diagnosis
+
+  A test using Testcontainers could not start the required Docker container. This usually means Docker is unavailable on the CI runner, or the runner cannot access the Docker socket.
+fix: |-
+  ## Fix steps
+
+  1. In GitHub Actions, ensure the runner actually has Docker available or add the appropriate Docker service.
+  2. In GitLab CI, add `docker:dind` and configure `DOCKER_HOST` if the test environment expects it.
+  3. If the job runs in a container, confirm `/var/run/docker.sock` is mounted or the remote Docker endpoint is reachable.
+  4. Use `TESTCONTAINERS_HOST_OVERRIDE` when Docker runs remotely.
+  5. Pre-pull large images in CI to avoid cold-start timeouts.
+validation: |-
+  ## Validation
+
+  - `docker info` succeeds in the same environment that runs the tests.
+  - Re-run the failing test command and confirm the container starts successfully.
+match:
+  any:
+    - "Could not find a valid Docker environment"
+    - "DockerClientProviderStrategy"
+    - "org.testcontainers"
+    - "container failed to start"
+    - "Mapped port can only be obtained after the container is started"
+    - "testcontainers"
+    - "ProviderError"
+  none:
+    - "docker build"
+    - "docker push"
+workflow:
+  likely_files:
+    - src/test/
+    - docker-compose.yml
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - docker info
+  verify:
+    - docker info
+why_it_matters: |-
+  ## Why it matters
+
+  Testcontainers requires a running Docker daemon. Many CI runners, especially Kubernetes-based ones, do not provide Docker-in-Docker access by default, or the user running the tests lacks permission to use the Docker socket.
+
+  ## Prevention
+
+  - Choose a CI runner tier that provides Docker daemon access for projects using Testcontainers.
+  - Add a CI diagnostic step before tests, such as `docker info`, so Docker unavailability surfaces early with a clear error.
+  - Document the Docker access requirement in the repository README so future CI migrations account for it.

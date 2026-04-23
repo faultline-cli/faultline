@@ -44,7 +44,9 @@ match:
     - "fixture file missing"
     - "no such file or directory"
     - "FileNotFoundError"
-    - "factory"
+    - "FactoryBot"
+    - "factory_bot"
+    - "factory not registered"
     - "undefined method"
     - "ActiveRecord::RecordNotFound"
     - "could not find test data"
@@ -64,6 +66,9 @@ match:
     - secret not found
     - mountvolume.setup failed
     - failedmount
+    - "command 'gcc' failed"
+    - "Could not build wheels for"
+    - "No matching distribution found for"
 hypothesis:
   supports:
     - signal: test.fixture.missing

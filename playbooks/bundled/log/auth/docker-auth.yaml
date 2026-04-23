@@ -13,6 +13,7 @@ match:
     - "unauthorized: authentication required"
     - no basic auth credentials
     - "denied: requested access to the resource is denied"
+    - "may require 'docker login'"
   none:
     - failed to pull image
     - imagepullbackoff

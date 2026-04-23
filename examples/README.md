@@ -4,7 +4,7 @@ These examples are small, runnable inputs derived from real CI failures.
 
 Each `.log` file has a matching `.expected.md` file so you can compare the current output with a known-good result. The missing-executable example also includes checked-in snapshots for `workflow`, `replay`, and `trace`, plus a deterministic `compare` snapshot against the runtime-mismatch sample.
 
-They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog currently ships 77 playbooks.
+They are intended for first-run checks, docs validation, and quick regression sanity checks. They are deliberately small; the broader regression corpus lives under `fixtures/real/` and the bundled catalog currently ships 100 playbooks.
 
 ## Included examples
 
@@ -93,7 +93,7 @@ For a quiet high-confidence local prevention check in a repository:
 
 ## Coverage snapshot
 
-The bundled catalog currently includes 77 playbooks across 75 log diagnoses and 2 source-detector rules. Representative diagnoses include:
+The bundled catalog currently includes 100 playbooks across 98 log diagnoses and 2 source-detector rules. Representative diagnoses include:
 
 - `docker-auth`, `git-auth`, `ssh-key-auth`, `aws-credentials`
 - `missing-executable`, `runtime-mismatch`, `dependency-drift`, `npm-ci-lockfile`, `poetry-lockfile-drift`

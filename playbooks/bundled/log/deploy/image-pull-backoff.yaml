@@ -44,6 +44,10 @@ match:
     - pull access denied for
     - back-off pulling image
     - "rpc error: code = unknown desc = error response from daemon"
+  none:
+    - "may require 'docker login'"
+    - "unauthorized: authentication required"
+    - no basic auth credentials
 workflow:
   likely_files:
     - Dockerfile

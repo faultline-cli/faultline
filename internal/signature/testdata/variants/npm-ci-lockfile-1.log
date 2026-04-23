@@ -1,0 +1,3 @@
+2026-04-22T10:41:03Z npm ERR! `npm ci` can only install packages when your package.json and package-lock.json are in sync
+/home/runner/work/app/app/package-lock.json:19 package.json and package-lock.json are in sync
+run `npm install` to generate a lockfile

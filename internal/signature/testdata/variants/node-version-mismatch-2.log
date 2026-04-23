@@ -1,0 +1,4 @@
+2026-04-23 08:55:00 worker 55218 starting install
+Expected node version >=20 but found v18.19.0
+D:\a\app\app\.nvmrc:1 pinned for commit 038de0b984b0d5fd
+toolcache wrapper noted at /opt/hostedtoolcache/node/18.19.0/x64/bin/node

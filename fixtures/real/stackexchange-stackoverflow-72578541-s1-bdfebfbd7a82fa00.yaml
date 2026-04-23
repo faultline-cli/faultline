@@ -1,0 +1,42 @@
+id: stackexchange-stackoverflow-72578541-s1-bdfebfbd7a82fa00
+title: How to access a pytest built-in fixture from a fixture with scope other than &#39;function&#39;?
+fixture_class: real
+normalized_log: |-
+    I have read the docs about fixtures a few times and I believe I understand scope:
+    https://docs.pytest.org/en/6.2.x/fixture.html
+    I have noticed that all the builtin fixtures I want to use are function scoped, for example: capdf, capsys, monkeypatch, etc...
+    That pytest documentation above encourages more of the "act step" to be pushed into fixtures instead of test functions.
+    Doing that without drastically increasing the time required for my tests seems to require the other scopes beyond the "function" scope.
+    But the builtin fixtures do not work in other scopes. Have I missed a way to use them in other scopes?
+    Example:
+    @pytest.fixture(scope="class")
+    def my_fixture(capfd):
+    # ... use capfd to capture stdout
+    pass
+    This causes an error:
+    ScopeMismatch: You tried to access the function scoped fixture capfd with a class scoped request object
+    See this workaround for monkeypatch specifically:
+    https://github.com/pytest-dev/pytest/issues/363#issuecomment-406536200
+    Is a workaround like this possible for capfd or for all builtin fixtures?
+    For instance, could one make a capfd_session fixture that uses the CaptureFixture class? Would doing so be inadvisable because it requires going past the API of pytest and these details could be subject to change in a future update?
+expectation:
+    expected_playbook: pytest-fixture-error
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/72578541
+    repository: stackoverflow
+    issue_number: 72578541
+    comment_id: "0"
+    title: How to access a pytest built-in fixture from a fixture with scope other than &#39;function&#39;?
+    author: user19315783
+    snippet: 1
+    fetched_at: "2026-04-22T20:59:31Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T21:01:33Z"
+fingerprint: bdfebfbd7a82fa00

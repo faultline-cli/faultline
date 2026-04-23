@@ -44,23 +44,28 @@ type Candidate struct {
 }
 
 type Report struct {
-	Source      string                     `json:"source,omitempty"`
-	Fingerprint string                     `json:"fingerprint,omitempty"`
-	Context     model.Context              `json:"context,omitempty"`
-	Playbook    model.Playbook             `json:"playbook"`
-	Signature   *signature.ResultSignature `json:"signature,omitempty"`
-	Rank        int                        `json:"rank,omitempty"`
-	Matched     bool                       `json:"matched"`
-	Score       float64                    `json:"score,omitempty"`
-	Confidence  float64                    `json:"confidence,omitempty"`
-	Detector    string                     `json:"detector,omitempty"`
-	Summary     string                     `json:"summary,omitempty"`
-	Rules       []Rule                     `json:"rules"`
-	Why         []string                   `json:"why,omitempty"`
-	Scoring     *model.ScoreBreakdown      `json:"scoring,omitempty"`
-	Ranking     *model.Ranking             `json:"ranking,omitempty"`
-	Competing   []Candidate                `json:"competing,omitempty"`
-	Hooks       *model.HookReport          `json:"hooks,omitempty"`
+	Source          string                     `json:"source,omitempty"`
+	Fingerprint     string                     `json:"fingerprint,omitempty"`
+	Context         model.Context              `json:"context,omitempty"`
+	Playbook        model.Playbook             `json:"playbook"`
+	Signature       *signature.ResultSignature `json:"signature,omitempty"`
+	SeenBefore      bool                       `json:"seen_before,omitempty"`
+	OccurrenceCount int                        `json:"occurrence_count,omitempty"`
+	FirstSeenAt     string                     `json:"first_seen_at,omitempty"`
+	LastSeenAt      string                     `json:"last_seen_at,omitempty"`
+	HookHistory     *model.HookHistorySummary  `json:"hook_history,omitempty"`
+	Rank            int                        `json:"rank,omitempty"`
+	Matched         bool                       `json:"matched"`
+	Score           float64                    `json:"score,omitempty"`
+	Confidence      float64                    `json:"confidence,omitempty"`
+	Detector        string                     `json:"detector,omitempty"`
+	Summary         string                     `json:"summary,omitempty"`
+	Rules           []Rule                     `json:"rules"`
+	Why             []string                   `json:"why,omitempty"`
+	Scoring         *model.ScoreBreakdown      `json:"scoring,omitempty"`
+	Ranking         *model.Ranking             `json:"ranking,omitempty"`
+	Competing       []Candidate                `json:"competing,omitempty"`
+	Hooks           *model.HookReport          `json:"hooks,omitempty"`
 }
 
 func Build(analysis *model.Analysis, lines []model.Line, playbooks []model.Playbook, playbookID string, includeRejected bool) (Report, error) {
@@ -83,6 +88,11 @@ func Build(analysis *model.Analysis, lines []model.Line, playbooks []model.Playb
 		report.Matched = true
 		sig := signature.ForResult(*result)
 		report.Signature = &sig
+		report.SeenBefore = result.SeenBefore
+		report.OccurrenceCount = result.OccurrenceCount
+		report.FirstSeenAt = result.FirstSeenAt
+		report.LastSeenAt = result.LastSeenAt
+		report.HookHistory = result.HookHistorySummary
 		report.Score = result.Score
 		report.Confidence = result.Confidence
 		report.Detector = result.Detector

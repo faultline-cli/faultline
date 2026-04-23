@@ -315,6 +315,62 @@ LIMIT ?
 	return values, nil
 }
 
+func (s *sqliteStore) ListSignatures(ctx context.Context, limit int) ([]SignatureSummary, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	rows, err := s.db.QueryContext(ctx, `
+SELECT
+	s.signature_hash,
+	s.failure_id,
+	COALESCE((
+		SELECT f.title
+		FROM findings f
+		WHERE f.rank = 1 AND f.signature_hash = s.signature_hash
+		ORDER BY f.seen_at DESC, f.run_id DESC
+		LIMIT 1
+	), ''),
+	COALESCE((
+		SELECT f.category
+		FROM findings f
+		WHERE f.rank = 1 AND f.signature_hash = s.signature_hash
+		ORDER BY f.seen_at DESC, f.run_id DESC
+		LIMIT 1
+	), ''),
+	s.occurrence_count,
+	s.first_seen_at,
+	s.last_seen_at
+FROM signatures s
+ORDER BY s.occurrence_count DESC, s.last_seen_at DESC, s.signature_hash ASC
+LIMIT ?
+`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("query signatures: %w", err)
+	}
+	defer rows.Close()
+
+	var out []SignatureSummary
+	for rows.Next() {
+		var item SignatureSummary
+		if err := rows.Scan(
+			&item.SignatureHash,
+			&item.FailureID,
+			&item.Title,
+			&item.Category,
+			&item.OccurrenceCount,
+			&item.FirstSeenAt,
+			&item.LastSeenAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan signature summary: %w", err)
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate signatures: %w", err)
+	}
+	return out, nil
+}
+
 func (s *sqliteStore) GetRecentFindingsBySignature(ctx context.Context, signatureHash string, limit int) ([]FindingSummary, error) {
 	signatureHash = strings.TrimSpace(signatureHash)
 	if signatureHash == "" {
@@ -346,6 +402,70 @@ LIMIT ?
 		return nil, fmt.Errorf("iterate findings by signature: %w", err)
 	}
 	return findings, nil
+}
+
+func (s *sqliteStore) ListPlaybookStats(ctx context.Context, limit int) ([]PlaybookStats, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	rows, err := s.db.QueryContext(ctx, `
+SELECT
+	f.failure_id,
+	COALESCE(MAX(f.title), ''),
+	COALESCE(MAX(f.category), ''),
+	COUNT(*) AS selected_count,
+	COALESCE(pm.match_count, COUNT(*)) AS matched_count,
+	COALESCE(pm.avg_rank, 1.0) AS avg_rank,
+	SUM(CASE WHEN COALESCE(s.occurrence_count, 0) > 1 THEN 1 ELSE 0 END) AS recurring_run_count,
+	COUNT(DISTINCT CASE WHEN COALESCE(s.occurrence_count, 0) > 1 THEN f.signature_hash END) AS recurring_signatures,
+	AVG(f.confidence) AS avg_confidence,
+	COALESCE(MAX(f.seen_at), '')
+FROM findings f
+LEFT JOIN signatures s ON s.signature_hash = f.signature_hash
+LEFT JOIN (
+	SELECT
+		playbook_id,
+		COUNT(*) AS match_count,
+		AVG(CAST(rank AS REAL)) AS avg_rank
+	FROM playbook_matches
+	GROUP BY playbook_id
+) pm ON pm.playbook_id = f.failure_id
+WHERE f.rank = 1
+GROUP BY f.failure_id, pm.match_count, pm.avg_rank
+ORDER BY selected_count DESC, MAX(f.seen_at) DESC, f.failure_id ASC
+LIMIT ?
+`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("query playbook stats: %w", err)
+	}
+	defer rows.Close()
+
+	var out []PlaybookStats
+	for rows.Next() {
+		var item PlaybookStats
+		if err := rows.Scan(
+			&item.FailureID,
+			&item.Title,
+			&item.Category,
+			&item.SelectedCount,
+			&item.MatchedCount,
+			&item.AvgRank,
+			&item.RecurringRunCount,
+			&item.RecurringSignatures,
+			&item.AvgConfidence,
+			&item.LastSeenAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan playbook stats: %w", err)
+		}
+		if item.MatchedCount > item.SelectedCount {
+			item.NonSelectedCount = item.MatchedCount - item.SelectedCount
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate playbook stats: %w", err)
+	}
+	return out, nil
 }
 
 func (s *sqliteStore) LookupHookHistory(ctx context.Context, signatureHash, playbookID string) (*HookHistorySummary, error) {
@@ -402,6 +522,63 @@ ORDER BY executed_at ASC
 		return nil, nil
 	}
 	return summary, nil
+}
+
+func (s *sqliteStore) ListHookStats(ctx context.Context, limit int) ([]HookStats, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	rows, err := s.db.QueryContext(ctx, `
+SELECT
+	playbook_id,
+	hook_id,
+	category,
+	COUNT(*) AS total_count,
+	SUM(CASE WHEN status = 'executed' THEN 1 ELSE 0 END) AS executed_count,
+	SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) AS passed_count,
+	SUM(CASE
+		WHEN status = 'failed' THEN 1
+		WHEN status = 'executed' AND passed = 0 THEN 1
+		ELSE 0
+	END) AS failed_count,
+	SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) AS blocked_count,
+	SUM(CASE WHEN status = 'skipped' THEN 1 ELSE 0 END) AS skipped_count,
+	AVG(confidence_delta) AS avg_confidence_delta,
+	COALESCE(MAX(executed_at), '')
+FROM hook_results
+GROUP BY playbook_id, hook_id, category
+ORDER BY total_count DESC, MAX(executed_at) DESC, playbook_id ASC, hook_id ASC
+LIMIT ?
+`, limit)
+	if err != nil {
+		return nil, fmt.Errorf("query hook stats: %w", err)
+	}
+	defer rows.Close()
+
+	var out []HookStats
+	for rows.Next() {
+		var item HookStats
+		if err := rows.Scan(
+			&item.PlaybookID,
+			&item.HookID,
+			&item.Category,
+			&item.TotalCount,
+			&item.ExecutedCount,
+			&item.PassedCount,
+			&item.FailedCount,
+			&item.BlockedCount,
+			&item.SkippedCount,
+			&item.AvgConfidenceDelta,
+			&item.LastSeenAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan hook stats: %w", err)
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate hook stats: %w", err)
+	}
+	return out, nil
 }
 
 func (s *sqliteStore) VerifyDeterminismForInputHash(ctx context.Context, inputHash string) (DeterminismSummary, error) {

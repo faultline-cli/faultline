@@ -28,11 +28,23 @@ func (noopStore) RecentTopFailures(context.Context, int) ([]string, error) {
 	return nil, nil
 }
 
+func (noopStore) ListSignatures(context.Context, int) ([]SignatureSummary, error) {
+	return nil, nil
+}
+
 func (noopStore) GetRecentFindingsBySignature(context.Context, string, int) ([]FindingSummary, error) {
 	return nil, nil
 }
 
+func (noopStore) ListPlaybookStats(context.Context, int) ([]PlaybookStats, error) {
+	return nil, nil
+}
+
 func (noopStore) LookupHookHistory(context.Context, string, string) (*HookHistorySummary, error) {
+	return nil, nil
+}
+
+func (noopStore) ListHookStats(context.Context, int) ([]HookStats, error) {
 	return nil, nil
 }
 

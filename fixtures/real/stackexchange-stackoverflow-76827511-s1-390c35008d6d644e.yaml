@@ -1,0 +1,28 @@
+id: stackexchange-stackoverflow-76827511-s1-390c35008d6d644e
+title: How to install pipenv on Ubuntu 23 after PEP 668?
+fixture_class: real
+normalized_log: |-
+    I used pipenv on Ubuntu 22. Then I upgraded the OS to version 23, so pipenv stopped working, and it is impossible to install it now with a system pip.
+    # pip3 install pipenv
+    error: externally-managed-environment
+    hint: See PEP 668 for the detailed specification.
+    PEP 668 apparently prevents using system python for personal use cases and wants me to use virtualenvs. But this is exactly why I want to install pipenv in the first place. So it is kind of a chicken and egg problem. What is the best way to install pipenv from now on?
+expectation:
+    expected_playbook: python-externally-managed
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/76827511
+    repository: stackoverflow
+    issue_number: 76827511
+    comment_id: "0"
+    title: How to install pipenv on Ubuntu 23 after PEP 668?
+    author: Vadim
+    snippet: 1
+    fetched_at: "2026-04-22T12:10:54Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T12:11:09Z"
+fingerprint: 390c35008d6d644e

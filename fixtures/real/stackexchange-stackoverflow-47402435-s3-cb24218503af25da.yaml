@@ -1,0 +1,34 @@
+id: stackexchange-stackoverflow-47402435-s3-cb24218503af25da
+title: pytest fixture of fixture, not found
+fixture_class: real
+normalized_log: |-
+    ============================================== ERRORS ==============================================
+    __________________________________ ERROR at setup of test_foo_bar __________________________________
+    file .../test_foo_bar.py, line 3
+    def test_foo_bar(bar):
+    .../test.py, line 7
+    @pytest.fixture
+    def bar(foo):
+    E fixture 'foo' not found
+    > available fixtures: TIMEOUT, bar, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, cov, doctest_namespace, monkeypatch, no_cover, once_without_docker, pytestconfig, record_property, record_xml_attribute, recwarn, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+    > use 'pytest --fixtures [testpath]' for help on them.
+expectation:
+    expected_playbook: pytest-fixture-error
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/47402435
+    repository: stackoverflow
+    issue_number: 47402435
+    comment_id: "55454635"
+    title: pytest fixture of fixture, not found
+    author: m. bron
+    snippet: 3
+    fetched_at: "2026-04-23T03:01:04Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T03:02:48Z"
+fingerprint: cb24218503af25da

@@ -1,0 +1,35 @@
+id: github-docker-for-mac-7553-s3-43296caaebd1aba5
+title: No Docker daemon on MacOS intel
+fixture_class: real
+normalized_log: |-
+    $ docker version
+    Client:
+    Version: 27.4.0
+    API version: 1.47
+    Go version: go1.22.10
+    Git commit: bde2b89
+    Built: Sat Dec 7 <timestamp> 2024
+    OS/Arch: darwin/amd64
+    Context: default
+    Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/for-mac/issues/7553
+    repository: docker/for-mac
+    issue_number: 7553
+    title: No Docker daemon on MacOS intel
+    labels:
+        - status/triage
+        - area/daemon
+    author: nbdavies
+    snippet: 3
+    fetched_at: "2026-04-22T12:18:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T12:22:46Z"
+fingerprint: 43296caaebd1aba5

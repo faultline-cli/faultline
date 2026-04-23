@@ -1,0 +1,11 @@
+package service
+
+import (
+	"os/exec"
+)
+
+func SyncRemote() error {
+	cmd := exec.Command("git", "fetch", "--all")
+	_ = cmd.Run()
+	return nil
+}

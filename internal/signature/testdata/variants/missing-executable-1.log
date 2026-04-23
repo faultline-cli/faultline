@@ -1,0 +1,3 @@
+2026-04-22T12:05:31Z Starting GitHub Actions step
+/home/runner/work/faultline/faultline/.github/workflows/ci.yml:118: exec /__e/node20/bin/node: no such file or directory
+Process completed with exit code 127

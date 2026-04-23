@@ -1,0 +1,47 @@
+id: stackexchange-stackoverflow-72206691-s1-5adf61362813fe2c
+title: 'encountering this error on circle ci: Unable to parse YAML # mapping values are not allowed here # in &#39;string&#39;, line 3, column 5'
+fixture_class: real
+normalized_log: |-
+    jobs:
+    build:
+    working_directory: ~/project
+    docker:
+    - image: "cirrusci/flutter"
+    steps:
+    - checkout
+    - run: flutter main.dart
+    test:
+    working_directory: ~/project
+    docker:
+    - image: "cirrusci/flutter"
+    steps:
+    - checkout
+    - run: flutter widget_test.dart
+    workflows:
+    build_and_test:
+    jobs:
+    - build
+    - test:
+    requires:
+    - build
+    I got this error from the CircleCI:
+    Unable to parse YAML # mapping values are not allowed here # in 'string', line 3, column 5
+expectation:
+    expected_playbook: circleci-config-validation
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/72206691
+    repository: stackoverflow
+    issue_number: 72206691
+    comment_id: "0"
+    title: 'encountering this error on circle ci: Unable to parse YAML # mapping values are not allowed here # in &#39;string&#39;, line 3, column 5'
+    author: ridge
+    snippet: 1
+    fetched_at: "2026-04-22T12:18:29Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T12:22:36Z"
+fingerprint: 5adf61362813fe2c

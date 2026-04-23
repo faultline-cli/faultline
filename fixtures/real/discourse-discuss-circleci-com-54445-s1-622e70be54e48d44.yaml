@@ -1,0 +1,29 @@
+id: discourse-discuss-circleci-com-54445-s1-622e70be54e48d44
+title: Job rejected due to not a valid resource class with machine image ubuntu-2404:2026.02.2
+fixture_class: real
+normalized_log: |-
+    Hi @shakuzen
+    I just had the same experience. It appears that the image was renamed. Check the current list of available images on CircleCI Developer - Machine Imagesubuntu-2404 - CircleCI .
+    I had success with ubuntu-2404:2026.02.20
+    machine-agent version 1.0.121027-1c678a53 (image: “ubuntu-2404:2026.02.20”, public ip: “3.84.54.181”, provider: “EC2”)
+    task-agent version 1.0.315880-984b2a35
+    Downloading task-agent: success after 324.963071ms.
+expectation:
+    expected_playbook: circleci-resource-class-invalid
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/job-rejected-due-to-not-a-valid-resource-class-with-machine-image-ubuntu-2404-2026-02-2/54445
+    repository: discuss.circleci.com
+    issue_number: 54445
+    comment_id: "107696"
+    title: Job rejected due to not a valid resource class with machine image ubuntu-2404:2026.02.2
+    author: MikeMcC399
+    snippet: 1
+    fetched_at: "2026-04-22T11:51:37Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T12:05:18Z"
+fingerprint: 622e70be54e48d44

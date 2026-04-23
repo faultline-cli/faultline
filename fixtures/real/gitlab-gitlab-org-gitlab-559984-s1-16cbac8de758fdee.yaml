@@ -1,0 +1,42 @@
+id: gitlab-gitlab-org-gitlab-559984-s1-16cbac8de758fdee
+title: 'Fix: katalon_gitlab_ci_yaml_spec.rb hangs on created pipeline'
+fixture_class: real
+normalized_log: |-
+    # [RSpecRunTime] Starting example group spec/lib/gitlab/ci/templates/katalon_gitlab_ci_yaml_spec.rb. Expected to take 1.54 seconds.
+    Katalon.gitlab-ci.yml
+    the created pipeline
+    Terminated
+    WARNING: step_script could not run to completion because the timeout was exceeded. For more control over job and script timeouts see: https://docs.gitlab.com/ci/runners/configure_runners/#set-script-and-after_script-timeouts
+    ERROR: Job failed: execution took longer than 1h30m0s seconds
+expectation:
+    expected_playbook: pipeline-timeout
+    top_n: 3
+    expected_stage: test
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab/-/issues/559984
+    repository: gitlab-org/gitlab
+    issue_number: 559984
+    title: 'Fix: katalon_gitlab_ci_yaml_spec.rb hangs on created pipeline'
+    labels:
+        - Category:Continuous Integration
+        - automation:ml
+        - backend
+        - bug::performance
+        - development-analytics:pipeline-stability
+        - devops::verify
+        - group::development tooling
+        - maintenance::pipelines
+        - section::ci
+        - type::bug
+        - workflow::complete
+    author: pranshusharma
+    snippet: 1
+    fetched_at: "2026-04-22T21:07:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-22T21:09:41Z"
+fingerprint: 16cbac8de758fdee

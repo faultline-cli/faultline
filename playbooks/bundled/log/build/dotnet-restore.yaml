@@ -1,0 +1,60 @@
+id: dotnet-restore
+title: .NET NuGet package restore failure
+category: build
+severity: high
+base_score: 1.0
+tags: [dotnet, nuget, restore, csharp, build]
+stage_hints: [build]
+summary: |-
+  `dotnet restore` or a build that implicitly runs restore could not download or resolve one or more NuGet packages. The build cannot proceed until all dependencies are available.
+diagnosis: |-
+  ## Diagnosis
+
+  `dotnet restore` or a build that implicitly runs restore could not download or resolve one or more NuGet packages. The build cannot proceed until all dependencies are available.
+fix: |-
+  ## Fix steps
+
+  1. Add feed credentials to `NuGet.Config` or as CI secrets for private feeds.
+  2. Run `dotnet restore --verbosity detailed` to identify which package is failing.
+  3. Update the package version to one that exists with `dotnet list package --outdated`.
+  4. If you need an offline restore path, restore from a known packages cache such as `dotnet restore --packages .nuget/packages`.
+validation: |-
+  ## Validation
+
+  - `dotnet restore` completes successfully.
+  - The CI build proceeds past the restore phase without the original NuGet error.
+match:
+  any:
+    - "error NU"
+    - "Unable to resolve"
+    - "Package restore failed"
+    - "NuGet restore"
+    - "could not be resolved"
+    - "unable to find package"
+    - "MSBuild error"
+    - "ProjectReference"
+    - "The given key was not present in the dictionary"
+    - "Could not resolve SDK"
+  none:
+    - "x509:"
+    - "certificate signed by unknown authority"
+workflow:
+  likely_files:
+    - "*.csproj"
+    - "*.sln"
+    - NuGet.Config
+    - global.json
+  local_repro:
+    - dotnet restore
+  verify:
+    - dotnet restore
+why_it_matters: |-
+  ## Why it matters
+
+  Common causes include a private NuGet feed that is not configured, a package version pinned in the project file that does not exist, or network access to `nuget.org` that is blocked in the CI environment.
+
+  ## Prevention
+
+  - Commit `NuGet.Config` with feed URLs, but not credentials, to the repository.
+  - Cache the NuGet packages directory between CI runs.
+  - Pin package versions in `*.csproj` and update them deliberately.

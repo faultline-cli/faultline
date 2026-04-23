@@ -26,8 +26,12 @@ source:
       patterns:
         - "os.Remove("
         - "os.Rename("
+        - "os.WriteFile("
         - "file.Write("
+        - "io.Copy("
         - "db.Exec("
+        - "cmd.Run("
+        - "cmd.Wait("
         - "tx.Commit("
         - "tx.Rollback("
         - "resp.Body.Close("

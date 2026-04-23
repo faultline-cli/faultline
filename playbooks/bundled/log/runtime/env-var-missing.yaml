@@ -74,6 +74,9 @@ match:
     - secret is empty
     - configmap not found
     - secret not found
+    - "connection refused"
+    - "could not connect to server"
+    - "ECONNREFUSED"
 workflow:
   likely_files:
     - .env.example

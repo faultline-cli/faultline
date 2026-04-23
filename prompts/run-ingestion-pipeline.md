@@ -22,21 +22,25 @@ Prefer a varied batch over a single-source sweep.
 ## Required Approach
 
 1. Confirm each source is public and suitable for ingestion.
-2. Build a mixed candidate batch across multiple adapters when possible:
+2. Check the current corpus mix before choosing URLs:
+   - `./bin/faultline fixtures stats --class real --json`
+   - bias the run toward underrepresented adapters or failure classes when the current corpus is skewed
+3. Build a mixed candidate batch across multiple adapters when possible:
    - `github-issue`
    - `gitlab-issue`
    - `stackexchange-question`
    - `discourse-topic`
    - `reddit-post`
-3. Prefer breadth over depth:
+4. Prefer breadth over depth:
    - take one or two strong candidates from a source before harvesting more from the same thread
    - avoid spending the whole run on one issue, one subreddit post, or one discussion thread unless it clearly yields distinct failure signatures
-4. Run `faultline fixtures ingest --adapter ... --url ...` for each candidate URL.
-5. Review staged results with `faultline fixtures review`.
-6. Reject duplicates, near-duplicates without new signal, setup-only snippets, workaround-only snippets, and cases that still need sanitization.
-7. For accepted cases, promote with `faultline fixtures promote <staging-id> --expected-playbook <id>` plus any needed `--strict-top-1`, `--disallow`, or `--expected-stage` guards.
-8. Rebuild and run `./bin/faultline fixtures stats --class real --check-baseline`.
-9. If a promoted fixture exposes weak matching or a confusable neighbor, continue with [`refine-playbook-from-fixture.md`](./refine-playbook-from-fixture.md) before stopping.
+5. Run `faultline fixtures ingest --adapter ... --url ...` for each candidate URL.
+6. Review staged results with `faultline fixtures review`.
+7. Reject duplicates, near-duplicates without new signal, setup-only snippets, workaround-only snippets, and cases that still need sanitization.
+8. For accepted cases, promote with `faultline fixtures promote <staging-id> --expected-playbook <id>` plus any needed `--strict-top-1`, `--disallow`, or `--expected-stage` guards.
+9. Rebuild and run `./bin/faultline fixtures stats --class real --check-baseline`.
+10. If a promoted fixture exposes weak matching or a confusable neighbor, continue with [`refine-playbook-from-fixture.md`](./refine-playbook-from-fixture.md) before stopping.
+11. If the investigation surfaces a repository-local risk that belongs to a bundled `source` playbook rather than log matching, add or update repository fixtures under `internal/engine/testdata/source/` and extend the source-playbook regression tests in the same pass instead of forcing that signal into the real-log corpus.
 
 ## Command Skeleton
 
@@ -55,10 +59,12 @@ make build
 ## Acceptance Bar
 
 - the batch includes varied sources when available, not just repeated pulls from one thread
+- the run is biased toward underrepresented adapters or failure classes when current corpus stats show a gap
 - staging output is sanitized
 - the promoted fixture has an explicit expected playbook
 - the real corpus still passes its deterministic baseline gate
 - any new ambiguity is handled immediately, not deferred
+- any repository-inspection risk uncovered during intake is handed off to source-playbook fixture coverage rather than left implicit
 
 ## Source Selection Rules
 
@@ -73,3 +79,4 @@ make build
 - the source mix used
 - promoted fixture IDs or rejected staging IDs
 - any follow-on playbook refinement required by the new evidence
+- any source-playbook fixture or regression follow-up required by the new evidence

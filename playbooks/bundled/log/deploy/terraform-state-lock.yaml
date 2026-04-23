@@ -1,0 +1,55 @@
+id: terraform-state-lock
+title: Terraform state lock conflict
+category: deploy
+severity: high
+base_score: 1.0
+tags: [terraform, state, lock, infra]
+stage_hints: [deploy]
+summary: |-
+  Terraform could not acquire the state lock because another Terraform process is currently holding it. Only one Terraform operation can modify a given state at a time.
+diagnosis: |-
+  ## Diagnosis
+
+  Terraform could not acquire the state lock because another Terraform process is currently holding it. Only one Terraform operation can modify a given state at a time.
+
+  State locking prevents concurrent modifications to the same infrastructure. The lock is usually held by a parallel CI job, a manual run, or a crashed previous job that did not release the lock.
+fix: |-
+  ## Fix steps
+
+  1. Identify which job or operator currently holds the lock before taking action. The backend usually records the lock ID and owner context.
+  2. Wait for any active Terraform `plan` or `apply` touching the same state to complete, or cancel the duplicate run in CI.
+  3. Use `terraform force-unlock <LOCK_ID>` only after confirming the lock is stale and no active Terraform process is still working against that state.
+  4. Check your CI configuration for parallel jobs, retries, or manual approval paths that target the same Terraform backend or workspace.
+validation: |-
+  ## Validation
+
+  - Re-run the Terraform command after the active lock holder exits or the stale lock is cleared.
+  - Confirm Terraform acquires the lock cleanly and proceeds without a state-lock error.
+match:
+  any:
+    - "error locking state"
+    - "state lock"
+    - "lock id"
+    - "another terraform process"
+    - "terraform state is locked"
+    - "error acquiring the state lock"
+workflow:
+  likely_files:
+    - "*.tf"
+    - "terraform/**"
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - terraform plan
+  verify:
+    - terraform plan
+why_it_matters: |-
+  ## Why it matters
+
+  Terraform state locking protects shared infrastructure from concurrent writes. Bypassing the lock incorrectly can corrupt state or hide overlapping deploy activity.
+
+  ## Prevention
+
+  - Serialize Terraform runs per environment using CI concurrency groups, environment locks, or a single deployment lane.
+  - Use separate state files or workspaces for environments that are expected to run in parallel.
+  - Alert on locks that outlive the normal apply window so stale-state incidents are caught quickly.

@@ -1,0 +1,60 @@
+id: jest-worker-crash
+title: Jest worker process crashed unexpectedly
+category: test
+severity: high
+base_score: 1.0
+tags: [jest, javascript, worker, crash, node, signal]
+stage_hints: [test]
+summary: |-
+  A Jest worker process crashed mid-test run. Jest spawns multiple worker processes to run tests in parallel, and one of them exited unexpectedly.
+diagnosis: |-
+  ## Diagnosis
+
+  A Jest worker process crashed mid-test run. Jest spawns multiple worker processes to run tests in parallel, and one of them exited unexpectedly.
+fix: |-
+  ## Fix steps
+
+  1. Run with a single worker to isolate the failing test: `jest --runInBand`.
+  2. Identify which suite crashes first by running Jest in-band with verbose output.
+  3. If a native addon is involved, rebuild it for the current Node version.
+  4. If the crash is memory-related, increase Node memory with `NODE_OPTIONS=--max-old-space-size=4096`.
+  5. Search the test code for `process.exit()` or `process.abort()` calls.
+validation: |-
+  ## Validation
+
+  - `jest --runInBand` completes without a worker crash.
+  - Re-run the CI test job and confirm the worker stays alive through the suite.
+match:
+  any:
+    - "A worker process has quit unexpectedly"
+    - "Jest worker exited"
+    - "Force exiting Jest"
+    - "jest-worker"
+    - "Worker failed after"
+    - "worker crashed"
+    - "The worker has exited."
+    - "jest-circus"
+    - "worker exited with signal"
+    - "jest did not exit"
+  none:
+    - "PASS"
+    - "test suite failed to run"
+workflow:
+  likely_files:
+    - jest.config.js
+    - jest.config.ts
+    - package.json
+  local_repro:
+    - jest --runInBand
+  verify:
+    - jest --runInBand
+why_it_matters: |-
+  ## Why it matters
+
+  Jest worker crashes are commonly caused by a native Node addon segfaulting inside a worker, a test consuming too much memory, a `process.exit()` call in test code, or a Jest and Node version mismatch.
+
+  ## Prevention
+
+  - Set `maxWorkers` explicitly in `jest.config.js` for CI runners with tight memory limits.
+  - Audit test files for process-terminating calls.
+  - Keep Jest and Node versions aligned across local and CI environments.

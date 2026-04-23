@@ -5,6 +5,7 @@ import (
 	"math"
 	"regexp"
 	"strings"
+	"time"
 
 	glamour "charm.land/glamour/v2"
 	lipgloss "charm.land/lipgloss/v2"
@@ -70,6 +71,9 @@ func (r Renderer) renderAnalyzeQuick(a *model.Analysis, top int) string {
 
 	if summary := r.renderMarkdownSection("Summary", topResult.Playbook.Summary); summary != "" {
 		sections = append(sections, r.renderSection("Summary", summary))
+	}
+	if history := r.renderHistorySummary(topResult); history != "" {
+		sections = append(sections, r.renderSection("History", history))
 	}
 	if evidence := r.renderQuickEvidence(topResult.Evidence); evidence != "" {
 		sections = append(sections, r.renderSection("Matched Evidence", evidence))
@@ -169,6 +173,9 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 	if summary := r.renderMarkdownSection("Summary", result.Playbook.Summary); summary != "" {
 		parts = append(parts, r.renderSection("Summary", summary))
 	}
+	if history := r.renderHistorySummary(result); history != "" {
+		parts = append(parts, r.renderDetailPanel("History", history, "repo"))
+	}
 	if detailed && len(result.Evidence) > 0 {
 		parts = append(parts, r.renderDetailPanel("Evidence", r.renderBulletLines(result.Evidence), "evidence"))
 	}
@@ -252,6 +259,103 @@ func (r Renderer) renderQuickActions(result model.Result) string {
 		return strings.Join(out, "\n")
 	}
 	return r.renderBulletLines(items)
+}
+
+func (r Renderer) renderHistorySummary(result model.Result) string {
+	lines := historySummaryLines(result)
+	if len(lines) == 0 {
+		return ""
+	}
+	if r.opts.Plain {
+		return strings.Join(lines, "\n")
+	}
+	return r.renderBulletLines(lines)
+}
+
+func historySummaryLines(result model.Result) []string {
+	var lines []string
+	if sig := shortHistorySignature(result.SignatureHash); sig != "" {
+		lines = append(lines, "history available for signature "+sig)
+	}
+	switch {
+	case result.OccurrenceCount > 1:
+		if span := historyWindow(result.FirstSeenAt, result.LastSeenAt); span != "" {
+			lines = append(lines, fmt.Sprintf("seen %d times over %s in local history", result.OccurrenceCount, span))
+		} else {
+			lines = append(lines, fmt.Sprintf("seen %d times in local history", result.OccurrenceCount))
+		}
+	case result.OccurrenceCount == 1:
+		lines = append(lines, "first recorded occurrence in local history")
+	}
+	if result.FirstSeenAt != "" {
+		lines = append(lines, "first seen: "+result.FirstSeenAt)
+	}
+	if result.LastSeenAt != "" {
+		lines = append(lines, "last seen: "+result.LastSeenAt)
+	}
+	if summary := hookHistorySummaryLine(result.HookHistorySummary); summary != "" {
+		lines = append(lines, summary)
+	}
+	return lines
+}
+
+func hookHistorySummaryLine(summary *model.HookHistorySummary) string {
+	if summary == nil || summary.TotalCount == 0 {
+		return ""
+	}
+	parts := []string{fmt.Sprintf("hook verification history: %d run(s)", summary.TotalCount)}
+	if summary.ExecutedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d executed", summary.ExecutedCount))
+	}
+	if summary.PassedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d passed", summary.PassedCount))
+	}
+	if summary.FailedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d failed", summary.FailedCount))
+	}
+	if summary.BlockedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d blocked", summary.BlockedCount))
+	}
+	if summary.SkippedCount > 0 {
+		parts = append(parts, fmt.Sprintf("%d skipped", summary.SkippedCount))
+	}
+	if summary.LastSeenAt != "" {
+		parts = append(parts, "last "+summary.LastSeenAt)
+	}
+	return strings.Join(parts, ", ")
+}
+
+func historyWindow(firstSeenAt, lastSeenAt string) string {
+	start, err := time.Parse(time.RFC3339, strings.TrimSpace(firstSeenAt))
+	if err != nil {
+		return ""
+	}
+	end, err := time.Parse(time.RFC3339, strings.TrimSpace(lastSeenAt))
+	if err != nil || end.Before(start) {
+		return ""
+	}
+	duration := end.Sub(start)
+	switch {
+	case duration >= 48*time.Hour:
+		return fmt.Sprintf("%dd", int(duration.Hours()/24))
+	case duration >= time.Hour:
+		return fmt.Sprintf("%dh", int(duration.Hours()))
+	case duration >= time.Minute:
+		return fmt.Sprintf("%dm", int(duration.Minutes()))
+	default:
+		return ""
+	}
+}
+
+func shortHistorySignature(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	if len(value) > 12 {
+		return value[:12]
+	}
+	return value
 }
 
 func (r Renderer) renderQuickAlternatives(results []model.Result) string {

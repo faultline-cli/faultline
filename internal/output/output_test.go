@@ -279,6 +279,28 @@ func TestFormatAnalysisTextQuickShowsConfidenceLabel(t *testing.T) {
 	}
 }
 
+func TestFormatAnalysisTextQuickIncludesHistorySummary(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.84, []string{"authentication required"})
+	a.Results[0].SignatureHash = "0123456789abcdef0123456789abcdef"
+	a.Results[0].OccurrenceCount = 3
+	a.Results[0].FirstSeenAt = "2026-04-20T10:00:00Z"
+	a.Results[0].LastSeenAt = "2026-04-23T12:00:00Z"
+	a.Results[0].HookHistorySummary = &model.HookHistorySummary{
+		TotalCount:    3,
+		ExecutedCount: 3,
+		PassedCount:   2,
+		FailedCount:   1,
+		LastSeenAt:    "2026-04-23T12:00:00Z",
+	}
+
+	text := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
+	for _, want := range []string{"History", "history available for signature 0123456789ab", "seen 3 times over 3d in local history", "hook verification history: 3 run(s)"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("expected %q in quick output, got %q", want, text)
+		}
+	}
+}
+
 func TestFormatAnalysisTextQuickTopN(t *testing.T) {
 	a := &model.Analysis{
 		Results: []model.Result{
@@ -306,6 +328,9 @@ func boolPtr(value bool) *bool {
 func TestFormatAnalysisMarkdownDetailed(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.91, []string{"authentication required"})
 	a.Context = model.Context{Stage: "deploy"}
+	a.Results[0].OccurrenceCount = 2
+	a.Results[0].FirstSeenAt = "2026-04-20T10:00:00Z"
+	a.Results[0].LastSeenAt = "2026-04-23T12:00:00Z"
 	a.Results[0].Explanation = model.ResultExplanation{
 		TriggeredBy: []string{"registry rejected credentials"},
 	}
@@ -342,7 +367,7 @@ func TestFormatAnalysisMarkdownDetailed(t *testing.T) {
 	a.RepoContext = &model.RepoContext{RepoRoot: "/repo", RecentFiles: []string{"Dockerfile"}}
 
 	text := FormatAnalysisMarkdown(a, 1, ModeDetailed)
-	for _, want := range []string{"# Docker auth", "- ID: `docker-auth`", "## Summary", "## Evidence", "## Differential Diagnosis", "## Confidence Breakdown", "## Triggered By", "## Score Breakdown", "## Suggested Fix", "## Repo Context"} {
+	for _, want := range []string{"# Docker auth", "- ID: `docker-auth`", "## Summary", "## History", "## Evidence", "## Differential Diagnosis", "## Confidence Breakdown", "## Triggered By", "## Score Breakdown", "## Suggested Fix", "## Repo Context"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in markdown output, got:\n%s", want, text)
 		}
@@ -356,11 +381,14 @@ func TestFormatTraceTextIncludesRulesAndCompeting(t *testing.T) {
 			ID:    "missing-executable",
 			Title: "Required executable or runtime binary missing",
 		},
-		Matched:    true,
-		Rank:       1,
-		Score:      2.10,
-		Confidence: 0.84,
-		Detector:   "log",
+		Matched:         true,
+		Rank:            1,
+		Score:           2.10,
+		Confidence:      0.84,
+		OccurrenceCount: 2,
+		FirstSeenAt:     "2026-04-20T10:00:00Z",
+		LastSeenAt:      "2026-04-23T12:00:00Z",
+		Detector:        "log",
 		Rules: []tracereport.Rule{
 			{
 				Group:       "match.any",
@@ -377,7 +405,7 @@ func TestFormatTraceTextIncludesRulesAndCompeting(t *testing.T) {
 	}
 
 	text := FormatTraceText(report, true, true, true)
-	for _, want := range []string{"TRACE  missing-executable", "Rule Evaluation", "MATCHED", "line 12", "Why This Result", "Competing Matches"} {
+	for _, want := range []string{"TRACE  missing-executable", "Rule Evaluation", "MATCHED", "History", "line 12", "Why This Result", "Competing Matches"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in trace text, got:\n%s", want, text)
 		}
@@ -391,7 +419,10 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 			ID:    "docker-auth",
 			Title: "Docker auth",
 		},
-		Matched: true,
+		Matched:         true,
+		OccurrenceCount: 2,
+		FirstSeenAt:     "2026-04-20T10:00:00Z",
+		LastSeenAt:      "2026-04-23T12:00:00Z",
 		Rules: []tracereport.Rule{
 			{Group: "match.any", Index: 0, Pattern: "authentication required", Status: tracereport.StatusMatched},
 		},
@@ -408,6 +439,9 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 	}
 	if payload["playbook_id"] != "docker-auth" {
 		t.Fatalf("expected playbook_id docker-auth, got %v", payload["playbook_id"])
+	}
+	if payload["history"] == nil {
+		t.Fatalf("expected history object in trace JSON, got %v", payload["history"])
 	}
 	rules, ok := payload["rules"].([]interface{})
 	if !ok || len(rules) != 1 {

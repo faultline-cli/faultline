@@ -32,7 +32,7 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 	if err != nil {
 		return prepared, err
 	}
-	st, _, err := store.OpenBestEffort(cfg)
+	st, info, err := store.OpenBestEffort(cfg)
 	if err != nil {
 		return prepared, err
 	}
@@ -40,18 +40,19 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 
 	ctx := context.Background()
 	now := time.Now().UTC()
+	historyEnabled := info.Mode != store.ModeOff && !info.Degraded
 	snapshots := captureHistorySnapshots(ctx, st, prepared)
 	previousFailures, _ := st.RecentTopFailures(ctx, 500)
 
 	withoutCurrent := applyHistorySnapshots(prepared, snapshots, now, false)
-	withCurrent := applyHistorySnapshots(prepared, snapshots, now, persist)
+	withCurrent := applyHistorySnapshots(prepared, snapshots, now, persist && historyEnabled)
 
 	withoutCurrent.Metrics = buildMetricsFromHistory(withoutCurrent, previousFailures, opts.MetricsHistoryFile, false)
 	if withoutCurrent.Metrics != nil && len(withoutCurrent.Results) > 0 {
 		withoutCurrent.Policy = policy.Compute(withoutCurrent.Metrics, withoutCurrent.Results[0].Playbook.Severity)
 	}
 
-	if persist && len(withCurrent.Results) > 0 {
+	if persist && historyEnabled && len(withCurrent.Results) > 0 {
 		withCurrent.Metrics = buildMetricsFromHistory(withCurrent, previousFailures, opts.MetricsHistoryFile, true)
 		if withCurrent.Metrics != nil {
 			withCurrent.Policy = policy.Compute(withCurrent.Metrics, withCurrent.Results[0].Playbook.Severity)

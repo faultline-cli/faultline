@@ -3,7 +3,7 @@
 Faultline now supports multiple deterministic detector modules behind a shared
 result model.
 
-The bundled catalog currently splits into 75 log playbooks and 2 source
+The bundled catalog currently splits into 98 log playbooks and 2 source
 playbooks.
 
 ## Built-in detectors
@@ -69,7 +69,9 @@ tree and `faultline guard .` when you only want quiet, high-confidence local
 prevention findings. When the inspected path lives inside a git worktree,
 `inspect` and `guard` also use the local diff when available so changed files
 and line-level edits can be scored as introduced or modified rather than only
-as legacy repository risk.
+as legacy repository risk. Positive and mitigated repository fixtures for the
+shipped source rules live under `internal/engine/testdata/source/` and are
+validated in `internal/engine/source_playbook_fixtures_test.go`.
 
 ## Suppressions
 
