@@ -53,6 +53,23 @@ why_it_matters: |-
   - Design CI jobs to run with the minimum required permissions.
   - Audit steps that modify the file system and verify they account for non-root users.
   - Prefer images and scripts that assume non-root execution from the start so permission problems surface during local development too.
+hooks:
+  verify:
+    - id: check-file-executable
+      kind: command_exit_zero
+      command: ["test", "-x"]
+      confidence_delta: 0.15
+    - id: check-current-user
+      kind: command_output_matches
+      command: ["whoami"]
+      pattern: "^(root|runner|github|ci)$"
+      confidence_delta: 0.10
+  collect:
+    - id: capture-file-permissions
+      kind: command_output_capture
+      command: ["ls", "-la"]
+      pattern: "^-.*[^x]\\s"
+      lines: 5
 workflow:
   likely_files:
     - Dockerfile

@@ -72,6 +72,22 @@ why_it_matters: |-
   - Set an explicit memory limit that is slightly above normal usage to catch regressions early.
   - Add a step that reports peak memory usage after each CI run.
   - Define memory budgets in project benchmarks and track them over time.
+hooks:
+  verify:
+    - id: check-memory-limits
+      kind: file_exists
+      path: /sys/fs/cgroup/memory/memory.limit_in_bytes
+      confidence_delta: 0.15
+    - id: check-docker-memory
+      kind: command_exit_zero
+      command: ["docker", "stats", "--no-stream", "--format", "table {{.MemUsage}}"]
+      confidence_delta: 0.10
+  collect:
+    - id: capture-dmesg-oom
+      kind: command_output_capture
+      command: ["dmesg"]
+      pattern: "OOMKilled|Out of memory"
+      lines: 10
 workflow:
   likely_files:
     - Dockerfile

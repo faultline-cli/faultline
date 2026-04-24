@@ -52,6 +52,11 @@ hypothesis:
   discriminators:
     - description: Node engine errors outrank the generic runtime fallback when the log calls out node explicitly.
       signal: runtime.node.version.mismatch
+delta_boost:
+  - signal: runtime.version.changed
+    weight: 0.6
+  - signal: dependency.manifest.changed
+    weight: 0.3
 workflow:
   likely_files:
     - .nvmrc

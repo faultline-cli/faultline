@@ -144,6 +144,11 @@ type raw struct {
 		Signal string  `yaml:"signal"`
 		Weight float64 `yaml:"weight"`
 	} `yaml:"delta_boost"`
+	RequiresTopology bool `yaml:"requires_topology"`
+	TopologyBoost    []struct {
+		Signal string  `yaml:"signal"`
+		Weight float64 `yaml:"weight"`
+	} `yaml:"topology_boost"`
 	Workflow struct {
 		LikelyFiles []string `yaml:"likely_files"`
 		LocalRepro  []string `yaml:"local_repro"`
@@ -321,6 +326,8 @@ func loadFile(path string) (model.Playbook, error) {
 		WhyItMatters:  normalizeMarkdownBlock(r.WhyItMatters),
 		RequiresDelta: r.RequiresDelta,
 		DeltaBoost:    convertDeltaBoosts(r.DeltaBoost),
+		RequiresTopology: r.RequiresTopology,
+		TopologyBoost:    convertTopologyBoosts(r.TopologyBoost),
 		Workflow: model.WorkflowSpec{
 			LikelyFiles: r.Workflow.LikelyFiles,
 			LocalRepro:  r.Workflow.LocalRepro,
@@ -403,6 +410,27 @@ func convertDeltaBoosts(rawBoosts []struct {
 			continue
 		}
 		out = append(out, model.DeltaBoost{
+			Signal: signal,
+			Weight: item.Weight,
+		})
+	}
+	return out
+}
+
+func convertTopologyBoosts(rawBoosts []struct {
+	Signal string  `yaml:"signal"`
+	Weight float64 `yaml:"weight"`
+}) []model.TopologyBoost {
+	if len(rawBoosts) == 0 {
+		return nil
+	}
+	out := make([]model.TopologyBoost, 0, len(rawBoosts))
+	for _, item := range rawBoosts {
+		signal := strings.TrimSpace(item.Signal)
+		if signal == "" {
+			continue
+		}
+		out = append(out, model.TopologyBoost{
 			Signal: signal,
 			Weight: item.Weight,
 		})

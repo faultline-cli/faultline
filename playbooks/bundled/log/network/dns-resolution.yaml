@@ -60,6 +60,22 @@ why_it_matters: |-
   - Add environment-specific connectivity checks for critical internal hosts.
   - Monitor resolver health on persistent runners or clusters.
   - Document which internal domains require private DNS so new runners are provisioned with the correct resolver settings.
+hooks:
+  verify:
+    - id: check-dns-resolution
+      kind: command_exit_zero
+      command: ["getent", "hosts", "8.8.8.8"]
+      confidence_delta: 0.15
+    - id: check-nameserver-config
+      kind: file_exists
+      path: /etc/resolv.conf
+      confidence_delta: 0.10
+  collect:
+    - id: capture-nslookup-attempt
+      kind: command_output_capture
+      command: ["nslookup", "google.com"]
+      pattern: "Address|can't find"
+      lines: 5
 workflow:
   likely_files:
     - .github/workflows/*.yml

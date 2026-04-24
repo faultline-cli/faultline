@@ -1,0 +1,31 @@
+# faultline-matchers.yaml - Shared matcher definitions for the minimal example pack
+#
+# This file demonstrates how to define reusable match patterns that can be
+# referenced by multiple playbooks using match.use references.
+#
+# Matchers defined here can be composed across playbooks to reduce duplication
+# and improve maintainability of complex match logic.
+
+matchers:
+  # Example matcher for cache-related patterns
+  cache_store_patterns:
+    - cache restored
+    - cache hit
+    - loaded from cache
+    - cache miss
+    - cache not found
+
+  # Example matcher for common error keywords
+  error_keywords:
+    - error:
+    - failed
+    - failure
+    - cannot
+    - unable to
+
+  # Example matcher for setup/initialization errors
+  setup_errors:
+    - setup failed
+    - initialization error
+    - bootstrap failed
+    - startup error

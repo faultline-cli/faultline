@@ -1,0 +1,87 @@
+id: example-hypothesis-disambiguation
+title: Example pack - using hypothesis fields for rival disambiguation
+category: build
+severity: low
+base_score: 0.3
+tags: [example, hypothesis, disambiguation]
+stage_hints: [build]
+summary: |-
+  This example demonstrates how to use hypothesis fields to disambiguate
+  between confusable failure patterns that have similar surface-level symptoms.
+
+diagnosis: |-
+  ## Diagnosis
+
+  When multiple playbooks could match the same error log, hypothesis fields help
+  Faultline rank them correctly by checking for additional signals that support
+  or contradict each theory.
+
+  This playbook shows how `supports`, `contradicts`, and `discriminators` work
+  together to resolve ambiguity.
+
+fix: |-
+  ## Fix steps
+
+  1. Understand that hypothesis fields are optional but powerful for disambiguation.
+  2. Use supports/contradicts to add confidence weights when source-repo context is available.
+  3. Use discriminators when you have clear evidence that rules out rival playbooks.
+  4. See the hypothesis field in this playbook for concrete examples.
+
+validation: |-
+  ## Validation
+
+  - Check the differential diagnosis output to see how hypothesis fields reranked candidates.
+  - Verify that when source context is available, the correct playbook ranks higher.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Many failure patterns look similar in logs but have different root causes:
+  - Network timeouts vs application hangs
+  - Permission errors vs missing files  
+  - Version conflicts vs dependency drift
+  
+  By encoding additional context-aware signals, you help Faultline pick the right fix
+  even when surface patterns overlap.
+
+match:
+  any:
+    - "example hypothesis demo"
+
+hypothesis:
+  # Supports: signals that increase confidence in THIS playbook
+  supports:
+    - signal: build.system.package
+      weight: 0.6
+  
+  # Contradicts: signals that decrease confidence in THIS playbook
+  # (they suggest a rival playbook is more likely)
+  contradicts:
+    - signal: network.timeout
+      weight: -0.5
+    - signal: runtime.memory.constrained
+      weight: -0.4
+  
+  # Discriminators: when system detects BOTH this signal and the pattern,
+  # it's strong evidence for THIS playbook over rivals
+  discriminators:
+    - description: "Package errors clearly point to build system, not runtime"
+      signal: build.system.package
+  
+  # Excludes: signals whose presence means this playbook should not match
+  excludes:
+    - signal: network.connectivity.offline
+
+workflow:
+  likely_files:
+    - Makefile
+    - build.gradle
+    - pom.xml
+    - setup.py
+  local_repro:
+    - make build
+    - gradle build
+    - mvn clean package
+    - python setup.py build
+  verify:
+    - echo "Verify build succeeds with proper tools installed"

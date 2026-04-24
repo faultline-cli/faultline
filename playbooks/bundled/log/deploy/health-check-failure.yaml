@@ -68,6 +68,23 @@ why_it_matters: |-
   ## Why it matters
 
   Health checks are the deployment gate that protects traffic from a broken release. When they fail, the platform is telling you the new instance is not safely serving requests.
+hooks:
+  verify:
+    - id: check-k8s-health-endpoint
+      kind: command_exit_zero
+      command: ["curl", "-f", "http://localhost:8080/health"]
+      confidence_delta: 0.15
+    - id: check-deployment-status
+      kind: command_output_matches
+      command: ["kubectl", "get", "deployment", "-o", "jsonpath={.items[0].status.replicas}"]
+      pattern: "[1-9]"
+      confidence_delta: 0.12
+  collect:
+    - id: capture-pod-events
+      kind: command_output_capture
+      command: ["kubectl", "get", "events", "--sort-by=.lastTimestamp"]
+      pattern: "Failed|Unhealthy|Probe"
+      lines: 10
 workflow:
   likely_files:
     - k8s/**/*.yaml

@@ -1,0 +1,65 @@
+id: example-setup-error
+title: Example pack setup and initialization failure
+category: build
+severity: medium
+base_score: 0.75
+tags: [example, setup, initialization]
+stage_hints: [build]
+summary: |-
+  This example playbook demonstrates the match.use pattern for composing
+  reusable matchers. It references matcher groups defined in faultline-matchers.yaml
+  to detect setup and initialization failures.
+diagnosis: |-
+  ## Diagnosis
+
+  The build initialization phase encountered an error. This could be a setup step
+  that failed, a bootstrap process that didn't complete, or a configuration that
+  was not applied before the main build started.
+fix: |-
+  ## Fix steps
+
+  1. Review the setup and initialization logs to identify which step failed.
+  2. Verify all required environment variables are set.
+  3. Check that external dependencies or services are available.
+  4. Ensure configuration files are present and readable.
+  5. Re-run the setup phase in isolation to reproduce the error.
+  6. Commit any necessary fixes to the build configuration.
+validation: |-
+  ## Validation
+
+  - Re-run the same build path and confirm the setup succeeds.
+  - Verify the initialization phase completes all required steps.
+why_it_matters: |-
+  ## Why it matters
+
+  Setup and initialization errors often appear cryptic because they happen before
+  the main work begins. By identifying these early, you can fail fast and reduce
+  wasted CI time. This example demonstrates how to compose matchers to catch
+  a family of related errors.
+
+  ## Prevention
+
+  - Add explicit validation steps after setup to confirm success.
+  - Log the completion of each setup phase clearly.
+  - Test setup scripts locally before committing them.
+match:
+  any:
+    # Direct inline patterns for specific setup errors
+    - initialization error
+    - bootstrap failed
+  use:
+    # Reference reusable matchers from faultline-matchers.yaml
+    - setup_errors
+    - error_keywords
+workflow:
+  likely_files:
+    - Makefile
+    - scripts/setup.sh
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - make setup
+    - ./scripts/setup.sh -v
+  verify:
+    - make verify-setup
+    - echo "Verify that all setup checklist items completed"

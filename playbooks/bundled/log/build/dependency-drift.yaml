@@ -41,6 +41,11 @@ hypothesis:
       signal: dependency.resolution.conflict
   excludes:
     - signal: dependency.hash.mismatch
+delta_boost:
+  - signal: dependency.manifest.changed
+    weight: 0.5
+  - signal: dependency.lockfile.changed
+    weight: 0.4
 
 summary: |-
   Dependency constraints have drifted apart enough that the package manager
