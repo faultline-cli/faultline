@@ -1,0 +1,11 @@
+ERR_PNPM_FROZEN_LOCKFILE_CHANGED  The lockfile is out of sync with the package.json file.
+
+According to "pnpm-lock.yaml", the following dependencies should have been hoisted to <root>:
+  - name: "pkg.json"
+    version: "1.0.0"
+
+But they are not.
+
+Run "pnpm install" to update the lockfile.
+
+Hint: if you want to update the lockfile, you can run "pnpm update --lockfile"

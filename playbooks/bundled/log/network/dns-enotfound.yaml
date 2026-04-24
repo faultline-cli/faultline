@@ -1,0 +1,100 @@
+id: dns-enotfound
+title: DNS resolution failed ENOTFOUND
+category: network
+severity: high
+base_score: 0.9
+tags: [dns, network, resolution, enotfound]
+stage_hints: [build, test, deploy]
+summary: |-
+  DNS resolution failed for a hostname. The domain name could not be resolved to an IP address, or there is no network connectivity.
+diagnosis: |-
+  ## Diagnosis
+
+  ENOTFOUND errors occur when:
+
+  - The hostname is mis-spelled or not resolvable in the current network.
+  - DNS servers are unreachable or not configured correctly on the CI runner.
+  - The private hostname is not registered in the local DNS or service discovery system (e.g., Kubernetes DNS).
+  - Network connectivity is missing or blocked by a firewall.
+  - The CI runner has no internet access (for public hostnames).
+
+  The error typically appears as `getaddrinfo ENOTFOUND <hostname>` or similar DNS resolution failures.
+
+fix: |-
+  ## Fix steps
+
+  1. Verify the hostname is spelled correctly and resolvable:
+
+     ```bash
+     nslookup <hostname>
+     dig <hostname>
+     curl -I https://<hostname>
+     ```
+
+  2. Check if DNS is working at all:
+
+     ```bash
+     nslookup 8.8.8.8
+     curl -I https://google.com
+     ```
+
+  3. If the hostname is a private service (database, cache, etc.), verify:
+     - The service is running and accessible.
+     - The service name matches the configured hostname exactly.
+     - On Kubernetes: the service is in the same namespace and reachable via DNS.
+     - The CI environment has network access to the service.
+
+  4. Check the application's configuration for the correct hostname:
+
+     ```bash
+     grep -r "<hostname>" . --include="*.env" --include="*.yml" --include="*.yaml"
+     ```
+
+  5. If DNS is misconfigured, update the application configuration to the correct hostname or service name.
+
+validation: |-
+  ## Validation
+
+  - `nslookup <hostname>` or `dig <hostname>` returns a valid IP address.
+  - `curl -I https://<hostname>` completes without DNS errors.
+  - Re-run the failing application or test.
+
+why_it_matters: |-
+  ## Why it matters
+
+  DNS resolution failures prevent all network communication. They block API calls, database connections, and inter-service communication, making the entire pipeline fail.
+
+  ## Prevention
+
+  - Document all required hostnames and services in `README.md` or deployment guides.
+  - Use environment-specific configuration (dev, staging, prod) to avoid typos.
+  - Test DNS resolution in CI (add `nslookup` or `dig` to a pre-flight check).
+  - For Kubernetes deployments, verify service DNS is reachable before running tests.
+
+match:
+  any:
+    - "ENOTFOUND"
+    - "getaddrinfo ENOTFOUND"
+    - "Name or service not known"
+    - "nodename nor servname provided"
+    - "DNS resolution"
+    - "cannot resolve hostname"
+  none:
+    - "ECONNREFUSED"
+    - "ETIMEDOUT"
+    - "EACCES"
+
+workflow:
+  likely_files:
+    - .env
+    - .env.example
+    - .github/workflows/*.yml
+    - docker-compose.yml
+    - config.yaml
+  local_repro:
+    - nslookup <hostname>
+    - dig <hostname>
+    - curl -I https://<hostname>
+  verify:
+    - nslookup <hostname>
+

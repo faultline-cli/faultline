@@ -1,0 +1,7 @@
+Running as user appuser (uid 1000, gid 1000)
+Starting application...
+Error: permission denied opening '/app/logs/app.log'
+chmod: changing permissions of '/app/cache': Operation not permitted
+Cannot write to directory: /app/logs
+
+Container exited with status code 1

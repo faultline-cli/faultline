@@ -1,0 +1,101 @@
+id: dockerfile-copy-source-missing
+title: Docker COPY failed source file missing from build context
+category: build
+severity: high
+base_score: 0.95
+tags: [docker, build, context, copy, dockerfile]
+stage_hints: [build]
+summary: |-
+  Docker COPY or ADD instruction failed because the source file does not exist in the build context. The file may be excluded by `.dockerignore` or the path is incorrect.
+diagnosis: |-
+  ## Diagnosis
+
+  Docker builds use a build context that includes only files and directories specified or not excluded. Common causes:
+
+  - The source file path in `COPY` or `ADD` instruction does not exist relative to the build context root.
+  - The file is excluded by `.dockerignore` but the Dockerfile tries to copy it anyway.
+  - The build context path is wrong (e.g., using `/app` or an absolute path instead of a relative path).
+  - A build step generates the file but the `COPY` runs before that step completes.
+  - The repository structure does not match what the Dockerfile expects.
+
+  The error appears as `COPY failed: file not found` or `file not found in build context`.
+
+fix: |-
+  ## Fix steps
+
+  1. Verify the exact relative path exists in the build context:
+
+     ```bash
+     docker build --no-cache -t test . 2>&1 | head -20
+     ls -la <source-file>
+     ```
+
+  2. Check `.dockerignore` for patterns that may be excluding the file:
+
+     ```bash
+     cat .dockerignore
+     ```
+
+  3. Update the `COPY` instruction in the Dockerfile to use the correct relative path:
+
+     ```dockerfile
+     # Before (wrong)
+     COPY /app/src/main.go .
+
+     # After (correct)
+     COPY src/main.go .
+     ```
+
+  4. If the file is generated during build, ensure it's created in an earlier stage and either copied from that stage (multi-stage) or not excluded from the context.
+
+  5. Re-run `docker build` with explicit context path:
+
+     ```bash
+     docker build -t myimage:latest .
+     ```
+
+validation: |-
+  ## Validation
+
+  - `docker build` completes without `COPY failed` errors.
+  - List files in the running container to confirm they were copied:
+
+     ```bash
+     docker run --rm myimage:latest ls -la /app
+     ```
+
+why_it_matters: |-
+  ## Why it matters
+
+  Docker build failures block the entire CI/CD pipeline and prevent deployments. Missing files in the build context usually indicate an incorrect Dockerfile or incorrect working directory assumptions.
+
+  ## Prevention
+
+  - Use relative paths in `COPY` instructions.
+  - Test the Dockerfile locally with the same repository structure.
+  - Keep `.dockerignore` minimal and intentional.
+  - Document the expected repository layout in `README.md`.
+
+match:
+  any:
+    - "COPY failed"
+    - "failed: file not found in build context"
+    - "ADD failed: file not found"
+    - "no such file or directory"
+    - "Step [0-9]+ : COPY"
+  none:
+    - "permission denied"
+    - "command not found"
+
+workflow:
+  likely_files:
+    - Dockerfile
+    - .dockerignore
+    - .github/workflows/*.yml
+  local_repro:
+    - docker build -t test .
+    - ls -la .dockerignore
+  verify:
+    - docker build -t test .
+    - docker run --rm test ls -la /app
+

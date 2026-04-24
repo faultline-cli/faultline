@@ -67,6 +67,7 @@ match:
     - read timeout
     - dial timeout
     - "ETIMEDOUT"
+    - "psql: error: could not connect"
 workflow:
   likely_files:
     - docker-compose.yml

@@ -38,10 +38,12 @@ Then read only the specific playbook and fixtures involved in the task.
    - improve `workflow.local_repro`
    - improve `workflow.verify`
 4. Add a new playbook only when the root-cause boundary is clearly distinct.
-5. When adding a new playbook, also add the positive and nearby negative or adversarial regression coverage needed to defend it.
+5. When adding a new playbook, use the `fixture-generation` skill to produce canonical, noisy, and near-miss fixtures. Also add the nearby negative or adversarial regression coverage needed to defend it.
+6. Run the `playbook-linter` skill after any playbook change. All critical criteria must PASS before proceeding to `make review`.
 
 ## Required Validation
 
+- `playbook-linter` skill (before make review)
 - `make review`
 - `make test`
 
@@ -63,4 +65,5 @@ Report:
 
 - the fixture or fixtures that motivated the change
 - whether the playbook was refined or a new one was justified
+- the `playbook-linter` verdict and any issues resolved
 - the exact validation commands run

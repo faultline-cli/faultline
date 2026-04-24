@@ -1,0 +1,89 @@
+id: github-actions-missing-checkout
+title: GitHub Actions missing actions/checkout before accessing repo files
+category: ci
+severity: high
+base_score: 0.95
+tags: [github-actions, ci, checkout, workflow]
+stage_hints: [build, test]
+summary: |-
+  GitHub Actions job tried to access repository files (build, test, run scripts) but the repository was never checked out. The `actions/checkout` step is missing or runs after the file access step.
+diagnosis: |-
+  ## Diagnosis
+
+  `actions/checkout@v4` (or similar) must run before any steps that read or execute files from the repository. Common mistakes:
+
+  - The `actions/checkout` step is missing entirely.
+  - The `actions/checkout` step runs after the step that accesses repo files.
+  - The job runs on a self-hosted runner without a clean workspace.
+  - A previous workflow step deletes the checked-out files.
+
+  The error typically appears as `file not found`, `no such file or directory`, or commands failing to execute because they cannot find repository files.
+
+fix: |-
+  ## Fix steps
+
+  1. Ensure `actions/checkout` is the first step (or very early) in the job:
+
+     ```yaml
+     jobs:
+       build:
+         runs-on: ubuntu-latest
+         steps:
+           - uses: actions/checkout@v4  # Add this as the FIRST step
+           - uses: actions/setup-node@v3
+             with:
+               node-version: '18'
+           - run: npm install
+           - run: npm test
+     ```
+
+  2. If the checkout is present but in the wrong place, move it before any file access steps.
+
+  3. If working with a monorepo, ensure you check out the correct path or use `fetch-depth` correctly:
+
+     ```yaml
+     - uses: actions/checkout@v4
+       with:
+         fetch-depth: 0  # For full history if needed
+     ```
+
+  4. Verify the workspace is clean at the start of each job. Self-hosted runners may retain files from previous runs.
+
+validation: |-
+  ## Validation
+
+  - The workflow file contains `uses: actions/checkout@v4` (or newer version) as an early step.
+  - `ls -la` in the next step shows repository files in the runner's working directory.
+  - Re-run the GitHub Actions workflow.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Every GitHub Actions job starts with an empty workspace. Without `actions/checkout`, there are no repository files to build, test, or deploy. This is a fundamental setup requirement.
+
+  ## Prevention
+
+  - Use a workflow template that includes `actions/checkout` from the start.
+  - Add a lint check or workflow validation to catch missing checkouts.
+  - Document the required workflow structure in `CONTRIBUTING.md`.
+
+match:
+  any:
+    - "No such file or directory"
+    - "command not found"
+    - '\./.*not found'
+    - "file not found in current directory"
+    - "actions/checkout"
+  none:
+    - "permission denied"
+    - "EACCES"
+
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - cat .github/workflows/*.yml
+  verify:
+    - grep -n "actions/checkout" .github/workflows/*.yml
+

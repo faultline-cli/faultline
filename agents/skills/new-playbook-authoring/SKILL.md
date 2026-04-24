@@ -24,6 +24,7 @@ Do not use it for:
 - [`SYSTEM.md`](../../../SYSTEM.md)
 - [`docs/playbooks.md`](../../../docs/playbooks.md)
 - [`docs/fixture-corpus.md`](../../../docs/fixture-corpus.md)
+- [`docs/ontology.md`](../../../docs/ontology.md) — required for ontology field values
 - [`prompts/author-new-playbook.md`](../../../prompts/author-new-playbook.md)
 - The nearest related playbook under `playbooks/bundled/`
 
@@ -38,10 +39,13 @@ Do not use it for:
    `id`, `title`, `category`, `severity`, `base_score`, `tags`, `stage_hints`,
    `summary`, `diagnosis`, `fix`, `validation`, `match.any`, `match.none`,
    `workflow.likely_files`, `workflow.local_repro`, `workflow.verify`
-4. Pair a positive fixture before validating:
-   - promote from staging if one exists: `faultline fixtures promote <id> --expected-playbook <new-id> --strict-top-1`
-   - otherwise create a minimal fixture under `fixtures/minimal/`
-5. Run an adversarial check against the nearest confusable neighbor to confirm exclusions hold.
+   Plus ontology fields (required for new playbooks):
+   `domain`, `class`, `mode` — see `docs/ontology.md` for valid values.
+4. Pair fixtures before validating:
+   - if a staged fixture exists, promote it: `faultline fixtures promote <id> --expected-playbook <new-id> --strict-top-1`
+   - if no staged fixture exists, use the `fixture-generation` skill to produce canonical, noisy, and near-miss variants under `fixtures/minimal/`
+5. Run the `playbook-linter` skill. All critical criteria must PASS before proceeding.
+   - If FAIL: resolve all critical issues and re-run the linter before continuing.
 6. Run the full validation sequence in order:
    ```bash
    make review
@@ -58,6 +62,8 @@ Do not use it for:
 - Every `match.any` phrase must be grounded in at least one real log sample.
 - Every `match.none` exclusion must be grounded in at least one real confusable case.
 - Do not ship with placeholder `workflow` fields.
+- Do not ship without ontology fields (`domain`, `class`, `mode`).
+- Do not skip the `playbook-linter` skill before `make review`.
 - Do not stop at a passing compile or a single fixture match; run all four validation commands.
 
 ## Deliverable
@@ -65,6 +71,7 @@ Do not use it for:
 Report:
 
 - the new playbook YAML path and ID
-- the fixture used to defend it
+- the fixtures used to defend it (canonical, noisy, near-miss paths and scores)
+- the `playbook-linter` verdict and any issues resolved
 - the nearest confusable neighbor and how the boundary is maintained
 - the exact validation commands run and their results

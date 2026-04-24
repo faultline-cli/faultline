@@ -1,0 +1,85 @@
+==== Monorepo Build Started at 2026-04-25T11:33:22Z ====
+
+[INFO] Workspace detected: Lerna v7.1.0
+[INFO] Found workspace.json configuration
+[INFO] Packages in workspace:
+  - @myorg/core v1.5.0
+  - @myorg/backend v2.1.0
+  - @myorg/frontend v3.0.0
+  - @myorg/shared v1.2.0
+  - @myorg/cli-tools v0.8.0
+
+[INFO] Installing workspace dependencies
+Running: lerna bootstrap --hoist
+
+lerna notice cli v7.1.0
+lerna notice cli v7.1.0
+lerna info Symlinking packages in workspace
+lerna info Packages symlinked successfully
+
+[INFO] Resolving workspace package versions
+Checking @myorg/core@1.5.0
+Checking @myorg/backend@2.1.0
+  @myorg/backend depends on @myorg/core@^1.3.0 ✓
+  @myorg/backend depends on @myorg/shared@^1.0.0 ✓
+Checking @myorg/frontend@3.0.0
+  @myorg/frontend depends on @myorg/core@^1.2.0 ✓
+  @myorg/frontend depends on @myorg/shared@^2.0.0
+    ERROR: @myorg/shared is version 1.2.0 in workspace
+    ERROR: @myorg/frontend requires @myorg/shared@^2.0.0
+
+[ERROR] Workspace version mismatch detected!
+
+lerna ERR! ECHILDDEPENDENCIES
+lerna ERR! Unmet workspace dependencies detected
+
+Conflict Details:
+  Package: @myorg/frontend v3.0.0
+  Location: packages/frontend/package.json
+  Requires: @myorg/shared@^2.0.0
+  Available: @myorg/shared@1.2.0 (in workspace registry)
+
+Dependents requiring @myorg/shared@^2.0.0:
+  - @myorg/frontend@3.0.0 (packages/frontend)
+
+Dependents requiring @myorg/shared@1.x:
+  - @myorg/backend@2.1.0 (packages/backend)
+  - @myorg/core@1.5.0 (packages/core)
+
+Resolution Options:
+1. Bump all dependent packages to use @myorg/shared@2.0.0
+2. Downgrade @myorg/frontend to @myorg/shared@^1.2.0
+3. Create a parallel version of shared: @myorg/shared-v2
+4. Update @myorg/shared to v2 in workspace root
+
+[ERROR] lerna exited with exit code 1
+
+[INFO] Attempting dependency tree resolution
+$ npm ls @myorg/shared
+@myorg/frontend@3.0.0 /home/runner/repositories/project/packages/frontend
+└── @myorg/shared@1.2.0 (unmet 2.0.0)
+
+@myorg/backend@2.1.0 /home/runner/repositories/project/packages/backend
+└── @myorg/shared@1.2.0 (ok)
+
+@myorg/core@1.5.0 /home/runner/repositories/project
+└── @myorg/shared@1.2.0 (ok)
+
+[ERROR] Package not found in workspace
+lerna ERR! Cannot find module '@myorg/shared' matching ^2.0.0
+lerna ERR! Looked in:
+lerna ERR!   /home/runner/repositories/project/packages/shared (v1.2.0)
+lerna ERR!   /home/runner/repositories/project/node_modules/@myorg
+lerna ERR!   /home/runner/repositories/project/packages/*/node_modules/@myorg
+
+Failed to resolve workspace dependencies
+Workspace is broken: version references are inconsistent
+
+[ERROR] Build step 'Install workspace dependencies' failed with exit code 1
+
+The workspace cannot proceed with this configuration.
+To fix this issue:
+1. Update package.json version specifiers to match published workspace versions
+2. Verify all cross-package dependencies reference compatible versions
+3. Run 'lerna list' to view package versions
+4. Run 'lerna exec -- npm ls' to check dependency trees

@@ -1,0 +1,11 @@
+Run npm install
+/bin/bash: npm: command not found
+
+Run npx jest
+Error: npm ERR! code ENOENT
+npm ERR! syscall open
+npm ERR! path /home/runner/work/myapp/myapp/package.json
+npm ERR! errno -2
+npm ERR! enoent ENOENT: no such file or directory, open '/home/runner/work/myapp/myapp/package.json'
+
+npm install failed because package.json not found. The actions/checkout step is missing!

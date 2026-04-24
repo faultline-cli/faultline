@@ -1,0 +1,5 @@
+Step 1/5 : FROM golang:1.20
+Step 2/5 : WORKDIR /app
+Step 3/5 : COPY cmd/main.go .
+COPY failed: file not found in build context
+failed to solve with frontend dockerfile.v0: failed to build LLB: failed to compute cache key: failed to walk /var/lib/docker/overlay2/build/cmd: no such file or directory

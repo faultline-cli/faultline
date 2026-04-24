@@ -1,0 +1,95 @@
+id: pnpm-lockfile-missing
+title: pnpm frozen lockfile missing or mismatch
+category: build
+severity: high
+base_score: 0.95
+tags: [pnpm, node, lockfile, dependency]
+stage_hints: [build, install]
+summary: |-
+  pnpm failed because the lockfile is missing, out of sync, or was not committed. pnpm requires an exact lockfile reference for reproducible installs.
+diagnosis: |-
+  ## Diagnosis
+
+  pnpm is stricter than npm and yarn about lockfile consistency. Common causes:
+
+  - `pnpm-lock.yaml` was not committed to the repository.
+  - The lockfile is out of sync with `package.json` (versions changed but lockfile not updated).
+  - `pnpm install` was run locally but the updated lockfile was not pushed before CI.
+  - CI is configured with `--frozen-lockfile` but the lockfile is stale.
+
+  The error appears as `ERR_PNPM_FROZEN_LOCKFILE_CHANGED` or similar pnpm validation errors.
+
+fix: |-
+  ## Fix steps
+
+  1. Ensure `pnpm-lock.yaml` is committed to the repository:
+
+     ```bash
+     git status pnpm-lock.yaml
+     ```
+
+  2. If `pnpm-lock.yaml` is missing, regenerate it locally:
+
+     ```bash
+     pnpm install
+     git add pnpm-lock.yaml
+     git commit -m "Update pnpm lockfile"
+     git push
+     ```
+
+  3. If the lockfile is out of sync with `package.json`, update it:
+
+     ```bash
+     pnpm install
+     git add pnpm-lock.yaml
+     git commit -m "Sync pnpm lockfile"
+     git push
+     ```
+
+  4. Verify the lockfile is in sync before re-running CI:
+
+     ```bash
+     pnpm install --frozen-lockfile
+     ```
+
+validation: |-
+  ## Validation
+
+  - `pnpm install --frozen-lockfile` completes without errors.
+  - `git status` shows no changes to `pnpm-lock.yaml`.
+  - Re-run the CI job.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Lockfile consistency ensures deterministic, repeatable builds. Without it, CI can install different versions than development, causing hard-to-debug failures.
+
+  ## Prevention
+
+  - Add `pnpm-lock.yaml` to `.gitignore` exceptions if needed.
+  - Use `--frozen-lockfile` in CI to enforce lockfile consistency.
+  - Set up pre-commit hooks to catch uncommitted lockfile changes.
+
+match:
+  any:
+    - "ERR_PNPM_FROZEN_LOCKFILE_CHANGED"
+    - "pnpm-lock.yaml.*not in sync"
+    - "lockfile.*missing"
+    - "pnpm install --frozen-lockfile"
+    - "pnpm ERR!"
+    - "ERR_PNPM"
+  none:
+    - "npm ERR!"
+    - "yarn error"
+
+workflow:
+  likely_files:
+    - pnpm-lock.yaml
+    - package.json
+    - .gitlab-ci.yml
+    - .github/workflows/*.yml
+  local_repro:
+    - pnpm install
+    - pnpm install --frozen-lockfile
+  verify:
+    - pnpm install --frozen-lockfile

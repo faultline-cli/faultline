@@ -14,6 +14,8 @@ import (
 // analysisJSON is the stable JSON schema emitted by FormatAnalysisJSON.
 type analysisJSON struct {
 	Matched               bool                         `json:"matched"`
+	Fallback              bool                         `json:"fallback,omitempty"`
+	FailureClass          string                       `json:"failure_class,omitempty"`
 	Status                model.ArtifactStatus         `json:"status,omitempty"`
 	Source                string                       `json:"source,omitempty"`
 	Fingerprint           string                       `json:"fingerprint,omitempty"`
@@ -260,6 +262,7 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	}
 
 	if a == nil {
+		payload.Fallback = true
 		payload.Message = "No known playbook matched this input."
 		payload.Results = []resultJSON{}
 		return payload
@@ -287,9 +290,21 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.Artifact = a.Artifact
 
 	if !payload.Matched {
+		payload.Fallback = true
 		payload.Message = "No known playbook matched this input."
 		payload.Results = []resultJSON{}
+		// Populate failure_class from the top candidate cluster when available.
+		if len(a.CandidateClusters) > 0 {
+			payload.FailureClass = a.CandidateClusters[0].LikelyCategory
+		} else if a.SuggestedPlaybookSeed != nil {
+			payload.FailureClass = a.SuggestedPlaybookSeed.Category
+		}
 		return payload
+	}
+
+	// Matched: populate failure_class from the top result's category.
+	if len(a.Results) > 0 {
+		payload.FailureClass = a.Results[0].Playbook.Category
 	}
 
 	results := topN(a.Results, top)

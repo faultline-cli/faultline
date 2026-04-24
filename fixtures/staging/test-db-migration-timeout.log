@@ -1,0 +1,100 @@
+=== Test Suite Started at 2026-04-25T10:12:45Z ===
+
+[INFO] Setting up test environment
+[INFO] Pulling database containers
+docker pull postgres:14-alpine
+14-alpine: Pulling from library/postgres
+Status: Downloaded newer image for postgres:14-alpine
+[INFO] Starting postgres service on 127.0.0.1:5432
+postgres-test: Creating
+postgres-test: Created
+Waiting for postgres to be ready...
+postgres:5432 - accepting connections
+
+[INFO] Running database migrations
+[INFO] Using Flyway version 9.8.1
+[INFO] Database: jdbc:postgresql://127.0.0.1:5432/testdb
+[INFO] Successfully validated 15 migrations
+
+Flyway V001__Initial_schema.sql
+Flyway V002__Add_users_table.sql
+Flyway V003__Add_auth_tokens_table.sql
+Flyway V004__Add_indexes.sql
+Flyway V005__Add_audit_logging.sql
+Flyway V006__Create_organizations.sql
+Flyway V007__Link_users_to_orgs.sql
+Flyway V008__Add_billing_tables.sql
+Flyway V009__Backfill_org_data.sql
+Flyway V010__Add_api_keys.sql
+
+[INFO] Running migration V011__Add_payment_methods.sql (2026-04-25 10:12:51)
+Query: CREATE TABLE payment_methods (
+  id UUID PRIMARY KEY,
+  org_id UUID NOT NULL REFERENCES organizations(id),
+  type VARCHAR(50) NOT NULL,
+  last_four VARCHAR(4),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+[INFO] Migration V011__Add_payment_methods.sql completed in 156ms
+
+[INFO] Running migration V012__Add_audit_columns.sql (2026-04-25 10:12:52)
+Query: ALTER TABLE users ADD COLUMN last_login TIMESTAMP;
+ALTER TABLE users ADD COLUMN login_count INTEGER DEFAULT 0;
+ALTER TABLE organizations ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+[INFO] Migration V012__Add_audit_columns.sql completed in 234ms
+
+[INFO] Running migration V013__Create_large_index_on_histories.sql (2026-04-25 10:13:15)
+Query: CREATE INDEX idx_histories_user_org_created ON histories(user_id, org_id, created_at DESC);
+[ERROR] Migration V013__Create_large_index_on_histories.sql failed!
+[ERROR] Flyway validation failed!
+[ERROR] Migration failed with status code 1
+
+java.sql.SQLException: Timeout waiting for exclusive lock on table 'histories'
+  at org.postgresql.core.v3.QueryExecutor.execute(QueryExecutor.java:295)
+  at org.postgresql.jdbc.PgStatement.executeInternal(PgStatement.java:489)
+  at org.postgresql.jdbc.PgStatement.execute(PgStatement.java:412)
+  at org.flywaydb.core.internal.database.postgresql.PostgreSQLDatabase.execute(PostgreSQLDatabase.java:156)
+
+[FATAL] database operations timeout after 30000ms (30s)
+Attempted to acquire exclusive lock on table 'histories' for index creation
+Lock acquisition timed out
+
+[WARN] Retrying migration V013__Create_large_index_on_histories.sql (attempt 1/3)
+[ERROR] Retry failed: Lock still held by previous migration process
+
+[WARN] Retrying migration V013__Create_large_index_on_histories.sql (attempt 2/3)
+[ERROR] Retry failed: Timeout waiting for lock
+
+[ERROR] Migration failed after 3 retries
+
+Flyway error message:
+ERROR: Timeout executing statement [CREATE INDEX idx_histories_user_org_created ON histories(...)]
+The database migration could not complete: lock acquisition timeout
+
+Possible causes:
+1. Another migration process is running
+2. The database has blocked sessions
+3. The index creation is too expensive for table size
+4. Connection pool is exhausted
+
+Active connections:
+  postgres=# select count(*) from pg_stat_activity where state = 'active';
+   count
+  --------
+       1
+  (1 row)
+
+Blocking queries:
+  SELECT * FROM pg_locks WHERE NOT granted;
+    locktype | mode | pid | usesysid
+  -----------+------+-----+----------
+   relation  | AccessExclusiveLock | 12345 | 10
+  (1 row)
+
+[ERROR] Test suite initialization failed
+[ERROR] Database migration validation error
+[ERROR] Flyway: Migration validation failed: expected 13 successful migrations, found 12
+
+Test execution cannot begin until database is in valid migration state
+
+Build step 'Run integration tests' failed with exit code 1

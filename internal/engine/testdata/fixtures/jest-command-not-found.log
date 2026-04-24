@@ -1,0 +1,6 @@
+npm ERR! code ENOENT
+npm ERR! syscall spawn
+npm ERR! path /app/node_modules/.bin/jest
+npm ERR! errno ENOENT
+npm ERR! enoent spawn ENOENT
+npm ERR! jest: command not found

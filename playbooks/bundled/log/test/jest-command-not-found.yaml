@@ -1,0 +1,106 @@
+id: jest-command-not-found
+title: jest command not found or not installed
+category: test
+severity: high
+base_score: 0.95
+tags: [jest, node, test, command, missing]
+stage_hints: [test]
+summary: |-
+  The `jest` command could not be found. Jest is either not installed as a dependency, not in the PATH, or the wrong shell was used to run it.
+diagnosis: |-
+  ## Diagnosis
+
+  Jest is typically installed locally as a dev dependency and accessed through `npm run test` or `npx jest`. Common causes:
+
+  - Jest is not listed in `package.json` as a `devDependency`.
+  - `npm install` or `npm ci` was not run before the test step, or it failed silently.
+  - The script is running in a different shell that does not have the PATH updated.
+  - Jest is installed locally but the script tries to use the global `jest` command.
+  - The test step runs before the install step in CI.
+
+  The error typically appears as `jest: command not found` or `jest is not installed`.
+
+fix: |-
+  ## Fix steps
+
+  1. Verify Jest is in `package.json`:
+
+     ```bash
+     grep jest package.json
+     ```
+
+  2. If missing, add it as a dev dependency:
+
+     ```bash
+     npm install --save-dev jest
+     ```
+
+  3. Ensure `npm install` completes before running tests:
+
+     ```bash
+     npm install
+     npm test
+     ```
+
+  4. Use `npm run test` or `npx jest` instead of calling `jest` directly:
+
+     ```bash
+     npm run test    # Uses local jest from node_modules
+     npx jest        # Also uses local jest
+     jest            # May not work if jest is not in PATH
+     ```
+
+  5. Check that the CI job runs the test step after the install step:
+
+     ```yaml
+     steps:
+       - uses: actions/checkout@v4
+       - uses: actions/setup-node@v3
+         with:
+           node-version: '18'
+       - run: npm install     # Must run BEFORE test
+       - run: npm test        # Now jest is available
+     ```
+
+validation: |-
+  ## Validation
+
+  - `npm install` completes without errors.
+  - `npm run test` or `npx jest` executes tests successfully.
+  - `npm ls jest` shows jest is installed in `node_modules`.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Missing test runners block the entire test pipeline. Test failures cannot be diagnosed if the test command itself fails to run.
+
+  ## Prevention
+
+  - Always run `npm install` (or `npm ci`) before test steps in CI.
+  - Use `npm run test` instead of calling commands directly.
+  - Document the test command in `package.json` and `README.md`.
+  - Commit `package-lock.json` to ensure consistent installs.
+
+match:
+  any:
+    - "jest: command not found"
+    - 'path.*\.bin/jest'
+  none:
+    - "FAIL"
+    - "PASS"
+    - "Tests:"
+    - "test suites"
+
+workflow:
+  likely_files:
+    - package.json
+    - jest.config.js
+    - .github/workflows/*.yml
+  local_repro:
+    - npm install
+    - npm run test
+    - npm ls jest
+  verify:
+    - npm ls jest
+    - npm test
+

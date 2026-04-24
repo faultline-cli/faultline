@@ -58,6 +58,7 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newSignaturesCommand())
 	cmd.AddCommand(newVerifyDeterminismCommand())
 	cmd.AddCommand(newFixturesCommand())
+	cmd.AddCommand(newCoverageCommand())
 	return cmd
 }
 

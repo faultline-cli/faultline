@@ -1,0 +1,15 @@
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE could not resolve
+npm ERR!
+npm ERR! While resolving: my-app@1.0.0
+npm ERR! Found: react@18.2.0
+npm ERR! node_modules/react
+npm ERR!   react@"^18.0.0" from the root project
+npm ERR!
+npm ERR! Could not resolve dependency:
+npm ERR! peer react@"^16.0.0" required by some-component@2.1.0
+npm ERR! node_modules/some-component
+npm ERR!   some-component@"*" from the root project
+npm ERR!
+npm ERR! Fix the upstream dependency conflict, or retry
+npm ERR! this command with --legacy-peer-deps

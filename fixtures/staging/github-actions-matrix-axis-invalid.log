@@ -1,0 +1,45 @@
+2026-04-25T08:22:14.5847284Z ##[group]Run actions/checkout@v4
+2026-04-25T08:22:14.5847500Z   with:
+2026-04-25T08:22:14.5847639Z     repository: myorg/myproject
+2026-04-25T08:22:14.5847766Z     ref: main
+2026-04-25T08:22:14.5847889Z     fetch-depth: 0
+2026-04-25T08:22:14.5848006Z     clean: true
+2026-04-25T08:22:14.5848124Z ##[endgroup]
+2026-04-25T08:22:14.8932015Z Syncing repository: myorg/myproject
+2026-04-25T08:22:15.1234567Z Fetching repository
+2026-04-25T08:22:17.9842156Z ##[group]Run actions/setup-node@v3
+2026-04-25T08:22:17.9842289Z   with:
+2026-04-25T08:22:17.9842416Z     node-version: ${{ matrix.node-version }}
+2026-04-25T08:22:17.9842542Z     cache: npm
+2026-04-25T08:22:17.9842667Z ##[endgroup]
+2026-04-25T08:22:18.2156234Z Resolving node version from file .nvmrc
+2026-04-25T08:22:18.2156421Z Found in cache @ /opt/hostedtoolcache/node/18.12.0/x64
+2026-04-25T08:22:18.2156548Z Added /opt/hostedtoolcache/node/18.12.0/x64/bin to PATH
+2026-04-25T08:22:18.2156675Z ##[group]Run npm ci
+2026-04-25T08:22:18.2156802Z npm WARN deprecated inflight@1.0.6: no longer maintained
+2026-04-25T08:22:18.2156929Z npm notice beginning npm-session 47e8c86c-bd1f-4c5e-ab1e-2a3c4d5e6f7g
+2026-04-25T08:22:20.1234567Z npm WARN logfile logs were written to /home/runner/.npm/_logs
+2026-04-25T08:22:20.1234756Z added 1247 packages in 8.92s
+2026-04-25T08:22:20.1234883Z ##[endgroup]
+2026-04-25T08:22:20.1235010Z ##[group]Run matrix.node-version
+2026-04-25T08:22:20.1235137Z ##[error]You have an error in your workflow file at line 24
+2026-04-25T08:22:20.1235264Z ##[error]The workflow is not valid. node@${{ matrix.node-version }} does not exist. Did you mean node@v3?
+2026-04-25T08:22:20.1235391Z ##[error]Unable to retrieve action metadata for 'node@${{ matrix.node-version }}'
+2026-04-25T08:22:20.1235518Z The provided node version is invalid: matrix.node
+2026-04-25T08:22:20.1235645Z ##[endgroup]
+2026-04-25T08:22:20.1235772Z ##[error]The workflow is not valid. Unresolved variable "matrix.node-version"
+2026-04-25T08:22:20.1235899Z ##[error]Unresolved variables in workflow: 
+2026-04-25T08:22:20.1236026Z             matrix.node-version (line 24, col 5)
+2026-04-25T08:22:20.1236153Z ##[error]workflow is invalid
+2026-04-25T08:22:20.2156234Z
+2026-04-25T08:22:20.2156361Z Error: The workflow is not valid. Unresolved variables in workflow:
+2026-04-25T08:22:20.2156488Z   {% raw %}${{ matrix.node-version }}{% endraw %} at line 24
+2026-04-25T08:22:20.2156615Z The matrix variable 'node-version' is not defined in the job's matrix strategy
+2026-04-25T08:22:20.2156742Z
+2026-04-25T08:22:20.2156869Z ##[group]Post GitHub Actions setup
+2026-04-25T08:22:20.2156996Z ##[group]Save npm cache
+2026-04-25T08:22:20.2157123Z Cache not saved (error in previous step)
+2026-04-25T08:22:20.2157250Z ##[endgroup]
+2026-04-25T08:22:20.2157377Z ##[endgroup]
+2026-04-25T08:22:20.3234567Z ##[notice]Logs have been written to /run/user/1001/workflow-logs
+2026-04-25T08:22:20.3234694Z Workflow failed with exit code 1

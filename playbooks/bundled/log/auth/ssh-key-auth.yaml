@@ -26,18 +26,17 @@ validation: |-
   - ssh -vT git@github.com
 match:
   any:
-    - "Permission denied (publickey)"
     - "Host key verification failed"
     - "no such identity"
-    - "Could not read from remote repository"
     - "Authentication failed"
     - "ssh: handshake failed"
     - "ssh: connect to host"
-    - "fatal: Could not read from remote repository"
-    - "git@github.com: Permission denied"
     - "Warning: Permanently added"
   none:
     - password
+    - "Permission denied (publickey)"
+    - "git@.*Permission denied"
+    - "fatal: Could not read from remote repository"
 workflow:
   likely_files:
     - .github/workflows/*.yml

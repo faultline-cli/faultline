@@ -1,0 +1,98 @@
+id: gradle-daemon-timeout
+title: Gradle daemon wrapper lock timeout
+category: build
+severity: high
+base_score: 0.95
+tags: [gradle, maven, jvm, build, daemon, timeout]
+stage_hints: [build]
+summary: |-
+  The Gradle or Maven daemon could not acquire an exclusive lock on cached wrapper files, causing the build tool initialization to timeout.
+diagnosis: |-
+  ## Diagnosis
+
+  Gradle and Maven use a daemon process for efficiency, but the daemon must acquire exclusive locks on its cached wrapper JAR files during initialization. When multiple builds run concurrently on the same runner (or a previous build wasn't fully cleaned up), the lock acquisition times out and the build fails.
+
+  This is distinct from a general pipeline timeout — the JVM is running but cannot proceed because of file system lock contention on cached build tool artifacts.
+
+  Common causes:
+  - Multiple concurrent builds on the same runner sharing cache directories
+  - Previous build daemon still holding locks (incomplete cleanup or crash)
+  - Stale lock file from interrupted build
+  - Runner filesystem performance degradation
+fix: |-
+  ## Fix steps
+
+  1. Clear the Gradle or Maven daemon and wrapper cache:
+
+     ```bash
+     rm -rf ~/.gradle/wrapper/dists ~/.gradle/caches ~/.m2/repository/org/gradle
+     ```
+
+  2. Add a cleanup step at the start of your CI job to ensure no stale daemon processes are running:
+
+     ```bash
+     pkill -9 -f 'java.*gradle' || true
+     pkill -9 -f 'java.*maven' || true
+     sleep 2
+     ```
+
+  3. If using matrix builds or parallel jobs on shared runners, ensure cache keys include the job ID to avoid lock contention:
+
+     ```yaml
+     cache:
+       key: gradle-cache-${{ runner.os }}-${{ github.run_id }}-${{ matrix.java-version }}
+       paths:
+         - ~/.gradle
+     ```
+
+  4. Increase the Gradle daemon startup timeout:
+
+     ```bash
+     export ORG_GRADLE_PROJECT_org_gradle_daemon_performance_warn_time_in_ms=60000
+     ./gradlew build
+     ```
+
+validation: |-
+  ## Validation
+
+  - Run `rm -rf ~/.gradle/wrapper/dists ~/.gradle/caches` and re-run the build.
+  - Confirm the build progresses past the "Starting a Gradle Daemon" message.
+  - Check that no `Timeout waiting for exclusive access` errors appear in the output.
+why_it_matters: |-
+  ## Why it matters
+
+  Gradle daemon timeouts block the entire build and are non-obvious to diagnose — the error is buried in a stack trace and could be confused with a general timeout. Because the daemon is meant to accelerate builds, the failure feels like a CI infrastructure problem rather than a tool configuration issue.
+
+  ## Prevention
+
+  - Clear daemon caches regularly, especially between major tool version upgrades.
+  - Use separate cache keys per concurrent job to avoid lock contention.
+  - Monitor runner disk space and cleanup to prevent stale lock files.
+  - Set explicit daemon timeout values in gradle.properties to fail fast and clearly.
+
+match:
+  any:
+    - "Timeout waiting for exclusive access to file"
+    - "gradle.*daemon.*closed"
+    - "connection to daemon lost"
+    - "ERROR 500 in daemon process"
+    - "Gradle daemon not started"
+  none:
+    - "SIGKILL"
+    - "Out of memory"
+    - "OutOfMemoryError"
+    - "test execution"
+
+workflow:
+  likely_files:
+    - gradle.properties
+    - build.gradle
+    - build.gradle.kts
+    - .github/workflows/*.y*ml
+    - settings.gradle
+  local_repro:
+    - rm -rf ~/.gradle/wrapper/dists ~/.gradle/caches
+    - ./gradlew clean build --stacktrace
+  verify:
+    - ./gradlew build
+    - grep -q "BUILD SUCCESSFUL" <(./gradlew build 2>&1)

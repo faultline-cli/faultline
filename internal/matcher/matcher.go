@@ -46,6 +46,9 @@ func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []m
 		if a.Confidence != b.Confidence {
 			return a.Confidence > b.Confidence
 		}
+		if len(a.Evidence) != len(b.Evidence) {
+			return len(a.Evidence) > len(b.Evidence)
+		}
 		return a.Playbook.ID < b.Playbook.ID
 	})
 

@@ -63,6 +63,17 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "dependency drift", file: "dependency-drift.log", wantID: "dependency-drift"},
 		{name: "go compile error", file: "go-compile-error.log", wantID: "go-compile-error"},
 		{name: "segfault", file: "segfault.log", wantID: "segfault"},
+		{name: "npm eresolve conflict", file: "npm-eresolve-conflict.log", wantID: "npm-eresolve-conflict"},
+		{name: "pnpm lockfile missing", file: "pnpm-lockfile-missing.log", wantID: "pnpm-lockfile-missing"},
+		{name: "package manager mismatch", file: "package-manager-mismatch.log", wantID: "package-manager-mismatch"},
+		{name: "python virtualenv not activated", file: "python-virtualenv-not-activated.log", wantID: "python-virtualenv-not-activated"},
+		{name: "dockerfile copy source missing", file: "dockerfile-copy-source-missing.log", wantID: "dockerfile-copy-source-missing"},
+		{name: "ssh permission denied", file: "ssh-permission-denied.log", wantID: "ssh-permission-denied"},
+		{name: "dns enotfound", file: "dns-enotfound.log", wantID: "dns-enotfound"},
+		{name: "github actions missing checkout", file: "github-actions-missing-checkout.log", wantID: "github-actions-missing-checkout"},
+		{name: "jest command not found", file: "jest-command-not-found.log", wantID: "jest-command-not-found"},
+		{name: "postgres connection refused", file: "postgres-connection-refused.log", wantID: "postgres-connection-refused"},
+		{name: "docker permission denied nonroot", file: "docker-permission-denied-nonroot.log", wantID: "docker-permission-denied-nonroot"},
 	}
 
 	for _, tc := range tests {

@@ -1,0 +1,87 @@
+id: package-manager-mismatch
+title: Package manager mismatch in lockfile
+category: build
+severity: medium
+base_score: 0.9
+tags: [npm, yarn, pnpm, lockfile, package-manager, dependency]
+stage_hints: [build, install]
+summary: |-
+  CI used one package manager (e.g., npm) but the repository has a lockfile from a different manager (e.g., pnpm or yarn), causing version and integrity mismatches.
+diagnosis: |-
+  ## Diagnosis
+
+  The CI job is using a package manager that does not match the lockfile in the repository. Common scenarios:
+
+  - Repository has `pnpm-lock.yaml` but CI runs `npm install` or `npm ci`.
+  - Repository has `yarn.lock` but CI runs `npm install` or `npm ci`.
+  - CI was updated to use a new package manager but the workflow file was not updated.
+  - The wrong package manager is installed on the CI runner.
+
+  Symptoms include hash mismatches, integrity errors, or unexpected version conflicts.
+
+fix: |-
+  ## Fix steps
+
+  1. Check which lockfile exists in the repository:
+
+     ```bash
+     ls -la package-lock.json pnpm-lock.yaml yarn.lock 2>/dev/null
+     ```
+
+  2. Identify the intended package manager. Most projects include it in:
+
+     - `package.json` under `engines.npm`, `engines.yarn`, or `engines.pnpm`
+     - `.npmrc`, `.yarnrc`, or `.pnpmrc` files
+     - CI workflow comments or documentation
+
+  3. Update the CI workflow to use the correct package manager and command:
+
+     - For **npm**: `npm ci`
+     - For **yarn**: `yarn install --frozen-lockfile` or `yarn ci`
+     - For **pnpm**: `pnpm install --frozen-lockfile`
+
+  4. Ensure the correct package manager is installed on the runner. Refer to your CI platform's documentation for switching package managers.
+
+validation: |-
+  ## Validation
+
+  - `<package-manager> install` completes without integrity or hash errors.
+  - `ls -la package-lock.json pnpm-lock.yaml yarn.lock` confirms the expected lockfile matches the package manager.
+  - Re-run the CI job.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Package managers produce different lockfile formats and apply different dependency resolution strategies. Mixing them leads to non-deterministic installs and hard-to-debug downstream failures.
+
+  ## Prevention
+
+  - Document the intended package manager in `package.json` and CI workflow comments.
+  - Add a CI step that checks for lockfile/package-manager consistency before installing.
+  - Use tooling like `~/.profilerc` or a `.tool-versions` file to enforce the package manager version globally.
+
+match:
+  any:
+    - "pnpm-lock.yaml"
+    - "yarn.lock"
+    - "package-lock.json"
+    - "lockfile mismatch"
+    - "lockfile integrity"
+    - "integrity mismatch"
+  none:
+    - "ENOENT"
+    - "permission denied"
+
+workflow:
+  likely_files:
+    - package.json
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - .npmrc
+    - .yarnrc
+    - .pnpmrc
+  local_repro:
+    - ls -la package-lock.json yarn.lock pnpm-lock.yaml
+    - npm install
+  verify:
+    - npm ls

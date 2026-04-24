@@ -53,7 +53,6 @@ match:
     - could not read username
     - authentication failed for
     - repository not found
-    - permission denied (publickey)
     - "remote: invalid username or password"
     - "fatal: credential helper"
   none:
@@ -61,6 +60,8 @@ match:
     - "ssh: handshake failed"
     - no such identity
     - "ssh: connect to host"
+    - "Permission denied (publickey)"
+    - "git@.*Permission denied"
 why_it_matters: |-
   ## Why it matters
 

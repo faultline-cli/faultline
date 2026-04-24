@@ -1,0 +1,81 @@
+==== Build started at 2026-04-25T08:15:42Z ====
+Running on runner-ubuntu-latest-001
+
+[INFO] Checkout code from repository
+$ git clone https://github.com/myorg/myproject.git .
+Cloning into '.'...
+remote: Counting objects: 12847, done.
+remote: Compressing objects: 100% (4521/4521), done.
+remote: Receiving objects: 100% (12847/12847), 3.42 MiB | 5.12 MiB/s
+Receiving deltas: 100% (8234/8234), 1.24 MiB | 4.18 MiB/s
+Checking connectivity... done.
+
+[INFO] Gradle Build Step
+$ ./gradlew --version
+Gradle 7.5
+Build time:   2023-02-28 17:34:38 UTC
+Kotlin:       1.8.10
+Groovy:       3.0.13
+JVM:          11.0.18 (Eclipse Adoptium 11.0.18+10)
+OS:           Linux 5.15.0-1047-aws amd64
+
+$ ./gradlew clean build --stacktrace
+Starting a Gradle Daemon (subsequent builds will be faster)
+
+> Task :compileJava
+Building 1234 source files
+[compiling ~400..500 files]
+[compiling ~600..700 files] 
+[compiling ~800..900 files]
+Build successfully compiled 1234 source files
+
+> Task :test
+Starting test run for 847 test cases
+[PASSED] com.example.service.UserServiceTest.testCreateUser (0.245s)
+[PASSED] com.example.service.UserServiceTest.testUpdateUser (0.198s)
+[PASSED] com.example.repository.UserRepositoryTest.testFindById (0.156s)
+[PASSED] com.example.api.UserControllerTest.testGetUser (0.287s)
+[PASSED] com.example.api.UserControllerTest.testListUsers (0.334s)
+[PASSED] com.example.service.PaymentServiceTest.testProcessPayment (2.456s)
+[PASSED] com.example.service.PaymentServiceTest.testRefundPayment (1.823s)
+[PASSED] com.example.service.NotificationServiceTest.testSendEmail (0.567s)
+[PASSED] com.example.service.NotificationServiceTest.testSendSMS (0.489s)
+Tests running: 847 tests completed, 841 passed, 6 failed
+
+> Task :integrationTest
+[INFO] Starting MariaDB test container
+[INFO] Waiting for container to be ready...
+[INFO] Container ready on 127.0.0.1:3306
+[INFO] Running integration tests against test database
+[PASSED] com.example.integration.UserRepositoryIntegrationTest.testTransaction (1.234s)
+[PASSED] com.example.integration.PaymentRepositoryIntegrationTest.testConcurrency (3.456s)
+
+> Task :build
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+java.io.IOException: Timeout waiting for exclusive access to file: /home/runner/.gradle/wrapper/dists/gradle-7.5/gradle-7.5-bin/gradle-7.5/lib/gradle-core-7.5.jar
+
+* Try:
+* Run with --info or --debug option to get more log output.
+* Run with --scan to get build scan information about what's going on.
+* Get more help at https://docs.gradle.org/7.5/userguide/troubleshooting.html
+
+* Exception is:
+java.io.IOException: Timeout waiting for exclusive access to file: /home/runner/.gradle/wrapper/dists/gradle-7.5/gradle-7.5-bin/gradle-7.5/lib/gradle-core-7.5.jar
+	at org.gradle.cache.internal.DefaultCacheLockingManager$DefaultCacheLock.lock(DefaultCacheLockingManager.java:156)
+	at org.gradle.cache.internal.DefaultCacheLockingManager.lock(DefaultCacheLockingManager.java:85)
+	at org.gradle.cache.internal.DefaultCacheLockingManager.lock(DefaultCacheLockingManager.java:78)
+	at org.gradle.wrapper.Install.createDist(Install.java:48)
+	at org.gradle.wrapper.GradleMain.main(GradleMain.java:48)
+
+Gradle daemon not started. Connection to daemon lost:
+ERROR 500 in daemon process
+java.io.IOException: Timeout waiting for exclusive access to file: /home/runner/.gradle/wrapper/dists/gradle-7.5/gradle-7.5-bin/gradle-7.5/lib/gradle-core-7.5.jar
+
+[INFO] Cleaning up test containers
+[INFO] MariaDB container stopped
+
+BUILD FAILED
+
+[ERROR] Build step 'gradle-build' failed with exit code 1

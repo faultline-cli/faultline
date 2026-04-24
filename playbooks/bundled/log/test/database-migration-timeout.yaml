@@ -1,0 +1,113 @@
+id: database-migration-timeout
+title: Database migration timeout or lock contention
+category: test
+severity: high
+base_score: 0.85
+tags: [database, migration, timeout, flyway, liquibase, alembic, test-setup]
+stage_hints: [test]
+summary: |-
+  Database migration failed to complete within the timeout window, usually due to lock contention or expensive DDL operations during test suite initialization.
+diagnosis: |-
+  ## Diagnosis
+
+  Integration test suites run database migrations (via Flyway, Liquibase, Alembic, or manual scripts) as a setup step. If a migration acquires an exclusive lock on a table (e.g., for schema changes or index creation) and can't complete within the configured timeout, the test run fails before any tests execute.
+
+  This is not a connectivity failure — the database is accessible; rather, the migration process itself is blocked waiting for a lock to be released.
+
+  Common causes:
+  - Large index creation on a populated table holds an exclusive lock longer than the timeout
+  - Concurrent migrations from multiple test processes competing for the same lock
+  - Transaction from a previous test still open, holding locks
+  - Database statistics or query planner issues causing slow DDL operations
+  - Migration fails on first attempt and retries exhaust the timeout
+fix: |-
+  ## Fix steps
+
+  1. Check which migration is timing out — it will be named in the error (e.g., `V013__Create_large_index.sql`).
+
+  2. Increase the migration timeout if the operation is legitimately expensive:
+
+     ```bash
+     # For Flyway
+     export FLYWAY_CONNECT_RETRIES=3
+     export FLYWAY_LOCK_RETRY_COUNT=50
+     
+     # For Liquibase
+     export LIQUIBASE_TIMEOUT=300  # seconds
+     
+     # For Alembic
+     # In alembic.ini: sqlalchemy.pool_timeout = 300
+     ```
+
+  3. Optimize the migration query to avoid full table locks:
+
+     ```sql
+     -- Good: create index without exclusive lock (if supported by DB)
+     CREATE INDEX CONCURRENTLY idx_name ON table_name(column);
+     
+     -- Avoid: operations that block writes for long periods
+     ALTER TABLE large_table ADD COLUMN new_col TYPE DEFAULT value;
+     ```
+
+  4. Clear any stale locks from previous test runs:
+
+     ```sql
+     -- PostgreSQL
+     SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE state = 'idle in transaction';
+     ```
+
+  5. Run migrations serially instead of in parallel during test setup:
+
+     ```yaml
+     # Disable matrix job isolation that causes concurrent migrations
+     parallelism: 1
+     ```
+
+validation: |-
+  ## Validation
+
+  - Re-run the test suite with increased timeout.
+  - Confirm the migration completes without timeout errors.
+  - Verify at least one test executes successfully after migration.
+why_it_matters: |-
+  ## Why it matters
+
+  Integration test failures during setup (before any tests run) are particularly frustrating because they hide test problems and make it hard to diagnose whether tests actually work. Migration timeouts happen frequently as schema complexity grows or when multiple CI jobs share database infrastructure.
+
+  ## Prevention
+
+  - Write migrations to avoid long-lived exclusive locks (use CONCURRENTLY where possible).
+  - Test migrations locally with realistic data volumes before committing.
+  - Set appropriate timeouts per migration complexity, not one global timeout.
+  - Ensure test database cleanup between runs to avoid lock contention.
+  - Monitor migration performance in CI to catch regressions early.
+
+match:
+  any:
+    - "Timeout waiting for exclusive lock"
+    - "Migration.*failed"
+    - "Flyway validation failed"
+    - "liquibase: locked"
+    - "alembic.*cannot upgrade"
+    - "database.*migration.*timeout"
+  all:
+    - "migration"
+  none:
+    - "network"
+    - "connection refused"
+    - "Pod.*Pending"
+
+workflow:
+  likely_files:
+    - db/migrations/*.sql
+    - src/main/resources/db/migration/*.sql
+    - alembic/versions/*.py
+    - flyway.conf
+    - liquibase.properties
+  local_repro:
+    - docker run --name testdb -e POSTGRES_PASSWORD=test -d postgres:14
+    - sleep 5
+    - ./gradlew test --info
+  verify:
+    - Check test database for successful migrations via flyway_schema_history
+    - Verify integration tests complete without timeout

@@ -1,0 +1,71 @@
+==== CI Pipeline Started at 2026-04-25T09:05:33Z ====
+
+Step 1/5: Initialize workspace
+Preparing workspace...
+RUNNER_OS: linux
+RUNNER_ARCH: x64
+RUNNER_NAME: GitHub Actions 2 (Linux)
+
+Step 2/5: Checkout source code
+Running: git clone --depth 1 --branch feature/refactor-auth https://github.com/myorg/backend.git .
+
+fatal: couldn't find remote ref feature/refactor-auth
+fatal: repository 'https://github.com/myorg/backend.git/' not found
+Error: Remote branch 'feature/refactor-auth' does not exist
+ERROR: git clone command failed with exit code 1
+
+Something went wrong checking out the code. The branch feature/refactor-auth does not exist on the remote.
+Possible causes:
+  - The branch name has a typo
+  - The branch was deleted
+  - The branch is in a different repository
+
+Attempting retry with full clone...
+Running: git clone https://github.com/myorg/backend.git . --no-checkout
+Cloning into '.'...
+remote: Counting objects: 45823, done.
+remote: Compressing objects: 100% (16234/16234), done.
+remote: Receiving objects: 100% (45823/45823), 8.92 MiB | 6.42 MiB/s
+Receiving deltas: 100% (29589/29589), 5.67 MiB | 8.18 MiB/s
+Checking connectivity... done.
+
+Attempting to fetch remote ref...
+fatal: invalid refspec :'feature/refactor-auth'
+
+The following refspecs are available on remote:
+- refs/heads/main
+- refs/heads/develop
+- refs/heads/feature/auth-v2
+- refs/heads/feature/database-migration
+- refs/heads/release/v1.2.0
+- refs/heads/hotfix/api-timeout
+
+fatal: ref 'refs/pull/1234/merge' does not match any existing object
+
+git config --get-regexp remote.origin
+remote.origin.url https://github.com/myorg/backend.git
+remote.origin.fetch +refs/heads/*:refs/remotes/origin/*
+
+Running: git fetch origin feature/refactor-auth:feature/refactor-auth
+fatal: couldn't find remote ref feature/refactor-auth
+
+The requested branch 'feature/refactor-auth' could not be found on the origin.
+This typically means:
+1. The branch name has been mistyped
+2. The branch has been deleted by another user
+3. The branch exists on a different remote
+
+Available matching branches:
+  feature/auth-v2
+  feature/database-migration
+
+Step 2 failed with exit code 128
+Error: Failed to checkout source code
+
+##[error]Git checkout failed: Could not find remote ref matching feature/refactor-auth
+
+Job failed with exit code 1
+Pipeline summary:
+  Duration: 45 seconds
+  Status: FAILED
+  Failed step: Checkout source code

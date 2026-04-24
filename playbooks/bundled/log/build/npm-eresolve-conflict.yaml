@@ -1,0 +1,87 @@
+id: npm-eresolve-conflict
+title: npm ERESOLVE dependency tree conflict
+category: build
+severity: high
+base_score: 1.0
+tags: [npm, node, dependency, resolution, peer]
+stage_hints: [build, install]
+summary: |-
+  npm encountered a dependency tree conflict that it could not automatically resolve. Usually a peer dependency or incompatible version constraint.
+diagnosis: |-
+  ## Diagnosis
+
+  npm's resolver found conflicting requirements in the dependency tree. This typically occurs when:
+
+  - A peer dependency version constraint conflicts with what npm wants to install
+  - Two packages require incompatible versions of the same transitive dependency
+  - A package specifies `peerDependencies` that are not satisfied
+
+  The error appears as `npm ERR! code ERESOLVE` followed by a resolution error message.
+
+  In npm 7+, this is an error by default (in npm 6 it was a warning).
+
+fix: |-
+  ## Fix steps
+
+  1. Read the full ERESOLVE error message to identify the conflicting packages and versions.
+
+  2. Check if the error suggests using `--legacy-peer-deps` as a workaround (common when upgrading packages).
+
+  3. Update the relevant `package.json` to resolve the conflict:
+
+     - Loosen the version constraint if safe for your project.
+     - Upgrade one of the conflicting packages to a compatible version.
+     - Remove an unnecessary dependency if it is not actually used.
+
+  4. If you cannot modify the dependency to fix the conflict, run `npm install --legacy-peer-deps` as a temporary workaround (not recommended for production):
+
+     ```bash
+     npm install --legacy-peer-deps
+     ```
+
+  5. Verify the installed versions satisfy your requirements:
+
+     ```bash
+     npm ls <package-name>
+     ```
+
+validation: |-
+  ## Validation
+
+  - `npm install` completes without `ERESOLVE` errors.
+  - `npm ls` shows all dependencies at compatible versions.
+  - Run the build step to confirm downstream tasks succeed.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Dependency conflicts often hide version mismatches that cause subtle runtime errors or security vulnerabilities. Resolving them properly ensures repeatable, secure installs.
+
+  ## Prevention
+
+  - Keep packages up to date without forcing `--legacy-peer-deps`.
+  - Test dependency upgrades in isolation before committing.
+  - Use `npm ci` instead of `npm install` to lock versions in CI.
+
+match:
+  any:
+    - "npm ERR! code ERESOLVE"
+    - "ERESOLVE could not resolve"
+    - "Could not resolve dependency:"
+  none:
+    - "npm ERR! code ETARGET"
+    - "npm ERR! code ENOTFOUND"
+    - "npm ERR! code EACCES"
+    - "npm ERR! code E404"
+
+workflow:
+  likely_files:
+    - package.json
+    - package-lock.json
+    - .npmrc
+  local_repro:
+    - npm install
+    - npm ls
+  verify:
+    - npm install
+    - npm ls

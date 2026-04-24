@@ -1,0 +1,4 @@
+$ psql -h postgres -U app_user -d app_db -c "SELECT 1"
+psql: error: could not connect to server: Connection refused
+	Is the server running on host "postgres" (172.17.0.2) and accepting
+	TCP/IP connections on port 5432?

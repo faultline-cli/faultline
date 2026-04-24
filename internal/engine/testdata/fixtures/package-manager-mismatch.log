@@ -1,0 +1,8 @@
+npm installLet's look at the pnpm-lock.yaml file:
+pnpm-lock.yaml was found in the root directory but npm ci was called.
+
+npm ERR! code EUSAGE
+npm ERR! 
+npm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync.
+
+npm ERR! A complete log of run this command with -verbose for more output.

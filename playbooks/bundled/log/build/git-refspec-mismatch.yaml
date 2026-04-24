@@ -1,0 +1,98 @@
+id: git-refspec-mismatch
+title: Git refspec or branch does not exist
+category: build
+severity: high
+base_score: 0.9
+tags: [git, checkout, refspec, vcs, branch-not-found]
+stage_hints: [build]
+summary: |-
+  A git checkout or clone operation failed because the requested refspec (branch name, tag, or commit reference) does not exist on the remote repository.
+diagnosis: |-
+  ## Diagnosis
+
+  When cloning or checking out a Git repository, the specified ref (branch, tag, or PR reference) must exist on the remote. If the ref is missing or misnamed, Git fails with "couldn't find remote ref" or "invalid refspec" error.
+
+  This is distinct from network errors — the remote is reachable, but the specific reference doesn't point to anything.
+
+  Common causes:
+  - Branch name was deleted or renamed
+  - Typo in branch name (e.g., `feature/auth` instead of `feature/auth-v2`)
+  - PR reference is stale (PR was closed or rebased)
+  - Shallow clone with `--depth 1 --branch <name>` where branch doesn't exist
+  - Incorrect refspec syntax (e.g., `feature/name:feature/name` with wrong colons)
+  - Branch exists locally but not on origin
+fix: |-
+  ## Fix steps
+
+  1. Verify the exact branch name on the remote:
+
+     ```bash
+     git ls-remote https://github.com/myorg/myrepo.git | head -20
+     ```
+
+  2. Check if the branch exists:
+
+     ```bash
+     git ls-remote --heads https://github.com/myorg/myrepo.git feature/auth
+     ```
+
+  3. If using a shallow clone, try a full clone first to confirm the branch truly exists:
+
+     ```bash
+     git clone https://github.com/myorg/myrepo.git . --no-checkout
+     git fetch origin <correct-branch-name>:refs/heads/<correct-branch-name>
+     ```
+
+  4. Correct the branch name in your CI configuration or Git command.
+
+  5. For PR references, ensure the PR still exists and hasn't been closed:
+
+     ```bash
+     git fetch origin pull/<PR_NUMBER>/head
+     ```
+
+validation: |-
+  ## Validation
+
+  - Run `git ls-remote` to confirm the correct ref exists on the remote.
+  - Re-run the checkout with the correct branch name.
+  - Confirm the repository is cloned and checked out successfully.
+why_it_matters: |-
+  ## Why it matters
+
+  Branch mismatches happen frequently when workflows are refactored, branches are deleted, or CI configurations reference moved/renamed refs. The failure occurs very early in the CI pipeline, before any meaningful work can start, and the error message can be cryptic without context about what branches do exist.
+
+  ## Prevention
+
+  - Use immutable refs (tags, commit SHAs) in CI when possible instead of mutable branch names.
+  - Verify branch names in CI configuration when renaming or deleting branches.
+  - Use full repository clones (`--no-checkout`) instead of shallow clones (`--depth 1`) if the exact branch is uncertain.
+  - Add a `git ls-remote` check before checkout as a sanity step.
+
+match:
+  any:
+    - "couldn't find remote ref"
+    - "invalid refspec"
+    - "does not exist"
+    - "ref.*does not match any"
+    - "failed to fetch submodule"
+  all:
+    - "git"
+  none:
+    - "network is unreachable"
+    - "connection refused"
+    - "authentication required"
+
+workflow:
+  likely_files:
+    - .github/workflows/*.y*ml
+    - .gitlab-ci.yml
+    - .circleci/config.yml
+    - Makefile
+    - scripts/clone.sh
+  local_repro:
+    - git ls-remote https://github.com/myorg/myrepo.git
+    - git clone --branch <branch-name> https://github.com/myorg/myrepo.git .
+  verify:
+    - git ls-remote --heads origin <branch-name>
+    - git log --oneline -n 1

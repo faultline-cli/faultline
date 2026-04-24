@@ -1,0 +1,99 @@
+id: ssh-permission-denied
+title: SSH permission denied (publickey) authentication failed
+category: auth
+severity: high
+base_score: 1.0
+tags: [ssh, git, auth, key, permission, publickey]
+stage_hints: [build, deploy]
+summary: |-
+  SSH authentication to a Git host or remote server failed with explicit "Permission denied (publickey)" message. The private key is missing, not readable, or the public key is not registered on the server.
+diagnosis: |-
+  ## Diagnosis
+
+  SSH permission errors occur when:
+
+  - The SSH private key file is missing or not in the expected location.
+  - The private key has incorrect file permissions (too permissive for the key itself or parent directories).
+  - The public key is not added to the SSH server's `authorized_keys`.
+  - SSH agent is not running or the key was not added with `ssh-add`.
+  - The SSH host key (known_hosts) is not recognized.
+  - The CI environment has no SSH support configured.
+
+  The error explicitly shows `Permission denied (publickey)`, indicating the public key authentication path was attempted but rejected.
+
+fix: |-
+  ## Fix steps
+
+  1. Confirm the SSH private key file exists and has correct permissions:
+
+     ```bash
+     ls -la ~/.ssh/id_rsa
+     chmod 600 ~/.ssh/id_rsa
+     chmod 700 ~/.ssh
+     ```
+
+  2. If using GitHub or similar, verify the public key is registered:
+
+     ```bash
+     ssh -T git@github.com 2>&1 | head -5
+     ```
+
+  3. If running in CI (GitHub Actions, GitLab CI, etc.), configure SSH with the correct secret:
+
+     **GitHub Actions example:**
+     ```yaml
+     - uses: webfactory/ssh-agent@v0.7.0
+       with:
+         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+     ```
+
+  4. If the SSH host key is not recognized, add it with `ssh-keyscan`:
+
+     ```bash
+     ssh-keyscan github.com >> ~/.ssh/known_hosts
+     ```
+
+  5. Test the SSH connection:
+
+     ```bash
+     ssh -v git@github.com
+     ```
+
+validation: |-
+  ## Validation
+
+  - `ssh -T git@github.com` returns `Hi <username>! You've successfully authenticated...` (or similar success message).
+  - `ls -la ~/.ssh/id_rsa` shows `600` permissions on the key.
+  - Re-run the CI job.
+
+why_it_matters: |-
+  ## Why it matters
+
+  SSH failures block Git operations (clone, fetch, push) and prevent code deployment. Misconfigured keys are a frequent source of CI/CD pipeline breakdowns.
+
+  ## Prevention
+
+  - Use SSH key management tools (ssh-agent, key managers) in CI environments.
+  - Document SSH setup in your CI configuration.
+  - Use strong, dedicated SSH keys for CI vs. development.
+  - Regularly audit which public keys are registered on your Git hosts.
+
+match:
+  any:
+    - "Permission denied (publickey)"
+    - "git@.*Permission denied"
+  none:
+    - "password"
+    - "Host key verification failed"
+
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - Dockerfile
+  local_repro:
+    - ssh -v git@github.com
+    - ls -la ~/.ssh
+  verify:
+    - ssh -T git@github.com
+

@@ -1,0 +1,6 @@
+/usr/bin/python3: No module named pytest
+Traceback (most recent call last):
+  File "./run_tests.py", line 5, in <module>
+    import sys; sys.path.insert(0, '/home/runner/.venv/lib/python3.11/site-packages')
+    source venv/bin/activate
+ModuleNotFoundError: activate: not found

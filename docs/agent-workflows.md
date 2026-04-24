@@ -43,14 +43,16 @@ These are narrower, but they are more useful: they tell an agent exactly how to 
 
 ## Repo Skills
 
-The repository now ships six repo-local skills under [`agents/skills/`](../agents/skills/):
+The repository now ships eight repo-local skills under [`agents/skills/`](../agents/skills/):
 
 - [`ingestion-pipeline`](../agents/skills/ingestion-pipeline/SKILL.md) for public-source fixture intake, staging review, promotion, and baseline validation
 - [`playbook-refinement`](../agents/skills/playbook-refinement/SKILL.md) for fixture-driven playbook tightening and workflow-field improvement
 - [`coverage-evidence`](../agents/skills/coverage-evidence/SKILL.md) for auditing playbook coverage against a broad, stratified sample of real CI failures from independent sources
-- [`new-playbook-authoring`](../agents/skills/new-playbook-authoring/SKILL.md) for authoring a new playbook after a gap has been explicitly justified, including pattern discipline, fixture pairing, and full validation
+- [`new-playbook-authoring`](../agents/skills/new-playbook-authoring/SKILL.md) for authoring a new playbook after a gap has been explicitly justified, including pattern discipline, fixture pairing, ontology classification, and full validation
 - [`baseline-regression`](../agents/skills/baseline-regression/SKILL.md) for isolating and resolving a failing `make fixture-check` gate without weakening the baseline
 - [`source-playbook-refinement`](../agents/skills/source-playbook-refinement/SKILL.md) for repository-local source-detector refinement and bundled source-playbook authoring
+- [`fixture-generation`](../agents/skills/fixture-generation/SKILL.md) for producing canonical, noisy, and near-miss fixture trios that defend a specific playbook pattern
+- [`playbook-linter`](../agents/skills/playbook-linter/SKILL.md) for applying the deterministic quality gate before `make review` — checks matcher precision, false positive risk, fixture realism, negative coverage, and ontology completeness
 
 This location is intentionally agent-neutral so the same skill files can be used from Codex, Copilot, or any other repository-aware assistant workflow.
 
@@ -220,6 +222,50 @@ Why this matters:
 - it gives agent workflows a single release-grade validation target instead of a hand-built checklist
 
 ## Upgrade Path
+
+## Composed Skill Chains
+
+The skills above are designed to compose. These are the primary chains:
+
+### Author A New Playbook (full chain)
+
+```
+coverage-evidence or triage-unmatched-log
+  → gap confirmed
+  → fixture-generation skill    (canonical + noisy + near-miss)
+  → new-playbook-authoring skill (YAML + ontology fields)
+  → playbook-linter skill        (PASS required before make review)
+  → make review → make test → make build → make fixture-check
+```
+
+Trigger: `coverage-evidence` or `triage-unmatched-log` confirms a new playbook is warranted.  
+Gate: `playbook-linter` PASS is required before `make review`. Do not skip it.
+
+### Refine An Existing Playbook (full chain)
+
+```
+fixture regression or weak match identified
+  → playbook-refinement skill   (smallest credible change)
+  → [if new fixtures needed] fixture-generation skill
+  → playbook-linter skill        (PASS required before make review)
+  → make review → make test
+  → [if real corpus affected] make build + fixture stats --check-baseline
+```
+
+Trigger: a fixture match is wrong, weak, or confusable.  
+Gate: `playbook-linter` PASS is required before `make review`.
+
+### Classify A New Playbook With Ontology
+
+New playbooks must carry ontology fields. The linter enforces this, but the values come from `docs/ontology.md`:
+
+```yaml
+domain: <dependency|runtime|container|auth|network|ci-config|test-runner|database|filesystem|platform|source>
+class:  <e.g. lockfile-drift, missing-executable, interpreter-mismatch>
+mode:   <concrete root cause slug, e.g. npm-ci-requires-package-lock>
+```
+
+The ontology is read-only metadata on the playbook. It does not change matching behavior.
 
 The next useful upgrades should stay small and repo-native.
 

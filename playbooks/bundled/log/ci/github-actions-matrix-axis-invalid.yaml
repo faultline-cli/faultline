@@ -1,0 +1,92 @@
+id: github-actions-matrix-axis-invalid
+title: GitHub Actions matrix axis variable undefined
+category: ci
+severity: high
+base_score: 0.9
+tags: [github-actions, matrix, workflow, ci, undefined-variable]
+stage_hints: [build, test]
+summary: |-
+  A GitHub Actions workflow uses an undefined matrix axis variable in a step or action, causing the workflow to fail during variable resolution.
+diagnosis: |-
+  ## Diagnosis
+
+  GitHub Actions matrix jobs allow you to run the same workflow across multiple configurations. If a step references a matrix variable (e.g., `${{ matrix.node-version }}`) but that variable is not defined in the job's `matrix:` strategy, the workflow fails with an "Unresolved variable" error.
+
+  This is a workflow authoring error — the variable name was mistyped, the axis was never added to the matrix, or the reference syntax is incorrect.
+
+  Common causes:
+  - Typo in matrix axis name (e.g., `matrix.node` instead of `matrix.node-version`)
+  - Matrix axis removed from strategy but step still references it
+  - Copy-paste from different workflow with different matrix axes
+  - Incorrect template syntax (e.g., missing braces or dollar sign)
+fix: |-
+  ## Fix steps
+
+  1. Identify the undefined variable in the error message. It will say something like "Unresolved variable matrix.node-version".
+
+  2. Check your workflow's `matrix:` strategy to confirm the axis exists:
+
+     ```yaml
+     strategy:
+       matrix:
+         node-version: [16, 18, 20]
+         os: [ubuntu-latest, macos-latest]
+     ```
+
+  3. Fix the reference in the step to match exactly:
+
+     ```yaml
+     - name: Setup Node
+       uses: actions/setup-node@v3
+       with:
+         node-version: ${{ matrix.node-version }}
+     ```
+
+  4. Verify the axis name exists in the parent job's `matrix:` block and the syntax is correct.
+
+  5. Use `${{ matrix.<axis-name> }}` only for axes defined in the same job's matrix strategy. For variables from other sources, use `${{ env.VAR_NAME }}` or `${{ secrets.SECRET_NAME }}`.
+
+validation: |-
+  ## Validation
+
+  - Update the workflow file to use a valid matrix axis.
+  - Push to a feature branch and run the workflow again.
+  - Confirm the "Unresolved variables in workflow" error no longer appears.
+  - Verify the job runs successfully with a valid matrix axis.
+
+why_it_matters: |-
+  ## Why it matters
+
+  Matrix jobs are fundamental to testing across multiple configurations in GitHub Actions,
+  and typos in variable names are easy to introduce during refactoring or copy-paste. These
+  errors fail the entire workflow before any steps execute, blocking CI entirely for that configuration.
+
+  ## Prevention
+
+  - Use IDE/editor linting for GitHub Actions workflows (e.g., GitHub's own schema validation).
+  - Add matrix axes to your workflow incrementally and test each addition.
+  - Avoid hardcoding variable names; use YAML anchors or template reuse when possible.
+  - Review matrix strategy and references together when making changes.
+
+match:
+  any:
+    - "Unresolved variable"
+    - "matrix.*not defined"
+    - "matrix.*undefined"
+    - "Unable to retrieve action metadata"
+  all:
+    - "matrix"
+  none:
+    - "build"
+    - "checkout"
+
+workflow:
+  likely_files:
+    - .github/workflows/*.y*ml
+    - .github/workflows/*.yaml
+  local_repro:
+    - cat .github/workflows/<workflow>.yml
+    - git grep "matrix\\."
+  verify:
+    - Verify all ${{ matrix.* }} references exist in strategy.matrix
+    - Confirm GitHub Actions workflow passes validation
