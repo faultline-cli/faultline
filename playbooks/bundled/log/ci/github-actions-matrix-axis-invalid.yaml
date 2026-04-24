@@ -77,8 +77,9 @@ match:
   all:
     - "matrix"
   none:
-    - "build"
     - "checkout"
+    - "npm install"
+    - "pip install"
 
 workflow:
   likely_files:

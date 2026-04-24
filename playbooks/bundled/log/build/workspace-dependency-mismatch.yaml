@@ -102,12 +102,13 @@ match:
     - "Unmet workspace dependencies detected"
     - "no packages matched"
     - "cannot find project"
-  all:
-    - "workspace"
   none:
     - "network"
     - "npm ERR! code E404"
     - "npm ERR! 404"
+    - "no such file or directory"
+    - "ModuleNotFoundError"
+    - "No module named"
 
 workflow:
   likely_files:

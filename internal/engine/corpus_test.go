@@ -197,6 +197,12 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 			wantStage: "build",
 		},
 		{
+			name:      "npm registry auth noisy build log",
+			file:      "npm-registry-auth-noisy.log",
+			wantTopID: "npm-registry-auth",
+			absentIDs: []string{"install-failure"},
+		},
+		{
 			name:    "no match success log",
 			file:    "no-match-success.log",
 			wantErr: ErrNoMatch,
@@ -280,7 +286,7 @@ func TestAnalyzeReaderExtraPackCorpus(t *testing.T) {
 	if extraDir == "" {
 		t.Skip("extra pack repository is not available locally")
 	}
-	
+
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
 	e := New(Options{PlaybookPackDirs: []string{extraDir}, NoHistory: true})
 

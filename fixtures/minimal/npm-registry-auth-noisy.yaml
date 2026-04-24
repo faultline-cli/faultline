@@ -1,0 +1,20 @@
+id: npm-registry-auth-noisy
+title: npm registry auth failure — new npm format with CI noise
+fixture_class: minimal
+normalized_log: |
+  Run npm ci
+    npm ci
+    shell: /usr/bin/bash -e {0}
+    env:
+      NODE_AUTH_TOKEN: ***
+  npm warn config production Use `--omit=dev` instead.
+  npm warn old lockfile
+  > @myorg/app@1.0.0 preinstall /home/runner/work/app/app
+  > node check-environment.js
+
+  npm error code E401
+  npm error 401 Unauthorized - GET https://registry.npmjs.org/@myorg%2fshared-components - Unauthorized
+  npm error Log files were written to: /home/runner/.npm/_logs/2024-04-01T12_00_00_000Z-debug-0.log
+  Error: Process completed with exit code 1.
+expectation:
+  expected_playbook: npm-registry-auth

@@ -86,6 +86,12 @@ match:
     - "/usr/bin/env: 'python': No such file or directory"
     - "/usr/bin/env: 'python3': No such file or directory"
     - "python executable not found"
+  none:
+    - "npx: command not found"
+    - "cargo: command not found"
+    - "bundle: command not found"
+    - "node: command not found"
+    - "go: command not found"
 workflow:
   likely_files:
     - .github/workflows/*.yml

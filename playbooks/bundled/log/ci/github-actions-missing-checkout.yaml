@@ -74,9 +74,14 @@ match:
     - '\./.*not found'
     - "file not found in current directory"
     - "actions/checkout"
+    - "The process.*cannot find the file"
+    - "checkout step is missing"
   none:
     - "permission denied"
     - "EACCES"
+    - "npx: command not found"
+    - "cargo: command not found"
+    - "bundle: command not found"
 
 workflow:
   likely_files:

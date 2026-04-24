@@ -95,6 +95,8 @@ match:
     - "authentication"
     - "ENOENT"
     - "connection"
+    - "for relation"
+    - "manage.py migrate"
 
 workflow:
   likely_files:

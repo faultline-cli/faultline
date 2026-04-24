@@ -76,12 +76,17 @@ match:
     - "does not exist"
     - "ref.*does not match any"
     - "failed to fetch submodule"
-  all:
-    - "git"
   none:
     - "network is unreachable"
     - "connection refused"
     - "authentication required"
+    - "terminal prompts disabled"
+    - "invalid username or password"
+    - "No tags can describe"
+    - "fetch more history"
+    - "no such file or directory"
+    - "npm ERR!"
+    - "npm error"
 
 workflow:
   likely_files:

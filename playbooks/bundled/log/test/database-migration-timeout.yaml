@@ -90,12 +90,15 @@ match:
     - "liquibase: locked"
     - "alembic.*cannot upgrade"
     - "database.*migration.*timeout"
+    - "migration.*timed out"
   all:
     - "migration"
   none:
     - "network"
     - "connection refused"
     - "Pod.*Pending"
+    - "django_migrations"
+    - "permission denied"
 
 workflow:
   likely_files:

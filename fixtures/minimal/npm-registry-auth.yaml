@@ -1,0 +1,10 @@
+id: npm-registry-auth-canonical
+title: npm registry auth failure — private scope E401
+fixture_class: minimal
+normalized_log: |
+  $ npm ci
+  npm ERR! code E401
+  npm ERR! 401 Unauthorized - GET https://npm.pkg.github.com/@myorg%2fprivate-sdk - unauthenticated: User cannot be authenticated with the token provided.
+  npm ERR! Log files were written to: /home/runner/.npm/_logs/2024-04-01T12_00_00_000Z-debug-0.log
+expectation:
+  expected_playbook: npm-registry-auth

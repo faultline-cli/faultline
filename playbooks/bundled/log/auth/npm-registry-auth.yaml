@@ -1,0 +1,109 @@
+id: npm-registry-auth
+title: npm or yarn registry authentication failure
+category: auth
+severity: high
+base_score: 1.0
+tags: [npm, yarn, pnpm, registry, auth, packages]
+stage_hints: [build]
+domain: auth
+class: registry-auth
+mode: npm-registry-401-unauthorized
+summary: |-
+  The Node.js package manager could not authenticate to a private or
+  organization npm registry. The request was rejected with a 401 or 403
+  status, blocking dependency installation.
+diagnosis: |-
+  ## Diagnosis
+
+  The package manager reached the npm registry but authentication failed
+  (HTTP 401 Unauthorized or 403 Forbidden). This blocks dependency
+  installation for any private or scoped package.
+
+  Root cause: the auth token for the target registry scope is missing,
+  expired, or does not have read access to the requested package.
+
+  Common causes:
+  - `NODE_AUTH_TOKEN` or `NPM_TOKEN` CI secret is unset or expired
+  - `.npmrc` scope-to-registry mapping is missing or misconfigured
+  - Token lacks `read:packages` scope (GitHub Packages)
+  - Wrong registry URL in `.npmrc` for the package scope
+fix: |-
+  ## Fix steps
+
+  1. Confirm the CI secret holding the registry token is set and current:
+     - GitHub Actions: `NODE_AUTH_TOKEN` mapped to the registry token secret
+     - GitLab CI: `NPM_TOKEN` variable scoped to the project or group
+
+  2. Add or verify the `.npmrc` entry that maps the package scope to the
+     registry and injects the auth token:
+
+     ```
+     @myorg:registry=https://npm.pkg.github.com/
+     //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+     ```
+
+  3. For GitHub Packages, ensure the token has `read:packages` scope.
+
+  4. For npmjs.org private packages, use an automation token with
+     read-only or publish access as required.
+
+  5. For pnpm, set the same `.npmrc` content — pnpm reads npm's registry
+     auth configuration.
+
+  6. Test the credential against the registry:
+
+     ```bash
+     npm whoami --registry https://npm.pkg.github.com/
+     ```
+validation: |-
+  ## Validation
+
+  - Re-run `npm ci` or `yarn install` and confirm no E401 or E403 appears.
+  - Confirm `npm whoami --registry <url>` returns the expected identity.
+match:
+  any:
+    - "npm ERR! code E401"
+    - "npm ERR! 401 Unauthorized"
+    - "npm error code E401"
+    - "npm error 401 Unauthorized"
+    - "ERR_PNPM_FETCH_401"
+    - "ERR_PNPM_FETCH_403"
+    - "npm ERR! code E403"
+    - "npm ERR! 403 Forbidden"
+    - "unauthenticated: User cannot be authenticated with the token provided"
+    - "npm ERR! need auth"
+  none:
+    - "npm ERR! code E404"
+    - "npm ERR! 404 Not Found"
+    - "docker login"
+    - "unauthorized: authentication required"
+    - "no basic auth credentials"
+    - "pull access denied"
+why_it_matters: |-
+  ## Why it matters
+
+  Private and scoped npm packages are common in enterprise and monorepo
+  setups. A missing or expired registry token silently blocks all dependency
+  installs. The failure is often misread as a network issue because the
+  registry responds with an HTTP error rather than a connection failure.
+
+  ## Prevention
+
+  - Store the registry token in a dedicated CI secret and reference it only
+    through environment variables — never hardcode tokens in `.npmrc`.
+  - Use short-lived tokens where the registry supports them.
+  - Add a pre-install registry ping before the full install step:
+    `npm ping --registry https://npm.pkg.github.com/`
+workflow:
+  likely_files:
+    - .npmrc
+    - package.json
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .yarnrc.yml
+  local_repro:
+    - npm ci --verbose
+    - yarn install --verbose
+  verify:
+    - npm whoami --registry <registry-url>
+    - npm ci

@@ -8,7 +8,7 @@
 ## Outcome
 
 - Score: 2.10
-- Confidence: 84%
+- Confidence: 55%
 
 ## Rule Evaluation
 
