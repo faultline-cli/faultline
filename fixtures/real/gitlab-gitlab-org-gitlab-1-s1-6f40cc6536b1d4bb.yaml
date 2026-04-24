@@ -1,0 +1,36 @@
+id: gitlab-gitlab-org-gitlab-1-s1-6f40cc6536b1d4bb
+title: 500 error on MR approvers edit page
+fixture_class: real
+normalized_log: |-
+    worker2 production.log: Completed 500 Internal Server Error in 287ms (ActiveRecord: 11.7ms)
+    worker2 production.log:
+    worker2 production.log: ActionView::Template::Error (undefined method `name' for nil:NilClass):
+    worker2 production.log: 54: %ul.well-list
+    worker2 production.log: 55: - @project.approvers.each do |approver|
+    worker2 production.log: 56: %li
+    worker2 production.log: 57: = link_to approver.user.name, approver.user
+    worker2 production.log: 58: .pull-right
+    worker2 production.log: 59: = link_to namespace_project_approver_path(@project.namespace, @project, approver), data: { confirm: "Are you sure you want to remove approver #{approver.user.name}"}, method: :delete, class: "btn-xs btn btn-remove", title: 'Remove approver' do
+    worker2 production.log: 60: = icon("sign-out")
+    worker2 production.log: app/views/projects/_merge_request_settings.html.haml:57:in `block in _app_views_projects__merge_request_settings_html_haml___545752523034962009_57962180'
+expectation:
+    expected_playbook: missing-test-fixture
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab/-/issues/1
+    repository: gitlab-org/gitlab
+    issue_number: 1
+    title: 500 error on MR approvers edit page
+    labels:
+        - Enterprise Edition
+        - backend
+    author: jacobvosmaer
+    snippet: 1
+    fetched_at: "2026-04-23T22:04:22Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T22:09:11Z"
+fingerprint: 6f40cc6536b1d4bb

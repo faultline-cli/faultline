@@ -1,0 +1,38 @@
+id: stackexchange-stackoverflow-48957195-s1-46d27c03a2ee190a
+title: 'How to fix Docker: Permission denied'
+fixture_class: real
+normalized_log: |-
+    I installed Docker on my Ubuntu machine.
+    When I run
+    sudo docker run hello-world
+    it works.
+    But if I write the command without sudo
+    docker run hello-world
+    it displays the following:
+    docker: Got permission denied while trying to connect
+    to the Docker daemon socket at unix:///var/run/docker.sock:
+    Post http://%2Fvar%2Frun%2Fdocker.sock/v1.35/containers/create:
+    dial unix /var/run/docker.sock: connect: permission denied.
+    See 'docker run --help'.
+    The same happens when I try to run:
+    docker-compose up
+    How can I resolve this?
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/48957195
+    repository: stackoverflow
+    issue_number: 48957195
+    comment_id: "0"
+    title: 'How to fix Docker: Permission denied'
+    author: Carlos Andres
+    snippet: 1
+    fetched_at: "2026-04-23T22:00:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-23T22:08:55Z"
+fingerprint: 46d27c03a2ee190a

@@ -1,0 +1,60 @@
+id: reddit-r-devops-i4c2nq-0-0-s2-626eba3c0e773282
+title: Circle CI Pytest Error
+fixture_class: real
+normalized_log: |-
+    version: 2
+    defaults: &defaults
+    docker:
+    - image: circleci/python:3.5.4
+    working_directory: ~/project
+    prepare_venv: &prepare_venv
+    run:
+    name: Create venv
+    command: |
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install --upgrade pip
+    prepare_tox: &prepare_tox
+    run:
+    name: Install tox
+    command: |
+    sudo pip install --upgrade pip
+    pip install --user tox
+    jobs:
+    test_regression_model_py35:
+    docker:
+    - image: circleci/python:3.5.4
+    working_directory: ~/project/model
+    steps:
+    - checkout:
+    path: ~/project
+    - run:
+    name: Run tests with Python 3.5
+    command: |
+    sudo pip install --upgrade pip
+    pip install tox
+    pip install -r requirements.txt
+    pytest test
+    workflows:
+    version: 2
+    test-all:
+    jobs:
+    - test_regression_model_py35
+expectation:
+    expected_playbook: pip-install-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/devops/comments/i4c2nq/
+    repository: r/devops
+    comment_id: "0"
+    title: Circle CI Pytest Error
+    author: da_chosen1
+    snippet: 2
+    fetched_at: "2026-04-22T21:07:41Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T05:53:42Z"
+fingerprint: 626eba3c0e773282

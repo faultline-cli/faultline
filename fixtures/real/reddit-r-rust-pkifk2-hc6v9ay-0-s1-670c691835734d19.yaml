@@ -1,0 +1,22 @@
+id: reddit-r-rust-pkifk2-hc6v9ay-0-s1-670c691835734d19
+title: My Rust CI builds get stuck forever (up to 50 min). ????
+fixture_class: real
+normalized_log: Actually, I discovered a similar issue when I was using sqlx. SQLX was using checked queries that expected a database connection. So the builds were passing locally where the environment variable was present but failed on the CI server.
+expectation:
+    expected_playbook: env-var-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/rust/comments/pkifk2/
+    repository: r/rust
+    comment_id: hc6v9ay
+    title: My Rust CI builds get stuck forever (up to 50 min). ????
+    author: vagmi
+    snippet: 1
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T05:54:14Z"
+fingerprint: 670c691835734d19

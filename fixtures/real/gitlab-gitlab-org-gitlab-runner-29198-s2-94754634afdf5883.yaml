@@ -1,0 +1,94 @@
+id: gitlab-gitlab-org-gitlab-runner-29198-s2-94754634afdf5883
+title: 'connect: network is unreachable in k8s runner job'
+fixture_class: real
+normalized_log: |-
+    affinity: {}
+    checkInterval: 30
+    concurrent: 10
+    configMaps: {}
+    gitlabUrl: https://gitlab.com//
+    hostAliases: []
+    image:
+    image: gitlab-org/gitlab-runner
+    registry: registry.gitlab.com
+    imagePullPolicy: IfNotPresent
+    metrics:
+    enabled: false
+    port: 9252
+    portName: metrics
+    serviceMonitor:
+    enabled: false
+    nodeSelector: {}
+    podAnnotations: {}
+    podLabels: {}
+    podSecurityContext:
+    fsGroup: 65533
+    runAsUser: 100
+    priorityClassName: ""
+    rbac:
+    clusterWideAccess: false
+    create: true
+    podSecurityPolicy:
+    enabled: false
+    resourceNames:
+    - gitlab-runner
+    rules: []
+    serviceAccountName: gitlab
+    resources: {}
+    runnerRegistrationToken: *******
+    runners:
+    builds: {}
+    cache: {}
+    config: |
+    [[runners]]
+    [runners.kubernetes]
+    namespace = "{{.Release.Namespace}}"
+    image = "ubuntu:20.04"
+    [[runners.kubernetes.volumes.host_path]]
+    name = "docker"
+    mount_path = "/var/run/docker.sock"
+    host_path = "/var/run/docker.sock"
+    helpers: {}
+    name: kubernetes-runner
+    privileged: "true"
+    secrets: []
+    securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+    drop:
+    - ALL
+    privileged: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    service:
+    enabled: false
+    type: ClusterIP
+    sessionServer:
+    enabled: false
+    terminationGracePeriodSeconds: 3600
+    tolerations: []
+    volumeMounts: []
+    volumes: []
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/29198
+    repository: gitlab-org/gitlab-runner
+    issue_number: 29198
+    title: 'connect: network is unreachable in k8s runner job'
+    labels:
+        - Category:Runner Core
+        - devops::verify
+        - group::runner core
+        - section::ops
+    author: 0xg0pher
+    snippet: 2
+    fetched_at: "2026-04-23T20:44:52Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T05:54:29Z"
+fingerprint: 94754634afdf5883

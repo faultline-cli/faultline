@@ -1,0 +1,48 @@
+id: stackexchange-stackoverflow-79870696-s1-e22e0505c34c58ec
+title: 'k8 cluster ASP.NET Core 8 error exec /usr/bin/dotnet: exec format error'
+fixture_class: real
+normalized_log: |-
+    I have notification service that I have in a docker image and am trying to push to a aks cluster.
+    locally everything works with docker desktop and k8 cluster thru docker desktop. I am running windows 10 PC. I see this can be a problem with macs.
+    I keep getting status: CrashLoopBackOff or Error while watching it with kubectl get pods -n dev -w
+    When I try and look at the logs I get the wonderful error of exec /usr/bin/dotnet: exec format error
+    Here is the kubectl description
+    Type Reason Age From Message
+    ---- ------ ---- ---- -------
+    Warning FailedScheduling 2m7s default-scheduler 0/2 nodes are available: 2 Insufficient cpu. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod.
+    Normal Scheduled 2m7s default-scheduler Successfully assigned dev/notification-svc-766875d4bb-s8fng to aks-agentpool-67548965-vmss000006
+    Normal Pulled 2m6s kubelet Successfully pulled image "ghcr.io/my-repo/service-notification:fixed-2026-4" in 351ms (351ms including waiting). Image size: 93733317 bytes.
+    Normal Pulled 2m5s kubelet Successfully pulled image "ghcr.io/my-repo/service-notification:fixed-2026-4" in 341ms (341ms including waiting). Image size: 93733317 bytes.
+    Normal Pulled 111s kubelet Successfully pulled image "ghcr.io/my-repo/service-notification:fixed-2026-4" in 324ms (324ms including waiting). Image size: 93733317 bytes.
+    Normal Pulled 84s kubelet Successfully pulled image "ghcr.io/my-repo/service-notification:fixed-2026-4" in 356ms (356ms including waiting). Image size: 93733317 bytes.
+    Normal Pulling 33s (x5 over 2m7s) kubelet Pulling image "ghcr.io/my-repo/service-notification:fixed-2026-4"
+    Normal Created 33s (x5 over 2m6s) kubelet Created container: notification-svc
+    Normal Started 33s (x5 over 2m6s) kubelet Started container notification-svc
+    Normal Pulled 33s kubelet Successfully pulled image "ghcr.io/my-repo/service-notification:fixed-2026-4" in 367ms (367ms including waiting). Image size: 93733317 bytes.
+    Warning BackOff 9s (x11 over 2m4s) kubelet Back-off restarting failed container notification-svc in pod notification-svc-766875d4bb-s8fng_dev(<id>)
+    The docker image I feel is correct based on all the reseach I've done with AKS and asp.net core 8
+    # Stage 1: Build
+    FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+    ARG BUILD_CONFIGURATION=Release
+    WORKDIR /src
+    COPY ["service-notification.sln", "."]
+    COPY ["src/service-notification/service-notification.csproj", "src/service-notification/"]
+expectation:
+    expected_playbook: k8s-crashloopbackoff
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/79870696
+    repository: stackoverflow
+    issue_number: 79870696
+    comment_id: "0"
+    title: 'k8 cluster ASP.NET Core 8 error exec /usr/bin/dotnet: exec format error'
+    author: whisk
+    snippet: 1
+    fetched_at: "2026-04-24T05:38:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T05:43:40Z"
+fingerprint: e22e0505c34c58ec
