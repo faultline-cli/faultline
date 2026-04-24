@@ -1,0 +1,91 @@
+id: docker-manifest-not-found
+title: Docker manifest not found or bad image tag
+category: build
+severity: medium
+base_score: 1.0
+tags: [docker, registry, image, tag, manifest]
+stage_hints: [build, deploy]
+summary: |-
+  Docker could not pull an image because the tag does not exist in the registry, the manifest is missing, or the image reference is malformed.
+diagnosis: |-
+  ## Diagnosis
+
+  Docker tried to pull an image from a registry (Docker Hub, ECR, GCR, etc.) but the tag or digest does not exist, the manifest is unavailable, or the image reference contains a typo.
+
+  Common causes:
+  - The image tag was deleted or never pushed.
+  - The image name or tag contains a typo.
+  - The registry requires authentication that is not configured.
+  - The image is private and the CI job lacks credentials.
+  - The image uses a multi‑arch manifest that is incomplete for the current platform.
+fix: |-
+  ## Fix steps
+
+  1. **Verify the image reference**:
+     ```bash
+     echo "Image: $IMAGE"
+     docker manifest inspect $IMAGE 2>&1 | head -20
+     ```
+
+  2. **Check if the tag exists** in the registry:
+     - For Docker Hub: visit `https://hub.docker.com/r/<org>/<image>/tags`
+     - For ECR: use `aws ecr describe-images --repository-name <repo>`
+     - For GCR: use `gcloud container images list-tags <image>`
+
+  3. **If the image is private**, ensure credentials are available:
+     ```bash
+     echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+     ```
+
+  4. **If using a multi‑arch image**, verify it supports your platform:
+     ```bash
+     docker buildx imagetools inspect $IMAGE
+     ```
+
+  5. **Retry with an explicit tag** instead of `latest`:
+     ```bash
+     docker pull myimage:1.2.3
+     ```
+
+  6. **If the image is built in a previous CI step**, ensure it was pushed successfully before the pull step.
+
+  7. **Check network connectivity** to the registry (firewall, proxy, DNS).
+validation: |-
+  ## Validation
+
+  - `docker pull <image>` succeeds without "manifest not found" or "tag does not exist".
+  - `docker run --rm <image> echo ok` runs without image pull errors.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing images block deployments, CI builds that depend on base images, and test containers. The error often appears after deleting old tags, renaming images, or when CI jobs run before image pushes complete.
+
+  ## Prevention
+
+  - Use immutable tags (e.g., Git SHA, build ID) instead of `latest`.
+  - Add a pre‑flight check that verifies required images exist before starting dependent jobs.
+  - Keep image references in a central configuration file to avoid typos.
+match:
+  any:
+    - "manifest not found"
+    - "tag does not exist"
+    - "repository does not exist"
+    - "image not found"
+    - "no such image"
+    - "invalid reference format"
+    - "manifest unknown"
+    - "manifest for.*not found"
+    - "no such manifest"
+    - "tag.*not found"
+workflow:
+  likely_files:
+    - Dockerfile
+    - docker-compose.yml
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - kubernetes/*.yaml
+  local_repro:
+    - docker pull <image>
+    - docker manifest inspect <image>
+  verify:
+    - docker pull <image>

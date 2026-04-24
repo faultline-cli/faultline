@@ -1,0 +1,9 @@
+> npm install
+npm ERR! code ENOENT
+npm ERR! syscall open
+npm ERR! path /home/runner/work/my-repo/my-repo/package.json
+npm ERR! errno -2
+npm ERR! ENOENT: no such file or directory, open 'package.json'
+npm ERR! 
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/runner/.npm/_logs/2024-01-01T12_00_00_000Z-debug.log

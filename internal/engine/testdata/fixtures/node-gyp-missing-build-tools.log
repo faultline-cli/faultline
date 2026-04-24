@@ -1,0 +1,45 @@
+$ npm install bcrypt
+npm ERR! code 1
+npm ERR! path /home/runner/work/my-repo/my-repo/node_modules/bcrypt
+npm ERR! command failed
+npm ERR! command sh -c node-gyp rebuild
+npm ERR! gyp ERR! find Python
+npm ERR! gyp ERR! find Python Python is not set from command line or npm configuration
+npm ERR! gyp ERR! find Python Python is not set from environment variable PYTHON
+npm ERR! gyp ERR! find Python checking if "python3" can be used
+npm ERR! gyp ERR! find Python - "python3" is not in PATH or produced an error
+npm ERR! gyp ERR! find Python checking if "python" can be used
+npm ERR! gyp ERR! find Python - "python" is not in PATH or produced an error
+npm ERR! gyp ERR! find Python
+npm ERR! gyp ERR! find Python **********************************************************
+npm ERR! gyp ERR! find Python You need to install the latest version of Python.
+npm ERR! gyp ERR! find Python Node-gyp should be able to find and use Python. If not,
+npm ERR! gyp ERR! find Python you can try one of the following options:
+npm ERR! gyp ERR! find Python - Use the switch --python="/path/to/pythonexecutable"
+npm ERR! gyp ERR! find Python   (accepted by both node-gyp and npm)
+npm ERR! gyp ERR! find Python - Set the environment variable PYTHON
+npm ERR! gyp ERR! find Python - Set the npm configuration variable `python`:
+npm ERR! gyp ERR! find Python   npm config set python "/path/to/pythonexecutable"
+npm ERR! gyp ERR! find Python For more information consult the documentation at:
+npm ERR! gyp ERR! find Python https://github.com/nodejs/node-gyp#installation
+npm ERR! gyp ERR! find Python **********************************************************
+npm ERR! gyp ERR! configure error
+npm ERR! gyp ERR! stack Error: `gyp` failed with exit code: 1
+npm ERR! gyp ERR! stack     at ChildProcess.onCpExit (/usr/local/lib/node_modules/npm/node_modules/node-gyp/lib/configure.js:351:16)
+npm ERR! gyp ERR! stack     at ChildProcess.emit (node:events:514:28)
+npm ERR! gyp ERR! stack     at Process.ChildProcess._handle.onexit (node:internal/child_process:291:12)
+npm ERR! gyp ERR! System Linux 5.15.0-1041-azure
+npm ERR! gyp ERR! command "/usr/local/bin/node" "/usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js" "rebuild"
+npm ERR! gyp ERR! cwd /home/runner/work/my-repo/my-repo/node_modules/bcrypt
+npm ERR! gyp ERR! node -v v20.11.0
+npm ERR! gyp ERR! node-gyp -v v9.4.0
+npm ERR! gyp ERR! not ok
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /home/runner/.npm/_logs/2025-01-15T12_34_56_789Z-debug.log
+
+$ python3 --version
+bash: python3: command not found
+
+$ g++ --version
+bash: g++: command not found

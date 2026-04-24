@@ -1,0 +1,84 @@
+id: node-gyp-missing-build-tools
+title: node-gyp missing build tools
+category: build
+severity: medium
+base_score: 1.2
+tags: [node, npm, node-gyp, build-tools, native]
+stage_hints: [build]
+summary: |-
+  `node-gyp` failed because required build tools (Python, C++ compiler, etc.) are missing from the CI environment.
+diagnosis: |-
+  ## Diagnosis
+
+  `node-gyp` is a tool used to compile native Node.js addons. It requires Python, a C++ compiler (like g++ or clang), and other build tools to be installed. CI environments often lack these by default, especially in minimal container images.
+
+  The error typically appears when installing packages with native dependencies (e.g., `bcrypt`, `sharp`, `sqlite3`).
+fix: |-
+  ## Fix steps
+
+  1. Install the necessary build tools before running `npm install` or `npm ci`:
+
+     **Ubuntu/Debian:**
+     ```bash
+     apt-get update && apt-get install -y python3 make g++
+     ```
+
+     **Alpine:**
+     ```bash
+     apk add --no-cache python3 make g++
+     ```
+
+     **macOS (GitHub Actions):**
+     ```bash
+     brew install python3
+     ```
+
+  2. If using a Node.js base image, switch to an image that includes build tools, such as `node:20` (includes g++ and Python) instead of `node:20-alpine` (minimal, lacks build tools).
+
+  3. For packages that offer pre‑built binaries, ensure the environment matches the binary target (e.g., `npm_config_platform`, `npm_config_arch`). You can also set `npm_config_build_from_source=true` to force compilation.
+
+  4. If the project does not actually need native addons, consider removing the offending dependency or switching to a pure‑JavaScript alternative.
+validation: |-
+  ## Validation
+
+  - Verify that `python3 --version` and `g++ --version` succeed in the CI environment.
+  - Re‑run the install step and confirm `node-gyp` no longer reports missing tools.
+why_it_matters: |-
+  ## Why it matters
+
+  Native addons are common in the Node.js ecosystem for performance‑sensitive tasks. Missing build tools block installation of those packages, which can halt deployment or testing.
+
+  ## Prevention
+
+  - Use a Docker image or CI runner that already includes Python and a C++ compiler.
+  - Add a pre‑install step that checks for required tools and installs them if missing.
+  - Consider using packages that offer pre‑built binaries for common platforms to avoid compilation in CI.
+match:
+  any:
+    - "node-gyp ERR!"
+    - "gyp ERR!"
+    - "missing: python"
+    - "Can't find Python executable"
+    - "No Xcode or CLT version detected"
+    - "Command failed: python"
+    - "make: not found"
+    - "g++: not found"
+    - "clang: not found"
+    - "error: no acceptable C compiler found"
+    - "ERR! stack Error: `make` failed"
+    - "ERR! stack Error: `g++` failed"
+    - "gyp ERR! find Python"
+    - "node-gyp rebuild"
+workflow:
+  likely_files:
+    - package.json
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - Dockerfile
+  local_repro:
+    - python3 --version
+    - g++ --version
+    - which make
+  verify:
+    - python3 --version
+    - g++ --version

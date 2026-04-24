@@ -1,0 +1,67 @@
+id: npm-enoent-package-json
+title: npm ENOENT package.json missing
+category: build
+severity: medium
+base_score: 1.0
+tags: [npm, node, package.json, missing]
+stage_hints: [build]
+summary: |-
+  npm could not find a `package.json` file in the current directory.
+diagnosis: |-
+  ## Diagnosis
+
+  npm expects a `package.json` file in the current working directory when running commands like `npm install`, `npm ci`, or `npm run`. The file may be missing, the CI job may be running in the wrong directory, or the repository checkout may have failed.
+
+  This error typically appears as `ENOENT: no such file or directory, open 'package.json'`.
+fix: |-
+  ## Fix steps
+
+  1. Verify the repository was checked out successfully and contains a `package.json` file.
+  2. Check the CI job's `working-directory` configuration. It may be pointing to a subdirectory that doesn't contain `package.json`.
+  3. If using a monorepo, ensure you're in the correct package directory.
+  4. Add a step to list files and confirm `package.json` exists before running npm commands:
+
+     ```bash
+     ls -la
+     pwd
+     ```
+
+  5. If `package.json` is missing from the repository, create it with the necessary fields or restore it from version control.
+validation: |-
+  ## Validation
+
+  - Run `ls -la package.json` to confirm the file exists.
+  - Re-run the npm command that previously failed.
+  - Ensure the command runs in the correct directory.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing `package.json` prevents npm from installing dependencies or running scripts. This is a fundamental setup issue that blocks all subsequent build steps.
+
+  ## Prevention
+
+  - Use explicit `working-directory` paths in CI configurations.
+  - Add a pre‑install check that verifies `package.json` exists.
+  - Keep repository structure consistent across branches.
+match:
+  any:
+    - "ENOENT: no such file or directory, open 'package.json'"
+    - "ENOENT.*package.json"
+    - "npm ERR! code ENOENT"
+    - "npm ERR!.*package.json"
+    - "could not read package.json"
+    - "package.json not found"
+  none:
+    - "npm ERR! code ERESOLVE"
+    - "npm ERR! code ETARGET"
+    - "npm ERR! code EPERM"
+workflow:
+  likely_files:
+    - package.json
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - ls -la package.json
+    - pwd
+  verify:
+    - ls -la package.json

@@ -1,0 +1,89 @@
+id: npm-eacces-permission-denied
+title: npm EACCES permission denied in node_modules
+category: build
+severity: medium
+base_score: 1.0
+tags: [npm, node, permissions, node_modules, eacces]
+stage_hints: [build]
+summary: |-
+  npm failed with an `EACCES` error while trying to write to `node_modules` or the global npm cache.
+diagnosis: |-
+  ## Diagnosis
+
+  npm needs write permission to the `node_modules` directory and the global npm cache. This error occurs when the CI runner or container runs under a user that lacks those permissions.
+
+  Common causes:
+  - The `node_modules` directory is owned by a different user (e.g., from a previous run with `sudo`).
+  - The CI job runs as `root` but npm is configured to reject root installs.
+  - A Docker volume mounts `node_modules` with incorrect ownership.
+  - The npm cache directory (`~/.npm`) is read‑only.
+fix: |-
+  ## Fix steps
+
+  1. **Clean and reset permissions** (if `node_modules` already exists):
+     ```bash
+     rm -rf node_modules
+     rm -rf package-lock.json
+     ```
+
+  2. **Ensure the current user owns the project directory**:
+     ```bash
+     sudo chown -R $(whoami):$(whoami) .
+     ```
+
+  3. **If running in Docker, avoid root**:
+     - Use the `node` official image's non‑root user (e.g., `node:20-alpine`).
+     - Set `USER node` in your Dockerfile before `npm install`.
+
+  4. **If you must run as root**, configure npm to allow it:
+     ```bash
+     npm config set unsafe-perm true
+     ```
+
+  5. **Check npm cache permissions**:
+     ```bash
+     npm cache verify
+     ls -la ~/.npm
+     ```
+
+  6. **Use `npm ci` instead of `npm install`** when a `package-lock.json` exists; it is stricter and may avoid some permission issues.
+
+  7. **In CI, run as a non‑root user** by adding a step:
+     ```bash
+     useradd -m -u 1001 ci-user
+     chown -R ci-user .
+     su ci-user -c "npm install"
+     ```
+validation: |-
+  ## Validation
+
+  - `ls -la node_modules` shows the directory is writable by the current user.
+  - Re‑run the npm command and confirm no `EACCES` error appears.
+why_it_matters: |-
+  ## Why it matters
+
+  Permission errors block dependency installation entirely. They often appear after switching CI runners, changing Docker base images, or when teams mix `sudo` and non‑`sudo` workflows.
+
+  ## Prevention
+
+  - Standardize on a non‑root user for CI jobs.
+  - Clean `node_modules` between runs in CI to avoid leftover root‑owned files.
+  - Use Docker images that define a non‑root default user (e.g., `node:20`).
+match:
+  any:
+    - "npm ERR! code EACCES"
+    - "EACCES: permission denied"
+    - "permission denied.*node_modules"
+    - "Error: EACCES: permission denied"
+    - "Please try running this command again as root/Administrator"
+workflow:
+  likely_files:
+    - package.json
+    - Dockerfile
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+  local_repro:
+    - ls -la node_modules
+    - whoami
+  verify:
+    - ls -la node_modules

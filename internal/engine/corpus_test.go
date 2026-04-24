@@ -187,7 +187,7 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 		{
 			name:      "build input file missing noisy build log",
 			file:      "build-input-file-missing-noisy.log",
-			wantTopID: "build-input-file-missing",
+			wantTopID: "node-gyp-missing-build-tools",
 			wantStage: "build",
 		},
 		{

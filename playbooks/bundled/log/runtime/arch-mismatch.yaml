@@ -82,6 +82,8 @@ match:
     - "no matching manifest for linux/amd64"
     - "WARNING: The requested image's platform"
     - "cannot execute binary file"
+    - "exec format error"
+    - "exec /usr/bin/dotnet: exec format error"
     - "QEMU"
     - "qemu-x86_64"
     - "qemu-aarch64"

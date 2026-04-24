@@ -454,7 +454,15 @@ func applyCompoundSignals(pb model.Playbook, triggers, amplifiers, mitigations [
 				}
 			}
 		}
-		for scopeKey, count := range scopeCounts {
+		// Collect and sort scope keys for deterministic iteration
+		scopeKeys := make([]string, 0, len(scopeCounts))
+		for scopeKey := range scopeCounts {
+			scopeKeys = append(scopeKeys, scopeKey)
+		}
+		sort.Strings(scopeKeys)
+		
+		for _, scopeKey := range scopeKeys {
+			count := scopeCounts[scopeKey]
 			if count < len(compound.Require) {
 				continue
 			}

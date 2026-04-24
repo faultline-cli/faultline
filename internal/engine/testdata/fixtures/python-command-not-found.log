@@ -1,0 +1,39 @@
+$ python --version
+bash: python: command not found
+
+$ python3 --version
+bash: python3: command not found
+
+$ pip install -r requirements.txt
+bash: pip: command not found
+
+$ pip3 --version
+bash: pip3: command not found
+
+$ which python3
+
+$ which pip3
+
+$ echo "Python is not installed in this Alpine image"
+Python is not installed in this Alpine image
+
+$ cat /etc/os-release
+NAME="Alpine Linux"
+ID=alpine
+VERSION_ID=3.19.1
+
+$ apk add --no-cache python3 py3-pip
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.19/main/x86_64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.19/community/x86_64/APKINDEX.tar.gz
+(1/10) Installing libbz2 (1.0.8-r5)
+(2/10) Installing libexpat (2.6.0-r0)
+(3/10) Installing libffi (3.4.4-r2)
+(4/10) Installing gdbm (1.23-r1)
+(5/10) Installing xz-libs (5.4.5-r0)
+(6/10) Installing mpdecimal (2.5.1-r2)
+(7/10) Installing ncurses-terminfo-base (6.4_p20231125-r0)
+(8/10) Installing ncurses-libs (6.4_p20231125-r0)
+(9/10) Installing readline (8.2.10-r0)
+(10/10) Installing python3 (3.11.7-r0)
+Executing busybox-1.36.1-r15.trigger
+OK: 57 MiB in 25 packages

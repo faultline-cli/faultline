@@ -14,6 +14,7 @@ match:
     - no basic auth credentials
     - "denied: requested access to the resource is denied"
     - "may require 'docker login'"
+    - "Error response from daemon: Get https://mcr.microsoft.com/v2/: Forbidden"
   none:
     - failed to pull image
     - imagepullbackoff

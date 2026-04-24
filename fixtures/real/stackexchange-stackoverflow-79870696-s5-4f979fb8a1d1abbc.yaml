@@ -1,0 +1,73 @@
+id: stackexchange-stackoverflow-79870696-s5-4f979fb8a1d1abbc
+title: 'k8 cluster ASP.NET Core 8 error exec /usr/bin/dotnet: exec format error'
+fixture_class: real
+normalized_log: |-
+    When I try and look at the logs I get the wonderful error of exec /usr/bin/dotnet: exec format error
+    Then I have the depolyment.ym file in my orchestration repo that does all the k8 work
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+    name: notification-svc
+    spec:
+    selector:
+    matchLabels:
+    app: notification-svc
+    template:
+    metadata:
+    labels:
+    app: notification-svc
+    spec:
+    imagePullSecrets:
+    - name: ghcr-secret
+    containers:
+    - name: notification-svc
+    image: ghcr.io/myrepo/service-notification:fixed-2026-4
+    imagePullPolicy: Always
+    envFrom:
+    - configMapRef:
+    name: notification-svc-config
+    - secretRef:
+    name: rabbitmq-secret
+    resources:
+    limits:
+    memory: "128Mi"
+    cpu: "500m"
+    ports:
+    - containerPort: 80
+    name: web
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+    name: notification-clusterip
+    spec:
+    type: ClusterIP
+    selector:
+    app: notification-svc
+    ports:
+    - port: 80
+    targetPort: 80
+    name: web
+    This is a simple notification project using signalR and masstransit/rabbitmq but I have commented that code out for simplicity.
+    using MassTransit;
+    using service_notification.Consumers;
+    using service_notification.Hubs;
+expectation:
+    expected_playbook: arch-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/79870696
+    repository: stackoverflow
+    issue_number: 79870696
+    comment_id: "0"
+    title: 'k8 cluster ASP.NET Core 8 error exec /usr/bin/dotnet: exec format error'
+    author: whisk
+    snippet: 5
+    fetched_at: "2026-04-24T05:38:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T09:41:38Z"
+fingerprint: 4f979fb8a1d1abbc
