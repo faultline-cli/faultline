@@ -1,0 +1,80 @@
+id: github-docker-for-mac-7553-s2-733eaa8f34242ff7
+title: No Docker daemon on MacOS intel
+fixture_class: real
+normalized_log: |-
+    $ /Applications/Docker.app/Contents/MacOS/com.docker.diagnose check
+    Starting diagnostics
+    [<timestamp>.217115000Z][com.docker.diagnose.ipc] fc1846ec-diagnose -> <HOME>/Library/Containers/com.docker.docker/Data/backend.sock BackendAPI
+    [<timestamp>.220193000Z][com.docker.diagnose.ipc] (5885d36f-0) fc1846ec-diagnose C->S BackendAPI POST /idle/make-busy
+    [<timestamp>.228876000Z][com.docker.diagnose.ipc][W] (5885d36f-0) fc1846ec-diagnose C<-S ConnectionClosed POST /idle/make-busy (8.695343ms): Post "http://ipc/idle/make-busy": dial unix <HOME>/Library/Containers/com.docker.docker/Data/backend.sock: connect: connection refused
+    [<timestamp>.218925000Z][com.docker.diagnose.ipc] (5885d36f-2) fc1846ec-diagnose C->S BackendAPI GET /idle
+    [<timestamp>.221340000Z][com.docker.diagnose.ipc][W] (5885d36f-2) fc1846ec-diagnose C<-S ConnectionClosed GET /idle (2.46109ms): Get "http://ipc/idle": dial unix <HOME>/Library/Containers/com.docker.docker/Data/backend.sock: connect: connection refused
+    [PASS] DD0027: is there available disk space on the host?
+    [SKIP] DD0028: is there available VM disk space?
+    [PASS] DD0018: does the host support virtualization?
+    [FAIL] DD0001: is the application running? Docker is not running
+    [PASS] DD0017: can a VM be started?
+    [FAIL] DD0016: is the LinuxKit VM running? prereq failed: is the application running?
+    [FAIL] DD0004: is the Docker engine running? prereq failed: is the LinuxKit VM running?
+    [PASS] DD0015: are the binary symlinks installed?
+    [FAIL] DD0031: does the Docker API work? prereq failed: is the Docker engine running?
+    [PASS] DD0013: is the $PATH ok?
+    [FAIL] DD0003: is the Docker CLI working? prereq failed: is the Docker engine running?
+    [FAIL] DD0037: is the connection to Docker working? prereq failed: is the Docker engine running?
+    [FAIL] DD0014: are the backend processes running? prereq failed: is the LinuxKit VM running?
+    [FAIL] DD0007: is the backend responding? prereq failed: are the backend processes running?
+    [FAIL] DD0010: is the Docker API proxy responding? prereq failed: are the backend processes running?
+    [FAIL] DD0030: is the image access management authorized? prereq failed: is the Docker engine running?
+    [PASS] DD0033: does the host have Internet access?
+    [PASS] DD0018: does the host support virtualization?
+    [WARN] DD0001: is the application running? Docker is not running
+    [PASS] DD0017: can a VM be started?
+    [WARN] DD0016: is the LinuxKit VM running? prereq failed: is the application running?
+    [WARN] DD0004: is the Docker engine running? prereq failed: is the LinuxKit VM running?
+    [PASS] DD0015: are the binary symlinks installed?
+    [WARN] DD0031: does the Docker API work? prereq failed: is the Docker engine running?
+    [WARN] DD0032: do Docker networks overlap with host IPs? prereq failed: does the Docker API work?
+    Please note the following 5 warnings:
+    1 : The check: is the application running?
+    Produced the following warning: Docker is not running
+    Is the Docker Desktop application running?
+    2 : The check: is the LinuxKit VM running?
+    Produced the following warning: prereq failed: is the application running?
+    The Docker engine runs inside a Linux VM. Therefore the VM must be running.
+    3 : The check: is the Docker engine running?
+    Produced the following warning: prereq failed: is the LinuxKit VM running?
+    The Docker engine manages all containers and images on the host. Check the dockerd.log to see why it failed to start.
+    4 : The check: does the Docker API work?
+    Produced the following warning: prereq failed: is the Docker engine running?
+    If the Docker API is not available from the host then Docker Desktop will not work correctly.
+    5 : The check: do Docker networks overlap with host IPs?
+    Produced the following warning: prereq failed: does the Docker API work?
+    If the subnet used by a Docker network overlaps with an IP used by the host, then containers
+    won't be able to contact the overlapping IP addresses.
+    Try configuring the IP address range used by networks: in your docker-compose.yml.
+    See https://docs.docker.com/compose/compose-file/compose-file-v2/#ipv4_address-ipv6_address
+    Please investigate the following 1 issue:
+    1 : The test: is the application running?
+    Failed with: Docker is not running
+    Is the Docker Desktop application running?
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/for-mac/issues/7553
+    repository: docker/for-mac
+    issue_number: 7553
+    title: No Docker daemon on MacOS intel
+    labels:
+        - status/triage
+        - area/daemon
+    author: nbdavies
+    snippet: 2
+    fetched_at: "2026-04-22T12:18:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:37Z"
+fingerprint: 733eaa8f34242ff7

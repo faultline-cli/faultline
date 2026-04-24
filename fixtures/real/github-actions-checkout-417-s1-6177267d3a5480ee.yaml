@@ -1,17 +1,11 @@
-id: github-actions-checkout-417-s1-64895806348e759e
+id: github-actions-checkout-417-s1-6177267d3a5480ee
 title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
 fixture_class: real
 normalized_log: |-
-    - name: Checkout private tools
-    uses: actions/checkout@v2
-    with:
-    repository: tectonic/infrastructure-helm
-    token: ${{ secrets.GIT_TECHDEPLOY_TOKEN }}
-    path: infrastructure-helm
-    fetch-depth: 0
-    ref: master
+    Same issue here : The process '/usr/bin/git' failed with exit code 128
+    Waiting 10 seconds before trying again
 expectation:
-    expected_playbook: git-shallow-checkout
+    expected_playbook: container-crash
     top_n: 3
     min_confidence: 0.55
 source:
@@ -20,11 +14,12 @@ source:
     url: https://github.com/actions/checkout/issues/417
     repository: actions/checkout
     issue_number: 417
+    comment_id: "842157976"
     title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
     author: arhue
     snippet: 1
     fetched_at: "2026-04-17T23:27:21Z"
 review:
     status: promoted
-    promoted_at: "2026-04-17T23:36:39Z"
-fingerprint: 64895806348e759e
+    promoted_at: "2026-04-24T06:49:38Z"
+fingerprint: 6177267d3a5480ee

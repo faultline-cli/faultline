@@ -1,0 +1,27 @@
+id: stackexchange-stackoverflow-44678725-s1-07075ed549217ccb
+title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+fixture_class: real
+normalized_log: |-
+    None of the other answers worked for me on CentOS. I fixed the Cannot connect to the Docker daemon error (despite the daemon running) with:
+    systemctl restart docker.socket
+    systemctl restart docker
+    This recreates the missing /var/run/docker.sock file, which the client needs. Verified it worked with docker ps. Check the socket (ls -l /var/run/docker.sock) if issues persist
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/44678725
+    repository: stackoverflow
+    issue_number: 44678725
+    comment_id: "79483658"
+    title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+    author: chongkai Lu
+    snippet: 1
+    fetched_at: "2026-04-23T21:23:30Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:39Z"
+fingerprint: 07075ed549217ccb

@@ -1,0 +1,31 @@
+id: github-fastled-fbuild-86-s1-8a2c91f8477d6cc3
+title: 'test-emu --emulator avr8js: auto npm install fails silently with ERR_MODULE_NOT_FOUND'
+fixture_class: real
+normalized_log: |-
+    node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+    Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'avr8js' imported from <tmp>
+    Did you mean to import \"avr8js/dist/cjs/index.js\"?
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+    ...
+    Node.js v24.14.1
+    avr8js ATmega328P test-emu failed: failed: avr8js exited with code 1
+expectation:
+    expected_playbook: gitlab-ci-yaml-invalid
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/FastLED/fbuild/issues/86
+    repository: FastLED/fbuild
+    issue_number: 86
+    title: 'test-emu --emulator avr8js: auto npm install fails silently with ERR_MODULE_NOT_FOUND'
+    author: zackees
+    snippet: 1
+    fetched_at: "2026-04-24T05:39:31Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:37Z"
+fingerprint: 8a2c91f8477d6cc3

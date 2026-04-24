@@ -1,0 +1,28 @@
+id: github-supabase-cli-4310-s1-ba2d9e406a7a138c
+title: Supabase start fails to connect to docker on WSL2
+fixture_class: real
+normalized_log: |-
+    npx supabase start --debug
+    open supabase/.temp/profile: no such file or directory
+    Supabase CLI 2.51.0
+    Using profile: supabase (supabase.co)
+    failed to inspect service: Cannot connect to the Docker daemon at tcp://127.0.0.1:2375. Is the docker daemon running?
+    Docker Desktop is a prerequisite for local development. Follow the official docs to install: https://docs.docker.com/desktop
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/supabase/cli/issues/4310
+    repository: supabase/cli
+    issue_number: 4310
+    title: Supabase start fails to connect to docker on WSL2
+    author: KailumVoleno
+    snippet: 1
+    fetched_at: "2026-04-23T21:24:14Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:39Z"
+fingerprint: ba2d9e406a7a138c

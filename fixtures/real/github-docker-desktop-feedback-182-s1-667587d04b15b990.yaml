@@ -1,0 +1,27 @@
+id: github-docker-desktop-feedback-182-s1-667587d04b15b990
+title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+fixture_class: real
+normalized_log: After less than 5 minutes of starting the two tasks docker would crash with this same error. For me, running just one task is the fix and I believe removing the raw file is probably reducing some contention for some folks and appears to resolve the issue, but fundamentally I think this is a race condition that appears under specific load.
+expectation:
+    expected_playbook: go-data-race
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/desktop-feedback/issues/182
+    repository: docker/desktop-feedback
+    issue_number: 182
+    comment_id: "4023252340"
+    title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+    labels:
+        - area/network
+        - platform/macos
+        - version/4.58.1
+    author: pranav-raft
+    snippet: 1
+    fetched_at: "2026-04-23T21:24:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:38Z"
+fingerprint: 667587d04b15b990

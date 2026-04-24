@@ -1,0 +1,22 @@
+id: reddit-r-devops-1qr00b5-o2kl4ge-0-s1-7391d189a3f60dc4
+title: our ci/cd testing is so slow devs just ignore failures now"
+fixture_class: real
+normalized_log: 'Very recognisable. You already tried running tests in parallel, which is the logical first step. The second step is to detect flaky tests, and flag them accordingly, so you can skip them and fix them. A next step could be to map the coverage of your tests to your codebase, and only run the tests that are relevant to changes in your code. And finally, but this is more an advanced scenario, there are options to learn from historical test-runs and use this data with machine-learning systems to define what tests to run in what order, because you know from this historical test-run data, with a configurable Pxx signifance, that if test X fails, the other tests will also fail, and you can basically "fail fast" and skip all the "downstream" tests and fail the pipeline. Disclaimer: I work for CircleCI, one of the original global cloud-native CI/CD and DevOps platforms (we started just a few months after the first Jenkins release in 2011). Within the CircleCI platform we have several features that can help you with running your tests faster, and especially, more efficient: [https://circleci.com/blog/introducing-test-insights-with-flaky-test-detection/](https://circleci.com/blog/introducing-test-insights-with-flaky-test-detection/) [https://circleci.com/blog/smarter-testing/](https://circleci.com/blog/smarter-testing/) [https://circleci.com/blog/boost-your-test-coverage-with-circleci-chunk-ai-agent/](https://circleci.com/blog/boost-your-test-coverage-with-circleci-chunk-ai-agent/) [https://circleci.com/docs/guides/test/rerun-failed-tests/](https://circleci.com/docs/guides/test/rerun-failed-tests/) [https://circleci.com/docs/guides/optimize/parallelism-faster-jobs/](https://circleci.com/docs/guides/optimize/parallelism-faster-jobs/) Happy to help out and answer any additional questions. You can try out CircleCI with our free plan that gives you a copious amount of free credits every month: [https://circleci.com/docs/guides/plans-pricing/plan-free/](https://circleci.com/docs/guides/plans-pricing/plan-free/)'
+expectation:
+    expected_playbook: flaky-test
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: reddit-post
+    provider: reddit
+    url: https://www.reddit.com/r/devops/comments/1qr00b5/
+    repository: r/devops
+    comment_id: o2kl4ge
+    title: our ci/cd testing is so slow devs just ignore failures now"
+    author: Aggravating_Branch63
+    snippet: 1
+    fetched_at: "2026-04-24T06:12:53Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:39Z"
+fingerprint: 7391d189a3f60dc4

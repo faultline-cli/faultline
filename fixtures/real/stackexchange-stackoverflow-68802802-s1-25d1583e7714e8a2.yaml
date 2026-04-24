@@ -1,0 +1,92 @@
+id: stackexchange-stackoverflow-68802802-s1-25d1583e7714e8a2
+title: Repository &#39;http://security.debian.org/debian-security buster/updates InRelease&#39; changed its &#39;Suite&#39; value from &#39;stable&#39; to &#39;oldstable&#39;
+fixture_class: real
+normalized_log: |-
+    Some of my GitHub Actions workflows started recently to return this error when installing Chromedriver:
+    Get:1 http://security.debian.org/debian-security buster/updates InRelease [65.4 kB]
+    Get:2 http://deb.debian.org/debian buster InRelease [122 kB]
+    Get:3 http://deb.debian.org/debian buster-updates InRelease [51.9 kB]
+    Reading package lists...
+    E: Repository 'http://security.debian.org/debian-security buster/updates InRelease' changed its 'Suite' value from 'stable' to 'oldstable'
+    E: Repository 'http://deb.debian.org/debian buster InRelease' changed its 'Suite' value from 'stable' to 'oldstable'
+    E: Repository 'http://deb.debian.org/debian buster-updates InRelease' changed its 'Suite' value from 'stable-updates' to 'oldstable-updates'
+    Error: Process completed with exit code 100.
+    Here is my step implementation:
+    jobs:
+    build:
+    runs-on: ubuntu-latest
+    container:
+    image: docker://guillaumefalourd/ritchiecli:py-3.8
+    steps:
+    - name: Install Chrome Driver
+    run: |
+    sudo apt-get update
+    sudo apt-get install -y unzip xvfb libxi6 libgconf-2-4 gnupg2
+    sudo curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
+    sudo echo "deb https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+    sudo apt-get -y update
+    sudo apt-get -y install google-chrome-stable
+    wget -N https://chromedriver.storage.googleapis.com/89.0.4389.23/chromedriver_linux64.zip -P ~/
+    unzip ~/chromedriver_linux64.zip -d ~/
+    rm ~/chromedriver_linux64.zip
+    sudo mv -f ~/chromedriver /usr/local/bin/chromedriver
+    sudo chown root:root /usr/local/bin/chromedriver
+    sudo chmod 0755 /usr/local/bin/chromedriver
+    Docker Image Implementation: docker://guillaumefalourd/ritchiecli:py-3.8
+    What I tried
+    I read from here and here that adding sudo apt-get --allow-releaseinfo-change update or sudo apt-get dist-upgrade could resolve the problem, but even adding those to my workflow didn't resolve it.
+    I tried using this action setup-chromedriver but it returned the same error when following the documentation:
+    steps:
+    - uses: actions/checkout@v2
+    - uses: nanasess/setup-chromedriver@master
+    with:
+    # Optional: do not specify to match Chrome's version
+    chromedriver-version: '88.0.4324.96'
+    - run: |
+    export DISPLAY=:99
+    chromedriver --url-base=/wd/hub &
+    sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
+    As it seems to be related to Debian 10 (Buster) (?) I also tried to use another Ubuntu runner version as a runner ( ubuntu-18.04 instead of ubuntu-latest ), but nothing changed, same error.
+    How can I resolve this issue? Answer
+    I observed afterwards that the problem was happening at the first command : sudo apt-get update (and I was adding the other command after...).
+    Substituting it for sudo apt-get --allow-releaseinfo-change update resolved my problem.
+    Therefore the answer was not to add the sudo apt-get --allow-releaseinfo-change update to the step executed commands, but substituting the sudo apt-get update command for it.
+    jobs:
+    build:
+    runs-on: ubuntu-latest
+    container:
+    image: docker://guillaumefalourd/ritchiecli:py-3.8
+    steps:
+    - name: Install Chrome Driver
+    run: |
+    sudo apt-get --allow-releaseinfo-change update
+    sudo apt-get install -y unzip xvfb libxi6 libgconf-2-4 gnupg2
+    sudo curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add
+    sudo echo "deb https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
+    sudo apt-get -y update
+    sudo apt-get -y install google-chrome-stable
+    wget -N https://chromedriver.storage.googleapis.com/89.0.4389.23/chromedriver_linux64.zip -P ~/
+    unzip ~/chromedriver_linux64.zip -d ~/
+    rm ~/chromedriver_linux64.zip
+    sudo mv -f ~/chromedriver /usr/local/bin/chromedriver
+    sudo chown root:root /usr/local/bin/chromedriver
+    sudo chmod 0755 /usr/local/bin/chromedriver
+expectation:
+    expected_playbook: container-crash
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/68802802
+    repository: stackoverflow
+    issue_number: 68802802
+    comment_id: "0"
+    title: Repository &#39;http://security.debian.org/debian-security buster/updates InRelease&#39; changed its &#39;Suite&#39; value from &#39;stable&#39; to &#39;oldstable&#39;
+    author: GuiFalourd
+    snippet: 1
+    fetched_at: "2026-04-22T12:11:25Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:39Z"
+fingerprint: 25d1583e7714e8a2

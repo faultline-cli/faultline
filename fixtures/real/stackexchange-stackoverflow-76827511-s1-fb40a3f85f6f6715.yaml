@@ -1,0 +1,28 @@
+id: stackexchange-stackoverflow-76827511-s1-fb40a3f85f6f6715
+title: How to install pipenv on Ubuntu 23 after PEP 668?
+fixture_class: real
+normalized_log: |-
+    At least as of early 2025, the Official PipEnv Docs suggest installing through Pip.
+    The suggested command is pip install --user pipenv . Which will lead to this error on newer versions of Ubuntu.
+    As per said docs, the spirit of this installation method seems to be "It's easy to have conflicts when Python dependencies are installed system-wide. Don't do that to save headache." So while the mentioned apt install pipenv command might work, it seems to go against the spirit of Pipenv, by using a solution that installs system-wide.
+    A better alternative is probably to install your Python virtual environment, load said virtual environment, and then at that point, you should be able to install Pipenv with pip install pipenv . This will install Pipenv only to that environment. So if you exit out of the virtual environment, delete it, etc, then you will not have access to Pipenv.
+    Which seems to make sense anyways. You can't accidentally have the wrong environment loaded (or have the system python environment loaded) and then run pipenv and install packages to where you didn't intend. Instead, if you don't have the correct environment loaded, you simply won't have access to Pipenv.
+expectation:
+    expected_playbook: pip-install-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/76827511
+    repository: stackoverflow
+    issue_number: 76827511
+    comment_id: "79547931"
+    title: How to install pipenv on Ubuntu 23 after PEP 668?
+    author: brodriguez8774
+    snippet: 1
+    fetched_at: "2026-04-22T12:10:54Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:39Z"
+fingerprint: fb40a3f85f6f6715

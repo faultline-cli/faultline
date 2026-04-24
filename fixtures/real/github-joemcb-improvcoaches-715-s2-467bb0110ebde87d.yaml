@@ -1,0 +1,27 @@
+id: github-joemcb-improvcoaches-715-s2-467bb0110ebde87d
+title: ActiveRecord::ConnectionNotEstablished in users#show
+fixture_class: real
+normalized_log: |-
+    **ActiveRecord::ConnectionNotEstablished** in **users#show**
+    connection to server at "98.90.178.224", port 5432 failed: Connection refused
+    Is the server running on that host and accepting TCP/IP connections?
+expectation:
+    expected_playbook: connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/JoeMcB/improvcoaches/issues/715
+    repository: JoeMcB/improvcoaches
+    issue_number: 715
+    title: ActiveRecord::ConnectionNotEstablished in users#show
+    labels:
+        - bugsnag
+    author: JoeMcB
+    snippet: 2
+    fetched_at: "2026-04-24T06:16:14Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T06:49:37Z"
+fingerprint: 467bb0110ebde87d
