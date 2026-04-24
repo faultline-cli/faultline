@@ -36,7 +36,7 @@ Fix:
 
 Run `faultline analyze ci.log --json` for the same diagnosis in stable JSON. Same log and playbook set in, same result out.
 
-Built on 106 bundled playbooks and 139 accepted real fixtures with perfect top‑1 and top‑3 match rates.
+Built on 106 bundled playbooks and 153 accepted real fixtures with perfect top‑1 and top‑3 match rates.
 
 ## Try it now 🚀
 
@@ -80,7 +80,7 @@ Determinism is the point, not a feature flag. The same matched evidence and play
 - 🔍 Every diagnosis is backed by matched log lines.
 - 📚 Diagnoses and fix steps come from explicit, versioned, inspectable playbooks checked into the repo.
 - 🛠 Teams can extend those playbooks without turning diagnosis into a black box.
-- 🧪 The shipped catalog is backed by 106 bundled playbooks and 139 accepted real fixtures with perfect top‑1 and top‑3 match rates.
+- 🧪 The shipped catalog is backed by 106 bundled playbooks and 153 accepted real fixtures with perfect top‑1 and top‑3 match rates.
 - 🏠 Faultline runs locally by default, so build logs stay on your machine unless you choose otherwise.
 
 Paid value is intentionally tied to coordination across runs and repositories:

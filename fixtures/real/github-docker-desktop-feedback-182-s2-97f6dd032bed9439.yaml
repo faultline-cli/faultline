@@ -1,0 +1,27 @@
+id: github-docker-desktop-feedback-182-s2-97f6dd032bed9439
+title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+fixture_class: real
+normalized_log: '`service dockerd failed: daemon.json is invalid: unable to configure the Docker daemon with file /run/config/docker/daemon.json: the following directives are specified both as a flag and in the configuration file: log-format: (from flag: json, from file: text)`'
+expectation:
+    expected_playbook: docker-daemon-config-conflict
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/desktop-feedback/issues/182
+    repository: docker/desktop-feedback
+    issue_number: 182
+    comment_id: "4023252355"
+    title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+    labels:
+        - area/network
+        - platform/macos
+        - version/4.58.1
+    author: pranav-raft
+    snippet: 2
+    fetched_at: "2026-04-23T21:24:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:22:20Z"
+fingerprint: 97f6dd032bed9439

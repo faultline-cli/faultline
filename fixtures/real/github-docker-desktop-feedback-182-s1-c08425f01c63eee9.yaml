@@ -1,0 +1,36 @@
+id: github-docker-desktop-feedback-182-s1-c08425f01c63eee9
+title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+fixture_class: real
+normalized_log: |-
+    Client:
+    Version: 29.3.1
+    API version: 1.54
+    Go version: go1.25.8
+    Git commit: c2be9cc
+    Built: Wed Mar 25 <timestamp> 2026
+    OS/Arch: darwin/arm64
+    Context: desktop-linux
+    Error response from daemon: Docker Desktop is unable to start
+expectation:
+    expected_playbook: runtime-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/desktop-feedback/issues/182
+    repository: docker/desktop-feedback
+    issue_number: 182
+    comment_id: "4169357882"
+    title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+    labels:
+        - area/network
+        - platform/macos
+        - version/4.58.1
+    author: pranav-raft
+    snippet: 1
+    fetched_at: "2026-04-23T21:24:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:12:42Z"
+fingerprint: c08425f01c63eee9

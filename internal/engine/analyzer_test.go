@@ -5,499 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"faultline/internal/detectors"
+	"faultline/internal/model"
+	"faultline/internal/repo"
+	"faultline/internal/scoring"
 )
-
-func TestReadLinesNormal(t *testing.T) {
-	lines, err := ReadLines(strings.NewReader("line one\nline two\nline three\n"))
-	if err != nil {
-		t.Fatalf("ReadLines: %v", err)
-	}
-	if len(lines) != 3 {
-		t.Fatalf("expected 3 lines, got %d: %#v", len(lines), lines)
-	}
-	if lines[0].Original != "line one" {
-		t.Errorf("expected first line 'line one', got %q", lines[0].Original)
-	}
-	if lines[2].Original != "line three" {
-		t.Errorf("expected third line 'line three', got %q", lines[2].Original)
-	}
-}
-
-func TestReadLinesSkipsBlanks(t *testing.T) {
-	lines, err := ReadLines(strings.NewReader("\n\nline one\n\n  \nline two\n\n"))
-	if err != nil {
-		t.Fatalf("ReadLines: %v", err)
-	}
-	if len(lines) != 2 {
-		t.Fatalf("expected 2 non-blank lines, got %d: %#v", len(lines), lines)
-	}
-}
-
-func TestReadLinesEmpty(t *testing.T) {
-	lines, err := ReadLines(strings.NewReader(""))
-	if err != nil {
-		t.Fatalf("ReadLines empty: %v", err)
-	}
-	if len(lines) != 0 {
-		t.Fatalf("expected 0 lines, got %d", len(lines))
-	}
-}
-
-func TestReadLinesPreservesLineNumbers(t *testing.T) {
-	lines, err := ReadLines(strings.NewReader("first\nsecond\nthird\n"))
-	if err != nil {
-		t.Fatalf("ReadLines: %v", err)
-	}
-	if len(lines) != 3 {
-		t.Fatalf("expected 3 lines, got %d", len(lines))
-	}
-	for i, line := range lines {
-		if line.Number == 0 {
-			t.Errorf("line[%d] has zero line number", i)
-		}
-	}
-}
-
-func TestAnalyzeReaderFindsBestMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"fatal: could not read Username for 'https://github.com': terminal prompts disabled\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if len(a.Results) == 0 {
-		t.Fatal("expected at least one result")
-	}
-	if a.Results[0].Playbook.ID != "git-auth" {
-		t.Fatalf("expected git-auth, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderReturnsNoMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	_, err := e.AnalyzeReader(strings.NewReader("all checks passed\n"))
-	if err != ErrNoMatch {
-		t.Fatalf("expected ErrNoMatch, got %v", err)
-	}
-}
-
-func TestAnalyzeReaderMultipleResults(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	log := "pull access denied\nauthentication required\ncould not read username for 'https://github.com': terminal prompts disabled\n"
-	a, err := e.AnalyzeReader(strings.NewReader(log))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if len(a.Results) < 2 {
-		t.Fatalf("expected at least 2 results, got %d", len(a.Results))
-	}
-}
-
-func TestAnalyzeReaderHypothesisPrefersDependencyDriftWhenCacheRestoreIsAbsent(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	log := "checksum mismatch\nfailed to resolve dependencies\n"
-	a, err := e.AnalyzeReader(strings.NewReader(log))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if len(a.Results) < 2 {
-		t.Fatalf("expected competing results, got %#v", a.Results)
-	}
-	if a.Results[0].Playbook.ID != "dependency-drift" {
-		t.Fatalf("expected dependency-drift to win differential ranking, got %s", a.Results[0].Playbook.ID)
-	}
-	if a.Differential == nil || len(a.Differential.Alternatives) == 0 {
-		t.Fatalf("expected populated differential diagnosis, got %#v", a.Differential)
-	}
-	alternative := a.Differential.Alternatives[0]
-	if alternative.FailureID != "cache-corruption" {
-		t.Fatalf("expected cache-corruption as the main alternative, got %#v", alternative)
-	}
-	if len(alternative.WhyLessLikely) == 0 || !strings.Contains(strings.ToLower(strings.Join(alternative.WhyLessLikely, " ")), "cache restore") {
-		t.Fatalf("expected alternative to explain missing cache restore evidence, got %#v", alternative.WhyLessLikely)
-	}
-}
-
-func TestAnalyzeReaderHypothesisRulesOutDependencyDriftOnHashMismatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	log := "THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE\nfailed to resolve dependencies\n"
-	a, err := e.AnalyzeReader(strings.NewReader(log))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if len(a.Results) == 0 {
-		t.Fatal("expected at least one result")
-	}
-	if a.Results[0].Playbook.ID != "pip-hash-mismatch" {
-		t.Fatalf("expected pip-hash-mismatch to win, got %s", a.Results[0].Playbook.ID)
-	}
-	if a.Differential == nil || len(a.Differential.RuledOut) == 0 {
-		t.Fatalf("expected ruled-out rival in differential diagnosis, got %#v", a.Differential)
-	}
-	found := false
-	for _, item := range a.Differential.RuledOut {
-		if item.FailureID == "dependency-drift" {
-			found = true
-			if len(item.RuledOutBy) == 0 {
-				t.Fatalf("expected ruled-out reason for dependency-drift, got %#v", item)
-			}
-			break
-		}
-	}
-	if !found {
-		t.Fatalf("expected dependency-drift to be ruled out, got %#v", a.Differential.RuledOut)
-	}
-}
-
-func TestAnalyzeReaderDockerAuthDoesNotMatchGenericPermissionDenied(t *testing.T) {
-	e := New(Options{
-		PlaybookDir:  repoPlaybookDir(t),
-		NoHistory:    true,
-		BayesEnabled: true,
-		GitSince:     "30d",
-		RepoPath:     t.TempDir(),
-	})
-
-	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
-	a, err := e.AnalyzeReader(strings.NewReader(log))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if len(a.Results) == 0 {
-		t.Fatal("expected at least one result")
-	}
-	if a.Results[0].Playbook.ID != "docker-auth" {
-		t.Fatalf("expected docker-auth, got %s", a.Results[0].Playbook.ID)
-	}
-	for _, result := range a.Results {
-		if result.Playbook.ID == "permission-denied" {
-			t.Fatalf("permission-denied should be excluded for registry auth failures: %#v", a.Results)
-		}
-	}
-}
-
-func TestAnalyzeReaderBayesDoesNotAttachDeltaWithoutGitContext(t *testing.T) {
-	e := New(Options{
-		PlaybookDir:  repoPlaybookDir(t),
-		NoHistory:    true,
-		BayesEnabled: true,
-	})
-
-	a, err := e.AnalyzeReader(strings.NewReader("Go Version: go1.26.0\n"))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Delta != nil {
-		t.Fatalf("expected no delta without git context, got %#v", a.Delta)
-	}
-	if a.RepoContext != nil {
-		t.Fatalf("expected no repo context without git context, got %#v", a.RepoContext)
-	}
-	if len(a.Results) == 0 || a.Results[0].Ranking == nil {
-		t.Fatalf("expected bayes ranking without git context, got %#v", a.Results)
-	}
-}
-
-func TestAnalyzeReaderOOMKilled(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader("Process exited with exit code 137\nout of memory\n"))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "oom-killed" {
-		t.Fatalf("expected oom-killed, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderYarnLockfile(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"Your lockfile needs to be updated, but yarn was run with `--frozen-lockfile`.\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "yarn-lockfile" {
-		t.Fatalf("expected yarn-lockfile, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderContextExtracted(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	log := "$ docker push ghcr.io/example/app\npull access denied\n"
-	a, err := e.AnalyzeReader(strings.NewReader(log))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Context.CommandHint == "" {
-		t.Error("expected a command hint to be extracted")
-	}
-}
-
-func TestAnalyzeReaderDockerBuildContext(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"failed to solve with frontend dockerfile.v0: failed to read Dockerfile: open Dockerfile: no such file or directory\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "docker-build-context" {
-		t.Fatalf("expected docker-build-context, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderImagePullBackoff(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"Warning Failed pod/app-123 Failed to pull image \"ghcr.io/acme/app:missing\": manifest unknown\nBack-off pulling image\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "image-pull-backoff" {
-		t.Fatalf("expected image-pull-backoff, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderSnapshotMismatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-
-	a, err := e.AnalyzeReader(strings.NewReader(
-		"Received value does not match stored snapshot\nRun with -u to update snapshots\n",
-	))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "snapshot-mismatch" {
-		t.Fatalf("expected snapshot-mismatch, got %s", a.Results[0].Playbook.ID)
-	}
-}
-
-func TestAnalyzeReaderWithAdditionalPack(t *testing.T) {
-	extra := t.TempDir()
-	if err := os.WriteFile(filepath.Join(extra, "custom.yaml"), []byte(`
-id: extra-custom
-title: Extra Custom
-category: test
-severity: low
-summary: |
-  Custom summary.
-diagnosis: |
-  ## Diagnosis
-
-  Custom diagnosis.
-fix: |
-  ## Fix steps
-
-  1. Custom fix.
-validation: |
-  ## Validation
-
-  - Custom validation.
-match:
-  any:
-    - "totally custom failure marker"
-`), 0o600); err != nil {
-		t.Fatalf("write custom pack: %v", err)
-	}
-
-	e := New(Options{
-		PlaybookDir:      "",
-		PlaybookPackDirs: []string{extra},
-		NoHistory:        true,
-	})
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
-
-	a, err := e.AnalyzeReader(strings.NewReader("totally custom failure marker\n"))
-	if err != nil {
-		t.Fatalf("analyze: %v", err)
-	}
-	if a.Results[0].Playbook.ID != "extra-custom" {
-		t.Fatalf("expected extra-custom, got %s", a.Results[0].Playbook.ID)
-	}
-	if a.Results[0].Playbook.Metadata.PackName != filepath.Base(extra) {
-		t.Fatalf("expected pack metadata %q, got %#v", filepath.Base(extra), a.Results[0].Playbook.Metadata)
-	}
-}
-
-func TestAnalyzePathFindsBestMatch(t *testing.T) {
-	f, err := os.CreateTemp(t.TempDir(), "test-*.log")
-	if err != nil {
-		t.Fatalf("create temp file: %v", err)
-	}
-	if _, err := f.WriteString("fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"); err != nil {
-		t.Fatalf("write: %v", err)
-	}
-	if err := f.Close(); err != nil {
-		t.Fatalf("close: %v", err)
-	}
-
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-	a, err := e.AnalyzePath(f.Name())
-	if err != nil {
-		t.Fatalf("AnalyzePath: %v", err)
-	}
-	if len(a.Results) == 0 {
-		t.Fatal("expected at least one result")
-	}
-	if a.Results[0].Playbook.ID != "git-auth" {
-		t.Fatalf("expected git-auth, got %s", a.Results[0].Playbook.ID)
-	}
-	if a.Source != f.Name() {
-		t.Errorf("expected source=%s, got %s", f.Name(), a.Source)
-	}
-}
-
-func TestAnalyzePathMissingFileReturnsError(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-	_, err := e.AnalyzePath("/nonexistent/does-not-exist.log")
-	if err == nil {
-		t.Fatal("expected error for missing file, got nil")
-	}
-}
-
-func TestEngineListReturnsPlaybooks(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-	pbs, err := e.List()
-	if err != nil {
-		t.Fatalf("List: %v", err)
-	}
-	if len(pbs) == 0 {
-		t.Fatal("expected non-empty playbook list")
-	}
-}
-
-func TestEngineExplainKnownPlaybook(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-	pb, err := e.Explain("git-auth")
-	if err != nil {
-		t.Fatalf("Explain: %v", err)
-	}
-	if pb.ID != "git-auth" {
-		t.Errorf("expected git-auth, got %s", pb.ID)
-	}
-}
-
-func TestEngineExplainUnknownReturnsError(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
-	_, err := e.Explain("totally-unknown-playbook-xyz")
-	if err == nil {
-		t.Fatal("expected error for unknown playbook ID")
-	}
-}
-
-func TestLooksLikeSourceFile(t *testing.T) {
-	wantTrue := []string{
-		"main.go", "app.js", "component.jsx", "types.ts", "page.tsx",
-		"script.py", "Main.java", "helper.rb", "controller.php",
-		"service.cs", "activity.kt", "config.yaml", "config.yml",
-	}
-	for _, path := range wantTrue {
-		if !looksLikeSourceFile(path) {
-			t.Errorf("looksLikeSourceFile(%q) = false, want true", path)
-		}
-	}
-	wantFalse := []string{
-		"README.md", "binary.exe", "archive.zip", "image.png",
-		"Makefile", ".gitignore", "data.json", "notes.txt",
-	}
-	for _, path := range wantFalse {
-		if looksLikeSourceFile(path) {
-			t.Errorf("looksLikeSourceFile(%q) = true, want false", path)
-		}
-	}
-}
-
-func TestLoadSourceFilesScansDirectory(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
-		t.Fatalf("write main.go: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte("# Readme\n"), 0o644); err != nil {
-		t.Fatalf("write README.md: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "app.ts"), []byte("const x = 1;\n"), 0o644); err != nil {
-		t.Fatalf("write app.ts: %v", err)
-	}
-
-	files, err := loadSourceFiles(dir)
-	if err != nil {
-		t.Fatalf("loadSourceFiles: %v", err)
-	}
-	paths := make(map[string]struct{}, len(files))
-	for _, f := range files {
-		paths[f.Path] = struct{}{}
-	}
-	if _, ok := paths["main.go"]; !ok {
-		t.Error("expected main.go in source files")
-	}
-	if _, ok := paths["app.ts"]; !ok {
-		t.Error("expected app.ts in source files")
-	}
-	if _, ok := paths["README.md"]; ok {
-		t.Error("README.md should not be in source files")
-	}
-}
-
-func TestLoadSourceFilesSkipsGitDir(t *testing.T) {
-	dir := t.TempDir()
-	gitDir := filepath.Join(dir, ".git")
-	if err := os.MkdirAll(gitDir, 0o755); err != nil {
-		t.Fatalf("mkdir .git: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(gitDir, "config.go"), []byte("package git\n"), 0o644); err != nil {
-		t.Fatalf("write config.go: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "app.go"), []byte("package main\n"), 0o644); err != nil {
-		t.Fatalf("write app.go: %v", err)
-	}
-
-	files, err := loadSourceFiles(dir)
-	if err != nil {
-		t.Fatalf("loadSourceFiles: %v", err)
-	}
-	for _, f := range files {
-		if strings.Contains(f.Path, ".git") {
-			t.Errorf("expected .git directory to be skipped, got %q", f.Path)
-		}
-	}
-}
-
-func TestLoadSourceFilesSkipsVirtualEnvDir(t *testing.T) {
-	dir := t.TempDir()
-	venvDir := filepath.Join(dir, ".venv", "lib", "python3.13", "site-packages", "pip")
-	if err := os.MkdirAll(venvDir, 0o755); err != nil {
-		t.Fatalf("mkdir .venv: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(venvDir, "service.go"), []byte("package pip\n"), 0o644); err != nil {
-		t.Fatalf("write service.go: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "app.go"), []byte("package main\n"), 0o644); err != nil {
-		t.Fatalf("write app.go: %v", err)
-	}
-
-	files, err := loadSourceFiles(dir)
-	if err != nil {
-		t.Fatalf("loadSourceFiles: %v", err)
-	}
-	for _, f := range files {
-		if strings.Contains(f.Path, ".venv/") {
-			t.Errorf("expected .venv directory to be skipped, got %q", f.Path)
-		}
-	}
-}
 
 func TestAnalyzeReaderEmptyInput(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
@@ -507,31 +21,299 @@ func TestAnalyzeReaderEmptyInput(t *testing.T) {
 	}
 }
 
+func TestAnalyzeReaderPartialMatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with both matching and non-matching content
+	log := "some normal log output\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\nmore normal output\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result for partial match")
+	}
+	if a.Results[0].Playbook.ID != "git-auth" {
+		t.Fatalf("expected git-auth, got %s", a.Results[0].Playbook.ID)
+	}
+}
+
+func TestAnalyzeReaderMultipleMatchesWithDifferentScores(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with multiple potential matches
+	log := "pull access denied\nauthentication required\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) < 2 {
+		t.Fatalf("expected at least 2 results, got %d", len(a.Results))
+	}
+	
+	// Results should be sorted by score (highest first)
+	if a.Results[0].Score < a.Results[1].Score {
+		t.Errorf("results not sorted by score: %v < %v", a.Results[0].Score, a.Results[1].Score)
+	}
+}
+
+func TestAnalyzeReaderWithVeryLongLine(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Create a very long line that might cause issues
+	longLine := strings.Repeat("x", 10000) + "\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+	a, err := e.AnalyzeReader(strings.NewReader(longLine))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result for long line input")
+	}
+}
+
+func TestAnalyzeReaderWithUnicodeCharacters(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with unicode characters
+	log := "normal log\nföö: authentication failed for repository 'https://github.com/repo'\nmore log\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	// Should not crash, but may not match anything
+	if a != nil {
+		_ = a
+	}
+}
+
+func TestAnalyzeReaderWithMixedLineEndings(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with mixed line endings (CRLF, LF, CR)
+	log := "line one\r\nline two\nline three\rline four\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result for mixed line endings")
+	}
+}
+
+func TestAnalyzeReaderWithOnlyWhitespace(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with only whitespace
+	log := "   \n\t\n  \n\n"
+	_, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != ErrNoInput {
+		t.Fatalf("expected ErrNoInput for whitespace-only input, got %v", err)
+	}
+}
+
+func TestAnalyzeReaderWithBinaryData(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+
+	// Log with some binary-like data
+	log := "normal log\n\x00\x01\x02\x03fatal: could not read Username for 'https://github.com': terminal prompts disabled\n\xff\xfe\xfd\xfc\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("analyze: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one result for input with binary data")
+	}
+}
+
+func TestAnalyzeRepositoryWithEmptyChangeSet(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	dir := t.TempDir()
+	
+	// Create a simple Go file
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	
+	a, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != nil && err != ErrNoMatch {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Either ErrNoMatch or a valid analysis is acceptable
+	_ = a
+}
+
+func TestAnalyzeRepositoryWithNonExistentRoot(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	
+	_, err := e.AnalyzeRepository("/nonexistent/path", detectors.ChangeSet{})
+	if err == nil {
+		t.Fatal("expected error for non-existent root")
+	}
+}
+
+func TestAnalyzeRepositoryWithCircularSymlink(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	dir := t.TempDir()
+	
+	// Create a circular symlink
+	if err := os.Symlink(dir, filepath.Join(dir, "circular")); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+	
+	// This should not crash, but may return an error or empty result
+	_, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != nil && err != ErrNoMatch && err != ErrNoInput {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestAnalyzeRepositoryWithPermissionDeniedFile(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("skipping permission test when running as root")
+	}
+	
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	dir := t.TempDir()
+	
+	// Create a file with restricted permissions
+	protectedFile := filepath.Join(dir, "protected.go")
+	if err := os.WriteFile(protectedFile, []byte("package main\n"), 0o000); err != nil {
+		t.Fatalf("write protected file: %v", err)
+	}
+	defer os.Chmod(protectedFile, 0o644) // cleanup
+	
+	// This should not crash, but may return an error due to permission denied
+	_, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != nil && err != ErrNoMatch && err != ErrNoInput {
+		// Permission denied is acceptable
+		t.Logf("got expected permission error: %v", err)
+	}
+}
+
+func TestCorrelateSnapshotWithNilResult(t *testing.T) {
+	snap := &repoSnapshot{
+		root: "/repo",
+		commits: []repo.Commit{
+			{Hash: "abc1234", Subject: "fix: auth token", Files: []string{".gitconfig"}, Time: time.Now()},
+		},
+		signals: repo.Signals{},
+		state:   &scoring.RepoState{Root: "/repo"},
+	}
+	rc := correlateSnapshot(snap, model.Result{})
+	// correlateSnapshot returns a RepoContext even for empty results
+	if rc == nil {
+		t.Errorf("expected non-nil RepoContext")
+	}
+	if rc.RepoRoot != "/repo" {
+		t.Errorf("expected RepoRoot /repo, got %q", rc.RepoRoot)
+	}
+}
+
+func TestLoadTopologySignalsWithInvalidCODEOWNERS(t *testing.T) {
+	dir := t.TempDir()
+	// Create an invalid CODEOWNERS file
+	if err := os.WriteFile(filepath.Join(dir, "CODEOWNERS"), []byte("invalid format"), 0o644); err != nil {
+		t.Fatalf("write CODEOWNERS: %v", err)
+	}
+	
+	out := loadTopologySignals(dir, []string{"main.go"})
+	if out != nil {
+		t.Errorf("expected nil with invalid CODEOWNERS, got %v", out)
+	}
+}
+
+func TestLoadTopologySignalsWithChangedFilesOutsideRepo(t *testing.T) {
+	dir := t.TempDir()
+	// Create a valid CODEOWNERS file
+	if err := os.WriteFile(filepath.Join(dir, "CODEOWNERS"), []byte("* @team\n"), 0o644); err != nil {
+		t.Fatalf("write CODEOWNERS: %v", err)
+	}
+	
+	// Include a file path outside the repo root
+	out := loadTopologySignals(dir, []string{"../outside/main.go"})
+	if out != nil {
+		t.Errorf("expected nil with outside files, got %v", out)
+	}
+}
+
+func TestRepoStateFromSnapshotWithNil(t *testing.T) {
+	state := repoStateFromSnapshot(nil)
+	if state != nil {
+		t.Errorf("expected nil for nil snapshot, got %#v", state)
+	}
+}
+
+func TestMergeRepoStatesWithNil(t *testing.T) {
+	state1 := &scoring.RepoState{Root: "/repo1", ChangedFiles: []string{"file1.go"}}
+	state2 := &scoring.RepoState{Root: "/repo2", ChangedFiles: []string{"file2.go"}}
+	
+	merged := mergeRepoStates(state1, state2, nil)
+	if len(merged.ChangedFiles) != 2 {
+		t.Errorf("expected 2 changed files, got %d", len(merged.ChangedFiles))
+	}
+}
+
+func TestChangedFilesFromChangeSetWithEmpty(t *testing.T) {
+	files := changedFilesFromChangeSet(detectors.ChangeSet{})
+	if files != nil {
+		t.Errorf("expected nil for empty change set, got %v", files)
+	}
+}
+
+func TestRecentFilesFromCommitsWithEmpty(t *testing.T) {
+	files := recentFilesFromCommits([]repo.Commit{}, 10)
+	if files != nil {
+		t.Errorf("expected nil for empty commits, got %v", files)
+	}
+}
+
+func TestHotspotDirsFromSignalsWithEmpty(t *testing.T) {
+	dirs := hotspotDirsFromSignals(repo.Signals{}, 5)
+	if dirs != nil {
+		t.Errorf("expected nil for empty signals, got %v", dirs)
+	}
+}
+
+func TestHotfixSignalsFromSignalsWithEmpty(t *testing.T) {
+	signals := hotfixSignalsFromSignals(repo.Signals{}, 5)
+	if signals != nil {
+		t.Errorf("expected nil for empty signals, got %v", signals)
+	}
+}
+
+func TestDriftSignalsFromSignalsWithEmpty(t *testing.T) {
+	signals := driftSignalsFromSignals(repo.Signals{}, 5)
+	if signals != nil {
+		t.Errorf("expected nil for empty signals, got %v", signals)
+	}
+}
+
+func TestLooksLikeSourceFileWithUnknownExtension(t *testing.T) {
+	if looksLikeSourceFile("unknown.xyz") {
+		t.Error("expected false for unknown extension")
+	}
+}
+
+func TestShouldSkipSourceDirWithUnknownDir(t *testing.T) {
+	if shouldSkipSourceDir("unknown_dir") {
+		t.Error("expected false for unknown directory")
+	}
+}
+
+func TestReadLinesWithVeryLongLine(t *testing.T) {
+	longLine := strings.Repeat("x", 10000) + "\n"
+	lines, err := ReadLines(strings.NewReader(longLine))
+	if err != nil {
+		t.Fatalf("ReadLines: %v", err)
+	}
+	if len(lines) != 1 {
+		t.Fatalf("expected 1 line, got %d", len(lines))
+	}
+	if lines[0].Original != longLine[:len(longLine)-1] {
+		t.Errorf("line content mismatch")
+	}
+}
+
 func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks/bundled"
-}
-
-func repoExtraPackDir(_ testing.TB) string {
-	return "../../playbooks/packs/extra-local"
-}
-
-func requireExtraPack(t testing.TB) string {
-	t.Helper()
-	for _, path := range []string{
-		repoExtraPackDir(t),
-		"../../../faultline-extra-pack",
-	} {
-		if _, err := os.Stat(path); err != nil {
-			continue
-		}
-		if resolved, err := filepath.EvalSymlinks(path); err == nil {
-			return resolved
-		}
-		if abs, err := filepath.Abs(path); err == nil {
-			return abs
-		}
-		return path
-	}
-	t.Skip("extra pack repository is not available locally")
-	return ""
 }

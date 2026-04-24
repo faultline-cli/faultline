@@ -266,7 +266,21 @@ func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
 }
 
 func TestAnalyzeReaderExtraPackCorpus(t *testing.T) {
-	extraDir := requireExtraPack(t)
+	// Skip test if extra pack is not available
+	extraDir := ""
+	for _, path := range []string{
+		"../../playbooks/packs/extra-local",
+		"../../../faultline-extra-pack",
+	} {
+		if _, err := os.Stat(path); err == nil {
+			extraDir = path
+			break
+		}
+	}
+	if extraDir == "" {
+		t.Skip("extra pack repository is not available locally")
+	}
+	
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
 	e := New(Options{PlaybookPackDirs: []string{extraDir}, NoHistory: true})
 

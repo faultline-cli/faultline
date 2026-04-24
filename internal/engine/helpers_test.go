@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"os"
 	"testing"
 
 	"faultline/internal/detectors"
@@ -242,4 +243,19 @@ func TestToModelTopologySignalsEmpty(t *testing.T) {
 	if ts.BoundaryCrossed || ts.UpstreamChanged || ts.OwnershipMismatch || ts.FailureClustered {
 		t.Error("expected all boolean signals false for nil input")
 	}
+}
+
+func requireExtraPack(t *testing.T) string {
+	t.Helper()
+	
+	for _, path := range []string{
+		"../../playbooks/packs/extra-local",
+		"../../../faultline-extra-pack",
+	} {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+	t.Skip("extra pack repository is not available locally")
+	return ""
 }

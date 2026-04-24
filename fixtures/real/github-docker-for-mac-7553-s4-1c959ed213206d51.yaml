@@ -1,0 +1,67 @@
+id: github-docker-for-mac-7553-s4-1c959ed213206d51
+title: No Docker daemon on MacOS intel
+fixture_class: real
+normalized_log: |-
+    $ docker info
+    Client:
+    Version: 27.4.0
+    Context: default
+    Debug Mode: false
+    Plugins:
+    ai: Ask Gordon - Docker Agent (Docker Inc.)
+    Version: v0.5.1
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-ai
+    buildx: Docker Buildx (Docker Inc.)
+    Version: v0.19.2-desktop.1
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-buildx
+    compose: Docker Compose (Docker Inc.)
+    Version: v2.31.0-desktop.2
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-compose
+    debug: Get a shell into any image or container (Docker Inc.)
+    Version: 0.0.37
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-debug
+    desktop: Docker Desktop commands (Beta) (Docker Inc.)
+    Version: v0.1.0
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-desktop
+    dev: Docker Dev Environments (Docker Inc.)
+    Version: v0.1.2
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-dev
+    extension: Manages Docker extensions (Docker Inc.)
+    Version: v0.2.27
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-extension
+    feedback: Provide feedback, right in your terminal! (Docker Inc.)
+    Version: v1.0.5
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-feedback
+    init: Creates Docker-related starter files for your project (Docker Inc.)
+    Version: v1.4.0
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-init
+    sbom: View the packaged-based Software Bill Of Materials (SBOM) for an image (Anchore Inc.)
+    Version: 0.6.0
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-sbom
+    scout: Docker Scout (Docker Inc.)
+    Version: v1.15.1
+    Path: /Users/nick.davies/.docker/cli-plugins/docker-scout
+    Server:
+    ERROR: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+    errors pretty printing info
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/for-mac/issues/7553
+    repository: docker/for-mac
+    issue_number: 7553
+    title: No Docker daemon on MacOS intel
+    labels:
+        - status/triage
+        - area/daemon
+    author: nbdavies
+    snippet: 4
+    fetched_at: "2026-04-22T12:18:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:21:21Z"
+fingerprint: 1c959ed213206d51

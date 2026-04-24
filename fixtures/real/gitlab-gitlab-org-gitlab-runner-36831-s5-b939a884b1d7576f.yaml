@@ -1,0 +1,47 @@
+id: gitlab-gitlab-org-gitlab-runner-36831-s5-b939a884b1d7576f
+title: 'job failed: read tcp use of closed network connection'
+fixture_class: real
+normalized_log: |-
+    concurrent = 1
+    check_interval = 0
+    shutdown_timeout = 0
+    [session_server]
+    session_timeout = 1800
+    [[runners]]
+    name = “xxx”
+    url = https://xxx.xxx
+    id = 24
+    token = “xxxx”
+    token_obtained_at = 2023-06-26T21:15:51Z
+    token_expires_at = 0001-01-01T00:00:00Z
+    executor = "ssh"
+    [runners.cache]
+    MaxUploadedArchiveSize = 0
+    [runners.ssh]
+    user = “xxxx”
+    password = “xxxx”
+    host = "172.nnn.nnn.nnn”
+    port = "22"
+expectation:
+    expected_playbook: parallelism-conflict
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/36831
+    repository: gitlab-org/gitlab-runner
+    issue_number: 36831
+    title: 'job failed: read tcp use of closed network connection'
+    labels:
+        - Category:Runner Core
+        - devops::verify
+        - group::runner core
+        - section::ci
+    author: 81mrg81
+    snippet: 5
+    fetched_at: "2026-04-23T20:45:07Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:22:21Z"
+fingerprint: b939a884b1d7576f

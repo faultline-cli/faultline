@@ -5,9 +5,9 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 ## Current Snapshot
 
 - Bundled playbooks: 101
-- Accepted real fixtures: 138
-- Top-1 match rate: 100% (138/138)
-- Top-3 match rate: 100% (138/138)
+- Accepted real fixtures: 153
+- Top-1 match rate: 100% (153/153)
+- Top-3 match rate: 100% (153/153)
 - Unmatched fixtures: 0
 - False positives: 0
 - Weak matches: 0 (0.0%)
@@ -68,13 +68,14 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-23 mixed-source ingestion pass | 100 | 123 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-23 auth-and-lock ingestion pass | 100 | 126 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-24 mixed-source ingestion + source-boundary refinement | 101 | 138 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-24 diverse-adapter ingestion pass | 101 | 153 | 32 | 100% | 100% | 0 | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The shipped corpus is still strongest on build, network, and CI failures, with 99 of 138 accepted fixtures concentrated in those three categories.
-- Provider diversity is still uneven: the accepted real corpus is 76 GitHub fixtures, 29 Stack Exchange fixtures, 16 GitLab fixtures, 12 Reddit fixtures, and 5 Discourse fixtures.
+- The shipped corpus is strongest on build, network, and CI failures, with 99 of 153 accepted fixtures concentrated in those three categories.
+- Provider diversity has improved: the accepted real corpus is now 88 GitHub fixtures (57%), 31 Stack Exchange fixtures (20%), 17 GitLab fixtures (11%), 12 Reddit fixtures (8%), and 5 Discourse fixtures (3%). Stack Exchange representation increased through diverse-adapter ingestion pass.
 - The `test` category is no longer a single-fixture blind spot, but it is still the thinnest accepted real slice relative to the 13 bundled test playbooks. Future ingestion should keep biasing toward high-signal test failures before adding more test rules.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through

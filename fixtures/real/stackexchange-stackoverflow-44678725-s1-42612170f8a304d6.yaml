@@ -1,0 +1,25 @@
+id: stackexchange-stackoverflow-44678725-s1-42612170f8a304d6
+title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+fixture_class: real
+normalized_log: |-
+    Sometimes, for some reason, Docker turns off my ubuntu integration, and I get this same Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running? error.
+    Go into your docker desktop settings cog at top right of the window > Resources > WSL Integration and turn the integration back on:
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/44678725
+    repository: stackoverflow
+    issue_number: 44678725
+    comment_id: "77149504"
+    title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+    author: Abraham Brookes
+    snippet: 1
+    fetched_at: "2026-04-23T21:23:30Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:22:21Z"
+fingerprint: 42612170f8a304d6

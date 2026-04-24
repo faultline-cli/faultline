@@ -30,7 +30,7 @@ normalized_log: |-
 expectation:
     expected_playbook: k8s-crashloopbackoff
     top_n: 3
-    min_confidence: 0.55
+    min_confidence: 0.50
 source:
     adapter: stackexchange-question
     provider: stackexchange

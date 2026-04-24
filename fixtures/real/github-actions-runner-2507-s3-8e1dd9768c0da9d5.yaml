@@ -1,0 +1,31 @@
+id: github-actions-runner-2507-s3-8e1dd9768c0da9d5
+title: Self hosted runner reports access error during registration; needs view permissions
+fixture_class: real
+normalized_log: |-
+    ## What's not working?
+    Get the following error message occasionally:
+    Current runner version: '2.303.0'
+    Listening for Jobs
+    An error occurred: Access denied. System:ServiceIdentity;DDDDDDDD-DDDD-DDDD-DDDD-DDDDDDDDDDDD needs View permissions to perform the action.
+    Runner listener exit with retryable error, re-launch runner in 5 seconds.
+    Restarting runner...
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/2507
+    repository: actions/runner
+    issue_number: 2507
+    title: Self hosted runner reports access error during registration; needs view permissions
+    labels:
+        - bug
+    author: weiw05
+    snippet: 3
+    fetched_at: "2026-04-22T10:00:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:21:20Z"
+fingerprint: 8e1dd9768c0da9d5

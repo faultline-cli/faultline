@@ -1,0 +1,69 @@
+id: github-docker-desktop-feedback-182-s2-005cf8fe4c2ac4a0
+title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+fixture_class: real
+normalized_log: |-
+    Client:
+    Version: 28.5.1
+    Context: desktop-linux
+    Debug Mode: false
+    Plugins:
+    ai: Docker AI Agent - Ask Gordon (Docker Inc.)
+    Version: v1.9.11
+    Path: /Users/user1/.docker/cli-plugins/docker-ai
+    buildx: Docker Buildx (Docker Inc.)
+    Version: v0.29.1-desktop.1
+    Path: /Users/user1/.docker/cli-plugins/docker-buildx
+    cloud: Docker Cloud (Docker Inc.)
+    Version: v0.4.39
+    Path: /Users/user1/.docker/cli-plugins/docker-cloud
+    compose: Docker Compose (Docker Inc.)
+    Version: v2.40.0-desktop.1
+    Path: /Users/user1/.docker/cli-plugins/docker-compose
+    debug: Get a shell into any image or container (Docker Inc.)
+    Version: 0.0.44
+    Path: /Users/user1/.docker/cli-plugins/docker-debug
+    desktop: Docker Desktop commands (Docker Inc.)
+    Version: v0.2.0
+    Path: /Users/user1/.docker/cli-plugins/docker-desktop
+    extension: Manages Docker extensions (Docker Inc.)
+    Version: v0.2.31
+    Path: /Users/user1/.docker/cli-plugins/docker-extension
+    init: Creates Docker-related starter files for your project (Docker Inc.)
+    Version: v1.4.0
+    Path: /Users/user1/.docker/cli-plugins/docker-init
+    mcp: Docker MCP Plugin (Docker Inc.)
+    Version: v0.22.0
+    Path: /Users/user1/.docker/cli-plugins/docker-mcp
+    model: Docker Model Runner (Docker Inc.)
+    Version: v0.1.42
+    Path: /Users/user1/.docker/cli-plugins/docker-model
+    sbom: View the packaged-based Software Bill Of Materials (SBOM) for an image (Anchore Inc.)
+    Version: 0.6.0
+    Path: /Users/user1/.docker/cli-plugins/docker-sbom
+    scout: Docker Scout (Docker Inc.)
+    Version: v1.18.3
+    Path: /Users/user1/.docker/cli-plugins/docker-scout
+    Server:
+    Cannot connect to the Docker daemon at unix:///Users/user1/.docker/run/docker.sock. Is the docker daemon running?
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/docker/desktop-feedback/issues/182
+    repository: docker/desktop-feedback
+    issue_number: 182
+    title: 'Docker desktop fails to start: `com.docker.virtualization: process terminated unexpectedly: use of closed network connection`'
+    labels:
+        - area/network
+        - platform/macos
+        - version/4.58.1
+    author: pranav-raft
+    snippet: 2
+    fetched_at: "2026-04-23T21:24:16Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:12:34Z"
+fingerprint: 005cf8fe4c2ac4a0

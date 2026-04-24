@@ -1,0 +1,33 @@
+id: stackexchange-stackoverflow-48957195-s1-75445d0c17b120e4
+title: 'How to fix Docker: Permission denied'
+fixture_class: real
+normalized_log: |-
+    Fix Docker Issue: (Permission denied)
+    Create the docker group if it does not exist: sudo groupadd docker
+    See number of super users in the available system: grep -Po '^sudo.+:\K.*$' /etc/group
+    Export the user in linux command shell: export USER=demoUser
+    Add user to the docker group: sudo usermod -aG docker $USER
+    Run the following command/ Login or logout: newgrp docker
+    Check if docker runs ok or not: docker run hello-world
+    Reboot if you still get an error: reboot
+    If it does not work, run this command:
+    sudo chmod 660 /var/run/docker.sock
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/48957195
+    repository: stackoverflow
+    issue_number: 48957195
+    comment_id: "67801127"
+    title: 'How to fix Docker: Permission denied'
+    author: Md. Shahariar Hossen
+    snippet: 1
+    fetched_at: "2026-04-23T22:00:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:22:22Z"
+fingerprint: 75445d0c17b120e4

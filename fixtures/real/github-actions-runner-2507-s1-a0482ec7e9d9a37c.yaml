@@ -1,0 +1,30 @@
+id: github-actions-runner-2507-s1-a0482ec7e9d9a37c
+title: Self hosted runner reports access error during registration; needs view permissions
+fixture_class: real
+normalized_log: |-
+    > [@thboop](https://github.com/thboop) FWIW, I've definitely encountered this when registering a brand new ephemeral runner (i.e. the JIT config was created moments before), and I suspect that may be the case for others who've chimed in on this thread. I.e. in the original description it says:
+    >
+    > > Most of the time, it works great, but occasionally, I get an error during runner registration with the message: "An error occurred: Access denied. System:ServiceIdentity;DDDDDDDD-DDDD-DDDD-DDDD-DDDDDDDDDDDD needs View permissions to perform the action."
+    >
+    > Since lots of people are already watching this issue, it might cause less confusion/churn if we just reopen it, and then we can attach runner diagnostic logs the next time we encounter this issue?
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/2507
+    repository: actions/runner
+    issue_number: 2507
+    comment_id: "3227723206"
+    title: Self hosted runner reports access error during registration; needs view permissions
+    labels:
+        - bug
+    author: weiw05
+    snippet: 1
+    fetched_at: "2026-04-22T10:00:55Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:12:33Z"
+fingerprint: a0482ec7e9d9a37c

@@ -1,0 +1,25 @@
+id: github-actions-runner-1490-s1-67a54fc179e98528
+title: Environment Secrets are not available on Reusable Workflow / Workflow Templates
+fixture_class: real
+normalized_log: "> GH must have silently rolled this out. I also recall being annoyed that this didn't work and explicitly documented for internal use to prefix repo scoped vars/secrets by env as a workaround.\n>\n> I just noticed one of our eng teams did this today, and I went to correct them, but then saw it was actually working \U0001F44D\n>\n> ![Image](https://github.com/user-attachments/assets/<id>)\n>\n> ![Image](https://github.com/user-attachments/assets/<id>)\n>\n> ![Image](https://github.com/user-attachments/assets/<id>)\n>\n> <img alt=\"Image\" width=\"729\" src=\"https://private-user-images.githubusercontent.com/26287138/436856381-<id>.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDU1MTI5MjEsIm5iZiI6MTc0NTUxMjYyMSwicGF0aCI6Ii8yNjI4NzEzOC80MzY4NTYzODEtOTEyZjRjM2QtZTBlNC00MTdiLWJkNDYtYzI5OWZlNzcyODViLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA0MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNDI0VDE2MzcwMVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTA4N2ZmYTY0YjQyMjg2OGU2ZDgwZDllNGEwMjYyOGFlZmM4OGY0Yjk0MmI3MDUxYTMzYmY5OTZiNDQxY2I0OWImWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.XaKj1Dj1w1cpyLzt6P2zOa5fJlBTcP4_Hk90uaEg6ks\">"
+expectation:
+    expected_playbook: oidc-token-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/1490
+    repository: actions/runner
+    issue_number: 1490
+    comment_id: "2828238408"
+    title: Environment Secrets are not available on Reusable Workflow / Workflow Templates
+    labels:
+        - bug
+    author: AllanOricil
+    snippet: 1
+    fetched_at: "2026-04-22T09:57:32Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:21:21Z"
+fingerprint: 67a54fc179e98528
