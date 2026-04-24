@@ -1,0 +1,80 @@
+id: github-teammates-teammates-9681-s2-567a4c3fb96d0c61
+title: 'cannot find module api-output '
+fixture_class: real
+normalized_log: |-
+    src/web/app/pages-instructor/instructor-sessions-page/sessions-permanent-deletio
+    n-confirm-modal/sessions-permanent-deletion-confirm-modal.component.ts(3,33): er
+    ror TS2307: Cannot find module '../../../../types/api-output'.
+    src/web/app/pages-instructor/student-list/student-list.component.ts(9,31): error
+    TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-session/session-result-page/session-result-page.component.ts(1
+    1,8): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-session/session-submission-page/session-submission-page.compon
+    ent.ts(22,8): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-static/static-page.component.ts(4,26): error TS2307: Cannot fi
+    nd module '../../types/api-output'.
+    src/web/app/pages-student/student-page.component.ts(5,26): error TS2307: Cannot
+    find module '../../types/api-output'.
+    src/web/app/pages-student/student-profile-page/student-profile-page.component.ts
+    (9,72): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-student/student-profile-page/upload-edit-profile-picture-modal
+    /upload-edit-profile-picture-modal.component.ts(10,46): error TS2307: Cannot fin
+    d module '../../../../types/api-output'.
+    src/web/app/user-join-page.component.ts(6,28): error TS2307: Cannot find module
+    '../types/api-output'.
+    src/web/environments/environment.prod.ts(1,24): error TS2307: Cannot find module
+    './config'.
+    src/web/environments/environment.ts(1,24): error TS2307: Cannot find module './c
+    onfig'.
+    src/web/services/account.service.ts(3,60): error TS2307: Cannot find module '../
+    types/api-output'.
+    src/web/services/account.service.ts(4,38): error TS2307: Cannot find module '../
+    types/api-request'.
+    src/web/services/course.service.ts(3,80): error TS2307: Cannot find module '../t
+    ypes/api-output'.
+    src/web/services/course.service.ts(4,80): error TS2307: Cannot find module '../t
+    ypes/api-request'.
+    src/web/services/feedback-questions.service.ts(13,8): error TS2307: Cannot find
+    module '../types/api-output'.
+    src/web/services/feedback-questions.service.ts(14,78): error TS2307: Cannot find
+    module '../types/api-request'.
+    src/web/services/feedback-responses.service.ts(12,8): error TS2307: Cannot find
+    module '../types/api-output'.
+    src/web/services/feedback-responses.service.ts(13,78): error TS2307: Cannot find
+    module '../types/api-request'.
+    src/web/services/feedback-sessions.service.ts(5,58): error TS2307: Cannot find m
+    odule '../types/api-output'.
+    src/web/services/feedback-sessions.service.ts(6,76): error TS2307: Cannot find m
+    odule '../types/api-request'.
+    src/web/services/student-profile.service.ts(3,47): error TS2307: Cannot find mod
+    ule '../types/api-output'.
+    src/web/services/student-profile.service.ts(4,45): error TS2307: Cannot find mod
+    ule '../types/api-request'.
+    src/web/services/student.service.ts(3,26): error TS2307: Cannot find module '../
+    types/api-output'.
+    src/web/services/timezone.service.ts(8,65): error TS2307: Cannot find module '..
+    /types/api-output'.
+    src/web/services/visibility-state-machine.ts(1,65): error TS2307: Cannot find mo
+    dule '../types/api-output'.
+    src/web/types/default-question-structs.ts(23,8): error TS2307: Cannot find modul
+    e './api-output'.
+    src/web/types/instructor-privilege.ts(1,37): error TS2307: Cannot find module '.
+    /api-output'.
+expectation:
+    expected_playbook: topology-boundary-crossed
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/TEAMMATES/teammates/issues/9681
+    repository: TEAMMATES/teammates
+    issue_number: 9681
+    title: 'cannot find module api-output '
+    author: HarikumarG
+    snippet: 2
+    fetched_at: "2026-04-17T23:33:10Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:59:05Z"
+fingerprint: 567a4c3fb96d0c61

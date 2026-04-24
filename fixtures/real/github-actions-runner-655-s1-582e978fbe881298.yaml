@@ -1,0 +1,33 @@
+id: github-actions-runner-655-s1-582e978fbe881298
+title: Load `env` from files
+fixture_class: real
+normalized_log: |-
+    This did the trick:
+    ```
+    - name: Inject env vars
+    run: |
+    export $(grep -Ev ^'(#|$)' .env)
+    envsubst < ./apps/api/.ebextensions/03_inject_env_vars.config | tee ./apps/api/.ebextensions/03_inject_env_vars.config
+    ```
+expectation:
+    expected_playbook: env-var-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/655
+    repository: actions/runner
+    issue_number: 655
+    comment_id: "1490249946"
+    title: Load `env` from files
+    labels:
+        - enhancement
+        - actions-feature
+    author: timharris777
+    snippet: 1
+    fetched_at: "2026-04-22T09:54:57Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:03Z"
+fingerprint: 582e978fbe881298

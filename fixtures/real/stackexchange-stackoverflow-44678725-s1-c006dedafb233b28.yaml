@@ -1,0 +1,46 @@
+id: stackexchange-stackoverflow-44678725-s1-c006dedafb233b28
+title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+fixture_class: real
+normalized_log: |-
+    I have applied every solution available on internet but still I cannot run Docker.
+    I want to use Scrapy Splash on my server.
+    Here is history of commands I ran.
+    docker run -p 8050:8050 scrapinghub/splash
+    sudo docker run -p 8050:8050 scrapinghub/splash
+    sudo usermod -aG docker $(whoami)
+    sudo docker run -p 8050:8050 scrapinghub/splash
+    newgrp docker
+    sudo docker run -p 8050:8050 scrapinghub/splash
+    reboot
+    sudo docker run -p 8050:8050 scrapinghub/splash
+    docker run -p 8050:8050 scrapinghub/splash
+    You can see I tried to restart my server as well, but it didnt help.
+    see output of ps -aux | grep docker
+    root@mani:/var/www/html# ps aux | grep docker
+    root 8524 0.0 0.8 127904 13964 ? Ssl 17:21 0:00 /usr/bin/dockerd --raw-logs
+    root 8534 0.0 0.3 90588 5012 ? Ssl 17:21 0:00 docker-containerd -l unix:///var/run/docker/libcontainerd/docker-containerd.sock --metrics-interval=0 --start-timeout 2m --state-dir /var/run/docker/libcontainerd/containerd --shim docker-containerd-shim --runtime docker-runc
+    root 8543 0.0 0.0 8812 764 pts/1 S+ 17:21 0:00 grep --color=auto docker
+    root 16356 0.0 0.0 17200 964 pts/1 S 17:14 0:00 newgrp docker
+    root 20080 0.0 0.0 17200 964 pts/1 S 17:06 0:00 newgrp docker
+    root 30221 0.0 0.0 17200 964 pts/1 S 17:09 0:00 newgrp docker
+    but it gives the error:
+    Cannot connect to the Docker daemon at unix:///var/run/docker.sock . Is the docker daemon running?.
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/44678725
+    repository: stackoverflow
+    issue_number: 44678725
+    comment_id: "0"
+    title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+    author: Umair Ayub
+    snippet: 1
+    fetched_at: "2026-04-23T21:23:30Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:59:05Z"
+fingerprint: c006dedafb233b28

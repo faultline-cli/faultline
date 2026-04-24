@@ -1,0 +1,29 @@
+id: stackexchange-stackoverflow-71835469-s2-0732f6653d9757de
+title: 'Github actions error- Error: Process completed with exit code 127'
+fixture_class: real
+normalized_log: |-
+    # This is your deploy stage
+    steps:
+    - name: Download artifact from build job
+    uses: actions/download-artifact@v2
+    with:
+    name: node-app
+expectation:
+    expected_playbook: artifact-upload-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/71835469
+    repository: stackoverflow
+    issue_number: 71835469
+    comment_id: "73215790"
+    title: 'Github actions error- Error: Process completed with exit code 127'
+    author: JEuvin
+    snippet: 2
+    fetched_at: "2026-04-24T06:12:17Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:28Z"
+fingerprint: 0732f6653d9757de

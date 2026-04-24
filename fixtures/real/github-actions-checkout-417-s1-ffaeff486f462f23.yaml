@@ -1,0 +1,41 @@
+id: github-actions-checkout-417-s1-ffaeff486f462f23
+title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+fixture_class: real
+normalized_log: |-
+    on: [push]
+    name: Code Analyzer
+    jobs:
+    build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install wily tool
+    run: |
+    pip install wily
+    - name: Run wily on code changes
+    run: |
+    wily build .
+    - name: Run wily on changed files
+    run: |
+    for changed_file in {{ steps.files.outputs.all }}; do
+    wily diff ${changed_file}
+    done
+expectation:
+    expected_playbook: pip-install-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/checkout/issues/417
+    repository: actions/checkout
+    issue_number: 417
+    comment_id: "943576832"
+    title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+    author: arhue
+    snippet: 1
+    fetched_at: "2026-04-17T23:27:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:10Z"
+fingerprint: ffaeff486f462f23

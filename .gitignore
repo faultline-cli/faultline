@@ -18,3 +18,5 @@ playbooks/packs/*-local
 
 # Local staging fixture review queue
 fixtures/staging/*.yaml
+
+.cocoindex_code/*

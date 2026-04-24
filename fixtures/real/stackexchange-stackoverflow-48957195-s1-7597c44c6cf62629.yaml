@@ -1,0 +1,48 @@
+id: stackexchange-stackoverflow-48957195-s1-7597c44c6cf62629
+title: 'How to fix Docker: Permission denied'
+fixture_class: real
+normalized_log: |-
+    After an upgrade I got the permission denied. Doing the steps of 'mkb' post install steps don't have change anything because my user was already in the 'docker' group; I retry-it twice any way without success.
+    After an search hour this following solution finaly worked :
+    sudo chmod 666 /var/run/docker.sock
+    Solution came from Olshansk .
+    Look like the upgrade have recreate the socket without enough permission for the 'docker' group.
+    Problems
+    This hard chmod open security hole and after each reboot, this error start again and again and you have to re-execute the above command each time. I want a solution once and for all. For that you have two problems :
+    1 ) Problem with SystemD : The socket will be create only with owner 'root' and group 'root'.
+    You can check this first problem with this command :
+    ls -l /lib/systemd/system/docker.socket
+    If every this is good, you should see ' root/docker ' not ' root/root '.
+    2 ) Problem with graphical Login : https://superuser.com/questions/1348196/why-my-linux-account-only-belongs-to-one-group
+    You can check this second problem with this command :
+    groups
+    If everything is correct you should see the docker group in the list. If not try the command
+    sudo su $USER -c groups
+    if you see then the docker group it is because of the bug.
+    Solutions
+    If you manage to to get a workaround for the graphical login, this should do the job :
+    sudo chgrp docker /lib/systemd/system/docker.socket
+    sudo chmod g+w /lib/systemd/system/docker.socket
+    But If you can't manage this bug, a not so bad solution could be this :
+    sudo chgrp $USER /lib/systemd/system/docker.socket
+    sudo chmod g+w /lib/systemd/system/docker.socket
+    This work because you are in a graphical environnement and probably the only user on your computer. In both case you need a reboot (or sudo chmod 666 /var/run/docker.sock )
+expectation:
+    expected_playbook: permission-denied
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/48957195
+    repository: stackoverflow
+    issue_number: 48957195
+    comment_id: "51362528"
+    title: 'How to fix Docker: Permission denied'
+    author: Galigator
+    snippet: 1
+    fetched_at: "2026-04-23T22:00:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:28Z"
+fingerprint: 7597c44c6cf62629

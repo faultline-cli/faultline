@@ -1,0 +1,47 @@
+id: gitlab-gitlab-org-gitlab-runner-38678-s6-51dc968b3a631520
+title: Jobs fail despite successful task completion when pods are evicted (since Runner 17.9)
+fixture_class: real
+normalized_log: |-
+    Version: 17.9.1
+    Git revision: bbf75488
+    Git branch: 17-9-stable
+    GO version: go1.23.2 X:cacheprog
+    Built: 2025-03-07T23:57:02Z
+    OS/Arch: linux/amd64
+expectation:
+    expected_playbook: runtime-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/38678
+    repository: gitlab-org/gitlab-runner
+    issue_number: 38678
+    title: Jobs fail despite successful task completion when pods are evicted (since Runner 17.9)
+    labels:
+        - Category:Runner Core
+        - Customer Interest
+        - Runner::P2
+        - SLO::Missed
+        - backlog::prospective
+        - bug::functional
+        - candidate::18.6
+        - customer
+        - devops::verify
+        - executor::kubernetes
+        - group::runner core
+        - missed:18.6
+        - priority::3
+        - section::ci
+        - severity::3
+        - support_backlog::done
+        - type::bug
+        - workflow::complete
+    author: becker-s
+    snippet: 6
+    fetched_at: "2026-04-23T02:47:47Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:59:05Z"
+fingerprint: 51dc968b3a631520

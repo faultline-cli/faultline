@@ -1,0 +1,54 @@
+id: gitlab-gitlab-org-gitlab-runner-37310-s5-85d0e3f7f8724277
+title: 'ERROR: Job failed (system failure): prepare environment: failed to start process: exec: "bash": executable file not found in $PATH. Using 16.2+ on RedHawk Linux server'
+fixture_class: real
+normalized_log: |-
+    listen_address = "[::]:8092"
+    concurrent = 2
+    check_interval = 0
+    log_level = "info"
+    log_format = "text"
+    shutdown_timeout = 0
+    [session_server]
+    listen_address = "[::]:8093"
+    session_timeout = 1800
+    [[runners]]
+    name = "redhawk"
+    url = "<redacted>"
+    id = 2
+    token = "<redacted>"
+    token_obtained_at = 2023-07-01T01:45:45Z
+    token_expires_at = 0001-01-01T00:00:00Z
+    executor = "shell"
+    cache_dir = "<redacted>"
+    [runners.custom_build_dir]
+    enabled = true
+expectation:
+    expected_playbook: parallelism-conflict
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab-runner/-/issues/37310
+    repository: gitlab-org/gitlab-runner
+    issue_number: 37310
+    title: 'ERROR: Job failed (system failure): prepare environment: failed to start process: exec: "bash": executable file not found in $PATH. Using 16.2+ on RedHawk Linux server'
+    labels:
+        - Category:Runner Core
+        - bug::functional
+        - devops::verify
+        - executor::shell
+        - group::runner core
+        - priority::3
+        - section::ci
+        - severity::3
+        - stale
+        - type::bug
+        - vintage
+    author: jzeno
+    snippet: 5
+    fetched_at: "2026-04-23T02:47:47Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:27Z"
+fingerprint: 85d0e3f7f8724277

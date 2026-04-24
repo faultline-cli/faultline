@@ -1,0 +1,40 @@
+id: github-actions-upload-artifact-232-s1-3e88863c0e52abdc
+title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+fixture_class: real
+normalized_log: |-
+    build:
+    runs-on: ubuntu-latest
+    defaults:
+    run:
+    working-directory: ./react
+    steps:
+    - uses: actions/checkout@v2
+    - run: yarn install --frozen-lockfile
+    - run: yarn build
+    - name: Archive build artifact
+    uses: actions/upload-artifact@v2
+    with:
+    name: react-bundle
+    path: react/react-bundle # ./react-bundle, ./react-bundle/*, react-bundle do not work
+    if-no-files-found: error
+expectation:
+    expected_playbook: yarn-lockfile
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/upload-artifact/issues/232
+    repository: actions/upload-artifact
+    issue_number: 232
+    comment_id: "1065422577"
+    title: 'No files were found with the provided path: build. No artifacts will be uploaded.'
+    labels:
+        - bug
+    author: benknab
+    snippet: 1
+    fetched_at: "2026-04-23T08:20:08Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:03Z"
+fingerprint: 3e88863c0e52abdc

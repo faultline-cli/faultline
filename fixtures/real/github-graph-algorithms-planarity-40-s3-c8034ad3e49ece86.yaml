@@ -1,0 +1,705 @@
+id: github-graph-algorithms-planarity-40-s3-c8034ad3e49ece86
+title: '`python -m build` fails to build source distribution and wheel'
+fixture_class: real
+normalized_log: |-
+    (.buildenv) wbkboyer@Wandas-MacBook-Pro planarity % python -m build
+    * Creating isolated environment: venv+pip...
+    * Installing packages in isolated environment:
+    - cython
+    - setuptools
+    * Getting build dependencies for sdist...
+    Compiling planarity/classic/planarity.pyx because it depends on <tmp>
+    Compiling planarity/full/graph.pyx because it depends on <tmp>
+    [1/2] Cythonizing planarity/classic/planarity.pyx
+    [2/2] Cythonizing planarity/full/graph.pyx
+    running egg_info
+    creating planarity.egg-info
+    writing planarity.egg-info/PKG-INFO
+    writing dependency_links to planarity.egg-info/dependency_links.txt
+    writing top-level names to planarity.egg-info/top_level.txt
+    writing manifest file 'planarity.egg-info/SOURCES.txt'
+    reading manifest file 'planarity.egg-info/SOURCES.txt'
+    reading manifest template 'MANIFEST.in'
+    warning: no files found matching '*.gz' under directory 'examples'
+    warning: no previously-included files matching '*~' found anywhere in distribution
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    warning: no previously-included files matching '.git' found anywhere in distribution
+    adding license file 'LICENSE.txt'
+    writing manifest file 'planarity.egg-info/SOURCES.txt'
+    * Building sdist...
+    running sdist
+    running egg_info
+    writing planarity.egg-info/PKG-INFO
+    writing dependency_links to planarity.egg-info/dependency_links.txt
+    writing top-level names to planarity.egg-info/top_level.txt
+    reading manifest file 'planarity.egg-info/SOURCES.txt'
+    reading manifest template 'MANIFEST.in'
+    warning: no files found matching '*.gz' under directory 'examples'
+    warning: no previously-included files matching '*~' found anywhere in distribution
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    warning: no previously-included files matching '.git' found anywhere in distribution
+    adding license file 'LICENSE.txt'
+    writing manifest file 'planarity.egg-info/SOURCES.txt'
+    running check
+    creating planarity-0.7.11
+    creating planarity-0.7.11/doc
+    creating planarity-0.7.11/doc/source
+    creating planarity-0.7.11/doc/source/reference
+    creating planarity-0.7.11/doc/sphinxext
+    creating planarity-0.7.11/examples/classic
+    creating planarity-0.7.11/examples/full
+    creating planarity-0.7.11/planarity
+    creating planarity-0.7.11/planarity.egg-info
+    creating planarity-0.7.11/planarity/c
+    creating planarity-0.7.11/planarity/c/graphLib
+    creating planarity-0.7.11/planarity/c/graphLib/extensionSystem
+    creating planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    creating planarity-0.7.11/planarity/c/graphLib/io
+    creating planarity-0.7.11/planarity/c/graphLib/lowLevelUtils
+    creating planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    creating planarity-0.7.11/planarity/classic
+    creating planarity-0.7.11/planarity/full
+    creating planarity-0.7.11/tests
+    copying files to planarity-0.7.11...
+    copying LICENSE.txt -> planarity-0.7.11
+    copying MANIFEST.in -> planarity-0.7.11
+    copying README.md -> planarity-0.7.11
+    copying pyproject.toml -> planarity-0.7.11
+    copying setup.py -> planarity-0.7.11
+    copying doc/Makefile -> planarity-0.7.11/doc
+    copying doc/source/conf.py -> planarity-0.7.11/doc/source
+    copying doc/source/index.rst -> planarity-0.7.11/doc/source
+    copying doc/source/reference/index.rst -> planarity-0.7.11/doc/source/reference
+    copying doc/sphinxext/LICENSE.txt -> planarity-0.7.11/doc/sphinxext
+    copying doc/sphinxext/docscrape.py -> planarity-0.7.11/doc/sphinxext
+    copying doc/sphinxext/docscrape_sphinx.py -> planarity-0.7.11/doc/sphinxext
+    copying doc/sphinxext/numpydoc.py -> planarity-0.7.11/doc/sphinxext
+    copying examples/classic/ascii.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/graph_formats.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/kuratowski.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/networkx_draw.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/networkx_interface.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/pgraph_class.py -> planarity-0.7.11/examples/classic
+    copying examples/classic/write_adjlist.py -> planarity-0.7.11/examples/classic
+    copying examples/full/planarity_app_utils.py -> planarity-0.7.11/examples/full
+    copying examples/full/test_specific_graph.py -> planarity-0.7.11/examples/full
+    copying planarity/__init__.py -> planarity-0.7.11/planarity
+    copying planarity.egg-info/PKG-INFO -> planarity-0.7.11/planarity.egg-info
+    copying planarity.egg-info/SOURCES.txt -> planarity-0.7.11/planarity.egg-info
+    copying planarity.egg-info/dependency_links.txt -> planarity-0.7.11/planarity.egg-info
+    copying planarity.egg-info/top_level.txt -> planarity-0.7.11/planarity.egg-info
+    copying planarity/c/LICENSE.TXT -> planarity-0.7.11/planarity/c
+    copying planarity/c/README -> planarity-0.7.11/planarity/c
+    copying planarity/c/graphLib/graphDFSUtils.c -> planarity-0.7.11/planarity/c/graphLib
+    copying planarity/c/graphLib/graphUtils.c -> planarity-0.7.11/planarity/c/graphLib
+    copying planarity/c/graphLib/extensionSystem/graphExtensions.c -> planarity-0.7.11/planarity/c/graphLib/extensionSystem
+    copying planarity/c/graphLib/homeomorphSearch/graphK23Search.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/homeomorphSearch/graphK23Search_Extensions.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/homeomorphSearch/graphK33Search.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/homeomorphSearch/graphK33Search_Extensions.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/homeomorphSearch/graphK4Search.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/homeomorphSearch/graphK4Search_Extensions.c -> planarity-0.7.11/planarity/c/graphLib/homeomorphSearch
+    copying planarity/c/graphLib/io/g6-api-utilities.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/io/g6-read-iterator.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/io/g6-write-iterator.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/io/graphIO.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/io/strOrFile.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/io/strbuf.c -> planarity-0.7.11/planarity/c/graphLib/io
+    copying planarity/c/graphLib/lowLevelUtils/apiutils.c -> planarity-0.7.11/planarity/c/graphLib/lowLevelUtils
+    copying planarity/c/graphLib/lowLevelUtils/listcoll.c -> planarity-0.7.11/planarity/c/graphLib/lowLevelUtils
+    copying planarity/c/graphLib/lowLevelUtils/stack.c -> planarity-0.7.11/planarity/c/graphLib/lowLevelUtils
+    copying planarity/c/graphLib/planarityRelated/graphDrawPlanar.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphDrawPlanar_Extensions.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphEmbed.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphIsolator.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphNonplanar.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphOuterplanarObstruction.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/c/graphLib/planarityRelated/graphTests.c -> planarity-0.7.11/planarity/c/graphLib/planarityRelated
+    copying planarity/classic/__init__.py -> planarity-0.7.11/planarity/classic
+    copying planarity/classic/cplanarity.pxd -> planarity-0.7.11/planarity/classic
+    copying planarity/classic/planarity.c -> planarity-0.7.11/planarity/classic
+    copying planarity/classic/planarity.pyx -> planarity-0.7.11/planarity/classic
+    copying planarity/classic/planarity_functions.py -> planarity-0.7.11/planarity/classic
+    copying planarity/classic/planarity_networkx.py -> planarity-0.7.11/planarity/classic
+    copying planarity/full/__init__.py -> planarity-0.7.11/planarity/full
+    copying planarity/full/cappconst.pxd -> planarity-0.7.11/planarity/full
+    copying planarity/full/cg6IterationDefs.pxd -> planarity-0.7.11/planarity/full
+    copying planarity/full/cgraphLib.pxd -> planarity-0.7.11/planarity/full
+    copying planarity/full/g6IterationUtils.c -> planarity-0.7.11/planarity/full
+    copying planarity/full/g6IterationUtils.pyx -> planarity-0.7.11/planarity/full
+    copying planarity/full/graph.c -> planarity-0.7.11/planarity/full
+    copying planarity/full/graph.pyx -> planarity-0.7.11/planarity/full
+    copying tests/test_planarity.py -> planarity-0.7.11/tests
+    copying tests/test_planarity_networkx.py -> planarity-0.7.11/tests
+    copying planarity.egg-info/SOURCES.txt -> planarity-0.7.11/planarity.egg-info
+    Writing planarity-0.7.11/setup.cfg
+    Creating tar archive
+    removing 'planarity-0.7.11' (and everything under it)
+    * Building wheel from sdist
+    * Creating isolated environment: venv+pip...
+    * Installing packages in isolated environment:
+    - cython
+    - setuptools
+    * Getting build dependencies for wheel...
+    Compiling planarity/classic/planarity.pyx because it depends on <tmp>
+    Compiling planarity/full/graph.pyx because it depends on <tmp>
+    [1/2] Cythonizing planarity/classic/planarity.pyx
+    [2/2] Cythonizing planarity/full/graph.pyx
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cdef class Graph:
+    def __cinit__(self):
+    global global_id_count
+    self._theGraph = cgraphLib.gp_New()
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:41:41: Cannot convert 'graphP' to Python object
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cdef class Graph:
+    def __cinit__(self):
+    global global_id_count
+    self._theGraph = cgraphLib.gp_New()
+    if self._theGraph == NULL:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:42:26: Invalid types for '==' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if self._theGraph == NULL:
+    raise MemoryError("gp_New() failed.")
+    self.owns_graphP = True
+    def __dealloc__(self):
+    if self._theGraph != NULL and self.owns_graphP:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:47:26: Invalid types for '!=' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    raise MemoryError("gp_New() failed.")
+    self.owns_graphP = True
+    def __dealloc__(self):
+    if self._theGraph != NULL and self.owns_graphP:
+    cgraphLib.gp_Free(&self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:48:30: Cannot take address of Python object attribute '_theGraph'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cgraphLib.gp_Free(&self._theGraph)
+    def get_wrapper_for_graphP(self) -> Graph:
+    cdef Graph new_wrapper = Graph()
+    if new_wrapper._theGraph != NULL:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:53:33: Invalid types for '!=' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def get_wrapper_for_graphP(self) -> Graph:
+    cdef Graph new_wrapper = Graph()
+    if new_wrapper._theGraph != NULL:
+    cgraphLib.gp_Free(&new_wrapper._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:54:30: Cannot take address of Python object attribute '_theGraph'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_IsEdge(self, int e):
+    return (
+    (e >= self.gp_EdgeArrayStart()) and
+    (e < self.gp_EdgeArraySize()) and
+    cgraphLib.gp_IsEdge(self._theGraph, e)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:64:36: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    (e < self.gp_EdgeArraySize()) and
+    cgraphLib.gp_IsEdge(self._theGraph, e)
+    )
+    def gp_EdgeArrayStart(self):
+    return cgraphLib.gp_EdgeArrayStart(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:68:47: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsEdge(e):
+    raise RuntimeError(
+    f"gp_EdgeInUse() failed: invalid edge index '{e}'."
+    )
+    return cgraphLib.gp_EdgeInUse(self._theGraph, e)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:76:42: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    )
+    return cgraphLib.gp_EdgeInUse(self._theGraph, e)
+    def gp_EdgeArraySize(self):
+    return cgraphLib.gp_EdgeArraySize(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:79:46: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_EdgeArraySize(self):
+    return cgraphLib.gp_EdgeArraySize(self._theGraph)
+    def gp_EdgeInUseArraySize(self):
+    return cgraphLib.gp_EdgeInUseArraySize(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:82:51: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsVertex(v):
+    raise RuntimeError(
+    f"gp_GetFirstEdge() failed: invalid vertex intex '{v}'."
+    )
+    return cgraphLib.gp_GetFirstEdge(self._theGraph, v)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:90:45: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsEdge(e):
+    raise RuntimeError(
+    f"gp_GetNextEdge() failed: invalid edge index '{e}'."
+    )
+    return cgraphLib.gp_GetNextEdge(self._theGraph, e)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:98:44: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsEdge(e):
+    raise RuntimeError(
+    f"gp_GetNeighbor() failed: invalid edge index '{e}'."
+    )
+    return cgraphLib.gp_GetNeighbor(self._theGraph, e)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:106:44: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_IsVertex(self, int v):
+    return (
+    (v >= self.gp_GetFirstVertex()) and
+    (v <= self.gp_GetLastVertex()) and
+    cgraphLib.gp_IsVertex(self._theGraph, v)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:112:38: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    (v <= self.gp_GetLastVertex()) and
+    cgraphLib.gp_IsVertex(self._theGraph, v)
+    )
+    def gp_GetFirstVertex(self):
+    return cgraphLib.gp_GetFirstVertex(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:116:47: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_GetFirstVertex(self):
+    return cgraphLib.gp_GetFirstVertex(self._theGraph)
+    def gp_GetLastVertex(self):
+    return cgraphLib.gp_GetLastVertex(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:119:46: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    return cgraphLib.gp_GetLastVertex(self._theGraph)
+    def gp_VertexInRangeAscending(self, int v):
+    return (
+    v >= self.gp_GetFirstVertex() and
+    cgraphLib.gp_VertexInRangeAscending(self._theGraph, v)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:124:52: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_GetN(self)-> int:
+    """
+    Returns the number of vertices in the graph.
+    """
+    if self._theGraph == NULL:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:131:26: Invalid types for '==' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    Returns the number of vertices in the graph.
+    """
+    if self._theGraph == NULL:
+    raise RuntimeError("Graph is not initialized.")
+    return cgraphLib.gp_GetN(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:134:37: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    raise RuntimeError("Graph is not initialized.")
+    return cgraphLib.gp_GetN(self._theGraph)
+    def gp_InitGraph(self, int n):
+    if cgraphLib.gp_InitGraph(self._theGraph, n) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:137:38: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_InitGraph(self, int n):
+    if cgraphLib.gp_InitGraph(self._theGraph, n) != cappconst.OK:
+    raise RuntimeError(f"gp_InitGraph() failed.")
+    def gp_ReinitializeGraph(self):
+    cgraphLib.gp_ReinitializeGraph(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:141:43: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cgraphLib.gp_ReinitializeGraph(self._theGraph)
+    def gp_CopyGraph(self, Graph src_graph):
+    # NOTE: this is interpreting the self as the dstGraph, i.e. copying
+    # the Graph wrapper that is passed in as the srcGraph
+    if self._theGraph == NULL:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:146:26: Invalid types for '==' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if self.gp_GetN() != src_graph.gp_GetN():
+    raise ValueError(
+    "Source and destination graphs must have the same order "
+    "to copy graphP struct.")
+    if cgraphLib.gp_CopyGraph(self._theGraph, src_graph._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:164:38: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if self.gp_GetN() != src_graph.gp_GetN():
+    raise ValueError(
+    "Source and destination graphs must have the same order "
+    "to copy graphP struct.")
+    if cgraphLib.gp_CopyGraph(self._theGraph, src_graph._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:164:59: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if cgraphLib.gp_CopyGraph(self._theGraph, src_graph._theGraph) != cappconst.OK:
+    raise RuntimeError(f"gp_CopyGraph() failed.")
+    def gp_DupGraph(self) -> Graph:
+    cdef cgraphLib.graphP theGraph_dup = cgraphLib.gp_DupGraph(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:168:71: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cdef Graph new_graph = Graph()
+    if new_graph is None:
+    raise MemoryError("Unable to create new Graph container for duplicate.")
+    if new_graph._theGraph != NULL:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:176:31: Invalid types for '!=' (Python object, void *)
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    cdef Graph new_graph = Graph()
+    if new_graph is None:
+    raise MemoryError("Unable to create new Graph container for duplicate.")
+    if new_graph._theGraph != NULL:
+    cgraphLib.gp_Free(&new_graph._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:177:30: Cannot take address of Python object attribute '_theGraph'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    raise MemoryError("Unable to create new Graph container for duplicate.")
+    if new_graph._theGraph != NULL:
+    cgraphLib.gp_Free(&new_graph._theGraph)
+    new_graph._theGraph = theGraph_dup
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:179:30: Cannot convert 'graphP' to Python object
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_Read(self, str infile_name):
+    # Convert Python str to UTF-8 encoded bytes, and then to const char *
+    cdef bytes encoded = infile_name.encode('utf-8')
+    cdef const char *FileName = encoded
+    if cgraphLib.gp_Read(self._theGraph, FileName) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:189:33: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    # Convert Python str to UTF-8 encoded bytes, and then to const char *
+    cdef bytes encoded = outfile_name.encode('utf-8')
+    cdef const char *theFileName = encoded
+    if cgraphLib.gp_Write(self._theGraph, theFileName, mode_code) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:207:34: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsVertex(u):
+    raise RuntimeError(f"'{u}' is not a valid vertex label.")
+    if not self.gp_IsVertex(v):
+    raise RuntimeError(f"'{v}' is not a valid vertex label.")
+    return cgraphLib.gp_FindEdge(self._theGraph, u, v)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:218:41: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_GetVertexDegree(self, int v):
+    if not self.gp_IsVertex(v):
+    raise RuntimeError(f"'{v}' is not a valid vertex label.")
+    return cgraphLib.gp_GetVertexDegree(self._theGraph, v)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:224:48: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    raise RuntimeError(f"'{v}' is not a valid vertex label.")
+    return cgraphLib.gp_GetVertexDegree(self._theGraph, v)
+    def gp_GetEdgeCapacity(self):
+    return cgraphLib.gp_GetEdgeCapacity(self._theGraph)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:227:48: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_GetEdgeCapacity(self):
+    return cgraphLib.gp_GetEdgeCapacity(self._theGraph)
+    def gp_EnsureEdgeCapacity(self, int new_edge_capacity):
+    if cgraphLib.gp_EnsureEdgeCapacity(self._theGraph, new_edge_capacity) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:230:47: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    )
+    if vlink != 0 and vlink != 1:
+    raise RuntimeError(
+    f"Invalid link index for vlink: '{vlink}'."
+    )
+    if cgraphLib.gp_AddEdge(self._theGraph, u, ulink, v, vlink) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:244:36: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if not self.gp_IsEdge(e):
+    raise RuntimeError(
+    f"gp_DeleteEdge() failed: invalid edge '{e}'."
+    )
+    return cgraphLib.gp_DeleteEdge(self._theGraph, e)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:256:43: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    )
+    return cgraphLib.gp_DeleteEdge(self._theGraph, e)
+    def gp_ExtendWith_Planarity(self):
+    if cgraphLib.gp_ExtendWith_Planarity(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:259:49: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_ExtendWith_Planarity(self):
+    if cgraphLib.gp_ExtendWith_Planarity(self._theGraph) != cappconst.OK:
+    raise RuntimeError("Failed to extend graph with Planarity structures.")
+    def gp_ExtendWith_DrawPlanar(self):
+    if cgraphLib.gp_ExtendWith_DrawPlanar(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:263:50: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_DrawPlanar_RenderToFile(self, str outfile_name):
+    # Convert Python str to UTF-8 encoded bytes, and then to const char *
+    cdef bytes encoded = outfile_name.encode('utf-8')
+    cdef const char *theFileName = encoded
+    if cgraphLib.gp_DrawPlanar_RenderToFile(self._theGraph, theFileName) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:271:52: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    if cgraphLib.gp_DrawPlanar_RenderToFile(self._theGraph, theFileName) != cappconst.OK:
+    raise RuntimeError(f"Failed to render embedding to file '{outfile_name}'.")
+    def gp_DrawPlanar_RenderToString(self):
+    cdef char* renditionString = NULL
+    if cgraphLib.gp_DrawPlanar_RenderToString(self._theGraph, &renditionString) != OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:276:54: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    ) from string_conversion_error
+    finally:
+    free(renditionString)
+    def gp_ExtendWith_Outerplanarity(self):
+    if cgraphLib.gp_ExtendWith_Outerplanarity(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:289:54: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_ExtendWith_Outerplanarity(self):
+    if cgraphLib.gp_ExtendWith_Outerplanarity(self._theGraph) != cappconst.OK:
+    raise RuntimeError("Failed to extend graph with Outerplanarity structures.")
+    def gp_ExtendWith_K23Search(self):
+    if cgraphLib.gp_ExtendWith_K23Search(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:293:49: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_ExtendWith_K23Search(self):
+    if cgraphLib.gp_ExtendWith_K23Search(self._theGraph) != cappconst.OK:
+    raise RuntimeError("Failed to extend graph with K23Search structures.")
+    def gp_ExtendWith_K33Search(self):
+    if cgraphLib.gp_ExtendWith_K33Search(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:297:49: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_ExtendWith_K33Search(self):
+    if cgraphLib.gp_ExtendWith_K33Search(self._theGraph) != cappconst.OK:
+    raise RuntimeError("Failed to extend graph with K33Search structures.")
+    def gp_ExtendWith_K4Search(self):
+    if cgraphLib.gp_ExtendWith_K4Search(self._theGraph) != cappconst.OK:
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:301:48: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_ExtendWith_K4Search(self):
+    if cgraphLib.gp_ExtendWith_K4Search(self._theGraph) != cappconst.OK:
+    raise RuntimeError("Failed to extend graph with K4Search structures.")
+    def gp_Embed(self, int embedFlags) -> int:
+    return cgraphLib.gp_Embed(self._theGraph, embedFlags)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:305:38: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_Embed(self, int embedFlags) -> int:
+    return cgraphLib.gp_Embed(self._theGraph, embedFlags)
+    def gp_TestEmbedResultIntegrity(self, Graph copy_of_orig_graph, int embed_result) -> int:
+    return cgraphLib.gp_TestEmbedResultIntegrity(self._theGraph, copy_of_orig_graph._theGraph, embed_result)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:308:57: Cannot convert Python object to 'graphP'
+    Error compiling Cython file:
+    ------------------------------------------------------------
+    ...
+    def gp_Embed(self, int embedFlags) -> int:
+    return cgraphLib.gp_Embed(self._theGraph, embedFlags)
+    def gp_TestEmbedResultIntegrity(self, Graph copy_of_orig_graph, int embed_result) -> int:
+    return cgraphLib.gp_TestEmbedResultIntegrity(self._theGraph, copy_of_orig_graph._theGraph, embed_result)
+    ^
+    ------------------------------------------------------------
+    planarity/full/graph.pyx:308:87: Cannot convert Python object to 'graphP'
+    Traceback (most recent call last):
+    File "/Users/wbkboyer/git/planarity/.buildenv/lib/python3.14/site-packages/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+    main()
+    ~~~~^^
+    File "/Users/wbkboyer/git/planarity/.buildenv/lib/python3.14/site-packages/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+    json_out["return_val"] = hook(**hook_input["kwargs"])
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+    File "/Users/wbkboyer/git/planarity/.buildenv/lib/python3.14/site-packages/pyproject_hooks/_in_process/_in_process.py", line 143, in get_requires_for_build_wheel
+    return hook(config_settings)
+    File "<tmp> line 333, in get_requires_for_build_wheel
+    return self._get_build_requires(config_settings, requirements=[])
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "<tmp> line 301, in _get_build_requires
+    self.run_setup()
+    ~~~~~~~~~~~~~~^^
+    File "<tmp> line 317, in run_setup
+    exec(code, locals())
+    ~~~~^^^^^^^^^^^^^^^^
+    File "<string>", line 53, in <module>
+    File "<tmp> line 1153, in cythonize
+    cythonize_one(*args)
+    ~~~~~~~~~~~~~^^^^^^^
+    File "<tmp> line 1297, in cythonize_one
+    raise CompileError(None, pyx_file)
+    Cython.Compiler.Errors.CompileError: planarity/full/graph.pyx
+    ERROR Backend subprocess exited when trying to invoke get_requires_for_build_wheel
+expectation:
+    expected_playbook: gitlab-ci-yaml-invalid
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/graph-algorithms/planarity/issues/40
+    repository: graph-algorithms/planarity
+    issue_number: 40
+    title: '`python -m build` fails to build source distribution and wheel'
+    labels:
+        - bug
+    author: wbkboyer
+    snippet: 3
+    fetched_at: "2026-04-24T05:39:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:27Z"
+fingerprint: c8034ad3e49ece86

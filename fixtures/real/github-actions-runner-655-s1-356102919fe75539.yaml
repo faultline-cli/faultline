@@ -1,0 +1,36 @@
+id: github-actions-runner-655-s1-356102919fe75539
+title: Load `env` from files
+fixture_class: real
+normalized_log: |-
+    name: Loading env vars from file
+    on:
+    push:
+    branches:
+    - develop
+    env-file: dev.env
+    env:
+    other-env-var: env-var-value
+    jobs:
+    build:
+    ...
+expectation:
+    expected_playbook: env-var-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/655
+    repository: actions/runner
+    issue_number: 655
+    title: Load `env` from files
+    labels:
+        - enhancement
+        - actions-feature
+    author: timharris777
+    snippet: 1
+    fetched_at: "2026-04-22T09:54:57Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:27Z"
+fingerprint: 356102919fe75539

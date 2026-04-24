@@ -1,0 +1,23 @@
+id: github-teammates-teammates-9681-s3-b5a7098a18901c4f
+title: 'cannot find module api-output '
+fixture_class: real
+normalized_log: 'FAILURE: Build failed with an exception.'
+expectation:
+    expected_playbook: gradle-build
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/TEAMMATES/teammates/issues/9681
+    repository: TEAMMATES/teammates
+    issue_number: 9681
+    comment_id: "485236326"
+    title: 'cannot find module api-output '
+    author: HarikumarG
+    snippet: 3
+    fetched_at: "2026-04-17T23:33:10Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:04Z"
+fingerprint: b5a7098a18901c4f

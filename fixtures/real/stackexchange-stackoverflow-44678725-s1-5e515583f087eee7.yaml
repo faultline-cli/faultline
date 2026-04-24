@@ -1,0 +1,64 @@
+id: stackexchange-stackoverflow-44678725-s1-5e515583f087eee7
+title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+fixture_class: real
+normalized_log: |-
+    I also received the error message below, after installing the docker and running: docker run hello-world #Cannot connect to the Docker daemon at unix: /var/run/docker.sock. Is the docker daemon running?
+    Here's a solution, what worked for me. Environment
+    Windows 10 (Don't forget to enable on windows: Settings> Update and Security> Developer mode)
+    Ubuntu 18.04 LTS
+    Docker Desktop version 2.3.0.2 (45183)
+    Enable in Docker Desktop: Expose daemon on tcp: // localhost: 2375 without TLS
+    Docker Desktop must also be running (connected to Docker Hub ... just log in)
+    After installing ubuntu, update the repository
+    sudo apt-get update
+    To use a repository over HTTPS
+    sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+    Add the official Docker GPG key:
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    Make sure you now have the key with the fingerprint
+    sudo apt-key fingerprint 0EBFCD88
+    Update the repository
+    sudo apt-get update
+    Update the docker repository
+    sudo add-apt-repository "deb [arch = amd64] https://download.docker.com/linux/ubuntu $ (lsb_release -cs) stable "
+    Update the repository again
+    sudo apt-get update
+    Command to install the docker in version: 5: 18.09.9 ~ 3-0 ~ ubuntu-bionic
+    sudo apt-get install docker-ce = 5: 18.09.9 ~ 3-0 ~ ubuntu-bionic docker-ce-cli = 5: 18.09.9 ~ 3-0 ~ ubuntu-bionic containerd.io
+    Command to set the DOCKER_HOST
+    export DOCKER_HOST="tcp://0.0.0.0:2375"
+    Note: put the command above in your profile to start with the ubunto ex: echo "export DOCKER_HOST="tcp://0.0.0.0:2375"" >> ~/.bashrc
+    Add user to the docker group
+    sudo usermod -aG docker $USER
+    Restart ubuntu
+    (Close and open the ubuntu window again) or run:
+    source ~/.bashrc
+    Testing the installation (DO NOT use more sudo before docker commands (it will give an error), the user "root" has already been included in the docker group)
+    docker run hello-world
+    The message below should be displayed
+    Hello from Docker! This message shows that your installation appears to be working correctly.
+    Note: if it fails, run the command again:
+    export DOCKER_HOST="tcp://0.0.0.0:2375"
+    Reference: https://docs.docker.com/engine/install/ubuntu/ Session: INSTALL DOCKER ENGINE
+    #For other versions of the docker that can be installed with ubuntu, see the repository using the command below: apt-cache madison docker-ce
+    Then install the desired version of the docker:
+    sudo apt-get install docker-ce = <VERSION_STRING> docker-ce-cli = <VERSION_STRING> containerd.io
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/44678725
+    repository: stackoverflow
+    issue_number: 44678725
+    comment_id: "61902994"
+    title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+    author: ukaliko
+    snippet: 1
+    fetched_at: "2026-04-23T21:23:30Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:55:27Z"
+fingerprint: 5e515583f087eee7

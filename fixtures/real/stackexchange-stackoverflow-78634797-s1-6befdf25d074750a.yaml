@@ -1,0 +1,29 @@
+id: stackexchange-stackoverflow-78634797-s1-6befdf25d074750a
+title: Github Actions pipeline terminates after 10 minutes with a timeout
+fixture_class: real
+normalized_log: |-
+    I am trying to run a CI/CD pipeline through GitHub Actions. If it finishes within 10 minutes - there are no problems. But as soon as it runs for 10 minutes it gets terminated with an error:
+    Run Command Timeout
+    Error: Process completed with exit code 1.
+    If I re-run failed jobs - the process takes less than 10 minutes and is usually successful.
+    I tried adding
+    timeout-minutes: 100.
+expectation:
+    expected_playbook: container-crash
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/78634797
+    repository: stackoverflow
+    issue_number: 78634797
+    comment_id: "0"
+    title: Github Actions pipeline terminates after 10 minutes with a timeout
+    author: Shiny Loot
+    snippet: 1
+    fetched_at: "2026-04-23T11:15:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:04Z"
+fingerprint: 6befdf25d074750a

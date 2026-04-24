@@ -1,0 +1,36 @@
+id: stackexchange-stackoverflow-44678725-s1-85750b4f3a2a8791
+title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+fixture_class: real
+normalized_log: |-
+    On Ubuntu 20.04 and Docker version 20.10.11,as a non root user, Running:
+    sudo service docker start
+    Then checking the status
+    sudo service docker status
+    Shows
+    * Docker is running
+    But trying any docker command such as
+    docker images
+    Shows the same error
+    Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+    Running the below solves it
+    sudo service docker restart
+    Restart solved it, while start did not
+expectation:
+    expected_playbook: docker-daemon-unavailable
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/44678725
+    repository: stackoverflow
+    issue_number: 44678725
+    comment_id: "70575175"
+    title: Cannot connect to the Docker daemon at unix:/var/run/docker.sock. Is the docker daemon running?
+    author: David Mwaura
+    snippet: 1
+    fetched_at: "2026-04-23T21:23:30Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:10Z"
+fingerprint: 85750b4f3a2a8791

@@ -1,0 +1,250 @@
+id: github-teammates-teammates-9681-s1-53700c12ceee739b
+title: 'cannot find module api-output '
+fixture_class: real
+normalized_log: |-
+    ERROR in src/web/app/components/copy-session-modal/copy-session-modal.component.
+    ts(3,24): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/error-report/error-report.component.ts(3,36): error TS230
+    7: Cannot find module '../../../types/api-request'.
+    src/web/app/components/question-edit-form/feedback-path.pipe.ts(2,41): error TS2
+    307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-edit-form/question-edit-form-model.ts(7,8): erro
+    r TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-edit-form/question-edit-form.component.ts(10,8):
+    error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-edit-form/visibility-setting.pipe.ts(2,40): erro
+    r TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-responses/single-response/single-response.compon
+    ent.ts(6,8): error TS2307: Cannot find module '../../../../types/api-output'.
+    src/web/app/components/question-submission-form/question-submission-form-model.t
+    s(8,8): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-submission-form/question-submission-form.compone
+    nt.ts(9,8): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-submission-form/recipient-type-name.pipe.ts(2,41
+    ): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-text-with-info/question-text-with-info.component
+    .ts(2,63): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/constsum-question
+    -additional-info.component.ts(2,52): error TS2307: Cannot find module '../../../
+    ../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/contribution-ques
+    tion-additional-info.component.ts(2,53): error TS2307: Cannot find module '../..
+    /../../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/mcq-question-addi
+    tional-info.component.ts(5,8): error TS2307: Cannot find module '../../../../typ
+    es/api-output'.
+    src/web/app/components/question-types/question-additional-info/msq-question-addi
+    tional-info.component.ts(5,8): error TS2307: Cannot find module '../../../../typ
+    es/api-output'.
+    src/web/app/components/question-types/question-additional-info/num-scale-questio
+    n-additional-info.component.ts(2,55): error TS2307: Cannot find module '../../..
+    /../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/question-addition
+    al-info.ts(2,41): error TS2307: Cannot find module '../../../../types/api-output
+    '.
+    src/web/app/components/question-types/question-additional-info/rank-options-ques
+    tion-additional-info.component.ts(2,52): error TS2307: Cannot find module '../..
+    /../../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/rank-recipients-q
+    uestion-additional-info.component.ts(2,55): error TS2307: Cannot find module '..
+    /../../../types/api-output'.
+    src/web/app/components/question-types/question-additional-info/rubric-question-a
+    dditional-info.component.ts(2,47): error TS2307: Cannot find module '../../../..
+    /types/api-output'.
+    src/web/app/components/question-types/question-additional-info/text-question-add
+    itional-info.component.ts(2,45): error TS2307: Cannot find module '../../../../t
+    ypes/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/contribution-que
+    stion-edit-answer-form.component.ts(6,8): error TS2307: Cannot find module '../.
+    ./../../types/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/mcq-question-edi
+    t-answer-form.component.ts(6,8): error TS2307: Cannot find module '../../../../t
+    ypes/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/msq-question-edi
+    t-answer-form.component.ts(5,8): error TS2307: Cannot find module '../../../../t
+    ypes/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/num-scale-questi
+    on-edit-answer-form.component.ts(6,8): error TS2307: Cannot find module '../../.
+    ./../types/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/question-edit-an
+    swer-form.ts(2,66): error TS2307: Cannot find module '../../../../types/api-outp
+    ut'.
+    src/web/app/components/question-types/question-edit-answer-form/rank-options-que
+    stion-edit-answer-form.component.ts(2,88): error TS2307: Cannot find module '../
+    ../../../types/api-output'.
+    src/web/app/components/question-types/question-edit-answer-form/text-question-ed
+    it-answer-form.component.ts(6,8): error TS2307: Cannot find module '../../../../
+    types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/contribution-qu
+    estion-edit-details-form.component.ts(2,53): error TS2307: Cannot find module '.
+    ./../../../types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/mcq-question-ed
+    it-details-form.component.ts(6,8): error TS2307: Cannot find module '../../../..
+    /types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/msq-question-ed
+    it-details-form.component.ts(3,69): error TS2307: Cannot find module '../../../.
+    ./types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/num-scale-quest
+    ion-edit-details-form.component.ts(2,55): error TS2307: Cannot find module '../.
+    ./../../types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/question-edit-d
+    etails-form.component.ts(2,41): error TS2307: Cannot find module '../../../../ty
+    pes/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/rank-options-qu
+    estion-edit-details-form.component.ts(3,52): error TS2307: Cannot find module '.
+    ./../../../types/api-output'.
+    src/web/app/components/question-types/question-edit-details-form/text-question-e
+    dit-details-form.component.ts(2,45): error TS2307: Cannot find module '../../../
+    ../types/api-output'.
+    src/web/app/components/question-types/question-instruction/rank-options-question
+    -instruction.component.ts(2,52): error TS2307: Cannot find module '../../../../t
+    ypes/api-output'.
+    src/web/app/components/question-types/question-response/constsum-question-respon
+    se.component.ts(5,8): error TS2307: Cannot find module '../../../../types/api-ou
+    tput'.
+    src/web/app/components/question-types/question-response/contribution-question-re
+    sponse.component.ts(5,8): error TS2307: Cannot find module '../../../../types/ap
+    i-output'.
+    src/web/app/components/question-types/question-response/mcq-question-response.co
+    mponent.ts(5,8): error TS2307: Cannot find module '../../../../types/api-output'
+    .
+    src/web/app/components/question-types/question-response/msq-question-response.co
+    mponent.ts(5,8): error TS2307: Cannot find module '../../../../types/api-output'
+    .
+    src/web/app/components/question-types/question-response/num-scale-question-respo
+    nse.component.ts(5,8): error TS2307: Cannot find module '../../../../types/api-o
+    utput'.
+    src/web/app/components/question-types/question-response/question-response.ts(2,6
+    6): error TS2307: Cannot find module '../../../../types/api-output'.
+    src/web/app/components/question-types/question-response/rank-options-question-re
+    sponse.component.ts(5,8): error TS2307: Cannot find module '../../../../types/ap
+    i-output'.
+    src/web/app/components/question-types/question-response/rank-recipients-question
+    -response.component.ts(5,8): error TS2307: Cannot find module '../../../../types
+    /api-output'.
+    src/web/app/components/question-types/question-response/rubric-question-response
+    .component.ts(5,8): error TS2307: Cannot find module '../../../../types/api-outp
+    ut'.
+    src/web/app/components/question-types/question-response/text-question-response.c
+    omponent.ts(5,8): error TS2307: Cannot find module '../../../../types/api-output
+    '.
+    src/web/app/components/session-edit-form/session-edit-form-model.ts(8,8): error
+    TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/session-edit-form/session-edit-form.component.ts(12,8): e
+    rror TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/session-edit-form/submission-status-name.pipe.ts(2,49): e
+    rror TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/sessions-table/publish-status-tooltip.pipe.ts(2,46): erro
+    r TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/sessions-table/resend-results-link-to-student-modal/resen
+    d-results-link-to-student-modal.component.ts(5,53): error TS2307: Cannot find mo
+    dule '../../../../types/api-request'.
+    src/web/app/components/sessions-table/send-reminders-to-student-modal/send-remin
+    ders-to-student-modal.component.ts(5,53): error TS2307: Cannot find module '../.
+    ./../../types/api-request'.
+    src/web/app/components/sessions-table/sessions-table-model.ts(1,86): error TS230
+    7: Cannot find module '../../../types/api-output'.
+    src/web/app/components/sessions-table/sessions-table.component.ts(3,87): error T
+    S2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/sessions-table/sessions-table.component.ts(4,53): error T
+    S2307: Cannot find module '../../../types/api-request'.
+    src/web/app/components/sessions-table/student-list-info-base-modal.component.ts(
+    3,81): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/sessions-table/student-list-info-base-modal.component.ts(
+    4,53): error TS2307: Cannot find module '../../../types/api-request'.
+    src/web/app/components/sessions-table/submission-status-tooltip.pipe.ts(2,49): e
+    rror TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/teammates-common/publish-status-name.pipe.ts(2,46): error
+    TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/teammates-common/question-type-name.pipe.ts(2,38): error
+    TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/teammates-common/submission-status-name.pipe.ts(2,49): er
+    ror TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/components/visibility-messages/visibility-entity-name.pipe.ts(6,8):
+    error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/error-message-output.ts(1,31): error TS2307: Cannot find module '../
+    types/api-output'.
+    src/web/app/pages-admin/admin-home-page/admin-home-page.component.ts(3,26): erro
+    r TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-admin/admin-page.component.ts(6,26): error TS2307: Cannot find
+    module '../../types/api-output'.
+    src/web/app/pages-admin/admin-search-page/admin-search-page.component.ts(5,37):
+    error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-admin/admin-sessions-page/admin-sessions-page.component.ts(7,7
+    1): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-admin/admin-timezone-page/admin-timezone-page.component.ts(4,2
+    7): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-help/session-links-recovery/session-links-recovery-page.compon
+    ent.ts(7,46): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-course-details-page/instructor-course-de
+    tails-page.component.ts(10,31): error TS2307: Cannot find module '../../../types
+    /api-output'.
+    src/web/app/pages-instructor/instructor-course-edit-page/instructor-course-edit-
+    page.component.ts(13,39): error TS2307: Cannot find module '../../../types/api-o
+    utput'.
+    src/web/app/pages-instructor/instructor-course-edit-page/instructor-course-edit-
+    page.component.ts(14,41): error TS2307: Cannot find module '../../../types/api-r
+    equest'.
+    src/web/app/pages-instructor/instructor-course-enroll-page/instructor-course-enr
+    oll-page.component.ts(6,30): error TS2307: Cannot find module '../../../types/ap
+    i-output'.
+    src/web/app/pages-instructor/instructor-course-student-edit-page/instructor-cour
+    se-student-edit-page.component.ts(8,31): error TS2307: Cannot find module '../..
+    /../types/api-output'.
+    src/web/app/pages-instructor/instructor-course-student-edit-page/instructor-cour
+    se-student-edit-page.component.ts(9,38): error TS2307: Cannot find module '../..
+    /../types/api-request'.
+    src/web/app/pages-instructor/instructor-courses-page/add-course-form/add-course-
+    form.component.ts(7,24): error TS2307: Cannot find module '../../../../types/api
+    -output'.
+    src/web/app/pages-instructor/instructor-courses-page/instructor-courses-page.com
+    ponent.ts(9,84): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-home-page/instructor-home-page.component
+    .ts(18,8): error TS2307: Cannot find module '../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-page.component.ts(5,26): error TS2307: C
+    annot find module '../../types/api-output'.
+    src/web/app/pages-instructor/instructor-session-base-page.component.ts(15,8): er
+    ror TS2307: Cannot find module '../../types/api-output'.
+    src/web/app/pages-instructor/instructor-session-base-page.component.ts(16,53): e
+    rror TS2307: Cannot find module '../../types/api-request'.
+    src/web/app/pages-instructor/instructor-session-edit-page/copy-questions-from-ot
+    her-sessions-modal/copy-questions-from-other-sessions-modal-model.ts(1,34): erro
+    r TS2307: Cannot find module '../../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-session-edit-page/copy-questions-from-ot
+    her-sessions-modal/copy-questions-from-other-sessions-modal.component.ts(3,34):
+    error TS2307: Cannot find module '../../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-session-edit-page/instructor-session-edi
+    t-page.component.ts(28,8): error TS2307: Cannot find module '../../../types/api-
+    output'.
+    src/web/app/pages-instructor/instructor-session-edit-page/template-question-moda
+    l/template-question-modal.component.ts(4,34): error TS2307: Cannot find module '
+    ../../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-session-result-page/instructor-session-r
+    esult-page.component.ts(10,8): error TS2307: Cannot find module '../../../types/
+    api-output'.
+    src/web/app/pages-instructor/instructor-sessions-page/copy-from-other-sessions-m
+    odal/copy-from-other-sessions-modal-model.ts(1,33): error TS2307: Cannot find mo
+    dule '../../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-sessions-page/copy-from-other-sessions-m
+    odal/copy-from-other-sessions-modal.component.ts(3,41): error TS2307: Cannot fin
+    d module '../../../../types/api-output'.
+    src/web/app/pages-instructor/instructor-sessions-page/instructor-sessions-page.c
+    omponent.ts(26,8): error TS2307: Cannot find module '../../../types/api-output'.
+expectation:
+    expected_playbook: topology-boundary-crossed
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/TEAMMATES/teammates/issues/9681
+    repository: TEAMMATES/teammates
+    issue_number: 9681
+    title: 'cannot find module api-output '
+    author: HarikumarG
+    snippet: 1
+    fetched_at: "2026-04-17T23:33:10Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-24T13:56:04Z"
+fingerprint: 53700c12ceee739b
