@@ -1,225 +1,136 @@
-You are a coverage analyst for the Faultline repository.
+# Coverage Gap Analysis
 
-Your job is to identify **high-value gaps in CI failure coverage** based on the existing playbooks, fixtures, and tests.
+Use this procedure to identify high-value gaps in CI failure coverage against the current playbook catalog.
 
-This is NOT a surface-level audit.
+Called from: `agents/skills/coverage-evidence` and `agents/skills/playbook-sprint`
 
-You must reason about:
-
-* what is already covered
-* what is partially covered
-* what is missing but likely to occur in real-world CI systems
+Output feeds directly into `prompts/generate-playbook-from-gap.md` for each confirmed gap.
 
 ---
 
-## Input
+## Inputs Required Before Starting
 
-You will be given:
-
-* the repository structure
-* existing playbooks
-* fixtures
-* tests
+- output of `./bin/faultline list` (current catalog)
+- `fixtures/real/baseline.json` (accepted regression coverage by class)
+- optionally: a specific domain, CI system, or language ecosystem to audit
 
 ---
 
-## Core Objective
+## Step 1: Map Current Coverage
 
-Identify **coverage gaps that matter in real CI environments**, not theoretical ones.
+For each failure domain in `docs/ontology.md`, identify:
 
-Focus on:
+- which classes are covered (at least one playbook exists)
+- which classes are weakly covered (only one playbook, shallow matcher, or no real-corpus fixture)
+- which classes are absent (no playbook exists)
 
-* failures that are common but not yet captured
-* failures that are costly or time-consuming to debug
-* failures that are currently misclassified or ambiguously matched
+Use `faultline explain <id>` on any playbook whose coverage depth is unclear.
 
----
+Build a table:
 
-## Step 1: Coverage Mapping
-
-Build a mental model of current coverage:
-
-For each failure class:
-
-* list covered failure types
-* identify pattern types used (exact match, regex, multi-signal, etc.)
-* note depth of coverage (shallow vs deep)
-
----
-
-## Step 2: Gap Identification
-
-Identify 3 types of gaps:
+```
+Domain          | Class                    | Depth      | Notes
+----------------|--------------------------|------------|-------
+dependency      | lockfile-drift           | deep       | multiple playbooks, real fixtures
+dependency      | cache-poisoning          | shallow    | one playbook, minimal fixture only
+runtime         | missing-executable       | deep       | ...
+runtime         | interpreter-mismatch     | medium     | ...
+...
+```
 
 ---
 
-### 1. Missing Failure Types
+## Step 2: Identify Gap Types
 
-Failures that:
+Look for three types of gap:
 
-* are common in CI pipelines
-* are not represented in any playbook
+### Missing classes
+Failure classes from the ontology with no playbook at all. These are the highest-value additions.
 
-Examples:
+### Weak coverage
+Classes with a single playbook that:
+- has a broad or generic `match.any` pattern
+- has no `match.none` exclusions
+- has only a minimal toy fixture and no real-corpus fixture
 
-* race conditions
-* environment drift between steps
-* cache corruption
-* partial installs
-
----
-
-### 2. Weak Coverage Areas
-
-Failures where:
-
-* only one simplistic playbook exists
-* coverage is shallow or overly generic
-* matcher lacks precision
-
----
-
-### 3. Overlapping / Ambiguous Coverage
-
+### Overlap or ambiguity
 Cases where:
-
-* multiple playbooks could match the same logs
-* classification is unclear
-* ranking may be unstable
-
----
-
-## Step 3: Prioritisation
-
-Rank gaps using:
-
-### Impact
-
-* how often this occurs in real CI
-* how costly it is to debug
-
-### Detectability
-
-* how easily it can be matched deterministically
-
-### Differentiation
-
-* whether this adds unique value vs competitors/tools
+- two playbooks share `match.any` phrases without a `match.none` separator
+- a playbook's `base_score` is low enough that confusable neighbors often rank above it
+- `make review` reports a conflict
 
 ---
 
-## Step 4: Output High-Value Additions
+## Step 3: Prioritise
 
-For each high-priority gap, provide:
+Rank gaps using three factors:
 
----
+**Impact** — how often does this failure occur in real CI pipelines? How long does it take engineers to diagnose without tooling?
 
-### Gap Name
+**Determinism** — does the failure emit a stable, specific log signal that can be matched precisely without false positives?
 
-Short, precise label
+**Boundary clarity** — is the root cause distinct enough from existing playbooks that a new one would not introduce ambiguity?
 
-### Failure Class
-
-Which category it belongs to
-
-### Why It Matters
-
-* real-world impact
-* why engineers struggle with it
-
-### Why It's Missing
-
-* why current playbooks don’t cover it
-
-### Suggested Detection Strategy
-
-* signals to match
-* patterns (multi-signal preferred)
-* how to avoid false positives
-
-### Example Failure Scenario
-
-Describe a realistic CI situation
-
-### Suggested Fixture Shape
-
-* what the log would look like
-* key lines that should exist
-
-### Risk Notes
-
-* false positive risk
-* edge cases
+Reject gaps where any of these are low:
+- low-frequency edge cases with no real public examples
+- failures whose log output is too variable or noisy to match deterministically
+- cases that would overlap an existing playbook without a clean boundary
 
 ---
 
-## Step 5: Suggest Expansion Batches
+## Step 4: Output Gap Records
 
-Group gaps into:
+For each confirmed high-priority gap, produce a gap record:
 
-* small, high-confidence batches (safe to implement immediately)
-* experimental batches (require careful matcher design)
+```
+Gap ID:              <domain>/<class>/<mode-slug>
+Title:               <short descriptive label>
+Domain:              <from ontology>
+Class:               <from ontology>
+Mode:                <concrete root cause slug>
+Impact:              high | medium | low
+Determinism:         high | medium | low
+Nearest neighbor ID: <existing playbook most likely to confuse>
+Root cause:          <one sentence>
+Key log signal:      <verbatim phrase expected in the log>
+Near-miss risk:      <scenario that must NOT match>
+Expansion batch:     safe | experimental
+Next action:         playbook-sprint | playbook-refinement
+```
+
+Only produce records for gaps that pass the prioritisation filter in Step 3.
 
 ---
 
-## Step 6: Optional Refactors
+## Step 5: Suggest Structural Fixes
 
-If applicable, suggest:
+If the audit reveals structural problems in existing playbooks, list separately:
 
-* playbooks that should be split
-* playbooks that should be merged
-* matcher improvements for precision
+- playbooks that should be split (too broad, covering multiple root causes)
+- playbooks that should be merged (overlapping patterns, same root cause family)
+- playbooks needing `match.none` additions to resolve ranking instability
+
+These are not new playbooks — they are inputs to `playbook-refinement`.
 
 ---
 
 ## Output Format
 
-Return:
+Return two sections:
 
 ### Coverage Summary
 
-* strengths
-* weak areas
+A filled-in version of the coverage table from Step 1, with depth ratings for each domain/class.
 
-### Top Gaps (Ranked)
+### Gap Records
 
-(list of gaps with full detail)
-
-### Quick Wins
-
-* gaps that are easy + high value
-
-### High-Leverage Expansions
-
-* gaps that significantly improve system capability
-
-### Risky Areas
-
-* gaps likely to introduce ambiguity if done poorly
-
-### Suggested Next Batch
-
-* 5–10 playbooks to implement next
+One record per confirmed gap, ordered by priority (impact × determinism). Include the batch assignment (safe / experimental) and next action.
 
 ---
 
-## Strict Rules
+## Rules
 
-* Do NOT suggest trivial or obvious failures already covered
-* Do NOT suggest generic patterns (“add more npm errors”)
-* Prefer deep, specific, high-signal gaps
-* Avoid ideas that cannot be matched deterministically
-
----
-
-## Guiding Principle
-
-Faultline should evolve toward:
-
-> “comprehensive, high-precision CI failure coverage with zero ambiguity”
-
-Not:
-
-> “broad but shallow error matching”
-
-Every suggestion must move the system toward that goal.
+- Do not suggest gaps that cannot be matched deterministically.
+- Do not suggest gaps that duplicate existing playbooks with only slight wording differences.
+- Do not list more than 10 gap records per run; prioritise ruthlessly.
+- Every gap record must have a named nearest neighbor — if you cannot identify one, the gap may be insufficiently scoped.

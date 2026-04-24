@@ -13,6 +13,7 @@ The useful workflows in Faultline are grounded in the shipped CLI, fixture corpu
 - refine an existing playbook before adding a new one
 - audit playbook coverage against an independent stratified sample of real CI failures
 - author a new playbook only after a gap has been explicitly justified
+- run the full gap-to-validated-playbook sprint in one session with real and synthetic fixtures
 - investigate and resolve a failing baseline gate without weakening it
 
 The current shipping boundary is documented in [`docs/release-boundary.md`](./release-boundary.md). Agents should treat that boundary as the default product scope and keep experimental or maintainer-only surfaces out of the main user narrative unless the task explicitly targets them.
@@ -38,6 +39,8 @@ Added:
 - [`prompts/collect-coverage-evidence.md`](../prompts/collect-coverage-evidence.md)
 - [`prompts/author-new-playbook.md`](../prompts/author-new-playbook.md)
 - [`prompts/investigate-baseline-regression.md`](../prompts/investigate-baseline-regression.md)
+- [`prompts/generate-playbook-from-gap.md`](../prompts/generate-playbook-from-gap.md)
+- [`prompts/coverage-gaps.md`](../prompts/coverage-gaps.md)
 
 These are narrower, but they are more useful: they tell an agent exactly how to work inside this repository without inventing its own process.
 
@@ -53,6 +56,7 @@ The repository now ships eight repo-local skills under [`agents/skills/`](../age
 - [`source-playbook-refinement`](../agents/skills/source-playbook-refinement/SKILL.md) for repository-local source-detector refinement and bundled source-playbook authoring
 - [`fixture-generation`](../agents/skills/fixture-generation/SKILL.md) for producing canonical, noisy, and near-miss fixture trios that defend a specific playbook pattern
 - [`playbook-linter`](../agents/skills/playbook-linter/SKILL.md) for applying the deterministic quality gate before `make review` — checks matcher precision, false positive risk, fixture realism, negative coverage, and ontology completeness
+- [`playbook-sprint`](../agents/skills/playbook-sprint/SKILL.md) for the full gap-to-validated-playbook loop in a single session, composing coverage-evidence, fixture-generation, new-playbook-authoring, and playbook-linter
 
 This location is intentionally agent-neutral so the same skill files can be used from Codex, Copilot, or any other repository-aware assistant workflow.
 
@@ -165,7 +169,49 @@ Why this matters:
 - pattern authoring without fixture pairing is how false positives are introduced
 - `make review` is the only way to see whether a new pattern silently outcompetes an existing one
 
-### 7. Investigate A Failing Gate
+### 7. Sprint From A Gap To A Validated Playbook
+
+Use this when the starting point is a failure type, coverage gap, or public failure URL and the goal is a committed playbook with real and synthetic fixtures in one session.
+
+**Run with no input** to have the sprint find and fill the highest-priority gap automatically:
+
+```bash
+# Phase 0: find highest-priority gap
+./bin/faultline list
+# (apply coverage-gaps.md Steps 1–4 to select the top gap record)
+```
+
+**Or provide a target** to skip Phase 0:
+
+```bash
+# Phase 1: orient (with known failure type or URL)
+./bin/faultline list
+faultline explain <nearest-neighbor-id>
+
+# Phase 2: collect real evidence
+faultline fixtures ingest --adapter <adapter> --url <public-url>
+./bin/faultline analyze <staged-file> --json
+faultline fixtures review
+
+# Phase 4: verify synthetic fixtures
+./bin/faultline analyze fixtures/minimal/<id>.yaml --json
+./bin/faultline analyze fixtures/minimal/<id>-noisy.yaml --json
+./bin/faultline analyze fixtures/minimal/<id>-near-miss.yaml --json
+
+# Phase 7: validate
+make review
+make test
+make build
+make fixture-check
+```
+
+Why this matters:
+- it is the only workflow that handles the full loop from "failure description" to "validated committed playbook" in one session
+- it forces real evidence collection before synthetic generation so patterns are grounded in actual log output
+- the linting gate ensures no playbook ships without negative coverage and ontology fields
+- it prevents the common failure mode of authoring YAML before confirming the fixture behaves as expected
+
+### 8. Investigate A Failing Gate
 
 Use this when `make fixture-check` exits non-zero after a repository change.
 
@@ -183,7 +229,7 @@ Why this matters:
 - isolating the regressed fixture before acting prevents cascading changes
 - every regression has exactly one correct outcome: fix forward, fix expectations, or revert
 
-### 8. Close The Loop
+### 9. Close The Loop
 
 Use this before considering a repository change complete.
 
@@ -203,7 +249,7 @@ make build
 Why this matters:
 - Faultline's trust boundary is checked-in evidence, not optimistic reasoning
 
-### 9. Prepare A Release Candidate
+### 10. Prepare A Release Candidate
 
 Use this when consolidating the repository for a tagged cut.
 
@@ -266,6 +312,27 @@ mode:   <concrete root cause slug, e.g. npm-ci-requires-package-lock>
 ```
 
 The ontology is read-only metadata on the playbook. It does not change matching behavior.
+
+### Sprint From A Gap (full chain)
+
+```
+[no input] → coverage-gaps.md (Steps 1–4) → top gap record selected
+      OR
+[failure type / URL provided] → skip to Phase 1
+
+  → playbook-sprint skill
+      Phase 0: coverage-gaps.md (no-input path only)
+      Phase 1: orient (./bin/faultline list + explain)
+      Phase 2: collect real evidence (ingest + analyze)
+      Phase 3: triage (keep / reject)
+      Phase 4: fixture-generation skill (canonical + noisy + near-miss)
+      Phase 5: new-playbook-authoring skill (YAML + ontology fields)
+      Phase 6: playbook-linter skill (PASS gate)
+      Phase 7: make review → make test → make build → make fixture-check
+```
+
+Trigger: no input needed — or provide a failure type, gap name, or public failure URL to skip Phase 0.  
+Key distinction from the "Author" chain: this one starts *before* triage, handles real evidence collection and synthetic generation, and can self-start by finding the highest-priority gap automatically.
 
 The next useful upgrades should stay small and repo-native.
 
