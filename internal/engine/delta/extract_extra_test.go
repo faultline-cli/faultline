@@ -3,6 +3,7 @@ package delta
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"testing"
 
 	"faultline/internal/model"
@@ -170,10 +171,17 @@ func TestUnzipLogsSkipsDirectories(t *testing.T) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
 	// Add a directory entry
-	_, _ = zw.Create("mydir/")
+	if _, err := zw.Create("mydir/"); err != nil {
+		t.Fatalf("create dir entry: %v", err)
+	}
 	// Add a real file
-	f, _ := zw.Create("mydir/file.log")
-	_, _ = f.Write([]byte("content\n"))
+	f, err := zw.Create("mydir/file.log")
+	if err != nil {
+		t.Fatalf("create file entry: %v", err)
+	}
+	if _, err := f.Write([]byte("content\n")); err != nil {
+		t.Fatalf("write file entry: %v", err)
+	}
 	if err := zw.Close(); err != nil {
 		t.Fatalf("close zip: %v", err)
 	}
@@ -189,8 +197,13 @@ func TestUnzipLogsSkipsDirectories(t *testing.T) {
 func TestUnzipLogsAddsNewlineToNonTerminatedEntry(t *testing.T) {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
-	f, _ := zw.Create("file.log")
-	_, _ = f.Write([]byte("no trailing newline"))
+	f, err := zw.Create("file.log")
+	if err != nil {
+		t.Fatalf("create file entry: %v", err)
+	}
+	if _, err := f.Write([]byte("no trailing newline")); err != nil {
+		t.Fatalf("write file entry: %v", err)
+	}
 	if err := zw.Close(); err != nil {
 		t.Fatalf("close zip: %v", err)
 	}
@@ -235,7 +248,7 @@ func TestNormalizeProviderAliases(t *testing.T) {
 
 func TestResolveUnsupportedProviderErrors(t *testing.T) {
 	r := NewResolver(nil)
-	_, err := r.Resolve(nil, Options{Provider: "bitbucket"}, "some log")
+	_, err := r.Resolve(context.Background(), Options{Provider: "bitbucket"}, "some log")
 	if err == nil {
 		t.Fatal("expected error for unsupported provider")
 	}
@@ -246,7 +259,7 @@ func TestResolveUnsupportedProviderErrors(t *testing.T) {
 
 func TestResolveEmptyProviderReturnsNil(t *testing.T) {
 	r := NewResolver(nil)
-	snapshot, err := r.Resolve(nil, Options{Provider: ""}, "some log")
+	snapshot, err := r.Resolve(context.Background(), Options{Provider: ""}, "some log")
 	if err != nil {
 		t.Fatalf("expected no error for empty provider, got %v", err)
 	}
@@ -257,7 +270,7 @@ func TestResolveEmptyProviderReturnsNil(t *testing.T) {
 
 func TestResolveNoneProviderReturnsNil(t *testing.T) {
 	r := NewResolver(nil)
-	snapshot, err := r.Resolve(nil, Options{Provider: "none"}, "some log")
+	snapshot, err := r.Resolve(context.Background(), Options{Provider: "none"}, "some log")
 	if err != nil {
 		t.Fatalf("expected no error for none provider, got %v", err)
 	}
