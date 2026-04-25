@@ -202,7 +202,7 @@ func TestSelectPrimaryUsesSeverityAndConfidenceOrdering(t *testing.T) {
 		t.Fatal("expected primary finding")
 	}
 	if primary.ID != "cache-miss-non-fatal" {
-		t.Fatalf("SelectPrimary should assume findings are pre-sorted; got %q", primary.ID)
+		t.Fatalf("SelectPrimary should return the first finding from a pre-ranked slice; got %q", primary.ID)
 	}
 
 	input := readLog(t, "multiple-silent.log")

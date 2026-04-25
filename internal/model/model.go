@@ -670,6 +670,11 @@ type FailureArtifact struct {
 
 // SilentFinding is a single finding produced by a built-in silent-failure
 // detector. Silent findings are attached to Analysis.SilentFindings.
+//
+// Precedence rule: silent findings supplement normal playbook matches. When a
+// normal playbook match exists, that match remains primary and silent findings
+// are reported as secondary findings. Silent findings are promoted to the
+// primary failure classification only when no normal playbook match exists.
 type SilentFinding struct {
 	// ID is the detector identifier (e.g. "zero-tests-executed").
 	ID string `json:"id"`
