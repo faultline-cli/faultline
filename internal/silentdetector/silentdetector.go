@@ -439,8 +439,8 @@ func (emptyQualityCheckDetector) Match(input AnalysisInput) []Finding {
 
 	var hasCheckContext bool
 	var hasEmptyResult bool
-	for _, rawLine := range strings.Split(input.RawLog, "\n") {
-		line := strings.TrimSpace(strings.ToLower(rawLine))
+	for _, l := range input.Lines {
+		line := strings.TrimSpace(l.Normalized)
 		if line == "" {
 			continue
 		}
