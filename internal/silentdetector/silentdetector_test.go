@@ -226,6 +226,43 @@ func TestSelectPrimaryEmpty(t *testing.T) {
 	}
 }
 
+// ── False-positive guard tests ────────────────────────────────────────────────
+
+// TestCacheMissNoFalsePositiveOnSingleLine ensures cacheMissNonFatalDetector
+// does not fire when only "cache miss" appears with no distinct cache-op signal.
+func TestCacheMissNoFalsePositiveOnSingleLine(t *testing.T) {
+	raw := "cache miss\n"
+	input := silentdetector.AnalysisInput{Lines: splitLines(raw), RawLog: raw}
+	findings := silentdetector.Run(input)
+	if f := findingID(findings, "cache-miss-non-fatal"); f != nil {
+		t.Errorf("expected no cache-miss-non-fatal finding for single-line input, got %+v", f)
+	}
+}
+
+// TestEmptyDeployNoFalsePositiveOnNothingToDeploy ensures
+// emptyDeploymentTargetDetector does not fire when only the emptySignals phrase
+// "Nothing to deploy" is present without an explicit deploy-tool signal.
+func TestEmptyDeployNoFalsePositiveOnNothingToDeploy(t *testing.T) {
+	raw := "Nothing to deploy\n"
+	input := silentdetector.AnalysisInput{Lines: splitLines(raw), RawLog: raw}
+	findings := silentdetector.Run(input)
+	if f := findingID(findings, "empty-deployment-target"); f != nil {
+		t.Errorf("expected no empty-deployment-target finding for single-line input, got %+v", f)
+	}
+}
+
+// TestEmptyQualityCheckNoFalsePositiveOnSingleEmptyLine ensures
+// emptyQualityCheckDetector does not fire when a single line matches both
+// checkSignals and emptySignals (e.g. "nothing to scan" contains "scan").
+func TestEmptyQualityCheckNoFalsePositiveOnSingleEmptyLine(t *testing.T) {
+	raw := "nothing to scan\n"
+	input := silentdetector.AnalysisInput{Lines: splitLines(raw), RawLog: raw}
+	findings := silentdetector.Run(input)
+	if f := findingID(findings, "empty-quality-check"); f != nil {
+		t.Errorf("expected no empty-quality-check finding for single ambiguous line, got %+v", f)
+	}
+}
+
 // TestEvidenceNotEmpty ensures each detector includes evidence.
 func TestEvidenceNotEmpty(t *testing.T) {
 	fixtures := []struct {
