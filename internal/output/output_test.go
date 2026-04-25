@@ -1099,3 +1099,246 @@ func TestFormatWorkflowJSON(t *testing.T) {
 		t.Fatalf("expected remediation in workflow JSON, got %v", out["remediation"])
 	}
 }
+
+// ── HashAnalysisOutput ────────────────────────────────────────────────────────
+
+func TestHashAnalysisOutputIsDeterministic(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	h1, err := HashAnalysisOutput(a)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput: %v", err)
+	}
+	h2, err := HashAnalysisOutput(a)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput second call: %v", err)
+	}
+	if h1 == "" {
+		t.Fatal("expected non-empty hash")
+	}
+	if h1 != h2 {
+		t.Fatalf("hash is not deterministic: %q != %q", h1, h2)
+	}
+}
+
+func TestHashAnalysisOutputDistinctForDifferentAnalyses(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	b := makeAnalysis("git-auth", "Git auth", "auth", 0.8, []string{"fatal: could not read Username"})
+	ha, err := HashAnalysisOutput(a)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput a: %v", err)
+	}
+	hb, err := HashAnalysisOutput(b)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput b: %v", err)
+	}
+	if ha == hb {
+		t.Fatalf("expected distinct hashes for distinct analyses, got %q", ha)
+	}
+}
+
+func TestHashAnalysisOutputExcludesOutputHash(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	a.OutputHash = "output-hash-abc"
+	h1, err := HashAnalysisOutput(a)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput: %v", err)
+	}
+	a.OutputHash = "output-hash-xyz"
+	h2, err := HashAnalysisOutput(a)
+	if err != nil {
+		t.Fatalf("HashAnalysisOutput: %v", err)
+	}
+	// Hash should be stable regardless of OutputHash field value
+	if h1 != h2 {
+		t.Fatalf("expected same hash regardless of OutputHash field: %q != %q", h1, h2)
+	}
+}
+
+// ── FormatHookSummariesMarkdown ───────────────────────────────────────────────
+
+func TestFormatHookSummariesMarkdownNilAnalysis(t *testing.T) {
+	got := FormatHookSummariesMarkdown(nil)
+	if got != "" {
+		t.Fatalf("expected empty for nil analysis, got %q", got)
+	}
+}
+
+func TestFormatHookSummariesMarkdownNoHooks(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	got := FormatHookSummariesMarkdown(a)
+	if got != "" {
+		t.Fatalf("expected empty when no hooks, got %q", got)
+	}
+}
+
+func TestFormatHookSummariesMarkdownWithHooks(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	passed := true
+	a.Results[0].Hooks = &model.HookReport{
+		Mode:            "observe",
+		BaseConfidence:  0.5,
+		FinalConfidence: 0.8,
+		ConfidenceDelta: 0.3,
+		Results: []model.HookResult{{
+			Category: "remediation",
+			ID:       "auto-fix",
+			Status:   "passed",
+			Passed:   &passed,
+		}},
+	}
+	got := FormatHookSummariesMarkdown(a)
+	if got == "" {
+		t.Fatal("expected non-empty markdown for analysis with hooks")
+	}
+	if !strings.Contains(got, "## Hooks") {
+		t.Fatalf("expected '## Hooks' header, got %q", got)
+	}
+	if !strings.Contains(got, "docker-auth:") {
+		t.Fatalf("expected failure_id prefix, got %q", got)
+	}
+}
+
+func TestFormatHookSummariesMarkdownEndsWithNewline(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	passed := true
+	a.Results[0].Hooks = &model.HookReport{
+		Mode:            "observe",
+		BaseConfidence:  0.5,
+		FinalConfidence: 0.8,
+		ConfidenceDelta: 0.3,
+		Results: []model.HookResult{{
+			Category: "remediation",
+			ID:       "auto-fix",
+			Status:   "passed",
+			Passed:   &passed,
+		}},
+	}
+	got := FormatHookSummariesMarkdown(a)
+	if !strings.HasSuffix(got, "\n") {
+		t.Fatalf("expected trailing newline, got %q", got)
+	}
+}
+
+// ── hookHistoryMarkdownLine ───────────────────────────────────────────────────
+
+func TestHookHistoryMarkdownLineMinimal(t *testing.T) {
+	summary := &model.HookHistorySummary{TotalCount: 3}
+	got := hookHistoryMarkdownLine(summary)
+	if !strings.Contains(got, "hook history: 3 run(s)") {
+		t.Fatalf("expected total count in line, got %q", got)
+	}
+}
+
+func TestHookHistoryMarkdownLineAllCounters(t *testing.T) {
+	summary := &model.HookHistorySummary{
+		TotalCount:    10,
+		ExecutedCount: 8,
+		PassedCount:   6,
+		FailedCount:   1,
+		BlockedCount:  1,
+		SkippedCount:  2,
+		LastSeenAt:    "2026-01-01T00:00:00Z",
+	}
+	got := hookHistoryMarkdownLine(summary)
+	for _, want := range []string{
+		"hook history: 10 run(s)",
+		"8 executed",
+		"6 passed",
+		"1 failed",
+		"1 blocked",
+		"2 skipped",
+		"last 2026-01-01T00:00:00Z",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("expected %q in line, got %q", want, got)
+		}
+	}
+}
+
+func TestHookHistoryMarkdownLineZeroCountsOmitted(t *testing.T) {
+	summary := &model.HookHistorySummary{TotalCount: 5}
+	got := hookHistoryMarkdownLine(summary)
+	for _, absent := range []string{"executed", "passed", "failed", "blocked", "skipped", "last"} {
+		if strings.Contains(got, absent) {
+			t.Errorf("expected %q to be omitted for zero count, got %q", absent, got)
+		}
+	}
+}
+
+// ── deltaLines ────────────────────────────────────────────────────────────────
+
+func TestDeltaLinesNilDelta(t *testing.T) {
+	got := deltaLines(nil)
+	if got != nil {
+		t.Fatalf("expected nil for nil delta, got %v", got)
+	}
+}
+
+func TestDeltaLinesWithFields(t *testing.T) {
+	delta := &model.Delta{
+		Provider:          "github-actions",
+		FilesChanged:      []string{"main.go"},
+		TestsNewlyFailing: []string{"TestAuth"},
+		ErrorsAdded:       []string{"authentication required"},
+		Causes: []model.DeltaCause{{
+			Kind:    "test_regression",
+			Score:   0.9,
+			Reasons: []string{"test started failing on this commit"},
+		}},
+	}
+	got := deltaLines(delta)
+	for _, want := range []string{
+		"Provider: github-actions",
+		"Changed file: main.go",
+		"New failing test: TestAuth",
+		"New error: authentication required",
+		"test_regression: 0.90",
+		"test_regression reason: test started failing on this commit",
+	} {
+		found := false
+		for _, line := range got {
+			if line == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("expected line %q in delta output, got: %v", want, got)
+		}
+	}
+}
+
+// ── partialMatchLines ─────────────────────────────────────────────────────────
+
+func TestPartialMatchLinesEmpty(t *testing.T) {
+	got := partialMatchLines(nil)
+	if got != nil {
+		t.Fatalf("expected nil for empty groups, got %v", got)
+	}
+}
+
+func TestPartialMatchLinesWithLabel(t *testing.T) {
+	groups := []model.PartialMatchGroup{
+		{ID: "auth-check", Label: "Auth Check", Minimum: 1, Patterns: []string{"login failed", "auth error"}},
+	}
+	got := partialMatchLines(groups)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 line, got %v", got)
+	}
+	if !strings.Contains(got[0], "Auth Check") {
+		t.Errorf("expected label in line, got %q", got[0])
+	}
+}
+
+func TestPartialMatchLinesWithoutLabel(t *testing.T) {
+	groups := []model.PartialMatchGroup{
+		{ID: "", Label: "", Minimum: 2, Patterns: []string{"login failed", "auth error", "access denied"}},
+	}
+	got := partialMatchLines(groups)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 line, got %v", got)
+	}
+	if !strings.Contains(got[0], "2-of-3") {
+		t.Errorf("expected minimum count in line, got %q", got[0])
+	}
+}

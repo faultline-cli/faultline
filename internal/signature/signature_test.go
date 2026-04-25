@@ -159,6 +159,30 @@ func TestFixtureDrivenSignatureStabilityAcrossRealLogs(t *testing.T) {
 	}
 }
 
+// --- isHomePath ---
+
+func TestIsHomePathDetectsUnixHomePath(t *testing.T) {
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{"/home/alice/project/app.go", true},
+		{"/users/bob/code/main.go", true},
+		{"c:/users/runner/appdata/local/temp/go", true},
+		{"/tmp/something", false},
+		{"/opt/tool/bin", false},
+		{"/workspace/app", false},
+		{"", false},
+		{"relative/path/file.go", false},
+	}
+	for _, tc := range cases {
+		got := isHomePath(tc.path)
+		if got != tc.want {
+			t.Errorf("isHomePath(%q) = %v, want %v", tc.path, got, tc.want)
+		}
+	}
+}
+
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()

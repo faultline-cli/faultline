@@ -692,3 +692,39 @@ func TestInstallCommandUnknownManagerErrors(t *testing.T) {
 		t.Fatal("expected error for unknown manager")
 	}
 }
+
+// --- detectPackageManagerStep.Execute ---
+
+func TestDetectPackageManagerStepExecuteFindsManager(t *testing.T) {
+	// Create a fake package manager script in a temp dir and point PATH at it.
+	tmp := t.TempDir()
+	script := "#!/bin/sh\nexit 0\n"
+	fakeMgr := filepath.Join(tmp, "apt-get")
+	if err := os.WriteFile(fakeMgr, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake manager: %v", err)
+	}
+	t.Setenv("PATH", tmp)
+
+	s := detectPackageManagerStep{}
+	result, err := s.Execute(context.Background(), Runtime{}, struct{}{})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if result.Outputs["manager"] != "apt-get" {
+		t.Fatalf("expected manager=apt-get, got %v", result.Outputs)
+	}
+	if result.Outputs["command"] == "" {
+		t.Fatal("expected non-empty command path")
+	}
+}
+
+func TestDetectPackageManagerStepExecuteNoManagerErrors(t *testing.T) {
+	// Point PATH to an empty temp dir so no package manager is found.
+	t.Setenv("PATH", t.TempDir())
+
+	s := detectPackageManagerStep{}
+	_, err := s.Execute(context.Background(), Runtime{}, struct{}{})
+	if err == nil {
+		t.Fatal("expected error when no package manager is found")
+	}
+}

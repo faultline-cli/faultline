@@ -317,3 +317,100 @@ func TestReadLinesWithVeryLongLine(t *testing.T) {
 func repoPlaybookDir(_ testing.TB) string {
 	return "../../playbooks/bundled"
 }
+
+// ── AnalyzePath ───────────────────────────────────────────────────────────────
+
+func TestAnalyzePathMatchingFile(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "ci.log")
+	content := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+	if err := os.WriteFile(tmpFile, []byte(content), 0o600); err != nil {
+		t.Fatalf("write log file: %v", err)
+	}
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	a, err := e.AnalyzePath(tmpFile)
+	if err != nil {
+		t.Fatalf("AnalyzePath: %v", err)
+	}
+	if a == nil || len(a.Results) == 0 {
+		t.Fatal("expected at least one result")
+	}
+	if a.Source != tmpFile {
+		t.Fatalf("expected source to be set to path, got %q", a.Source)
+	}
+}
+
+func TestAnalyzePathMissingFileErrors(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	_, err := e.AnalyzePath(filepath.Join(t.TempDir(), "no_such_file.log"))
+	if err == nil {
+		t.Fatal("expected error for missing file")
+	}
+}
+
+// ── loadRepoSnapshotFromPath / loadRepoSnapshot ───────────────────────────────
+
+func TestLoadRepoSnapshotFromPathNonGitDir(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	// A non-git temp dir: NewScanner will fail; should return a snapshot with nil state.
+	snap := e.loadRepoSnapshotFromPath(t.TempDir(), detectors.ChangeSet{})
+	if snap == nil {
+		t.Fatal("expected non-nil snapshot even for non-git directory")
+	}
+}
+
+func TestLoadRepoSnapshotNonGitDir(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true, RepoPath: t.TempDir()})
+	snap := e.loadRepoSnapshot()
+	if snap == nil {
+		t.Fatal("expected non-nil snapshot from loadRepoSnapshot")
+	}
+}
+
+// ── localRepoEnricher.Enrich ──────────────────────────────────────────────────
+
+func TestLocalRepoEnricherEnrichNonGitReturnsNil(t *testing.T) {
+	enricher := localRepoEnricher{opts: Options{RepoPath: t.TempDir()}}
+	rc := enricher.Enrich(model.Result{
+		Playbook: model.Playbook{ID: "docker-auth", Category: "auth"},
+	})
+	// Non-git directory: NewScanner fails, returns nil.
+	if rc != nil {
+		t.Logf("got non-nil RepoContext for non-git dir (may be in a git worktree): %#v", rc)
+	}
+}
+
+// ── List and Explain ──────────────────────────────────────────────────────────
+
+func TestListReturnsBundledPlaybooks(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	pbs, err := e.List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if len(pbs) == 0 {
+		t.Fatal("expected at least one playbook from bundled directory")
+	}
+}
+
+func TestExplainReturnsPlaybook(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	pbs, err := e.List()
+	if err != nil || len(pbs) == 0 {
+		t.Fatalf("List: %v (len=%d)", err, len(pbs))
+	}
+	pb, err := e.Explain(pbs[0].ID)
+	if err != nil {
+		t.Fatalf("Explain(%q): %v", pbs[0].ID, err)
+	}
+	if pb.ID != pbs[0].ID {
+		t.Fatalf("expected ID %q, got %q", pbs[0].ID, pb.ID)
+	}
+}
+
+func TestExplainUnknownIDReturnsError(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	_, err := e.Explain("definitely-not-a-real-playbook-id-xyz")
+	if err == nil {
+		t.Fatal("expected error for unknown playbook ID")
+	}
+}

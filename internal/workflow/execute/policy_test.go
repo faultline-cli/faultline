@@ -327,3 +327,100 @@ func TestMapFromMap(t *testing.T) {
 		t.Fatalf("unexpected result: %v", got)
 	}
 }
+
+// ── Apply error paths ─────────────────────────────────────────────────────────
+
+// TestApplyResolveArgsErrorReturnsFailed tests that when a step's args contain
+// an unresolvable reference, Apply returns a failed record.
+func TestApplyResolveArgsErrorReturnsFailed(t *testing.T) {
+	// Build a plan with a step whose ResolvedArgs contain an unresolvable reference.
+	def, err := schema.LoadBytes([]byte(`
+schema_version: workflow.v1
+workflow_id: test.resolve-err
+title: Resolve error test
+description: Triggers a resolve error.
+steps:
+  - id: step1
+    type: noop
+    args:
+      message: hello
+    expect: {}
+verification:
+  - id: verify1
+    type: noop
+    args: {}
+`))
+	if err != nil {
+		t.Fatalf("LoadBytes: %v", err)
+	}
+	compiled, err := plan.Build(context.Background(), def, plan.BuildOptions{
+		Recommendation: model.ArtifactWorkflowRecommendation{Ref: def.WorkflowID},
+		Runtime:        bind.RuntimeContext{WorkDir: t.TempDir()},
+		Registry:       registry.Default(),
+	})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	// Inject an unresolvable step reference into the compiled args.
+	for i := range compiled.Steps {
+		compiled.Steps[i].ResolvedArgs = map[string]any{
+			"message": "${inputs.does_not_exist}",
+		}
+	}
+	record, err := Apply(context.Background(), compiled, Options{
+		Runtime: bind.RuntimeContext{WorkDir: t.TempDir()},
+		Policy:  Policy{},
+	})
+	if err == nil {
+		t.Fatal("expected error when ResolveValue fails for args")
+	}
+	if record.Status != model.WorkflowExecutionStatusFailed {
+		t.Fatalf("expected failed status, got %v", record.Status)
+	}
+}
+
+// TestApplyResolveExpectErrorReturnsFailed tests that when a step's expect contains
+// an unresolvable reference, Apply returns a failed record.
+func TestApplyResolveExpectErrorReturnsFailed(t *testing.T) {
+	def, err := schema.LoadBytes([]byte(`
+schema_version: workflow.v1
+workflow_id: test.expect-resolve-err
+title: Expect resolve error test
+description: Triggers a resolve error in expect.
+steps:
+  - id: step1
+    type: noop
+    args: {}
+verification:
+  - id: verify1
+    type: noop
+    args: {}
+`))
+	if err != nil {
+		t.Fatalf("LoadBytes: %v", err)
+	}
+	compiled, err := plan.Build(context.Background(), def, plan.BuildOptions{
+		Recommendation: model.ArtifactWorkflowRecommendation{Ref: def.WorkflowID},
+		Runtime:        bind.RuntimeContext{WorkDir: t.TempDir()},
+		Registry:       registry.Default(),
+	})
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	// Inject an unresolvable reference into the expect map of the first step.
+	for i := range compiled.Steps {
+		compiled.Steps[i].ResolvedExpect = map[string]any{
+			"message": "${inputs.does_not_exist}",
+		}
+	}
+	record, err := Apply(context.Background(), compiled, Options{
+		Runtime: bind.RuntimeContext{WorkDir: t.TempDir()},
+		Policy:  Policy{},
+	})
+	if err == nil {
+		t.Fatal("expected error when ResolveValue fails for expect")
+	}
+	if record.Status != model.WorkflowExecutionStatusFailed {
+		t.Fatalf("expected failed status, got %v", record.Status)
+	}
+}
