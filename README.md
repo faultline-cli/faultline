@@ -4,7 +4,7 @@
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
-Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 142 playbooks and returns evidence-backed diagnoses — the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
+Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 142 playbooks and returns evidence-backed diagnoses - the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
 
 **Your build just failed. Here's what the next 30 seconds looks like:**
 
