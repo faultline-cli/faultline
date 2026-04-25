@@ -1,0 +1,30 @@
+id: mysql-connection-refused-canonical
+title: MySQL ERROR 2003 (HY000) — service not ready in GitHub Actions
+fixture_class: minimal
+normalized_log: |
+  Run tests
+    pytest tests/ -v
+    shell: /usr/bin/bash -e {0}
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: secret
+
+  + python -m pytest tests/ -v
+  ========================= test session starts ==========================
+  platform linux -- Python 3.11.4, pytest-7.4.0, pluggy-1.2.0
+  rootdir: /home/runner/work/myapp/myapp
+  collected 28 items
+
+  tests/test_models.py::test_user_create FAILED
+
+  ======================= FAILURES =======================
+  __________________ test_user_create ____________________
+  pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '127.0.0.1'")
+  ERROR 2003 (HY000): Can't connect to MySQL server on '127.0.0.1' (111)
+
+  ======================== 28 failed in 2.31s ========================
+  ERROR: Process completed with exit code 1.
+expectation:
+  expected_playbook: mysql-connection-refused

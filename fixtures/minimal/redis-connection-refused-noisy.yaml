@@ -1,0 +1,56 @@
+id: redis-connection-refused-noisy
+title: Redis ECONNREFUSED — noisy Node.js CI log with multiple steps
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run actions/checkout@v4
+  Checking out repository...
+  ##[endgroup]
+
+  ##[group]Set up Node.js 20
+  Found in cache
+  ##[endgroup]
+
+  ##[group]Install dependencies
+  $ npm ci
+  added 847 packages in 18s
+  ##[endgroup]
+
+  ##[group]Run lint
+  $ npm run typecheck
+  > myapp@2.1.0 typecheck
+  > tsc --noEmit
+  No type errors found.
+  ##[endgroup]
+
+  ##[group]Run unit tests
+  $ npm test
+  > myapp@2.1.0 test
+  > jest --runInBand --forceExit
+
+  PASS src/utils/helpers.test.ts
+  PASS src/models/user.test.ts
+  ##[endgroup]
+
+  ##[group]Run integration tests
+  $ npm run test:integration
+  > myapp@2.1.0 test:integration
+  > jest --config jest.integration.config.js
+
+  ● Test suite failed to run
+
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1494:16)
+
+  redis.on('error', (err) => {
+    ^
+    [ioredis] Unhandled error event: Error: connect ECONNREFUSED 127.0.0.1:6379
+        at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1494:16)
+
+  FAIL src/integration/queue.test.ts
+  FAIL src/integration/session.test.ts
+
+  Test Suites: 2 failed, 2 passed, 4 total
+  Tests:       0 passed
+  ##[error]ioredis unhandled error. ECONNREFUSED 127.0.0.1:6379
+expectation:
+  expected_playbook: redis-connection-refused

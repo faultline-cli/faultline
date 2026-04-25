@@ -1,0 +1,43 @@
+id: mysql-connection-refused-noisy
+title: MySQL HY000 connection refused — noisy multi-step CI build log
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run actions/checkout@v4
+  with:
+    ref: refs/heads/main
+    token: ***
+    path: .
+  Getting Git version info
+  Initializing the repository
+  Setting up auth
+  Fetching the repository
+  Checking out the ref
+  ##[endgroup]
+  ##[group]Set up Java JDK
+  Configured JDK 17 (AdoptOpenJDK)
+  ##[endgroup]
+  ##[group]Cache Maven packages
+  Cache restored successfully
+  ##[endgroup]
+  ##[group]Start MySQL
+  Starting MySQL service...
+  ##[endgroup]
+
+  ##[group]Run mvn test
+  [INFO] Scanning for projects...
+  [INFO] Building myapp 1.0.0
+  [INFO] --- maven-surefire-plugin:3.1.2:test ---
+  [INFO] Forks 1 thread(s) to run tests.
+  [INFO]   MyRepositoryTest.testFindById() -- FAILED
+  com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+  Last packet sent to the server was 0 ms ago.
+  The last packet sent successfully to the server was 0 ms ago.
+  com.mysql.cj.jdbc.exceptions.CommunicationsException: Communications link failure
+
+
+  ##[error]Maven build did not succeed.
+  ##[group]Post Run actions/checkout@v4
+  Deleting temp folder '/home/runner/work/_temp/...'
+  ##[endgroup]
+expectation:
+  expected_playbook: mysql-connection-refused

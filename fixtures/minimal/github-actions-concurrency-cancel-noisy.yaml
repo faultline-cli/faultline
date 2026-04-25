@@ -1,0 +1,43 @@
+id: github-actions-concurrency-cancel-noisy
+title: GitHub Actions concurrency cancel — buried in long integration test run
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run actions/checkout@v4
+  Initialized empty Git repository
+  Checking out main at a7b2c3d
+  ##[endgroup]
+
+  ##[group]Set up Python 3.11
+  Found in cache
+  ##[endgroup]
+
+  ##[group]Install dependencies
+  $ pip install -r requirements.txt -q
+  Successfully installed 142 packages.
+  ##[endgroup]
+
+  ##[group]Run unit tests
+  $ pytest tests/unit/ -v --tb=short
+  collected 88 items
+
+  tests/unit/test_parser.py::test_parse_log PASSED
+  tests/unit/test_engine.py::test_match PASSED
+  tests/unit/test_scorer.py::test_score PASSED
+  ... (85 more tests passing)
+  88 passed in 4.23s
+  ##[endgroup]
+
+  ##[group]Run integration tests
+  $ pytest tests/integration/ -v --tb=short
+  collected 42 items
+
+  tests/integration/test_pipeline.py::test_full_flow PASSED
+  tests/integration/test_pipeline.py::test_error_path PASSED
+  tests/integration/test_ci_adapter.py::test_github_adapter
+
+  ##[warning]A newer run for concurrency group 'ci-main' was queued. Cancelling this run.
+  ##[error]A task was canceled.
+  Error: The operation was canceled.
+  ##[endgroup]
+expectation:
+  expected_playbook: github-actions-concurrency-cancel

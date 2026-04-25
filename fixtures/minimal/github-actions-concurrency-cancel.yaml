@@ -1,0 +1,25 @@
+id: github-actions-concurrency-cancel-canonical
+title: GitHub Actions workflow cancelled by concurrency group
+fixture_class: minimal
+normalized_log: |
+  Run actions/checkout@v4
+  Checking out repository...
+
+  Run Set up Node.js 20
+  Found in tool cache
+
+  Run npm ci
+  added 652 packages in 22s
+
+  Run npm test
+  > myapp@1.0.0 test
+  > jest --runInBand
+
+  PASS src/utils.test.ts (3.21s)
+  PASS src/models.test.ts (5.88s)
+
+  Cancelling a currently running workflow: CI / test (main) — a newer run for the same concurrency group was queued.
+  The operation was canceled.
+  Error: The operation was canceled.
+expectation:
+  expected_playbook: github-actions-concurrency-cancel

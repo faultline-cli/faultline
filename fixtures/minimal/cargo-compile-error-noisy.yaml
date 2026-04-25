@@ -1,0 +1,53 @@
+id: cargo-compile-error-noisy
+title: Rust cargo build — borrow checker error buried in multi-step CI log
+fixture_class: minimal
+normalized_log: |
+  ##[group]Set up repository
+  Checked out repository at refs/heads/main
+  ##[endgroup]
+
+  ##[group]Install Rust toolchain
+  $ rustup toolchain install stable
+  stable-x86_64-unknown-linux-gnu unchanged - rustc 1.77.2 (25ef9e3d8 2026-04-09)
+  $ rustup component add clippy rustfmt
+  ##[endgroup]
+
+  ##[group]Cache cargo registry
+  Cache hit: cargo-registry-Cargo.lock-abc123
+  ##[endgroup]
+
+  ##[group]Run cargo fmt --check
+  $ cargo fmt --check
+  Diff in /home/runner/work/myapp/src/engine.rs at line 42:
+  warning: formatting check passed.
+  ##[endgroup]
+
+  ##[group]Run cargo build
+  $ cargo build --all-targets
+    Compiling serde v1.0.197
+    Compiling tokio v1.37.0
+    Compiling myapp v0.3.1 (/home/runner/work/myapp/myapp)
+  error[E0502]: cannot borrow `data` as mutable because it is also borrowed as immutable
+   --> src/engine.rs:87:9
+    |
+  83 |     let ref_a = &data.items;
+    |                   --------- immutable borrow occurs here
+  87 |     data.items.push(new_item);
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^ mutable borrow occurs here
+  91 |     println!("{:?}", ref_a);
+    |                       ----- immutable borrow later used here
+
+  error[E0382]: borrow of moved value: `config`
+   --> src/engine.rs:102:15
+    |
+  98 |     let engine = Engine::new(config);
+    |                              ------ value moved here
+  102 |     println!("{:?}", config);
+    |                      ^^^^^^ value borrowed here after move
+
+  error: aborting due to 2 previous errors
+  error: could not compile `myapp` due to 2 previous errors
+  ##[error]cargo build --all-targets failed.
+  ##[endgroup]
+expectation:
+  expected_playbook: cargo-compile-error

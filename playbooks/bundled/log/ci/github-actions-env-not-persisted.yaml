@@ -1,0 +1,134 @@
+id: github-actions-env-not-persisted
+title: GitHub Actions environment variable not persisted across steps
+category: ci
+severity: high
+base_score: 0.95
+tags: [github-actions, env, environment-variable, set-env, GITHUB_ENV, deprecated]
+stage_hints: [build, test, deploy]
+domain: ci-config
+class: env-not-persisted
+mode: github-actions-env-not-carried
+summary: |-
+  A GitHub Actions step exported an environment variable using the deprecated
+  `::set-env` workflow command, which is now disabled. The variable was not
+  visible to subsequent steps. The fix is to write to `$GITHUB_ENV` instead.
+diagnosis: |-
+  ## Diagnosis
+
+  GitHub Actions runs each `run:` step in a new shell process. Variables set
+  with the shell's `export` built-in do **not** persist across steps. To share
+  a value with subsequent steps, write to the `$GITHUB_ENV` file:
+
+  ```bash
+  echo "MY_VAR=value" >> "$GITHUB_ENV"
+  ```
+
+  Before this mechanism existed, GitHub Actions supported a workflow command
+  syntax (`::set-env name=VAR::value`). This command was deprecated in
+  October 2020 and permanently **disabled** due to a security vulnerability
+  (it allowed injection from log output into the runner's environment). Any
+  workflow still using it receives an explicit error:
+
+  - `The 'set-env' command is deprecated and will be disabled soon.`
+  - `Unable to process command '::set-env' successfully.`
+  - `Error: Unprocessed element 'set-env'`
+
+  The downstream symptom is that the variable appears empty in later steps,
+  causing the following step to fail with a command-not-found, missing-path,
+  or empty-value error.
+fix: |-
+  ## Fix steps
+
+  1. Search the workflow file for any use of the `::set-env` syntax:
+
+     ```bash
+     grep -r "::set-env" .github/workflows/
+     ```
+
+  2. Replace each occurrence with the `$GITHUB_ENV` file append:
+
+     ```bash
+     # Before (deprecated / disabled):
+     echo "::set-env name=MY_VAR::$VALUE"
+
+     # After (correct):
+     echo "MY_VAR=$VALUE" >> "$GITHUB_ENV"
+     ```
+
+  3. If `export VAR=value` is used to set a variable that needs to be visible
+     in a later step, replace it:
+
+     ```bash
+     # Before (does not persist across steps):
+     export MY_VAR=$(git describe --tags)
+
+     # After (persists to all subsequent steps in the same job):
+     echo "MY_VAR=$(git describe --tags)" >> "$GITHUB_ENV"
+     ```
+
+  4. For step outputs (not environment variables), use `$GITHUB_OUTPUT`:
+
+     ```bash
+     echo "result=success" >> "$GITHUB_OUTPUT"
+     ```
+
+     Then reference the output in a later step with
+     `${{ steps.<step-id>.outputs.result }}`.
+
+  5. Re-run the workflow and confirm the variable is available in subsequent
+     steps.
+validation: |-
+  ## Validation
+
+  - Add a diagnostic step immediately after the setting step:
+
+    ```bash
+    echo "MY_VAR is: $MY_VAR"
+    ```
+
+  - Confirm the value is printed correctly, not empty.
+  - Confirm the `::set-env` error no longer appears in the workflow log.
+why_it_matters: |-
+  ## Why it matters
+
+  Shell environment variables are process-local. GitHub Actions runs each step
+  in its own process, so `export` and `::set-env` both silently drop values
+  between steps. Developers migrating from other CI systems or writing their
+  first GitHub Actions workflow regularly hit this because the mental model
+  of a shared shell session does not apply.
+
+  The `::set-env` command was disabled as a security fix: a compromised
+  dependency or a log line from a build tool could inject arbitrary environment
+  variable values into the runner's environment. Replacing it with `$GITHUB_ENV`
+  uses a file path that is unique per job run and not guessable from log output.
+
+  ## Prevention
+
+  - Use `>> "$GITHUB_ENV"` for all inter-step environment variable sharing.
+  - Use `>> "$GITHUB_OUTPUT"` for step outputs passed to other steps or jobs.
+  - Enable the `actions/checkout` pre-commit hook or a workflow linter
+    (e.g., `actionlint`) to catch `::set-env` usage in code review.
+
+match:
+  any:
+    - "The 'set-env' command is deprecated"
+    - "set-env' command is disabled"
+    - "Unable to process command '::set-env'"
+    - "::set-env name="
+    - "Unprocessed element 'set-env'"
+  none:
+    - "No secret named"
+    - "secrets.* is not available"
+    - "Context access might be invalid: secrets"
+    - "set-output"
+    - "GITHUB_OUTPUT"
+
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - 'grep -r "::set-env" .github/workflows/'
+    - 'grep -r "::set-output" .github/workflows/'
+  verify:
+    - 'grep -r "::set-env" .github/workflows/ && echo "FOUND deprecated usage" || echo "Clean"'

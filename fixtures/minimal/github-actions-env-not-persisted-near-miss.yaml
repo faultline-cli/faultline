@@ -1,0 +1,21 @@
+id: github-actions-env-not-persisted-near-miss
+title: GitHub Actions secret not available from fork — near-miss for github-actions-env-not-persisted
+fixture_class: minimal
+normalized_log: |
+  Run deploy to staging
+    npm run deploy
+    shell: /usr/bin/bash -e {0}
+    env:
+      API_KEY: ***
+      DEPLOY_TOKEN: ***
+  npm run deploy
+  > myapp@2.1.0 deploy
+  > node scripts/deploy.js
+
+  Error: No secret named DEPLOY_TOKEN
+  secrets.DEPLOY_TOKEN is not available for workflows triggered from fork PRs.
+  Context access might be invalid: secrets.DEPLOY_TOKEN is not available from pull_request events triggered by forks.
+expectation:
+  expected_playbook: secrets-not-available
+  disallowed_playbooks:
+    - github-actions-env-not-persisted

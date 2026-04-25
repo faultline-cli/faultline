@@ -1,0 +1,22 @@
+id: github-actions-concurrency-cancel-near-miss
+title: GitHub Actions pipeline timeout — near-miss for concurrency-cancel
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run integration tests
+  $ pytest tests/integration/ --timeout=600
+  collected 55 items
+
+  tests/integration/test_slow_pipeline.py::test_full_ingestion
+
+  ... (running for 45 minutes) ...
+
+  ERROR: test timed out after 600 seconds
+  FAILED tests/integration/test_slow_pipeline.py::test_full_ingestion - Timeout
+  ##[endgroup]
+
+  ##[error]Job's timeout exceeded: The job running on runner Hosted Agent exceeded the maximum execution time of 60 minutes.
+  ##[error]Process completed with exit code 1.
+expectation:
+  expected_playbook: test-timeout
+  disallowed_playbooks:
+    - github-actions-concurrency-cancel

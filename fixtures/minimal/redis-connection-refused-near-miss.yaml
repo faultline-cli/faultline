@@ -1,0 +1,28 @@
+id: redis-connection-refused-near-miss
+title: Redis WRONGPASS auth error — near-miss for redis-connection-refused
+fixture_class: minimal
+normalized_log: |
+  Run python -m pytest tests/integration/ -v
+    shell: /usr/bin/bash -e {0}
+    env:
+      REDIS_URL: redis://:badpassword@127.0.0.1:6379/0
+  + python -m pytest tests/integration/ -v
+  ========================= test session starts ===========================
+  platform linux -- Python 3.11.4
+  rootdir: /home/runner/work/myapp
+
+  tests/integration/test_cache.py::test_cache_set FAILED
+
+  ======================= FAILURES =========================
+  ________________ test_cache_set __________________________
+  redis.exceptions.AuthenticationError: WRONGPASS invalid username-password pair or user is disabled.
+
+  tests/integration/test_cache.py::test_cache_get FAILED
+  redis.exceptions.AuthenticationError: WRONGPASS invalid username-password pair or user is disabled.
+
+  ====================== 8 failed in 1.65s ====================
+  Error: Process completed with exit code 1.
+expectation:
+  expected_playbook: container-crash
+  disallowed_playbooks:
+    - redis-connection-refused

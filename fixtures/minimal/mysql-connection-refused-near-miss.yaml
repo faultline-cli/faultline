@@ -1,0 +1,24 @@
+id: mysql-connection-refused-near-miss
+title: MySQL access denied — near-miss for mysql-connection-refused (auth failure, not connection refused)
+fixture_class: minimal
+normalized_log: |
+  Run pytest tests/ -v
+    shell: /usr/bin/bash -e {0}
+  + python -m pytest tests/ -v
+  ========================= test session starts ==========================
+  platform linux -- Python 3.11.4
+  rootdir: /home/runner/work/myapp/myapp
+  collected 12 items
+
+  tests/test_db.py::test_connect FAILED
+
+  ======================= FAILURES =======================
+  ___________ test_connect ____________
+  sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1045, "Access denied for user 'root'@'127.0.0.1' (using password: YES)")
+
+  =================== 12 failed in 1.12s ==================
+  ERROR: Process completed with exit code 1.
+expectation:
+  expected_playbook: container-crash
+  disallowed_playbooks:
+    - mysql-connection-refused

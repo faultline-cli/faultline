@@ -1,0 +1,31 @@
+id: cargo-compile-error-near-miss
+title: Rust cargo test failure — near-miss for cargo-compile-error (tests fail, not compile)
+fixture_class: minimal
+normalized_log: |
+  Run cargo test --all
+    cargo test --all
+    shell: /usr/bin/bash -e {0}
+
+  $ cargo test --all
+    Compiling myapp v0.3.1 (/home/runner/work/myapp/myapp)
+    Finished test [unoptimized + debuginfo] target(s) in 8.44s
+     Running unittests src/main.rs (target/debug/deps/myapp-a3f8c2d1)
+
+  running 14 tests
+  test engine::tests::test_normalize ... ok
+  test engine::tests::test_match_basic ... ok
+  test engine::tests::test_score_threshold ... FAILED
+  test engine::tests::test_edge_case_empty ... ok
+
+  failures:
+
+  ---- engine::tests::test_score_threshold stdout ----
+  thread 'engine::tests::test_score_threshold' panicked at 'assertion failed: score >= 0.8\nleft: 0.72\nright: 0.8', src/engine.rs:222:9
+  note: run with `RUST_BACKTRACE=1` for a backtrace.
+
+  test result: FAILED. 1 failed; 13 passed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+  Error: Process completed with exit code 101.
+expectation:
+  expected_playbook: topology-failure-clustered
+  disallowed_playbooks:
+    - cargo-compile-error

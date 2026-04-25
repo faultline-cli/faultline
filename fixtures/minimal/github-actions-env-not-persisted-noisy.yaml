@@ -1,0 +1,34 @@
+id: github-actions-env-not-persisted-noisy
+title: GitHub Actions set-env disabled — buried in multi-step release workflow
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run actions/checkout@v4
+  Checking out repository at refs/heads/main
+  HEAD is now at a4c2f91
+  ##[endgroup]
+
+  ##[group]Set up Go 1.22
+  Go 1.22.2 toolchain found in cache
+  Added to PATH
+  ##[endgroup]
+
+  ##[group]Run tests
+  $ go test ./... -count=1
+  ok      github.com/org/myapp/internal/engine        0.412s
+  ok      github.com/org/myapp/internal/matcher       0.208s
+  ok      github.com/org/myapp/cmd                    0.033s
+  ##[endgroup]
+
+  ##[group]Compute release version
+  $ git describe --tags --always
+  v1.3.2-4-ga4c2f91
+  $ echo "::set-env name=RELEASE_VERSION::v1.3.2-4-ga4c2f91"
+  Error: Unable to process command '::set-env' successfully. The `set-env` command is disabled. Please upgrade to using Environment Files.
+  ##[error]Process completed with exit code 1.
+  ##[endgroup]
+
+  ##[group]Post Run actions/checkout@v4
+  Cleaning up orphan processes
+  ##[endgroup]
+expectation:
+  expected_playbook: github-actions-env-not-persisted

@@ -20,3 +20,5 @@ playbooks/packs/*-local
 fixtures/staging/*.yaml
 
 .cocoindex_code/*
+
+fixtures/datasets/*

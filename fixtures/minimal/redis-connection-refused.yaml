@@ -1,0 +1,29 @@
+id: redis-connection-refused-canonical
+title: Redis CannotConnectError — service not started in CI
+fixture_class: minimal
+normalized_log: |
+  Run bundle exec rspec spec/ --format progress
+    bundle exec rspec spec/ --format progress
+    shell: /usr/bin/bash -e {0}
+    env:
+      RAILS_ENV: test
+      REDIS_URL: redis://localhost:6379/1
+  Cloning repository...
+  Checking out files: 100% (421/421), done.
+
+  $ bundle install --quiet
+  Bundle complete! 68 Gemfile dependencies, 223 gems now installed.
+
+  $ bundle exec rspec spec/ --format progress
+  /home/runner/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.1/gems/redis-5.0.6/lib/redis/client.rb:374:in `establish_connection'
+  Redis::CannotConnectError: Error connecting to Redis on localhost:6379 (ECONNREFUSED 127.0.0.1:6379)
+    from /home/runner/.rbenv/versions/3.2.1/lib/ruby/gems/3.2.1/gems/redis-5.0.6/lib/redis.rb:89:in `_client'
+
+  An error occurred while loading spec_helper.rb.
+  Failure/Error: Sidekiq.redis { |r| r.ping }
+
+  Could not connect to Redis at localhost:6379
+  0 examples, 0 failures, 1 error
+  Error: bundle exec rspec failed.
+expectation:
+  expected_playbook: redis-connection-refused
