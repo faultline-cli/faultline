@@ -15,7 +15,7 @@ func TestBuildWithOptionsNilAnalysisReturnsPrompt(t *testing.T) {
 		t.Errorf("expected schema version %q, got %q", schemaVersion, plan.SchemaVersion)
 	}
 	if len(plan.Steps) == 0 {
-		t.Error("expected prompt step for nil analysis")
+		t.Fatal("expected prompt step for nil analysis")
 	}
 	if !strings.Contains(plan.Steps[0], "faultline analyze") {
 		t.Errorf("expected faultline analyze in step, got %q", plan.Steps[0])
@@ -491,7 +491,7 @@ func TestMarkdownListItemsIgnoresHeaders(t *testing.T) {
 func TestDedupeKeepOrderBasic(t *testing.T) {
 	out := dedupeKeepOrder([]string{"a"}, []string{"b", "a", "c", ""})
 	if len(out) != 3 {
-		t.Errorf("expected 3 unique items, got %v", out)
+		t.Fatalf("expected 3 unique items, got %v", out)
 	}
 	if out[0] != "a" || out[1] != "b" || out[2] != "c" {
 		t.Errorf("unexpected order: %v", out)

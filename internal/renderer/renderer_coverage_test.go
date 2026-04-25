@@ -197,9 +197,12 @@ func TestRenderAnalyzeStyledDetailedPanelsHaveANSI(t *testing.T) {
 		},
 	}
 	out := New(Options{Plain: false, Width: 88, DarkBackground: true}).RenderAnalyze(a, 1, true)
-	// Styled output uses lipgloss panels — should contain rendered content
+	// Styled output uses lipgloss panels and should include ANSI escape sequences.
 	if !strings.Contains(out, "Missing go.sum entry") {
 		t.Errorf("expected playbook title in styled detailed output, got:\n%s", out)
+	}
+	if !strings.Contains(out, "\x1b[") {
+		t.Errorf("expected ANSI escape sequences in styled detailed output, got:\n%s", out)
 	}
 }
 

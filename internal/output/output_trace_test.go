@@ -55,8 +55,11 @@ func TestFormatTraceMarkdownMatchedContainsPlaybookID(t *testing.T) {
 func TestFormatTraceMarkdownMatchedShowsOutcome(t *testing.T) {
 	report := makeTraceReport(true)
 	out := FormatTraceMarkdown(report, false, false, false)
-	if !strings.Contains(out, "matched") {
-		t.Errorf("expected 'matched' outcome in markdown, got:\n%s", out)
+	if !strings.Contains(out, "- Outcome: matched") {
+		t.Errorf("expected '- Outcome: matched' in markdown, got:\n%s", out)
+	}
+	if strings.Contains(out, "not matched") {
+		t.Errorf("did not expect 'not matched' in markdown, got:\n%s", out)
 	}
 }
 
@@ -208,8 +211,8 @@ func TestFormatTraceMarkdownScoreInHeader(t *testing.T) {
 	report.Score = 2.5
 	report.Confidence = 0.9
 	out := FormatTraceMarkdown(report, false, false, false)
-	if !strings.Contains(out, "Outcome") {
-		t.Errorf("expected Outcome section when score > 0, got:\n%s", out)
+	if !strings.Contains(out, "- Score:") {
+		t.Errorf("expected score information in markdown when score > 0, got:\n%s", out)
 	}
 }
 

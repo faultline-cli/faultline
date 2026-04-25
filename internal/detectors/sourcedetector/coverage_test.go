@@ -85,7 +85,7 @@ func TestCollectSuppressionsInlineFaultlineIgnore(t *testing.T) {
 		t.Error("expected fullySuppressed=true for inline faultline:ignore")
 	}
 	if len(out) == 0 {
-		t.Error("expected at least one suppression occurrence")
+		t.Fatal("expected at least one suppression occurrence")
 	}
 	if out[0].evidence.Kind != model.EvidenceSuppression {
 		t.Errorf("expected suppression kind, got %q", out[0].evidence.Kind)
@@ -208,7 +208,7 @@ func TestCollectSafeContextMatchesPath(t *testing.T) {
 	}
 	out := collectSafeContext(pb, files)
 	if len(out) != 1 {
-		t.Errorf("expected 1 safe context match for testdata file, got %d: %v", len(out), out)
+		t.Fatalf("expected 1 safe context match for testdata file, got %d: %v", len(out), out)
 	}
 	if out[0].evidence.File != "testdata/cases.go" {
 		t.Errorf("expected testdata/cases.go, got %q", out[0].evidence.File)
@@ -366,13 +366,13 @@ func TestSortOccurrencesByKind(t *testing.T) {
 		{evidence: model.Evidence{File: "a.go", Line: 1, Kind: model.EvidenceTrigger}},
 	}
 	sortOccurrences(items)
-	// Trigger kind should sort before Mitigation alphabetically (t < m in string comparison).
-	// The exact order depends on the string value of the constants; we just verify determinism.
-	before := items[0].evidence.Kind
-	sortOccurrences(items)
-	after := items[0].evidence.Kind
-	if before != after {
-		t.Error("sortOccurrences is not deterministic")
+	// Kind is used as a lexical tie-breaker when file and line are equal, so
+	// EvidenceMitigation sorts before EvidenceTrigger ("mitigation" < "trigger").
+	if items[0].evidence.Kind != model.EvidenceMitigation {
+		t.Errorf("expected mitigation first, got %q", items[0].evidence.Kind)
+	}
+	if items[1].evidence.Kind != model.EvidenceTrigger {
+		t.Errorf("expected trigger second, got %q", items[1].evidence.Kind)
 	}
 }
 

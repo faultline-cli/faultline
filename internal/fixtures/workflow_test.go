@@ -3,6 +3,7 @@ package fixtures
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -43,9 +44,10 @@ func TestWriteFixtureClearsFilePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read fixture file: %v", err)
 	}
-	// FilePath field should have been cleared before serialization
-	if string(data) == "" {
-		t.Fatal("expected non-empty file content")
+	// FilePath field should have been cleared before serialization — it must
+	// not appear in the YAML output.
+	if strings.Contains(string(data), "file_path") {
+		t.Errorf("expected file_path to be absent from serialized YAML, got:\n%s", string(data))
 	}
 }
 
