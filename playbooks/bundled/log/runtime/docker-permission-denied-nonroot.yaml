@@ -85,18 +85,21 @@ why_it_matters: |-
 
 match:
   any:
-    - "Permission denied"
     - "permission denied"
     - "cannot open"
     - "cannot read"
     - "Access denied"
     - "Operation not permitted"
+    - "running as user"
+    - "uid 1000"
+    - "chown"
   none:
     - "authentication"
     - "ENOENT"
     - "connection"
     - "for relation"
     - "manage.py migrate"
+    - "(publickey)"
 
 workflow:
   likely_files:

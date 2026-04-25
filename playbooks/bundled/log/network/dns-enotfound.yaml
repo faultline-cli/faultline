@@ -83,6 +83,7 @@ match:
     - "ECONNREFUSED"
     - "ETIMEDOUT"
     - "EACCES"
+    - "ModuleNotFoundError"
 
 workflow:
   likely_files:

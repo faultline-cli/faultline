@@ -12,6 +12,7 @@ match:
     - "exec: \""
     - "command not found"
     - is not recognized as an internal or external command
+    - "exit status 127"
   none:
     - fixture
     - testdata

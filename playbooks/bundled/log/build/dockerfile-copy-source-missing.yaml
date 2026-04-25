@@ -86,6 +86,7 @@ match:
   none:
     - "permission denied"
     - "command not found"
+    - "command 'gcc' failed"
 
 workflow:
   likely_files:

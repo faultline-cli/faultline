@@ -268,7 +268,7 @@ func TestReplayRejectsTraceForAnalysisArtifact(t *testing.T) {
 func TestCompareArtifacts(t *testing.T) {
 	svc := NewService()
 	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "pull access denied\npermission denied\n"
+	rightLog := "permission denied opening /app/data/config.yaml\n"
 
 	makeArtifact := func(log string) string {
 		var buf bytes.Buffer
@@ -851,7 +851,7 @@ func runServiceGitEnv(t *testing.T, dir string, env []string, args ...string) {
 func TestSignaturesEmptyStore(t *testing.T) {
 	svc := NewService()
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	
+
 	// Test text output
 	var buf bytes.Buffer
 	err := svc.Signatures(storePath, 10, false, &buf)
@@ -862,7 +862,7 @@ func TestSignaturesEmptyStore(t *testing.T) {
 	if !strings.Contains(output, "No stored signatures yet") {
 		t.Errorf("expected 'No stored signatures yet' in output, got: %s", output)
 	}
-	
+
 	// Test JSON output
 	buf.Reset()
 	err = svc.Signatures(storePath, 10, true, &buf)
@@ -883,7 +883,7 @@ func TestSignaturesEmptyStore(t *testing.T) {
 func TestSignaturesWithData(t *testing.T) {
 	svc := NewService()
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	
+
 	// First, analyze a log to create some history
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
 	opts := AnalyzeOptions{
@@ -892,13 +892,13 @@ func TestSignaturesWithData(t *testing.T) {
 		Store:       storePath,
 		PlaybookDir: repoPlaybookDir(),
 	}
-	
+
 	var analysisBuf bytes.Buffer
 	err := svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &analysisBuf)
 	if err != nil {
 		t.Fatalf("Analyze to create history: %v", err)
 	}
-	
+
 	// Now test Signatures with data
 	var buf bytes.Buffer
 	err = svc.Signatures(storePath, 10, false, &buf)
@@ -912,7 +912,7 @@ func TestSignaturesWithData(t *testing.T) {
 	if strings.Contains(output, "No stored signatures yet") {
 		t.Errorf("expected signatures in output, got 'No stored signatures yet'")
 	}
-	
+
 	// Test JSON output with data
 	buf.Reset()
 	err = svc.Signatures(storePath, 10, true, &buf)
@@ -933,7 +933,7 @@ func TestSignaturesWithData(t *testing.T) {
 func TestHistoryDeterminismVerification(t *testing.T) {
 	svc := NewService()
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	
+
 	// First analysis
 	log := "Error response from daemon: pull access denied\n"
 	opts := AnalyzeOptions{
@@ -942,20 +942,20 @@ func TestHistoryDeterminismVerification(t *testing.T) {
 		Store:       storePath,
 		PlaybookDir: repoPlaybookDir(),
 	}
-	
+
 	var firstBuf bytes.Buffer
 	err := svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &firstBuf)
 	if err != nil {
 		t.Fatalf("First Analyze: %v", err)
 	}
-	
+
 	// Second analysis with same input
 	var secondBuf bytes.Buffer
 	err = svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &secondBuf)
 	if err != nil {
 		t.Fatalf("Second Analyze: %v", err)
 	}
-	
+
 	// Verify determinism
 	var buf bytes.Buffer
 	err = svc.VerifyDeterminism(bytes.NewBufferString(log), "stdin", storePath, false, &buf)
@@ -976,7 +976,7 @@ func TestHelperFunctions(t *testing.T) {
 	if hash := shortHash("abc"); hash != "abc" {
 		t.Errorf("shortHash short input: expected 'abc', got %s", hash)
 	}
-	
+
 	// Test maxInt
 	if val := maxInt(1, 2); val != 2 {
 		t.Errorf("maxInt: expected 2, got %d", val)
@@ -987,7 +987,7 @@ func TestHelperFunctions(t *testing.T) {
 	if val := maxInt(-1, -5); val != -1 {
 		t.Errorf("maxInt negative: expected -1, got %d", val)
 	}
-	
+
 	// Test emptyDash
 	if val := emptyDash(""); val != "-" {
 		t.Errorf("emptyDash empty: expected '-', got %s", val)
@@ -995,7 +995,7 @@ func TestHelperFunctions(t *testing.T) {
 	if val := emptyDash("test"); val != "test" {
 		t.Errorf("emptyDash non-empty: expected 'test', got %s", val)
 	}
-	
+
 	// Test historyWindow with timestamp strings
 	if window := historyWindow("2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z"); window != "" {
 		t.Errorf("historyWindow same timestamp: expected empty string, got %s", window)
@@ -1008,7 +1008,7 @@ func TestHelperFunctions(t *testing.T) {
 	if window := historyWindow("2024-01-01T00:00:00Z", "2024-01-03T00:00:00Z"); window != "2d" {
 		t.Errorf("historyWindow 2 day difference: expected '2d', got %s", window)
 	}
-	
+
 	// Test fallbackSource
 	if source := fallbackSource("test.log"); source != "test.log" {
 		t.Errorf("fallbackSource with input: expected 'test.log', got %s", source)

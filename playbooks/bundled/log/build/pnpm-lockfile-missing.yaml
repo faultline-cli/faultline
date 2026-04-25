@@ -81,6 +81,7 @@ match:
   none:
     - "npm ERR!"
     - "yarn error"
+    - "ERR_PNPM_OUTDATED_LOCKFILE"
 
 workflow:
   likely_files:

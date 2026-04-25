@@ -3,8 +3,8 @@ title: Github action fails to checkout private submodule.
 fixture_class: real
 normalized_log: 'git@github.com: Permission denied (publickey).'
 expectation:
-    expected_playbook: ssh-key-auth
-    top_n: 3
+    expected_playbook: ssh-permission-denied
+    top_n: 1
     strict_top1: true
     min_confidence: 0.55
 source:

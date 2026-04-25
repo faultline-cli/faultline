@@ -32,6 +32,10 @@
   pattern: `is not recognized as an internal or external command`
   evidence: none
   note: trigger rule did not match
+- `MISSING` `match.any[5]`
+  pattern: `exit status 127`
+  evidence: none
+  note: trigger rule did not match
 - `CLEAR` `match.none[0]`
   pattern: `fixture`
   evidence: none

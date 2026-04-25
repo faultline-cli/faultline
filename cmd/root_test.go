@@ -674,7 +674,7 @@ func TestCompareCommandJSON(t *testing.T) {
 	}
 
 	left := makeArtifact("pull access denied\nError response from daemon: authentication required\n")
-	right := makeArtifact("pull access denied\npermission denied\n")
+	right := makeArtifact("permission denied opening /app/data/config.yaml\n")
 
 	cmd := newRootCommand()
 	cmd.SetArgs([]string{"compare", "--json", left, right})

@@ -82,6 +82,7 @@ match:
     - "npx: command not found"
     - "cargo: command not found"
     - "bundle: command not found"
+    - "uses: actions/checkout"
 
 workflow:
   likely_files:
