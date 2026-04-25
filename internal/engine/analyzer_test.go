@@ -369,13 +369,17 @@ func TestLoadRepoSnapshotNonGitDir(t *testing.T) {
 // ── localRepoEnricher.Enrich ──────────────────────────────────────────────────
 
 func TestLocalRepoEnricherEnrichNonGitReturnsNil(t *testing.T) {
-	enricher := localRepoEnricher{opts: Options{RepoPath: t.TempDir()}}
+	repoPath := t.TempDir()
+	if err := os.WriteFile(filepath.Join(repoPath, ".git"), []byte("not a git dir"), 0o644); err != nil {
+		t.Fatalf("write invalid .git marker: %v", err)
+	}
+
+	enricher := localRepoEnricher{opts: Options{RepoPath: repoPath}}
 	rc := enricher.Enrich(model.Result{
 		Playbook: model.Playbook{ID: "docker-auth", Category: "auth"},
 	})
-	// Non-git directory: NewScanner fails, returns nil.
 	if rc != nil {
-		t.Logf("got non-nil RepoContext for non-git dir (may be in a git worktree): %#v", rc)
+		t.Fatalf("expected nil RepoContext for non-git dir, got %#v", rc)
 	}
 }
 

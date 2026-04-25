@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -696,11 +697,16 @@ func TestInstallCommandUnknownManagerErrors(t *testing.T) {
 // --- detectPackageManagerStep.Execute ---
 
 func TestDetectPackageManagerStepExecuteFindsManager(t *testing.T) {
-	// Create a fake package manager script in a temp dir and point PATH at it.
+	// Create a fake package manager executable in a temp dir and point PATH at it.
+	// On Windows, exec.LookPath only resolves executables with extensions listed in
+	// PATHEXT, so we create "apt-get.exe" and set PATHEXT accordingly.
 	tmp := t.TempDir()
-	script := "#!/bin/sh\nexit 0\n"
-	fakeMgr := filepath.Join(tmp, "apt-get")
-	if err := os.WriteFile(fakeMgr, []byte(script), 0o755); err != nil {
+	name := "apt-get"
+	if runtime.GOOS == "windows" {
+		name = "apt-get.exe"
+		t.Setenv("PATHEXT", ".EXE")
+	}
+	if err := os.WriteFile(filepath.Join(tmp, name), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
 		t.Fatalf("write fake manager: %v", err)
 	}
 	t.Setenv("PATH", tmp)
