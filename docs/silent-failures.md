@@ -77,7 +77,7 @@ Without `--fail-on-silent`, silent findings are reported but Faultline's exit be
 
 ## Built-in detectors
 
-Faultline includes six built-in silent-failure detectors. All are deterministic: no ML, no external calls, no guesswork.
+Faultline includes eight built-in silent-failure detectors. All are deterministic: no ML, no external calls, no guesswork.
 
 | Detector | Signal | Severity |
 |---|---|---|
@@ -87,6 +87,8 @@ Faultline includes six built-in silent-failure detectors. All are deterministic:
 | `artifact-missing` | Upload step + `Skipping upload`, `no files found with the provided path`, etc. | high |
 | `cache-miss-non-fatal` | Cache step + `Cache not found`, `Failed to restore cache`, etc. | medium |
 | `skipped-critical-step` | `Skipping step due to condition` + critical domain keyword | high |
+| `empty-deployment-target` | Deploy/publish step + `Nothing to deploy`, `No manifests found`, etc. | high |
+| `empty-quality-check` | Lint/scan/coverage step + `0 files scanned`, `No files to lint`, etc. | medium |
 
 Each detector uses conservative AND-logic where possible: both a context signal (e.g. "an upload step ran") and a failure signal (e.g. "no files found") must be present.
 
@@ -100,6 +102,8 @@ Each detector has a corresponding playbook with diagnosis, fix steps, and preven
 - [`artifact-missing`](../playbooks/bundled/log/silent/artifact-missing.yaml)
 - [`cache-miss-non-fatal`](../playbooks/bundled/log/silent/cache-miss-non-fatal.yaml)
 - [`skipped-critical-step`](../playbooks/bundled/log/silent/skipped-critical-step.yaml)
+- [`empty-deployment-target`](../playbooks/bundled/log/silent/empty-deployment-target.yaml)
+- [`empty-quality-check`](../playbooks/bundled/log/silent/empty-quality-check.yaml)
 
 ## JSON schema
 
@@ -126,6 +130,6 @@ Existing fields (`results`, `context`, `fingerprint`, etc.) are unchanged.
 
 Planned improvements:
 
-1. **More detector coverage** — detect silent linter/security-scan failures and empty deployment targets
-2. **CI config cross-referencing** — correlate log signals with the workflow YAML to catch skipped steps more accurately
+1. **CI config cross-referencing** — correlate log signals with the workflow YAML to catch skipped steps more accurately
+2. **Repo expectations** — let teams declare expected test, lint, deploy, or coverage surfaces per repository
 3. **Public detector interface** — allow custom org-level silent failure rules via a declarative config (not yet implemented)

@@ -125,6 +125,30 @@ func TestSkippedCriticalStepDetector(t *testing.T) {
 	}
 }
 
+func TestEmptyDeploymentTargetDetector(t *testing.T) {
+	input := readLog(t, "empty-deployment-target.log")
+	findings := silentdetector.Run(input)
+	f := findingID(findings, "empty-deployment-target")
+	if f == nil {
+		t.Fatal("expected empty-deployment-target finding, got none")
+	}
+	if f.Severity != "high" {
+		t.Errorf("expected severity high, got %q", f.Severity)
+	}
+}
+
+func TestEmptyQualityCheckDetector(t *testing.T) {
+	input := readLog(t, "empty-quality-check.log")
+	findings := silentdetector.Run(input)
+	f := findingID(findings, "empty-quality-check")
+	if f == nil {
+		t.Fatal("expected empty-quality-check finding, got none")
+	}
+	if f.Severity != "medium" {
+		t.Errorf("expected severity medium, got %q", f.Severity)
+	}
+}
+
 // ── Combined / integration scenarios ─────────────────────────────────────────
 
 func TestNoSilentFindingsOnCleanLog(t *testing.T) {
@@ -168,6 +192,30 @@ func TestSelectPrimaryDeterminism(t *testing.T) {
 	}
 }
 
+func TestSelectPrimaryUsesSeverityAndConfidenceOrdering(t *testing.T) {
+	findings := []model.SilentFinding{
+		{ID: "cache-miss-non-fatal", Severity: "medium", Confidence: "medium"},
+		{ID: "ignored-exit-code", Severity: "high", Confidence: "high"},
+	}
+	primary := silentdetector.SelectPrimary(findings)
+	if primary == nil {
+		t.Fatal("expected primary finding")
+	}
+	if primary.ID != "cache-miss-non-fatal" {
+		t.Fatalf("SelectPrimary should assume findings are pre-sorted; got %q", primary.ID)
+	}
+
+	input := readLog(t, "multiple-silent.log")
+	ranked := silentdetector.Run(input)
+	best := silentdetector.SelectPrimary(ranked)
+	if best == nil {
+		t.Fatal("expected ranked primary finding")
+	}
+	if best.Severity != "high" {
+		t.Fatalf("expected high severity primary, got %q", best.Severity)
+	}
+}
+
 // TestSelectPrimaryEmpty ensures nil is returned for empty input.
 func TestSelectPrimaryEmpty(t *testing.T) {
 	if p := silentdetector.SelectPrimary(nil); p != nil {
@@ -181,7 +229,7 @@ func TestSelectPrimaryEmpty(t *testing.T) {
 // TestEvidenceNotEmpty ensures each detector includes evidence.
 func TestEvidenceNotEmpty(t *testing.T) {
 	fixtures := []struct {
-		file      string
+		file       string
 		detectorID string
 	}{
 		{"ignored-exit-code.log", "ignored-exit-code"},
@@ -190,6 +238,8 @@ func TestEvidenceNotEmpty(t *testing.T) {
 		{"artifact-missing.log", "artifact-missing"},
 		{"cache-miss.log", "cache-miss-non-fatal"},
 		{"skipped-critical-step.log", "skipped-critical-step"},
+		{"empty-deployment-target.log", "empty-deployment-target"},
+		{"empty-quality-check.log", "empty-quality-check"},
 	}
 	for _, tc := range fixtures {
 		t.Run(tc.detectorID, func(t *testing.T) {
@@ -215,6 +265,8 @@ func TestSilentFindingClass(t *testing.T) {
 		"artifact-missing.log",
 		"cache-miss.log",
 		"skipped-critical-step.log",
+		"empty-deployment-target.log",
+		"empty-quality-check.log",
 	}
 	for _, file := range fixtures {
 		input := readLog(t, file)

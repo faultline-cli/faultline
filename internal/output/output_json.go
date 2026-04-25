@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"faultline/internal/model"
+	"faultline/internal/silentdetector"
 )
 
 // ── JSON types ────────────────────────────────────────────────────────────────
@@ -310,7 +311,7 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 		}
 		// If silent findings are present and no playbook matched, promote the
 		// top silent finding to the primary failure classification.
-		if primary := silentPrimary(a.SilentFindings); primary != nil {
+		if primary := silentdetector.SelectPrimary(a.SilentFindings); primary != nil {
 			payload.FaultlineStatus = "failure"
 			payload.FailureClass = primary.Class
 			payload.FailureID = primary.ID
@@ -360,16 +361,6 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 		}
 	}
 	return payload
-}
-
-// silentPrimary selects the highest-priority silent finding from findings.
-// It mirrors silentdetector.SelectPrimary without creating a package dependency
-// in the output layer.
-func silentPrimary(findings []model.SilentFinding) *model.SilentFinding {
-	if len(findings) == 0 {
-		return nil
-	}
-	return &findings[0]
 }
 
 func repoContextJSON(repoCtx *model.RepoContext) *repoCtxJSON {

@@ -80,7 +80,7 @@ Faultline detects a class of failure most tools miss: **CI appeared to succeed, 
 faultline analyze build.log --fail-on-silent
 ```
 
-Six built-in detectors cover suppressed exit codes, zero-test runs, missing artifacts, cache failures, and skipped critical steps. See [docs/silent-failures.md](docs/silent-failures.md) for details.
+Eight built-in detectors cover suppressed exit codes, zero-test runs, missing artifacts, cache failures, skipped critical steps, empty deploy targets, and empty lint/scan steps. See [docs/silent-failures.md](docs/silent-failures.md) for details.
 
 ## ↪ Drop it into CI
 
