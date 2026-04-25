@@ -19,7 +19,7 @@ diagnosis: |-
   Common causes:
 
   - A glob pattern or path filter no longer matches any test files (e.g.,
-    after a directory reorganisation).
+    after a directory reorganization).
   - Test files were moved but the runner configuration was not updated.
   - A new workspace or working directory is missing test files that exist
     elsewhere in the repository.

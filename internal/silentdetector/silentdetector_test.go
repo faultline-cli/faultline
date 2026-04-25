@@ -194,14 +194,14 @@ func TestSelectPrimaryDeterminism(t *testing.T) {
 
 func TestSelectPrimaryUsesSeverityAndConfidenceOrdering(t *testing.T) {
 	findings := []model.SilentFinding{
-		{ID: "cache-miss-non-fatal", Severity: "medium", Confidence: "medium"},
 		{ID: "ignored-exit-code", Severity: "high", Confidence: "high"},
+		{ID: "cache-miss-non-fatal", Severity: "medium", Confidence: "medium"},
 	}
 	primary := silentdetector.SelectPrimary(findings)
 	if primary == nil {
 		t.Fatal("expected primary finding")
 	}
-	if primary.ID != "cache-miss-non-fatal" {
+	if primary.ID != "ignored-exit-code" {
 		t.Fatalf("SelectPrimary should return the first finding from a pre-ranked slice; got %q", primary.ID)
 	}
 

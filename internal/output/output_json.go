@@ -293,6 +293,9 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.DominantSignals = a.DominantSignals
 	payload.SuggestedPlaybookSeed = a.SuggestedPlaybookSeed
 	payload.Artifact = a.Artifact
+	if len(a.Results) > 0 || len(a.SilentFindings) > 0 {
+		payload.FaultlineStatus = "failure"
+	}
 
 	// Attach silent findings regardless of whether a playbook matched.
 	if len(a.SilentFindings) > 0 {
@@ -312,7 +315,6 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 		// If silent findings are present and no playbook matched, promote the
 		// top silent finding to the primary failure classification.
 		if primary := silentdetector.SelectPrimary(a.SilentFindings); primary != nil {
-			payload.FaultlineStatus = "failure"
 			payload.FailureClass = primary.Class
 			payload.FailureID = primary.ID
 		}
@@ -322,7 +324,6 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	// Matched: populate failure_class from the top result's category.
 	if len(a.Results) > 0 {
 		payload.FailureClass = a.Results[0].Playbook.Category
-		payload.FaultlineStatus = "failure"
 	}
 
 	results := topN(a.Results, top)
