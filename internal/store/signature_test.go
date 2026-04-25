@@ -50,3 +50,30 @@ func TestNormalizeEvidenceLineRealFixtureNoise(t *testing.T) {
 		t.Fatalf("unexpected normalized line: %q", got)
 	}
 }
+
+func TestInputHashForLogIsDeterministic(t *testing.T) {
+	text := "pull access denied for registry.example.com/app:latest"
+	h1 := InputHashForLog(text)
+	h2 := InputHashForLog(text)
+	if h1 == "" {
+		t.Fatal("expected non-empty hash")
+	}
+	if h1 != h2 {
+		t.Fatalf("hash is not deterministic: %q != %q", h1, h2)
+	}
+}
+
+func TestInputHashForLogDistinctInputsDistinctHashes(t *testing.T) {
+	h1 := InputHashForLog("authentication required for https://registry.example.com")
+	h2 := InputHashForLog("dial tcp: connection refused")
+	if h1 == h2 {
+		t.Fatalf("expected distinct hashes for distinct inputs, got %q", h1)
+	}
+}
+
+func TestInputHashForLogEmptyInput(t *testing.T) {
+	h := InputHashForLog("")
+	if h == "" {
+		t.Fatal("expected non-empty hash for empty input")
+	}
+}

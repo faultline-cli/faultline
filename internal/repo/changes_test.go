@@ -159,3 +159,56 @@ func hasLine(lines map[int]struct{}, want int) bool {
 	_, ok := lines[want]
 	return ok
 }
+
+// ── cloneChangeSet ────────────────────────────────────────────────────────────
+
+func TestCloneChangeSetCopiesAllFiles(t *testing.T) {
+	in := detectors.ChangeSet{
+		ChangedFiles: map[string]detectors.FileChange{
+			"main.go": {
+				Status: "modified",
+				Lines:  map[int]struct{}{3: {}, 7: {}},
+			},
+			"util.go": {
+				Status: "added",
+				Lines:  map[int]struct{}{1: {}},
+			},
+		},
+	}
+	out := cloneChangeSet(in)
+	if len(out.ChangedFiles) != 2 {
+		t.Fatalf("expected 2 files, got %d", len(out.ChangedFiles))
+	}
+	if out.ChangedFiles["main.go"].Status != "modified" {
+		t.Errorf("expected status modified for main.go, got %q", out.ChangedFiles["main.go"].Status)
+	}
+	if !hasLine(out.ChangedFiles["main.go"].Lines, 3) || !hasLine(out.ChangedFiles["main.go"].Lines, 7) {
+		t.Errorf("expected lines 3 and 7 for main.go, got %v", out.ChangedFiles["main.go"].Lines)
+	}
+}
+
+func TestCloneChangeSetIsIndependent(t *testing.T) {
+	in := detectors.ChangeSet{
+		ChangedFiles: map[string]detectors.FileChange{
+			"app.go": {
+				Status: "added",
+				Lines:  map[int]struct{}{1: {}},
+			},
+		},
+	}
+	out := cloneChangeSet(in)
+	// Mutate original
+	in.ChangedFiles["app.go"] = detectors.FileChange{Status: "deleted", Lines: map[int]struct{}{}}
+	// Clone should not be affected
+	if out.ChangedFiles["app.go"].Status != "added" {
+		t.Errorf("expected clone to be independent of original, got status %q", out.ChangedFiles["app.go"].Status)
+	}
+}
+
+func TestCloneChangeSetEmptyInput(t *testing.T) {
+	in := detectors.ChangeSet{ChangedFiles: map[string]detectors.FileChange{}}
+	out := cloneChangeSet(in)
+	if len(out.ChangedFiles) != 0 {
+		t.Errorf("expected empty clone, got %v", out.ChangedFiles)
+	}
+}
