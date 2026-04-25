@@ -66,9 +66,6 @@ func TestEvaluateLogAbsentNoMatchWhenPresent(t *testing.T) {
 }
 
 func TestEvaluateDeltaSignalMatches(t *testing.T) {
-	deltaSignals := map[string]model.DeltaSignal{
-		"dep.changed": {ID: "dep.changed", Detail: "package.json changed"},
-	}
 	env := newEnvironment(nil, model.Context{}, &model.Delta{
 		Signals: []model.DeltaSignal{{ID: "dep.changed", Detail: "package.json changed"}},
 	})
@@ -79,7 +76,6 @@ func TestEvaluateDeltaSignalMatches(t *testing.T) {
 	if len(result.evidence) == 0 {
 		t.Error("expected evidence from delta signal detail")
 	}
-	_ = deltaSignals
 }
 
 func TestEvaluateDeltaSignalNoMatch(t *testing.T) {

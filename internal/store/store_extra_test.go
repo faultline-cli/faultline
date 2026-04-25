@@ -3,6 +3,7 @@ package store
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -16,13 +17,16 @@ func TestDefaultPathReturnsPathUnderHome(t *testing.T) {
 	if path == "" {
 		t.Fatal("expected non-empty path")
 	}
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("UserHomeDir: %v", err)
+	}
 	if !filepath.IsAbs(path) {
 		t.Errorf("expected absolute path, got %q", path)
 	}
 	// Should be under the user's home directory
 	rel, err := filepath.Rel(home, path)
-	if err != nil || rel == "" {
+	if err != nil || strings.HasPrefix(rel, "..") {
 		t.Errorf("expected path under home dir %q, got %q", home, path)
 	}
 }

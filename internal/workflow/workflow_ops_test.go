@@ -119,8 +119,19 @@ func TestMarshalExecutionJSONProducesValidJSON(t *testing.T) {
 }
 
 func TestMarshalExecutionJSONNilRecord(t *testing.T) {
-	// nil dereference would panic, but pointer is non-nil here.
-	// Instead test with a minimal record.
+	// A nil *model.WorkflowExecutionRecord is valid: json.Marshal returns "null".
+	var record *model.WorkflowExecutionRecord
+
+	out, err := MarshalExecutionJSON(record)
+	if err != nil {
+		t.Fatalf("unexpected error for nil record: %v", err)
+	}
+	if out != "null\n" {
+		t.Fatalf("expected %q, got %q", "null\n", out)
+	}
+}
+
+func TestMarshalExecutionJSONEmptyRecord(t *testing.T) {
 	out, err := MarshalExecutionJSON(&model.WorkflowExecutionRecord{})
 	if err != nil {
 		t.Fatalf("unexpected error for empty record: %v", err)
@@ -370,12 +381,22 @@ func TestDefaultDirNonExistentExplicitErrors(t *testing.T) {
 }
 
 func TestDefaultDirAutoDiscoveryReturnsErrorWhenNoneFound(t *testing.T) {
-	// With explicit="" and env="", auto-discovery scans cwd/exe paths.
-	// In the test sandbox there won't be a workflows/bundled dir at root,
-	// so this should return an error (or it finds the real one in the repo).
-	// Either way, the code path is exercised.
+	base := t.TempDir()
+
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(base); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
 	t.Setenv(envKey, "")
-	_, _ = defaultDir("") // just exercise the code path; we don't assert
+	_, err = defaultDir("")
+	if err == nil {
+		t.Fatal("expected error when auto-discovery finds no workflows/bundled directory")
+	}
 }
 
 func TestDefaultDirAutoDiscoveryFindsExistingWorkflowDir(t *testing.T) {
@@ -386,7 +407,10 @@ func TestDefaultDirAutoDiscoveryFindsExistingWorkflowDir(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 	// Set cwd to inside the base so auto-discovery can find it
-	orig, _ := os.Getwd()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
 	if err := os.Chdir(base); err != nil {
 		t.Fatalf("chdir: %v", err)
 	}
