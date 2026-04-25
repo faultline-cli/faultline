@@ -1,0 +1,75 @@
+id: zero-tests-executed
+title: Test command ran but zero tests were executed
+category: silent_failure
+severity: high
+base_score: 0.8
+tags: [silent-failure, test, coverage, zero-tests, pytest, jest, go-test]
+stage_hints: [test]
+summary: |-
+  A test runner command was invoked but discovered or executed zero tests.
+  CI marked the job as passing because the test runner exited zero, but no
+  tests were actually validated.
+diagnosis: |-
+  ## Diagnosis
+
+  Most test runners exit with code 0 when they find no tests to execute.
+  This means a broken test discovery configuration, missing test files, or
+  an incorrect test filter produces a false green signal.
+
+  Common causes:
+
+  - A glob pattern or path filter no longer matches any test files (e.g.,
+    after a directory reorganisation).
+  - Test files were moved but the runner configuration was not updated.
+  - A new workspace or working directory is missing test files that exist
+    elsewhere in the repository.
+  - A `--testPathPattern` or similar filter accidentally excludes all tests.
+  - `pytest` is invoked from a directory with no `test_*.py` files.
+  - `go test ./...` runs against a module with no `_test.go` files.
+
+  Affected runners and their zero-test signals:
+  - Jest / Vitest: "No tests found", "No test suites found"
+  - pytest: "collected 0 items", "no tests ran"
+  - Go test: "0 tests" (implied by empty output)
+  - Mocha: "0 passing"
+  - RSpec: "0 examples"
+fix: |-
+  ## Fix steps
+
+  1. Run the test command locally and inspect the discovery output.
+  2. Verify the test paths or glob patterns in the runner configuration match
+     the actual file layout:
+     ```bash
+     find . -name "*.test.*" -o -name "test_*.py" -o -name "*_test.go"
+     ```
+  3. Check whether the working directory or `--rootDir` option points at the
+     correct source tree.
+  4. Remove over-restrictive `--testPathPattern` or `--ignore` filters.
+  5. Consider adding a CI assertion that at least N tests were executed.
+validation: |-
+  ## Validation
+
+  Re-run the test command and confirm the output shows at least one test
+  passing.  Add a minimum-test-count assertion to the CI pipeline to prevent
+  regression.
+match:
+  any:
+    - "No tests found"
+    - "No test files found"
+    - "No test suites found"
+    - "0 tests"
+    - "0 passed"
+    - "0 examples"
+    - "0 passing"
+    - "tests: 0"
+workflow:
+  likely_files:
+    - "jest.config.*"
+    - "pytest.ini"
+    - "setup.cfg"
+    - ".mocharc.*"
+    - "Makefile"
+  local_repro:
+    - "Run the test command locally and inspect the 'found N tests' output"
+  verify:
+    - "find . -name '*.test.*' -o -name 'test_*.py' -o -name '*_test.go' | head -20"

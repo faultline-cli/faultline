@@ -174,6 +174,7 @@ func newAnalyzeCommand() *cobra.Command {
 		gitlabAPIBaseURL   string
 		metricsHistoryFile string
 		hookMode           string
+		failOnSilent       bool
 	)
 
 	cmd := &cobra.Command{
@@ -264,6 +265,7 @@ func newAnalyzeCommand() *cobra.Command {
 				MetricsHistoryFile: metricsHistoryFile,
 				Store:              firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				HookMode:           resolvedHookMode,
+				FailOnSilent:       failOnSilent,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -300,6 +302,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitlabAPIBaseURL, "gitlab-api-base-url", "", "GitLab API v4 base URL for --delta-provider gitlab-ci (defaults to CI_API_V4_URL)")
 	cmd.Flags().StringVar(&metricsHistoryFile, "history-file", "", "path to a JSONL history file for FPC and PHI computation")
 	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
+	cmd.Flags().BoolVar(&failOnSilent, "fail-on-silent", false, "exit non-zero when a silent failure is detected")
 	_ = cmd.Flags().MarkHidden("delta-provider")
 	_ = cmd.Flags().MarkHidden("github-repo")
 	_ = cmd.Flags().MarkHidden("github-branch")

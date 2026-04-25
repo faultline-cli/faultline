@@ -1,0 +1,11 @@
+Run actions/checkout@v4
+Run npm ci
+added 540 packages in 14s
+
+Run npm test
+> myapp@1.0.0 test
+> jest
+
+npm test || true
+PASS src/utils.test.ts
+All tests passed.

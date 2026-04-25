@@ -68,8 +68,19 @@ Determinism is the contract, not a feature flag. The same log and playbook set p
 | 🧪 Test runners | pytest fixture errors, jest worker crashes, testcontainer startup failures |
 | 🔒 Access & network | Permission denied, DNS failures, TLS errors, timeouts |
 | 🌐 IaC | terraform init, state lock, provider auth |
+| 🔇 Silent failures | Zero tests executed, suppressed errors, missing artifacts, skipped critical steps |
 
 Faultline is intentionally narrow: precise on failures it knows, silent on failures it doesn't. No hallucinated diagnoses.
+
+### Silent / misleading failures
+
+Faultline detects a class of failure most tools miss: **CI appeared to succeed, but important work never happened**.
+
+```bash
+faultline analyze build.log --fail-on-silent
+```
+
+Six built-in detectors cover suppressed exit codes, zero-test runs, missing artifacts, cache failures, and skipped critical steps. See [docs/silent-failures.md](docs/silent-failures.md) for details.
 
 ## ↪ Drop it into CI
 

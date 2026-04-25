@@ -1,0 +1,11 @@
+Run actions/checkout@v4
+Run setup-node v3
+Run npm ci
+added 540 packages in 14s
+
+Run npm test
+> myapp@1.0.0 test
+> jest --coverage
+
+No tests found
+Ran 0 test suites

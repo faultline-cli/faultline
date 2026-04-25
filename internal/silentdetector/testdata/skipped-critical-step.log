@@ -1,0 +1,12 @@
+Run actions/checkout@v4
+
+Run security-scan
+  Skipping step due to condition
+  if: github.event_name != 'pull_request' evaluated to false
+
+Run npm test
+  All tests passed.
+
+Run coverage-report
+  Skipping step due to condition
+  Condition evaluated to false

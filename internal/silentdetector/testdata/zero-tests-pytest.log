@@ -1,0 +1,7 @@
+Run actions/checkout@v4
+Run setup-python v4
+
+Run pytest
+collected 0 items
+
+============================ no tests ran ============================

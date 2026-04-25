@@ -1,0 +1,13 @@
+Run actions/checkout@v4
+
+Run security-scan
+  Skipping step due to condition
+  Condition evaluated to false
+
+Run actions/upload-artifact
+  No files found with the provided path: reports/*.xml
+  Skipping upload
+
+Run npm test
+  No tests found
+  npm test || true

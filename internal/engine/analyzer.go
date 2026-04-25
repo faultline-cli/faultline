@@ -22,6 +22,7 @@ import (
 	"faultline/internal/repo"
 	"faultline/internal/repo/topology"
 	"faultline/internal/scoring"
+	"faultline/internal/silentdetector"
 )
 
 var (
@@ -156,6 +157,10 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 
 	if len(results) == 0 {
 		clusters, dominantSignals, seed := buildUnknownDiagnosis(lines, ctx)
+		silentFindings := silentdetector.Run(silentdetector.AnalysisInput{
+			Lines:  lines,
+			RawLog: currentLog,
+		})
 		return &model.Analysis{
 			Results:               []model.Result{},
 			Context:               ctx,
@@ -166,6 +171,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 			CandidateClusters:     clusters,
 			DominantSignals:       dominantSignals,
 			SuggestedPlaybookSeed: seed,
+			SilentFindings:        silentFindings,
 		}, ErrNoMatch
 	}
 
@@ -205,6 +211,10 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		Differential:    differential,
 		PackProvenances: packProv,
 		Status:          model.ArtifactStatusMatched,
+		SilentFindings: silentdetector.Run(silentdetector.AnalysisInput{
+			Lines:  lines,
+			RawLog: currentLog,
+		}),
 	}
 
 	// Enrich with git repo context when requested (best-effort; never blocks).

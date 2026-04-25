@@ -418,3 +418,60 @@ func TestExplainUnknownIDReturnsError(t *testing.T) {
 		t.Fatal("expected error for unknown playbook ID")
 	}
 }
+
+// ── Silent-failure detector integration ──────────────────────────────────────
+
+// TestAnalyzeReaderSilentFindingNoMatch verifies that a log with a silent
+// pattern but no playbook match populates SilentFindings on the returned
+// Analysis.
+func TestAnalyzeReaderSilentFindingNoMatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	// Use a log that triggers the cache-miss detector (medium severity) but
+	// should not match any playbook (cache-miss playbook requires both a cache
+	// signal and a fail signal; this log has the fail signal only in a form
+	// that won't match the zero-tests or ignored-exit-code playbooks).
+	// We use the restore-cache + "cache miss" combo which triggers the Go
+	// detector but the playbook requires cache to already be an error.
+	log := "Run actions/cache\nrestore cache\ncache miss\nCache not found\nRun npm ci\nadded 100 packages\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	// May return ErrNoMatch or nil depending on playbook matches.
+	// What matters is that SilentFindings is populated.
+	if err != nil && err != ErrNoMatch {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a == nil {
+		t.Fatal("expected non-nil analysis")
+	}
+	if len(a.SilentFindings) == 0 {
+		t.Fatal("expected silent findings, got none")
+	}
+}
+
+// TestAnalyzeReaderSilentFindingWithMatch verifies that silent findings are
+// also attached when a normal playbook match is present.
+func TestAnalyzeReaderSilentFindingWithMatch(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	// Log contains both a git-auth failure (playbook match) and || true (silent signal).
+	log := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\nnpm test || true\n"
+	a, err := e.AnalyzeReader(strings.NewReader(log))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(a.Results) == 0 {
+		t.Fatal("expected at least one playbook result")
+	}
+	if len(a.SilentFindings) == 0 {
+		t.Fatal("expected silent findings alongside playbook results")
+	}
+}
+
+// TestAnalyzeReaderNoSilentFindingOnCleanLog verifies that a clean log
+// produces no silent findings.
+func TestAnalyzeReaderNoSilentFindingOnCleanLog(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	log := "Run npm test\nPASS src/utils.test.ts\nTests: 5 passed, 5 total\n"
+	a, _ := e.AnalyzeReader(strings.NewReader(log))
+	if a != nil && len(a.SilentFindings) > 0 {
+		t.Errorf("expected no silent findings on clean log, got %d", len(a.SilentFindings))
+	}
+}

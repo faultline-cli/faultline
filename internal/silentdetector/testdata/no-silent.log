@@ -1,0 +1,14 @@
+Run actions/checkout@v4
+Run npm ci
+added 540 packages in 14s
+
+Run npm test
+> myapp@1.0.0 test
+> jest
+
+PASS src/utils.test.ts (3.21s)
+PASS src/models.test.ts (5.88s)
+
+Test Suites: 2 passed, 2 total
+Tests:       24 passed, 24 total
+Passed.
