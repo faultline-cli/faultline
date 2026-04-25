@@ -1,0 +1,6 @@
+Run actions/checkout@v4
+Run semgrep --config auto .
+Security scan started
+0 files scanned
+Nothing to scan
+Scan completed successfully.

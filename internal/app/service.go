@@ -34,6 +34,11 @@ type Service struct{}
 
 var ErrGuardFindings = errors.New("guard findings emitted")
 
+// ErrSilentFailure is returned by Analyze when --fail-on-silent is set and a
+// silent failure is detected.  The error message is not printed to stderr;
+// the analysis output already describes the finding.
+var ErrSilentFailure = errors.New("silent failure detected")
+
 // guardMinConfidence and guardMinScore are the thresholds used by the guard
 // command to filter source-detector results down to high-confidence findings
 // only. Lower values increase noise; higher values reduce recall.
@@ -63,7 +68,13 @@ func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Wri
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
 	}
-	return writeAnalysis(a, opts, w)
+	if writeErr := writeAnalysis(a, opts, w); writeErr != nil {
+		return writeErr
+	}
+	if opts.FailOnSilent && a != nil && len(a.SilentFindings) > 0 {
+		return ErrSilentFailure
+	}
+	return nil
 }
 
 // Trace performs log analysis and renders a deterministic playbook trace.

@@ -668,6 +668,28 @@ type FailureArtifact struct {
 	WorkflowRecommendations []ArtifactWorkflowRecommendation `json:"workflow_recommendations,omitempty"`
 }
 
+// SilentFinding is a single finding produced by a built-in silent-failure
+// detector. Silent findings are attached to Analysis.SilentFindings.
+//
+// Precedence rule: silent findings supplement normal playbook matches. When a
+// normal playbook match exists, that match remains primary and silent findings
+// are reported as secondary findings. Silent findings are promoted to the
+// primary failure classification only when no normal playbook match exists.
+type SilentFinding struct {
+	// ID is the detector identifier (e.g. "zero-tests-executed").
+	ID string `json:"id"`
+	// Class is always "silent_failure".
+	Class string `json:"class"`
+	// Severity is one of "high", "medium", or "low".
+	Severity string `json:"severity"`
+	// Confidence is one of "high", "medium", or "low".
+	Confidence string `json:"confidence"`
+	// Explanation is a short human-readable description of the finding.
+	Explanation string `json:"explanation"`
+	// Evidence lists the log lines (or patterns) that triggered this finding.
+	Evidence []string `json:"evidence,omitempty"`
+}
+
 // Analysis is the complete output of a log analysis run.
 // Results is empty (not nil) when no playbook matched.
 type Analysis struct {
@@ -688,6 +710,9 @@ type Analysis struct {
 	DominantSignals       []string               `json:"dominant_signals,omitempty"`
 	SuggestedPlaybookSeed *SuggestedPlaybookSeed `json:"suggested_playbook_seed,omitempty"`
 	Artifact              *FailureArtifact       `json:"artifact,omitempty"`
+	// SilentFindings holds results from the built-in silent-failure detector
+	// pass.  Non-nil only when at least one silent finding was detected.
+	SilentFindings []SilentFinding `json:"findings,omitempty"`
 }
 
 // Metrics is the machine-readable pipeline reliability summary.

@@ -1,0 +1,62 @@
+id: cache-miss-non-fatal
+title: Cache restore or save failed but job continued
+category: silent_failure
+severity: medium
+base_score: 0.8
+tags: [silent-failure, cache, github-actions, ci, performance]
+stage_hints: [build, test]
+summary: |-
+  A cache restore or save step failed (cache not found, restore error, or save
+  error), but the CI job continued without flagging this as a failure.  Repeated
+  cache misses degrade CI performance and may indicate a configuration problem
+  or dependency issue.
+diagnosis: |-
+  ## Diagnosis
+
+  Cache steps (`actions/cache`, GitLab CI `cache:`, CircleCI `restore_cache`)
+  are designed to be non-fatal: a cache miss simply means the job builds from
+  scratch.  However, persistent cache failures can indicate:
+
+  - The cache key or path is misconfigured and will never produce a hit.
+  - The cache backend is experiencing availability issues.
+  - The cache was invalidated by a dependency change that should itself be
+    investigated.
+  - Save failures may indicate insufficient storage or permissions on the
+    runner.
+
+  While a single cache miss is expected behaviour, repeated non-fatal cache
+  failures mask a real configuration or infrastructure problem.
+fix: |-
+  ## Fix steps
+
+  1. Check the cache key expression:
+     ```yaml
+     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+     ```
+     Ensure the key file exists and the hash produces a stable value.
+  2. Verify the cache path matches the actual dependency directory
+     (e.g., `~/.npm` vs `node_modules`).
+  3. For restore failures: confirm the cache was saved on a previous run
+     and that the key matches.
+  4. For save failures: check runner disk space and storage quota.
+  5. Review CI logs for additional error messages after the cache failure.
+validation: |-
+  ## Validation
+
+  On the next CI run, verify the cache step reports a cache hit or a
+  successful save.  Monitor the cache hit rate across recent runs.
+match:
+  any:
+    - "Cache not found"
+    - "Failed to restore cache"
+    - "Failed to save cache"
+    - "cache miss"
+    - "No cache found"
+workflow:
+  likely_files:
+    - ".github/workflows/*.yml"
+    - ".gitlab-ci.yml"
+  local_repro:
+    - "Check the cache key expression and confirm the key file path is correct"
+  verify:
+    - "Review recent CI runs to determine if the cache miss is consistent"

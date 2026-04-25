@@ -1,0 +1,9 @@
+Run actions/checkout@v4
+Run build
+  Building...
+  Build succeeded.
+
+Run actions/upload-artifact
+  With the provided path, there were no files to upload.
+  No files found with the provided path: dist/*.tar.gz
+  Skipping upload

@@ -1,0 +1,58 @@
+id: empty-deployment-target
+title: Deploy or publish step ran but had nothing deployable
+category: silent_failure
+severity: high
+base_score: 0.75
+tags: [silent-failure, deploy, publish, release, empty-target]
+stage_hints: [deploy]
+summary: |-
+  A deploy, apply, publish, or release step ran, but the log indicates there
+  was nothing deployable to apply or publish. CI continued successfully, but no
+  release target was actually updated.
+diagnosis: |-
+  ## Diagnosis
+
+  Deployment jobs can report success even when they do not deploy anything.
+  This happens when the step runs with an empty artifact set, an empty manifest
+  directory, or a publish path that contains no release payload.
+
+  Common causes:
+
+  - The build step that should have produced the deployable artifact was skipped.
+  - A release directory or manifest path is wrong or empty.
+  - The deploy step points at the wrong working directory.
+  - A packaging step succeeded but produced no files matching the publish glob.
+
+  The CI job appears green, but the expected deploy or publish action never
+  happened.
+fix: |-
+  ## Fix steps
+
+  1. Verify the build or packaging step produced the expected deployable files.
+  2. Check the manifest or publish path used by the deploy step.
+  3. Add an assertion before deploy that the target files or manifests exist.
+  4. If the deploy is intentionally conditional, make that behavior explicit in
+     the workflow rather than relying on an empty target.
+validation: |-
+  ## Validation
+
+  Re-run the pipeline and confirm the deploy or publish step reports a positive
+  number of applied resources, released artifacts, or published packages.
+match:
+  any:
+    - "Nothing to deploy"
+    - "No files to deploy"
+    - "No manifests found"
+    - "No objects passed to apply"
+    - "0 artifacts to publish"
+    - "No packages found to publish"
+    - "No deployable artifacts"
+workflow:
+  likely_files:
+    - ".github/workflows/*.yml"
+    - ".gitlab-ci.yml"
+    - "deploy/**"
+  local_repro:
+    - "List the deployable files or manifests that the release step expects"
+  verify:
+    - "test -d deploy -o -f dist/release.tar.gz"

@@ -1,0 +1,5 @@
+Run actions/checkout@v4
+Run kubectl apply -f deploy/
+No manifests found
+Nothing to deploy
+Release completed successfully.

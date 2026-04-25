@@ -1,0 +1,12 @@
+Run actions/checkout@v4
+
+Run actions/cache
+  Cache not found for key: Linux-node-abc123
+  cache miss
+  Skipping cache restore.
+
+Run npm ci
+added 540 packages in 14s
+
+Run npm test
+All tests passed.

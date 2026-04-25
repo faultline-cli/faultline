@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"faultline/internal/model"
+	"faultline/internal/silentdetector"
 )
 
 // ── JSON types ────────────────────────────────────────────────────────────────
@@ -15,7 +16,9 @@ import (
 type analysisJSON struct {
 	Matched               bool                         `json:"matched"`
 	Fallback              bool                         `json:"fallback,omitempty"`
+	FaultlineStatus       string                       `json:"faultline_status,omitempty"`
 	FailureClass          string                       `json:"failure_class,omitempty"`
+	FailureID             string                       `json:"failure_id,omitempty"`
 	Status                model.ArtifactStatus         `json:"status,omitempty"`
 	Source                string                       `json:"source,omitempty"`
 	Fingerprint           string                       `json:"fingerprint,omitempty"`
@@ -23,6 +26,7 @@ type analysisJSON struct {
 	OutputHash            string                       `json:"output_hash,omitempty"`
 	Context               ctxJSON                      `json:"context"`
 	Results               []resultJSON                 `json:"results"`
+	Findings              []model.SilentFinding        `json:"findings,omitempty"`
 	RepoContext           *repoCtxJSON                 `json:"repo_context,omitempty"`
 	Delta                 *model.Delta                 `json:"delta,omitempty"`
 	Differential          *model.DifferentialDiagnosis `json:"differential,omitempty"`
@@ -143,6 +147,7 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 		DominantSignals:       payload.DominantSignals,
 		SuggestedPlaybookSeed: payload.SuggestedPlaybookSeed,
 		Artifact:              payload.Artifact,
+		SilentFindings:        payload.Findings,
 	}
 	a.RepoContext = parseRepoContextJSON(payload.RepoContext)
 
@@ -288,6 +293,14 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.DominantSignals = a.DominantSignals
 	payload.SuggestedPlaybookSeed = a.SuggestedPlaybookSeed
 	payload.Artifact = a.Artifact
+	if len(a.Results) > 0 || len(a.SilentFindings) > 0 {
+		payload.FaultlineStatus = "failure"
+	}
+
+	// Attach silent findings regardless of whether a playbook matched.
+	if len(a.SilentFindings) > 0 {
+		payload.Findings = a.SilentFindings
+	}
 
 	if !payload.Matched {
 		payload.Fallback = true
@@ -298,6 +311,12 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 			payload.FailureClass = a.CandidateClusters[0].LikelyCategory
 		} else if a.SuggestedPlaybookSeed != nil {
 			payload.FailureClass = a.SuggestedPlaybookSeed.Category
+		}
+		// If silent findings are present and no playbook matched, promote the
+		// top silent finding to the primary failure classification.
+		if primary := silentdetector.SelectPrimary(a.SilentFindings); primary != nil {
+			payload.FailureClass = primary.Class
+			payload.FailureID = primary.ID
 		}
 		return payload
 	}

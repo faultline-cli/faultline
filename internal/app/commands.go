@@ -82,6 +82,9 @@ type AnalyzeOptions struct {
 	Store string
 	// HookMode controls whether constrained playbook hooks run for rendered results.
 	HookMode model.HookMode
+	// FailOnSilent causes Analyze to return ErrSilentFailure when a silent
+	// failure finding is detected, regardless of whether a playbook also matched.
+	FailOnSilent bool
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

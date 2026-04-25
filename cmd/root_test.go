@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1538,5 +1539,79 @@ func TestVersionFlag(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "faultline") {
 		t.Fatalf("expected version string to mention faultline, got %q", out.String())
+	}
+}
+
+// ── --fail-on-silent ──────────────────────────────────────────────────────────
+
+// TestFailOnSilentReturnsErrSilentFailure verifies that analyze exits with
+// ErrSilentFailure when --fail-on-silent is set and a silent finding is detected.
+func TestFailOnSilentReturnsErrSilentFailure(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	// Log with || true triggers ignored-exit-code detector.
+	logPath := writeTempLog(t, "Run npm test\n> jest\nAll tests ran.\nnpm test || true\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--no-history", "--git=false", "--fail-on-silent", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	err := cmd.Execute()
+	if !errors.Is(err, app.ErrSilentFailure) {
+		t.Fatalf("expected ErrSilentFailure, got %v", err)
+	}
+}
+
+// TestFailOnSilentNoFindingsExitsZero verifies that --fail-on-silent does not
+// cause a non-zero exit when no silent finding is detected.
+func TestFailOnSilentNoFindingsExitsZero(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "Run npm test\nPASS src/utils.test.ts\nTests: 5 passed, 5 total\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--no-history", "--git=false", "--fail-on-silent", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("expected zero exit with no silent findings, got %v", err)
+	}
+}
+
+// TestFailOnSilentJSONContainsFaultlineStatus verifies that when a silent
+// finding is present, the JSON output includes faultline_status=failure.
+func TestFailOnSilentJSONContainsFaultlineStatus(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	logPath := writeTempLog(t, "Run npm test\n> jest\nNo tests found\nnpm test || true\n")
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"analyze", "--no-history", "--git=false", "--json", logPath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+
+	_ = cmd.Execute() // may return ErrNoMatch; that's OK
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal JSON: %v (output: %q)", err, out.String())
+	}
+
+	if payload["faultline_status"] != "failure" {
+		t.Errorf("expected faultline_status=failure, got %v", payload["faultline_status"])
+	}
+	if payload["failure_class"] != "silent_failure" {
+		t.Errorf("expected failure_class=silent_failure, got %v", payload["failure_class"])
+	}
+
+	// findings array should be present
+	findings, ok := payload["findings"].([]interface{})
+	if !ok || len(findings) == 0 {
+		t.Errorf("expected non-empty findings array, got %v", payload["findings"])
 	}
 }
