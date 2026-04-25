@@ -161,7 +161,7 @@ func TestFixtureDrivenSignatureStabilityAcrossRealLogs(t *testing.T) {
 
 // --- isHomePath ---
 
-func TestIsHomePathDetectsUnixHomePath(t *testing.T) {
+func TestIsHomePathDetectsHomePathPrefixes(t *testing.T) {
 	cases := []struct {
 		path string
 		want bool
