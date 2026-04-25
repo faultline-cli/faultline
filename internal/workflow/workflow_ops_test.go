@@ -231,7 +231,7 @@ func TestRuntimeContextUsesRepoPath(t *testing.T) {
 	}
 }
 
-func TestRuntimeContextDefaultsToDotwhenEmpty(t *testing.T) {
+func TestRuntimeContextDefaultsToDotWhenEmpty(t *testing.T) {
 	ctx := runtimeContext(Options{})
 	if ctx.WorkDir != "." {
 		t.Errorf("expected '.', got %q", ctx.WorkDir)
