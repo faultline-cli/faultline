@@ -9,6 +9,7 @@ import (
 	"faultline/internal/detectors"
 	"faultline/internal/model"
 	"faultline/internal/repo"
+	"faultline/internal/repo/topology"
 	"faultline/internal/scoring"
 )
 
@@ -33,8 +34,13 @@ func TestDefaultSourceLoaderLoadScansDirectory(t *testing.T) {
 }
 
 func TestDefaultSourceLoaderLoadMissingDir(t *testing.T) {
+	dir := t.TempDir()
+	missingDir := filepath.Join(dir, "missing")
+	if _, err := os.Stat(missingDir); !os.IsNotExist(err) {
+		t.Fatalf("expected %q to not exist before Load, got err=%v", missingDir, err)
+	}
 	loader := defaultSourceLoader{}
-	_, err := loader.Load("/no-such-directory-xyz-abc")
+	_, err := loader.Load(missingDir)
 	if err == nil {
 		t.Error("expected error for non-existent directory")
 	}
@@ -96,7 +102,7 @@ func TestCorrelateSnapshotAttachesTopologySignals(t *testing.T) {
 		signals: repo.Signals{},
 		state: &scoring.RepoState{
 			Root:            "/repo",
-			TopologySignals: []string{"boundary_crossed"},
+			TopologySignals: []string{topology.SignalBoundaryCrossed},
 		},
 	}
 	result := model.Result{Playbook: model.Playbook{ID: "docker-auth", Category: "auth"}}
@@ -106,6 +112,9 @@ func TestCorrelateSnapshotAttachesTopologySignals(t *testing.T) {
 	}
 	if rc.Topology == nil {
 		t.Fatal("expected topology signals to be attached")
+	}
+	if !rc.Topology.BoundaryCrossed {
+		t.Errorf("expected BoundaryCrossed=true for signal %q", topology.SignalBoundaryCrossed)
 	}
 }
 

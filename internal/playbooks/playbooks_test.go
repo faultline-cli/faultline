@@ -48,9 +48,10 @@ func TestLoadDefaultEnvVarInvalidDirErrors(t *testing.T) {
 	}
 }
 
-func TestLoadDefaultFallsBackToRepoPlaybooks(t *testing.T) {
-	// Point to the actual bundled playbooks directory to verify LoadDefault works
-	// when the env var points to a valid directory with yaml files.
+func TestLoadDefaultWithEnvVarPointingToBundledDir(t *testing.T) {
+	// Set FAULTLINE_PLAYBOOK_DIR to the actual bundled playbooks directory to
+	// verify LoadDefault works when the env var points to a valid directory
+	// with yaml files.
 	bundledDir := "../../playbooks/bundled"
 	t.Setenv(envKey, bundledDir)
 	pbs, err := LoadDefault()
@@ -74,7 +75,7 @@ func TestDefaultDirUsesEnvVar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DefaultDir with env: %v", err)
 	}
-	if !strings.HasPrefix(got, dir) {
+	if got != dir {
 		t.Errorf("expected DefaultDir to return %q, got %q", dir, got)
 	}
 }
