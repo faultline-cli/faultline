@@ -5,6 +5,9 @@ severity: low
 base_score: 0.5
 tags: [test, flaky, intermittent, timing]
 stage_hints: [test]
+domain: test-runner
+class: flaky-test
+mode: non-deterministic-test-failure
 summary: |-
   A test failed but the failure is not consistently reproducible. Flaky tests indicate timing dependencies, global state, or resource contention that produce different outcomes on each run.
 diagnosis: |-

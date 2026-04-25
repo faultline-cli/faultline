@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [test, fixture, seed, database, missing-data]
 stage_hints: [test]
+domain: test-runner
+class: test-setup-failure
+mode: missing-test-fixture
 summary: |-
   A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
 diagnosis: |-

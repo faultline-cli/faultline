@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [timeout, ci, hung, pipeline]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: resource-overallocation
+mode: pipeline-time-limit-exceeded
 summary: |-
   The CI job ran past its configured time limit and was killed by the CI system. This is a hard stop — no further steps ran.
 diagnosis: |-

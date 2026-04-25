@@ -1,0 +1,59 @@
+id: asciidoctor-jbehave-test-failure
+title: Asciidoctor JBehave integration test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [asciidoctor, jbehave, java, documentation, integration-test]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: jbehave-step-failure
+summary: |-
+  An Asciidoctor Java integration test written in JBehave (BDD scenario style) failed.
+  These tests cover attribute substitution, Java extension registration, CLI invocation,
+  and Asciidoctor class instantiation. A failure typically indicates a regression in
+  the core rendering pipeline or extension API.
+diagnosis: |-
+  ## Diagnosis
+
+  The asciidoctor-java project uses JBehave for behaviour-driven integration tests.
+  Failing scenario classes include:
+
+  - `WhenAttributesAreUsedInAsciidoctor` — tests attribute substitution in documents.
+  - `WhenJavaExtensionIsRegistered` — tests the extension registration API.
+  - `WhenAnAsciidoctorClassIsInstantiated` — tests basic library instantiation.
+  - `WhenAsciidoctorIsCalledUsingCli` — tests the command-line interface.
+
+  Common causes:
+
+  - **API change** — a public method signature or attribute name changed.
+  - **Extension loading failure** — a required Java extension is missing from the classpath.
+  - **Template regression** — an AsciiDoc template produces unexpected output.
+fix: |-
+  ## Fix steps
+
+  1. Run the failing JBehave story locally:
+     ```bash
+     mvn test -Dtest=WhenAttributesAreUsedInAsciidoctor
+     ```
+  2. Check recent changes to the attribute substitution or extension API.
+  3. Inspect the JBehave report in `target/jbehave/` for the failing step.
+validation: |-
+  ## Validation
+
+  Re-run all JBehave integration stories:
+  ```bash
+  mvn integration-test
+  ```
+match:
+  any:
+    - "WhenAttributesAreUsedInAsciidoctor"
+    - "WhenJavaExtensionIsRegistered"
+    - "WhenAnAsciidoctorClassIsInstantiated"
+    - "WhenAsciidoctorIsCalledUsingCli"
+why_it_matters: |-
+  ## Why it matters
+
+  These JBehave scenarios are the primary integration tests for the Asciidoctor Java
+  rendering pipeline. A failure means the library's public API is broken for downstream
+  consumers such as build plugins (Maven, Gradle) and the Asciidoctor CLI tool.

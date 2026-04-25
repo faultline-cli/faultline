@@ -22,3 +22,6 @@ fixtures/staging/*.yaml
 .cocoindex_code/*
 
 fixtures/datasets/*
+
+eval-work/**/*.jsonl
+eval-work/gaps*/*

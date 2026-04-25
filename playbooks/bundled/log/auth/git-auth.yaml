@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [git, github, ssh, auth]
 stage_hints: [build, deploy]
+domain: auth
+class: credential-expired
+mode: git-auth-failed
 summary: |-
   The CI runner could not authenticate with the remote Git repository. This prevents cloning, fetching, or pushing code.
 diagnosis: |-

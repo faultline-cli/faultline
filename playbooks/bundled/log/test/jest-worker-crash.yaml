@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [jest, javascript, worker, crash, node, signal]
 stage_hints: [test]
+domain: test-runner
+class: test-runner-crash
+mode: jest-worker-crashed
 summary: |-
   A Jest worker process crashed mid-test run. Jest spawns multiple worker processes to run tests in parallel, and one of them exited unexpectedly.
 diagnosis: |-

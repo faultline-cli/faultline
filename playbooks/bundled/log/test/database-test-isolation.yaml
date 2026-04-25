@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [test, database, isolation, transaction, state]
 stage_hints: [test]
+domain: database
+class: isolation-failure
+mode: database-state-pollution
 summary: |-
   Tests are polluting a shared database with committed data that later tests
   did not expect to find. Tests pass in isolation but fail when the full suite

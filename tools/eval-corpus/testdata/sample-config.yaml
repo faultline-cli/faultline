@@ -1,0 +1,22 @@
+name: sample
+
+input:
+  type: csv
+  path: testdata/sample.csv
+
+parsing:
+  log_field: message
+  id_field: id
+  timestamp_field: timestamp
+  join_lines: false
+
+processing:
+  dedupe: true
+  max_log_size: 200kb
+  redact:
+    emails: true
+    tokens: true
+
+output:
+  format: jsonl
+  path: corpus.jsonl

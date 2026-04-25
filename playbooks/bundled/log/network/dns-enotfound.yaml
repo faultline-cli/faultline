@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [dns, network, resolution, enotfound]
 stage_hints: [build, test, deploy]
+domain: network
+class: dns-failure
+mode: dns-enotfound
 summary: |-
   DNS resolution failed for a hostname. The domain name could not be resolved to an IP address, or there is no network connectivity.
 diagnosis: |-

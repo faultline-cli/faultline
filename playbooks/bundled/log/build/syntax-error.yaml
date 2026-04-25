@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [syntax, parse, compile]
 stage_hints: [build]
+domain: source
+class: compile-error
+mode: generic-syntax-error
 match:
   any:
     - "SyntaxError:"

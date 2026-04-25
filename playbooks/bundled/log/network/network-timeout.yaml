@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [network, timeout, http, connection]
 stage_hints: [build, deploy]
+domain: network
+class: timeout
+mode: network-request-timeout
 summary: |-
   A network request exceeded its timeout limit. The remote host did not respond within the expected window, causing the CI step to fail.
 diagnosis: |-

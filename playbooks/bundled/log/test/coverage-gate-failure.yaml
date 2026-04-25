@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [test, coverage, threshold, quality-gate]
 stage_hints: [test]
+domain: test-runner
+class: coverage-gate
+mode: coverage-gate-failed
 summary: |-
   The test step completed, but the job failed because measured coverage fell below an enforced minimum. This is a quality policy failure rather than a crash in the test runner itself.
 diagnosis: |-

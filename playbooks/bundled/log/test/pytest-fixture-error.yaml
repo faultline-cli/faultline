@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [pytest, python, fixture, setup, teardown, conftest]
 stage_hints: [test]
+domain: test-runner
+class: test-setup-failure
+mode: pytest-fixture-error
 summary: |-
   A pytest fixture failed during setup or teardown, causing the associated test to be marked as `ERROR` rather than `FAILED`. The test body never ran, or cleanup after the test raised an exception.
 diagnosis: |-

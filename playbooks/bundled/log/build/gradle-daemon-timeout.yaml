@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [gradle, maven, jvm, build, daemon, timeout]
 stage_hints: [build]
+domain: runtime
+class: resource-exhaustion
+mode: gradle-daemon-timeout
 summary: |-
   The Gradle or Maven daemon could not acquire an exclusive lock on cached wrapper files, causing the build tool initialization to timeout.
 diagnosis: |-

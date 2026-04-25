@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [pnpm, lockfile, node, javascript, ci]
 stage_hints: [build]
+domain: dependency
+class: lockfile-drift
+mode: pnpm-frozen-lockfile-outdated
 summary: |-
   The pnpm lockfile (`pnpm-lock.yaml`) is out of sync with `package.json`. CI uses `--frozen-lockfile` to ensure reproducible installs, so any discrepancy causes the install step to fail immediately.
 diagnosis: |-

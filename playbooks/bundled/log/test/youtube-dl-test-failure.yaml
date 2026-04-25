@@ -1,0 +1,83 @@
+id: youtube-dl-test-failure
+title: youtube-dl / yt-dlp test failure due to unavailable video
+category: test
+severity: low
+base_score: 1.0
+tags: [youtube-dl, yt-dlp, video, external-service, network, flaky]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: youtube-dl-test-failure
+summary: |-
+  A youtube-dl or yt-dlp test case failed because the target video or page was
+  unavailable at the time the test ran. This is an external-service failure, not
+  a code defect. Common causes include videos deleted or made private, HTTP 403/404
+  responses from video platforms, URLs that are geo-restricted, or the platform
+  changing its embed format so the extractor can no longer parse it.
+diagnosis: |-
+  ## Diagnosis
+
+  The test suite calls a live video URL during CI. The video host returned an error
+  (HTTP 4xx/5xx, redirect loop, timeout, or "unsupported URL") causing youtube-dl
+  to raise an exception and the test to fail.
+
+  Typical error messages include:
+
+  - `Unable to extract <field>; please report this issue on https://yt-dl.org/bug`
+  - `unable to download video data: HTTP Error 403: Forbidden`
+  - `Unsupported URL: <url>; please report this issue on https://yt-dl.org/bug`
+  - `Unable to download webpage: timed out`
+  - `YouTube said: This video is no longer available`
+  - `No video formats found; please report this issue on https://yt-dl.org/bug`
+fix: |-
+  ## Fix steps
+
+  1. Find the failing test case name (e.g. `test_YouTube_1`) in the output.
+  2. Check whether the test video is still accessible from the command line:
+     ```
+     youtube-dl -v <url>
+     ```
+  3. If the video is gone or geo-blocked, replace the test URL with a stable
+     alternative or mark the test as an expected failure / skip for that URL.
+  4. If the extractor logic changed upstream, update to the latest youtube-dl
+     release:
+     ```
+     pip install --upgrade youtube-dl
+     # or
+     pip install --upgrade yt-dlp
+     ```
+  5. For persistent failures against a specific platform, consider mocking the
+     HTTP layer in CI so tests do not depend on live network access.
+validation: |-
+  ## Validation
+
+  - Re-run the specific failing test: `python -m pytest test/test_download.py -k test_YouTube_1 -v`
+  - Confirm the test passes or is correctly skipped.
+  - No other test_download tests regress.
+match:
+  any:
+    - "yt-dl.org"
+    - "yt-dlp.org"
+    - "unable to download webpage: timed out"
+    - "unable to download video data: timed out"
+    - "unable to download video#"
+    - "urlopen error timed out"
+    - "youtube said:"
+workflow:
+  likely_files:
+    - test/test_download.py
+    - test/test_networking.py
+    - test/test_utils.py
+  local_repro:
+    - python -m pytest test/test_download.py -v -x
+    - youtube-dl --verbose <failing-url>
+  verify:
+    - python -m pytest test/test_download.py -v
+why_it_matters: |-
+  ## Why it matters
+
+  These failures are almost always transient or caused by a third-party platform
+  change rather than a regression in the codebase. They should not block merges
+  unless the extractor code itself changed. The right response is to update the
+  test URL, skip the test for the unavailable resource, or upgrade to a newer
+  youtube-dl release that has a fixed extractor for that platform.

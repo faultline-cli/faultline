@@ -1,0 +1,105 @@
+id: readthedocs-build-test-failure
+title: Read the Docs site-build integration test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [readthedocs, django, sphinx, documentation, build, integration-test]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: readthedocs-build-test-failure
+summary: |-
+  A Read the Docs (readthedocs.io) Django integration test failed.
+  These tests exercise the documentation build pipeline end-to-end — building
+  demo projects, verifying sitemaps, checking generated links, testing URL routing,
+  and validating translated content. A failure here usually means a regression in
+  the build system, URL configuration, or template rendering logic.
+diagnosis: |-
+  ## Diagnosis
+
+  The test suite for the Read the Docs application includes integration tests that
+  actually invoke the Sphinx/MkDocs build pipeline and inspect the output. Failing
+  test classes include:
+
+  - `DemoBuildTest` — verifies the demo documentation site builds correctly and
+    produces correct RSS feeds, sitemaps, and indexes.
+  - `EmptyBuildTest` — verifies that an empty project builds without error.
+  - `Testmaker` / `TestMaker` — tests the `readthedocs-build` CLI tool for creating
+    new projects.
+  - `TranslatedBuildTest` / `TranslationsPatternTest` — tests multilingual docs.
+  - `TestCheck` / `TestCheckFailure` — link-checker integration.
+  - `FuturePostTest`, `MonthlyArchiveTest`, `DayArchiveTest` — blog-style archive tests.
+  - `PrivacyTests`, `RedirectTests`, `SubdomainUrlTests` — URL routing and privacy
+    gate tests.
+
+  Common causes:
+
+  - **Build dependency missing** — a required Sphinx extension, theme, or Python
+    package is not installed in the test environment.
+  - **Template or URL regression** — a change to view logic, URL patterns, or
+    a Jinja/Django template broke expected output.
+  - **File system fixture mismatch** — the test expects a specific file to be
+    generated at a specific path, but the path changed.
+  - **Sitemap or RSS schema change** — the structured output format changed
+    and the test assertions haven't been updated.
+fix: |-
+  ## Fix steps
+
+  1. Run the failing tests locally with verbose output to see the actual vs expected
+     diff:
+     ```bash
+     python -m pytest readthedocs/ -k "DemoBuildTest or Testmaker" -v
+     ```
+  2. For build failures, check that all Sphinx extensions and themes required by
+     the test fixtures are installed:
+     ```bash
+     pip install -r requirements/testing.txt
+     ```
+  3. For sitemap or link assertion failures, inspect the generated output file and
+     compare it with the expected fixture.
+  4. For URL routing failures, run the URL resolver against the failing path:
+     ```bash
+     python manage.py shell -c "from django.urls import reverse; print(reverse('docs_detail', ...))"
+     ```
+  5. Check recent commits to `readthedocs/templates/`, `readthedocs/urls.py`, or
+     `readthedocs/builds/` for the change that broke the test.
+validation: |-
+  ## Validation
+
+  - Re-run the full integration test suite: `python -m pytest readthedocs/integrations/ -v`
+  - Confirm that `DemoBuildTest`, `TranslatedBuildTest`, and `TestCheck` all pass.
+match:
+  any:
+    - "DemoBuildTest"
+    - "EmptyBuildTest"
+    - "Testmaker.test_"
+    - "test_integration.TranslatedBuildTest"
+    - "test_integration.TestCheck"
+workflow:
+  likely_files:
+    - readthedocs/builds/
+    - readthedocs/templates/
+    - readthedocs/urls.py
+    - requirements/testing.txt
+  local_repro:
+    - python -m pytest readthedocs/ -k "DemoBuildTest" -v
+    - python -m pytest readthedocs/ -k "Testmaker" -v
+  verify:
+    - python -m pytest readthedocs/integrations/ -v
+why_it_matters: |-
+  ## Why it matters
+
+  The Read the Docs integration tests exercise the full documentation build pipeline
+  in a real Django environment with a real Sphinx build. A failure here means that
+  documentation authors who push to a connected repository will see broken builds in
+  production. Because the tests cover sitemap, link-checking, URL routing, and
+  translation support, they catch regressions in the publishing pipeline that unit
+  tests cannot detect.
+
+  ## Prevention
+
+  - Keep `requirements/testing.txt` in sync with production dependencies.
+  - Run the integration tests against a Docker image that mirrors the production
+    build environment rather than bare pip installs.
+  - Add fixture snapshots for generated sitemaps and RSS feeds so breaking changes
+    are caught immediately.

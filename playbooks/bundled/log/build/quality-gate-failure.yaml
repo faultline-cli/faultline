@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.4
 tags: [quality, lint, format, static-analysis, checks]
 stage_hints: [build, test]
+domain: source
+class: lint-failure
+mode: quality-gate-failed
 summary: |-
   A non-compiler quality gate failed during CI. The job stopped because lint,
   formatting, or static-analysis checks reported violations even though the

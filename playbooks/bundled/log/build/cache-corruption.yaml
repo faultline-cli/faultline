@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [cache, dependencies, build]
 stage_hints: [build]
+domain: dependency
+class: cache-poisoning
+mode: dependency-cache-corrupted
 match:
   any:
     - cache is corrupted

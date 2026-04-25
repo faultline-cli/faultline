@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [git, ci, shallow, history, tags, versioning, github-actions]
 stage_hints: [build, test]
+domain: ci-config
+class: workflow-syntax
+mode: git-shallow-clone-missing-history
 summary: |-
   The CI job performed a shallow Git clone and a later step requires full commit history or tags. Tools like semantic-release, lerna, changelog generators, and tag-based version bumps fail because the expected refs are absent.
 diagnosis: |-

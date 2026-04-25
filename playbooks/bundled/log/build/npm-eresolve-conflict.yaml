@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [npm, node, dependency, resolution, peer]
 stage_hints: [build, install]
+domain: dependency
+class: version-conflict
+mode: npm-eresolve-conflict
 summary: |-
   npm encountered a dependency tree conflict that it could not automatically resolve. Usually a peer dependency or incompatible version constraint.
 diagnosis: |-

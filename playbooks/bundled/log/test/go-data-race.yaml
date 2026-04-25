@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [go, race, concurrency, data-race, test]
 stage_hints: [test]
+domain: test-runner
+class: concurrency-error
+mode: go-data-race-detected
 summary: |-
   The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one performing a write, without any synchronization between them.
 diagnosis: |-

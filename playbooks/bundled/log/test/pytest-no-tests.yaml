@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [pytest, python, test, collection, discovery]
 stage_hints: [test]
+domain: test-runner
+class: test-setup-failure
+mode: pytest-no-tests-collected
 summary: |-
   pytest exited with code 5 because it collected zero tests. No tests matched the given path, filter expression, or marker constraint.
 diagnosis: |-

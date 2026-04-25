@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [go, golang, compile, build, undefined]
 stage_hints: [build]
+domain: source
+class: compile-error
+mode: go-compile-error
 summary: |-
   The Go compiler rejected the package because of a semantic error — undefined
   identifier, type mismatch, unused import, or interface non-compliance. The

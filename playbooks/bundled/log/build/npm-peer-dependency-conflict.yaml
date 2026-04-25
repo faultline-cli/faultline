@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [npm, node, dependencies, peer-deps, resolution]
 stage_hints: [build]
+domain: dependency
+class: peer-dependency-mismatch
+mode: npm-peer-dependency-conflict
 match:
   any:
     - npm error code ERESOLVE

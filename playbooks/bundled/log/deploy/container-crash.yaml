@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [container, crash, oomkilled, exit-code, kubernetes, docker]
 stage_hints: [deploy]
+domain: container
+class: container-crash
+mode: container-exit-unexpected
 summary: |-
   The container started but then exited with a non-zero status code. If it keeps restarting, Kubernetes enters CrashLoopBackOff and the pod never becomes ready.
 diagnosis: |-

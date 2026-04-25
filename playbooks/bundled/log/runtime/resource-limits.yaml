@@ -5,6 +5,9 @@ severity: high
 base_score: 0.5
 tags: [ulimit, cpu, file-descriptors, threads]
 stage_hints: [build, test]
+domain: runtime
+class: resource-exhaustion
+mode: resource-limit-exceeded
 summary: |-
   The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
 diagnosis: |-

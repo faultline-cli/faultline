@@ -6,6 +6,9 @@ base_score: 0.6
 requires_topology: true
 tags: [topology, monorepo, cluster, component, localised]
 stage_hints: [test, build, runtime]
+domain: source
+class: ownership-violation
+mode: topology-failure-clustered
 summary: |-
   Multiple failures are concentrated within a single directory or package
   boundary, suggesting the root cause is localised to one component rather than

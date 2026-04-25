@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [gitlab, ci, log, limit, truncated, verbose]
 stage_hints: [build, test]
+domain: ci-config
+class: resource-overallocation
+mode: gitlab-log-size-exceeded
 summary: |-
   The GitLab CI job produced more output than the runner's configured log size limit. GitLab truncates the log and marks the job as failed.
 diagnosis: |-

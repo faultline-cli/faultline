@@ -5,6 +5,9 @@ severity: high
 base_score: 0.5
 tags: [env, config, secrets]
 stage_hints: [build, deploy]
+domain: auth
+class: missing-credential
+mode: missing-env-credential
 summary: |-
   A required environment variable was not set in the CI environment. The job cannot continue without the expected configuration or secret value.
 diagnosis: |-

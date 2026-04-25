@@ -1,0 +1,61 @@
+id: nupic-test-failure
+title: NuPIC region or encoder test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [nupic, numenta, machine-learning, cpp, python, encoder]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: nupic-test-failure
+summary: |-
+  A test failure in the Numenta NuPIC (Numenta Platform for Intelligent Computing)
+  project. This may indicate a region I/O validation error (unknown output name on
+  a region) or a failure in the spatial/temporal encoder tests.
+diagnosis: |-
+  ## Diagnosis
+
+  NuPIC test failures in this pattern come from two areas:
+
+  - **Region I/O tests** — The C++ engine raises an error when `getOutputData` is
+    called with an output name that does not exist on the specified region. The error
+    message is emitted from `RegionIo.cpp`.
+  - **Encoder unit tests** — `CoordinateEncoderTest.testEncodeAdjacentPositions`
+    and similar tests validate the spatial pooler's coordinate encoder.
+
+  Common causes:
+
+  - **C++ extension build failure** — the NuPIC C++ core was not compiled or is
+    incompatible with the installed Python version.
+  - **API change** — an output name was renamed or removed in the region schema.
+  - **Test data regression** — encoder sensitivity parameters changed.
+fix: |-
+  ## Fix steps
+
+  1. Rebuild the NuPIC C++ extension:
+     ```bash
+     python setup.py build_ext --inplace
+     ```
+  2. Run the failing encoder test:
+     ```bash
+     python -m pytest tests/unit/encoders/coordinate_encoder_test.py -v
+     ```
+  3. Check the region XML schema for the output name referenced in the error.
+validation: |-
+  ## Validation
+
+  Run the affected test file:
+  ```bash
+  python -m pytest tests/unit/ -k "CoordinateEncoder" -v
+  ```
+match:
+  any:
+    - "getOutputData -- unknown output 'doesnotexist'"
+    - "CoordinateEncoderTest.testEncodeAdjacentPositions"
+    - "extensions/core/src/main/engine/RegionIo.cpp"
+why_it_matters: |-
+  ## Why it matters
+
+  NuPIC's region I/O layer is the interface between Python user code and the C++
+  HTM engine. Failures here block all higher-level cortical algorithm tests and
+  indicate a broken build or schema mismatch.

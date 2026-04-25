@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [node, javascript, webpack, nextjs, oom, heap, memory]
 stage_hints: [build]
+domain: runtime
+class: oom-killed
+mode: node-heap-oom
 summary: |-
   The Node.js process ran out of heap memory during the build. This is common in large Webpack, Next.js, or Jest builds where the default V8 heap limit is too low for the amount of modules being processed.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [typescript, tsc, javascript, typecheck]
 stage_hints: [build, test]
+domain: source
+class: compile-error
+mode: typescript-type-error
 summary: |-
   The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [github-actions, matrix, workflow, ci, undefined-variable]
 stage_hints: [build, test]
+domain: ci-config
+class: workflow-syntax
+mode: github-actions-matrix-axis-undefined
 summary: |-
   A GitHub Actions workflow uses an undefined matrix axis variable in a step or action, causing the workflow to fail during variable resolution.
 diagnosis: |-

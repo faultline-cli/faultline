@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [java, maven, gradle, dependencies, repository]
 stage_hints: [build]
+domain: dependency
+class: missing-package
+mode: maven-dependency-not-found
 summary: |-
   The Java build could not resolve one or more dependencies or plugins from the configured artifact repositories.
 diagnosis: |-

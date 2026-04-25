@@ -1,0 +1,77 @@
+id: mdanalysis-test-failure
+title: MDAnalysis molecular dynamics library test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [mdanalysis, molecular-dynamics, python, scientific, coordinates, topology]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: mdanalysis-test-failure
+summary: |-
+  A test failure in the MDAnalysis Python library for molecular dynamics trajectory
+  analysis. Failing tests typically cover coordinate readers/writers (DCD, DLP, GRO,
+  LAMMPS, PDB, XYZ), topology parsing, or atom group operations.
+diagnosis: |-
+  ## Diagnosis
+
+  MDAnalysis uses a modular test suite under `MDAnalysisTests`. Common failing
+  subsystems include:
+
+  - **Coordinate readers** (`MDAnalysisTests.coordinates.*`) — DCD, DLP, GRO,
+    LAMMPS, NetCDF, PDB, TRZ, XYZ format readers and writers.
+  - **Topology parsers** (`MDAnalysisTests.topology.*`) — GRO parser and
+    related topology attribute reading.
+  - **Atom group operations** (`MDAnalysisTests.test_atomgroup.*`) — Universe
+    construction, atom selection, indexing.
+  - **Atom selections** (`MDAnalysisTests.test_atomselections.*`) — around,
+    zone, and bonded selection algorithms.
+  - **Utility functions** (`MDAnalysisTests.test_util.*`) — `make_whole` and
+    other geometry utilities.
+
+  Common causes:
+
+  - **Missing optional dependency** — a reader requires `netcdf4`, `h5py`, or
+    `GridDataFormats` which is not installed.
+  - **NumPy/SciPy version incompatibility** — array shape or dtype assumptions
+    in test fixtures diverge from the installed version.
+  - **Trajectory fixture missing or corrupt** — the test data files under
+    `MDAnalysisTests/data/` were not installed correctly.
+fix: |-
+  ## Fix steps
+
+  1. Install all optional dependencies:
+     ```bash
+     pip install MDAnalysis[analysis] netcdf4 h5py GridDataFormats
+     ```
+  2. Run the failing test file directly:
+     ```bash
+     python -m pytest MDAnalysisTests/coordinates/test_dlpoly.py -v
+     ```
+  3. Verify that test data files are present:
+     ```bash
+     python -c "import MDAnalysisTests; print(MDAnalysisTests.__file__)"
+     ls $(python -c "import MDAnalysisTests; import os; print(os.path.dirname(MDAnalysisTests.__file__))")/data/
+     ```
+validation: |-
+  ## Validation
+
+  Re-run the coordinate and topology test suites:
+  ```bash
+  python -m pytest MDAnalysisTests/coordinates/ MDAnalysisTests/topology/ -v
+  ```
+match:
+  any:
+    - "MDAnalysisTests.coordinates."
+    - "MDAnalysisTests.topology."
+    - "MDAnalysisTests.test_atomgroup."
+    - "MDAnalysisTests.test_atomselections."
+    - "MDAnalysisTests.test_modelling."
+    - "MDAnalysisTests.test_topologyattrs."
+    - "MDAnalysisTests.test_util."
+why_it_matters: |-
+  ## Why it matters
+
+  MDAnalysis is a widely-used scientific Python library for analysing MD simulation
+  data. Test failures in the coordinate readers directly affect the ability to load
+  trajectory data from all major MD engines (GROMACS, NAMD, AMBER, LAMMPS).

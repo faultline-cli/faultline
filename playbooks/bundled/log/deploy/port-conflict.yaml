@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [port, conflict, binding, deploy, network]
 stage_hints: [deploy]
+domain: runtime
+class: port-in-use
+mode: deploy-port-already-in-use
 summary: |-
   A container or service failed to start because the port it needs to bind to
   is already occupied by another process or a previous deployment that has not

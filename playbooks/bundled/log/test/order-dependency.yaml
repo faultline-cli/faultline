@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [test, order, state, isolation]
 stage_hints: [test]
+domain: test-runner
+class: flaky-test
+mode: test-order-dependency
 summary: |-
   A test failed because it depends on side effects or state created by a different test that ran earlier. When test order changes, the assumed preconditions are absent.
 diagnosis: |-

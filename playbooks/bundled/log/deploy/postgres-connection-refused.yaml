@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [postgres, database, connection, refused, service, psql]
 stage_hints: [test, deploy]
+domain: database
+class: service-not-ready
+mode: postgres-connection-refused
 summary: |-
   The application could not connect to PostgreSQL. The service is not responding, not yet started, or the credentials/hostname are wrong.
 diagnosis: |-

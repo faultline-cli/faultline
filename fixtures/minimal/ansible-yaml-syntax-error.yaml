@@ -1,0 +1,22 @@
+id: ansible-yaml-syntax-error-canonical
+title: Ansible playbook run — YAML syntax error in role task file
+fixture_class: minimal
+normalized_log: |
+  $ ansible-playbook -i inventory/production site.yml
+  PLAY [Configure web servers] ************************************
+
+  TASK [Gathering Facts] ******************************************
+  ok: [web-01.example.com]
+
+  Syntax Error while loading YAML script, /home/travis/build/myorg/infra/roles/webserver/tasks/main.yml
+
+  The offending line appears to be:
+
+  - name: Install nginx
+    yum:
+      name: nginx
+      state: present
+     enabled: true
+          ^ here
+expectation:
+  expected_playbook: ansible-yaml-syntax-error

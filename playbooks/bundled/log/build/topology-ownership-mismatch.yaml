@@ -6,6 +6,9 @@ base_score: 0.6
 requires_topology: true
 tags: [topology, codeowners, ownership, monorepo, review-gate]
 stage_hints: [build, test, ci]
+domain: source
+class: ownership-violation
+mode: topology-ownership-mismatch
 summary: |-
   The files that were recently changed are owned by a different team than the
   files where the failure originated, indicating that an out-of-team edit

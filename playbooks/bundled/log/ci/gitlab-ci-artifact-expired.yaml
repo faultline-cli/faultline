@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [gitlab, artifact, expired, dependency, ci]
 stage_hints: [build, deploy, test]
+domain: ci-config
+class: artifact-failure
+mode: gitlab-artifact-expired
 summary: |-
   A downstream GitLab CI job could not retrieve an artifact produced by an earlier job because it expired, was never produced, or was referenced incorrectly.
 diagnosis: |-

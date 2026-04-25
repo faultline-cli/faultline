@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [jenkins, plugin, dependency, ci, missing]
 stage_hints: [build, deploy]
+domain: ci-config
+class: task-not-found
+mode: jenkins-plugin-missing
 summary: |-
   A Jenkins job or pipeline step failed because a required plugin is not installed, is disabled, or has an incompatible version. Jenkins cannot execute the affected step.
 diagnosis: |-

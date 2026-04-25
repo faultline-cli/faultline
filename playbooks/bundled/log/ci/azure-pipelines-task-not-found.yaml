@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [azure-pipelines, azure-devops, task, version, deprecated, ci]
 stage_hints: [build, deploy, test]
+domain: ci-config
+class: task-not-found
+mode: azure-task-missing
 summary: |-
   An Azure Pipelines job could not start because a pipeline task references a version that has been deprecated, removed, or does not exist in the organization's task catalog. The pipeline is blocked before any work runs.
 diagnosis: |-

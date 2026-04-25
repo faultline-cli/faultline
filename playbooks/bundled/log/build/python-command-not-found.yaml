@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [python, pip, executable, missing, environment]
 stage_hints: [build]
+domain: runtime
+class: missing-executable
+mode: python-command-not-found
 summary: |-
   The `python` or `pip` command is not available in the CI environment's PATH.
 diagnosis: |-

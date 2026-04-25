@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [node, python, ruby, go, java, version]
 stage_hints: [build, test]
+domain: runtime
+class: interpreter-mismatch
+mode: runtime-version-mismatch
 summary: |-
   The installed Python, Ruby, or Go runtime does not satisfy the version
   constraint declared by the project. The build is using a language runtime

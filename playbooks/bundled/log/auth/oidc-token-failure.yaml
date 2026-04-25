@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [oidc, jwt, token, federated, aws, gcp, azure, github-actions]
 stage_hints: [build, deploy]
+domain: auth
+class: token-expired
+mode: oidc-token-invalid
 summary: |-
   An OIDC token request failed or the issued token was rejected by the cloud provider. Federated authentication to AWS, GCP, or Azure cannot proceed.
 diagnosis: |-

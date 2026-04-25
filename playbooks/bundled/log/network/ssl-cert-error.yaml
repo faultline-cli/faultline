@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [ssl, tls, certificate, https]
 stage_hints: [build, deploy]
+domain: network
+class: tls-validation
+mode: ssl-certificate-error
 summary: |-
   A TLS/SSL certificate error prevented a secure connection. The certificate was expired, self-signed, or signed by an untrusted certificate authority.
 diagnosis: |-

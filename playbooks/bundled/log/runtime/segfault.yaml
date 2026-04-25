@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [segfault, sigsegv, signal, crash, core-dump]
 stage_hints: [build, test, deploy]
+domain: runtime
+class: crash
+mode: process-segfault
 summary: |-
   The process received a fatal signal — most commonly SIGSEGV (segmentation
   fault), SIGABRT (assertion failure), or SIGBUS (bus error) — and was

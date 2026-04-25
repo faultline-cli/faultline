@@ -6,6 +6,9 @@ base_score: 0.8
 requires_topology: true
 tags: [topology, monorepo, codeowners, boundary, cross-team]
 stage_hints: [build, test]
+domain: source
+class: ownership-violation
+mode: topology-boundary-crossed
 summary: |-
   A change in one ownership zone has broken code in a separate ownership zone,
   suggesting the failure originates at a cross-team integration boundary rather

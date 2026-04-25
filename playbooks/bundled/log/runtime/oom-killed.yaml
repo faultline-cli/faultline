@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [oom, memory, kill, exit-137]
 stage_hints: [build, test]
+domain: runtime
+class: oom-killed
+mode: process-oom-killed
 summary: |-
   The process was terminated by the operating system's out-of-memory (OOM) killer. Exit code 137 (128 + SIGKILL) is the canonical indicator.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [github-actions, yaml, syntax, workflow, ci]
 stage_hints: [build]
+domain: ci-config
+class: workflow-syntax
+mode: github-actions-workflow-syntax
 summary: |-
   GitHub Actions rejected the workflow definition or could not resolve a referenced action, so the workflow could not validate cleanly before the intended job logic ran.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [terraform, iac, init, provider, backend]
 stage_hints: [deploy]
+domain: ci-config
+class: config-error
+mode: terraform-init-failed
 summary: |-
   `terraform init` failed before any plan or apply could begin. Initialization downloads providers and configures the backend, so errors here block every later Terraform step.
 diagnosis: |-

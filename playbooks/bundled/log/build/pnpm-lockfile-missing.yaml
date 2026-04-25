@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [pnpm, node, lockfile, dependency]
 stage_hints: [build, install]
+domain: dependency
+class: lockfile-drift
+mode: pnpm-frozen-lockfile-missing
 summary: |-
   pnpm failed because the lockfile is missing, out of sync, or was not committed. pnpm requires an exact lockfile reference for reproducible installs.
 diagnosis: |-

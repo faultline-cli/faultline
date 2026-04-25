@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [dns, network, host, resolution]
 stage_hints: [build, deploy]
+domain: network
+class: dns-failure
+mode: dns-resolution-failed
 summary: |-
   The runner could not resolve a hostname to an IP address, so the network call failed before it could connect.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: low
 base_score: 0.8
 tags: [test, snapshot, golden, fixtures]
 stage_hints: [test]
+domain: test-runner
+class: test-failure
+mode: snapshot-golden-file-mismatch
 summary: |-
   A test compared current output against a committed snapshot or golden file and found a difference.
 diagnosis: |-

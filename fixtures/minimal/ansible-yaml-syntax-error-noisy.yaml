@@ -1,0 +1,47 @@
+id: ansible-yaml-syntax-error-noisy
+title: Ansible playbook run — YAML syntax error buried in full Travis CI log
+fixture_class: minimal
+normalized_log: |
+  travis_fold:start:git.1
+  $ git clone --depth=50 --branch=main https://github.com/myorg/infra.git myorg/infra
+  Cloning into 'myorg/infra'...
+  travis_fold:end:git.1
+
+  travis_fold:start:install.1
+  $ sudo apt-get install -y ansible
+  Reading package lists...
+  Building dependency tree...
+  The following NEW packages will be installed: ansible
+  Setting up ansible (2.4.0+dfsg-2) ...
+  travis_fold:end:install.1
+
+  travis_fold:start:script.1
+  $ ansible-playbook -i inventory/staging site.yml --syntax-check
+  ERROR! the role 'common' was not found in /home/travis/build/myorg/infra/roles:/etc/ansible/roles
+
+  $ ansible-playbook -i inventory/staging site.yml
+  PLAY [Configure application servers] *****************************
+
+  TASK [Gathering Facts] *******************************************
+  ok: [app-01.staging.example.com]
+  ok: [app-02.staging.example.com]
+
+  TASK [common : Update apt cache] *********************************
+  ok: [app-01.staging.example.com]
+
+  TASK [app : Deploy application config] ***************************
+
+  Syntax Error while loading YAML script, /home/travis/build/myorg/infra/roles/app/tasks/deploy.yml
+
+  The offending line appears to be:
+
+  - name: Write config template
+    template:
+      src: app.conf.j2
+       dest: /etc/app/app.conf
+          ^ here
+
+  travis_fold:end:script.1
+  The command "ansible-playbook -i inventory/staging site.yml" exited with 4.
+expectation:
+  expected_playbook: ansible-yaml-syntax-error

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [python, pip, hash, security, supply-chain, requirements]
 stage_hints: [build]
+domain: dependency
+class: cache-poisoning
+mode: pip-hash-mismatch
 summary: |-
   pip rejected one or more downloaded packages because their hash did not match the expected value recorded in `requirements.txt`. The install was aborted to prevent supply-chain tampering.
 diagnosis: |-

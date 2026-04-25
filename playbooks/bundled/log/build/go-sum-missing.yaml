@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [go, modules, dependencies]
 stage_hints: [build]
+domain: dependency
+class: lockfile-drift
+mode: go-sum-missing
 match:
   any:
     - missing go.sum entry for module providing package

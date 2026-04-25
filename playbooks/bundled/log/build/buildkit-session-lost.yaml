@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [docker, buildkit, build, session, timeout]
 stage_hints: [build]
+domain: container
+class: build-session-error
+mode: buildkit-session-lost
 summary: |-
   Docker BuildKit lost its session while loading the build definition or context, so the image build stopped before it could execute any build steps.
 diagnosis: |-

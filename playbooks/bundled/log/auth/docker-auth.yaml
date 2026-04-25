@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [docker, registry, auth]
 stage_hints: [build, deploy]
+domain: auth
+class: registry-auth
+mode: docker-registry-auth-failed
 
 match:
   any:

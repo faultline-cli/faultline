@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [kubernetes, k8s, crashloopbackoff, container, restart, pod]
 stage_hints: [deploy]
+domain: platform
+class: crash-loop
+mode: k8s-crashloopbackoff
 summary: |-
   A Kubernetes pod is stuck in CrashLoopBackOff: the container starts, exits with a non-zero code, and Kubernetes restarts it with exponential back-off. The root cause is almost always inside the container itself.
 diagnosis: |-

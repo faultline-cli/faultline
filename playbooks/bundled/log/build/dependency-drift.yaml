@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [dependencies, lockfile, version]
 stage_hints: [build]
+domain: dependency
+class: version-conflict
+mode: dependency-version-drift
 match:
   any:
     - conflicting requirements

@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.2
 tags: [node, npm, node-gyp, build-tools, native]
 stage_hints: [build]
+domain: runtime
+class: missing-executable
+mode: node-gyp-build-tools-missing
 summary: |-
   `node-gyp` failed because required build tools (Python, C++ compiler, etc.) are missing from the CI environment.
 diagnosis: |-

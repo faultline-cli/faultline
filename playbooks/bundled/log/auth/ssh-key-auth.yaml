@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [ssh, key, git, auth, deploy-key]
 stage_hints: [build, deploy]
+domain: auth
+class: credential-expired
+mode: ssh-key-auth-failed
 summary: |-
   An SSH operation (git clone, deploy, rsync) failed because the SSH key was not found, not loaded into the agent, or the remote host does not accept it.
 diagnosis: |-

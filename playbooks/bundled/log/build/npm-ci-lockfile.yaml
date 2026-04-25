@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [npm, node, lockfile, dependencies]
 stage_hints: [build]
+domain: dependency
+class: lockfile-drift
+mode: npm-ci-requires-package-lock
 match:
   any:
     - npm ci can only install packages when your package.json and package-lock.json

@@ -5,6 +5,9 @@ severity: high
 base_score: 0.85
 tags: [database, migration, timeout, flyway, liquibase, alembic, test-setup]
 stage_hints: [test]
+domain: database
+class: migration-timeout
+mode: database-migration-timeout
 summary: |-
   Database migration failed to complete within the timeout window, usually due to lock contention or expensive DDL operations during test suite initialization.
 diagnosis: |-

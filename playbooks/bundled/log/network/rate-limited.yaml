@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [network, rate-limit, 429, npm, docker, github, api]
 stage_hints: [build, deploy, test]
+domain: network
+class: rate-limiting
+mode: request-rate-limited
 summary: |-
   A request to an external service was rejected with HTTP 429 Too Many Requests
   or an equivalent rate-limit error. Package registries, container registries,

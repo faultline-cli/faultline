@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [python, poetry, lockfile, dependencies]
 stage_hints: [build, test]
+domain: dependency
+class: lockfile-drift
+mode: poetry-lockfile-drift
 match:
   any:
     - poetry.lock is not consistent with pyproject.toml

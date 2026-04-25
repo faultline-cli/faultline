@@ -1,0 +1,108 @@
+id: tox-invocation-error
+title: tox environment command failed (InvocationError)
+category: build
+severity: high
+base_score: 0.85
+tags: [python, tox, test-runner, virtualenv, ci]
+stage_hints: [test, build]
+domain: test-runner
+class: test-runner-error
+mode: tox-invocation-error
+summary: |-
+  tox ran a command inside a virtual environment and the command exited with a non-zero status. The error line begins with `InvocationError:` and shows the full path to the failing executable.
+diagnosis: |-
+  ## Diagnosis
+
+  tox wraps test and tool commands so that they run inside isolated virtual environments. When any command in a tox environment exits non-zero, tox reports:
+
+  ```
+  InvocationError: '/path/to/.tox/<env>/bin/<command> [args]'
+  <env>: commands failed
+  ```
+
+  The `InvocationError` line itself only tells you *which* command failed, not *why*. The actual failure is always in the output printed before this line. Common root causes:
+
+  - Test assertions failed (pytest, nosetests, behave, unittest).
+  - A dependency is missing or version-incompatible inside the tox virtualenv.
+  - The test command was killed due to timeout or OOM inside the CI runner.
+  - A configuration issue in `tox.ini` or `setup.cfg` caused the wrong command to run.
+  - An environment variable required by the test suite was not set in the tox context.
+
+fix: |-
+  ## Fix steps
+
+  1. Scroll up past the `InvocationError:` line to read the actual failure output — that is where the real error is.
+
+  2. Reproduce locally using the exact tox environment that failed:
+
+     ```bash
+     tox -e <env-name> -v
+     ```
+
+     Replace `<env-name>` with the environment shown before `: commands failed` (e.g. `py3.3-django1.6-postgresql-locmem`).
+
+  3. If the environment does not exist on your machine, install the required Python version and recreate it:
+
+     ```bash
+     tox -e <env-name> --recreate
+     ```
+
+  4. For dependency failures inside tox, check `tox.ini`:
+
+     ```bash
+     tox -e <env-name> --listenvs-all
+     cat tox.ini | grep -A20 '\[testenv'
+     ```
+
+  5. Check if the tox virtualenv itself is stale or corrupt:
+
+     ```bash
+     tox -e <env-name> --recreate
+     ```
+
+  6. For missing environment variables, ensure CI sets them in the job definition and that `tox.ini` passes them through with `passenv`.
+
+validation: |-
+  ## Validation
+
+  - `tox -e <env-name>` exits 0.
+  - All tests in the affected environment pass.
+  - No `InvocationError` line appears in the tox output.
+match:
+  any:
+    - "InvocationError:"
+  all:
+    - "commands failed"
+  none:
+    - "could not find a version that satisfies"
+    - "No matching distribution found"
+    - "pip install"
+    - "ResolutionImpossible"
+    - "Could not build wheels"
+    - "ERROR: No command"
+    - "error: command 'gcc' failed"
+    - "permission denied"
+    - "EACCES"
+workflow:
+  likely_files:
+    - tox.ini
+    - setup.cfg
+    - pyproject.toml
+    - .travis.yml
+  local_repro:
+    - tox -e <env-name> -v
+    - tox -e <env-name> --recreate
+  verify:
+    - tox -e <env-name>
+    - python -m pytest <test-dir> -v
+why_it_matters: |-
+  ## Why it matters
+
+  `InvocationError` is a tox-level wrapper error: it does not describe the actual failure. Without reading the lines above it, the failure mode is invisible. In CI log summarizers that truncate output, this error line can be the only thing surfaced, making the build appear broken for an opaque reason.
+
+  ## Prevention
+
+  - Always read from the top of the tox output when debugging.
+  - Set `tox.ini` section `[tox] minversion = 4` to get cleaner error reporting.
+  - Use `tox --parallel --parallel-live` to interleave output so failures stay visible.
+  - Pin `tox` itself in CI to avoid subtle version-upgrade behavior changes.

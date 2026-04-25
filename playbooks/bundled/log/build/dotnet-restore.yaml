@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [dotnet, nuget, restore, csharp, build]
 stage_hints: [build]
+domain: dependency
+class: missing-package
+mode: dotnet-restore-failed
 summary: |-
   `dotnet restore` or a build that implicitly runs restore could not download or resolve one or more NuGet packages. The build cannot proceed until all dependencies are available.
 diagnosis: |-

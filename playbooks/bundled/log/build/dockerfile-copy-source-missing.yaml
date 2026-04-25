@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [docker, build, context, copy, dockerfile]
 stage_hints: [build]
+domain: filesystem
+class: missing-file
+mode: docker-copy-source-missing
 summary: |-
   Docker COPY or ADD instruction failed because the source file does not exist in the build context. The file may be excluded by `.dockerignore` or the path is incorrect.
 diagnosis: |-

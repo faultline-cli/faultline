@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [artifact, upload, download, ci, pipeline, storage]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: artifact-failure
+mode: artifact-upload-failed
 summary: |-
   A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job. Pipeline stages that depend on the artifact cannot proceed.
 diagnosis: |-

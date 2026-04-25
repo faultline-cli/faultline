@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [gradle, java, kotlin, android, build]
 stage_hints: [build]
+domain: source
+class: compile-error
+mode: gradle-build-failure
 summary: |-
   Gradle exited with a non-zero status, indicating one or more tasks failed. The `FAILURE:` block in the output identifies the first task that failed and the root cause.
 diagnosis: |-

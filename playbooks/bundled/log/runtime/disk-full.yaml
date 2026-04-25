@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [disk, storage, no space]
 stage_hints: [build, deploy]
+domain: runtime
+class: disk-full
+mode: disk-space-exhausted
 summary: |-
   The host or container filesystem ran out of disk space. Writes fail
   immediately when the disk is full, typically aborting builds, unpack steps,

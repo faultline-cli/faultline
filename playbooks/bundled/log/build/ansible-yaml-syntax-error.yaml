@@ -1,0 +1,143 @@
+id: ansible-yaml-syntax-error
+title: Ansible YAML task or variable file syntax error
+category: build
+severity: high
+base_score: 1.0
+tags: [ansible, yaml, infrastructure, configuration, iac, playbook, roles]
+stage_hints: [build, deploy]
+domain: source
+class: yaml-syntax
+mode: ansible-task-yaml-syntax
+summary: |-
+  Ansible failed to parse a YAML file — a task file, variable file, role
+  default, or handler — while loading the playbook. The CI pipeline cannot
+  continue until the YAML syntax is corrected.
+diagnosis: |-
+  ## Diagnosis
+
+  Ansible's YAML loader emits this error when it encounters a syntax violation
+  in a task file, variables file, handler, or role default. The error message
+  identifies the exact file and, in newer Ansible versions, marks the offending
+  line with a caret (`^`):
+
+  ```
+  Syntax Error while loading YAML script, /path/to/roles/<role>/tasks/main.yml
+
+  The offending line appears to be:
+      key: value
+       misindented: true
+           ^ here
+  ```
+
+  Common causes:
+
+  - **Incorrect indentation**: YAML uses spaces exclusively — tabs are not
+    permitted and will cause a parse failure.
+  - **Incorrect alignment under a mapping key**: a value block that is not
+    indented consistently relative to its parent key.
+  - **Missing or extra colons or dashes**: a bare colon inside an unquoted
+    string, or a list item dash not followed by a space.
+  - **Unclosed quotes**: a single or double quote opened but never closed.
+  - **Duplicate keys**: two keys at the same level in a mapping block.
+  - **Merge conflict markers** left in the file: lines beginning with
+    `<<<<<<<`, `=======`, or `>>>>>>>`.
+  - **Jinja2 template expressions in bare YAML**: a `{{ }}` block at the
+    start of a value must be quoted.
+fix: |-
+  ## Fix steps
+
+  1. Identify the file and line from the error message.
+
+  2. Run Ansible's built-in syntax check on the playbook:
+
+     ```bash
+     ansible-playbook --syntax-check playbook.yml
+     ```
+
+  3. Validate the offending file with the Python YAML parser:
+
+     ```bash
+     python3 -c "import yaml; yaml.safe_load(open('<file>').read()); print('OK')"
+     ```
+
+  4. Use `yamllint` for detailed whitespace and structure feedback:
+
+     ```bash
+     yamllint <file>
+     ```
+
+  5. Scan for tabs:
+
+     ```bash
+     grep -Pn "\t" <file>
+     ```
+
+  6. Look for merge conflict markers:
+
+     ```bash
+     grep -n "^<<<\|^===\|^>>>" <file>
+     ```
+
+  7. If the file uses Jinja2 templates, quote any value that starts with
+     `{{`:
+
+     ```yaml
+     # BAD
+     dest: {{ app_dir }}/app.conf
+
+     # GOOD
+     dest: "{{ app_dir }}/app.conf"
+     ```
+
+  8. After fixing, re-run:
+
+     ```bash
+     ansible-playbook --syntax-check playbook.yml
+     ```
+validation: |-
+  ## Validation
+
+  - `ansible-playbook --syntax-check playbook.yml` exits 0 with no errors.
+  - `yamllint roles/<role>/tasks/main.yml` reports no errors.
+  - The CI pipeline completes the Ansible run without YAML parse failures.
+match:
+  any:
+    - "Syntax Error while loading YAML script"
+    - "ERROR! Syntax Error while loading YAML"
+  none:
+    - "yaml.scanner.ScannerError"
+workflow:
+  likely_files:
+    - "*.yml"
+    - "roles/*/tasks/main.yml"
+    - "roles/*/tasks/*.yml"
+    - "roles/*/vars/main.yml"
+    - "roles/*/defaults/main.yml"
+    - "roles/*/handlers/main.yml"
+    - "group_vars/*.yml"
+    - "host_vars/*.yml"
+  local_repro:
+    - "ansible-playbook --syntax-check playbook.yml"
+    - "yamllint roles/<role>/tasks/main.yml"
+    - "python3 -c \"import yaml; yaml.safe_load(open('<file>').read())\""
+  verify:
+    - "ansible-playbook --syntax-check playbook.yml"
+    - "yamllint <file>"
+why_it_matters: |-
+  ## Why it matters
+
+  Ansible YAML syntax errors are a hard CI-blocker: Ansible refuses to load
+  any task from the offending file, so the entire playbook fails before a
+  single task runs. Infrastructure automation (provisioning, configuration,
+  deployment) is completely blocked until the YAML is corrected.
+
+  ## Prevention
+
+  - Add `yamllint` as a pre-commit hook and as a CI lint step run before the
+    playbook step.
+  - Configure `yamllint` with a project-specific `.yamllint` file so indentation
+    and line-length rules match your team conventions.
+  - Enable Ansible language support in your editor (e.g., the VS Code Ansible
+    extension) to surface YAML errors before commit.
+  - Run `ansible-playbook --syntax-check` as a cheap fast-fail step before the
+    full playbook run in CI.

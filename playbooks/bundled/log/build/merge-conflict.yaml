@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [git, merge, conflict, syntax, build]
 stage_hints: [build]
+domain: source
+class: merge-conflict
+mode: unresolved-merge-conflict
 summary: |-
   A file contains unresolved merge conflict markers (`<<<<<<<`, `=======`,
   `>>>>>>>`). The build, linter, or type-checker rejects the file because the

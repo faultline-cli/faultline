@@ -1,0 +1,20 @@
+id: ansible-yaml-syntax-error-near-miss
+title: Python SyntaxError in source code — near-miss for ansible-yaml-syntax-error
+fixture_class: minimal
+normalized_log: |
+  $ python setup.py test
+  running test
+  running egg_info
+  writing config_loader.egg-info/PKG-INFO
+  running build_ext
+
+  File "config_loader/parser.py", line 42
+      config = {missing_key
+               ^
+  SyntaxError: invalid syntax
+
+  Error: Tests failed with exit code 1.
+expectation:
+  expected_playbook: syntax-error
+  disallowed_playbooks:
+    - ansible-yaml-syntax-error

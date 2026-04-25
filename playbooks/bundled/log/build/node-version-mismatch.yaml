@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [node, nodejs, nvmrc, engines, nvm, version]
 stage_hints: [build]
+domain: runtime
+class: interpreter-mismatch
+mode: node-version-mismatch
 summary: |-
   The Node.js version installed on the CI runner does not satisfy the `engines` constraint declared in `package.json` or the version pinned in `.nvmrc`.
 diagnosis: |-

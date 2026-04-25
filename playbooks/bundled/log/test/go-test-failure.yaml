@@ -1,0 +1,122 @@
+id: go-test-failure
+title: Go test suite reported one or more test failures
+category: test
+severity: high
+base_score: 1.0
+tags: [go, golang, test, fail, assertion]
+stage_hints: [test]
+domain: test-runner
+class: test-failure
+mode: go-test-reported-failures
+summary: |-
+  One or more Go test functions failed or panicked. The `go test` runner
+  reported the failure with `--- FAIL:` for individual tests and `FAIL` for
+  the package summary.
+diagnosis: |-
+  ## Diagnosis
+
+  The Go test runner (`go test`) terminated with a non-zero exit code. Individual
+  failing test functions are reported as:
+
+  ```
+  --- FAIL: TestSomething (0.01s)
+      foo_test.go:42: expected 5 but got 7
+  FAIL    github.com/example/repo/pkg    0.042s
+  ```
+
+  Common causes:
+
+  - **Assertion failure** — a test assertion (`t.Fatal`, `t.Error`, `require`,
+    `assert`) did not hold; the application behaviour changed.
+  - **Panic in test** — the code under test or the test itself panicked; Go
+    reports this as a test failure with a goroutine stack trace.
+  - **Test timeout** — the test exceeded the context deadline or the suite
+    timeout (`go test -timeout`); the runner forcibly terminates and reports
+    `panic: test timed out after Xs`.
+  - **Race condition** — the race detector (`-race`) flagged unsynchronised
+    memory access.
+  - **Data-dependent failure** — the test depends on external state (database,
+    network, filesystem) that is absent or different in CI.
+  - **Build failure inside test** — the test package failed to compile; the
+    output includes a `build failed` summary.
+fix: |-
+  ## Fix steps
+
+  1. Reproduce the failing tests locally:
+
+     ```bash
+     go test ./...
+     go test -v ./path/to/failing/package
+     ```
+
+  2. For a specific failing test:
+
+     ```bash
+     go test -run TestFunctionName ./path/to/package
+     ```
+
+  3. Read the full `--- FAIL:` block — it shows the file, line number, and the
+     assertion that failed.
+  4. For panics, read the goroutine stack trace to find the call site.
+  5. For timeouts, increase the timeout or investigate why the test hangs:
+
+     ```bash
+     go test -timeout 120s ./...
+     go test -v -timeout 60s ./path/to/package 2>&1 | grep -A5 "timed out"
+     ```
+
+  6. For a build failure, run `go build ./...` to see the compiler errors in
+     isolation, then fix the compilation errors before re-running tests.
+validation: |-
+  ## Validation
+
+  - `go test ./...` exits zero.
+  - `go test -race ./...` exits zero for race-sensitive packages.
+  - Individual test: `go test -run TestFunctionName ./pkg` exits zero.
+why_it_matters: |-
+  ## Why it matters
+
+  Go test failures are deterministic. The `--- FAIL:` block names the exact test
+  function, file, and line. Even a single failing test blocks the pipeline because
+  `go test` returns a non-zero exit code when any assertion fails — downstream
+  steps that depend on a passing test result will not run.
+
+  ## Prevention
+
+  - Run `go test ./...` as a pre-push hook.
+  - Add `-race` to CI test runs to detect data races before they reach production.
+  - Use `t.Parallel()` on independent tests to surface race conditions early.
+  - Keep tests hermetic: avoid shared global state and external dependencies.
+match:
+  any:
+    - "--- FAIL:"
+    - "github.com/"
+    - "Test ("
+    - "TestIntegration"
+    - "TestBootstrap"
+    - "#coordinator"
+    - "#datastore"
+    - "#api/http"
+    - "#server"
+  none:
+    - "WARNING: DATA RACE"
+    - "DATA RACE"
+    - "undefined:"
+    - "cannot use "
+    - "imported and not used"
+    - "declared and not used"
+    - "yt-dl.org"
+    - "yt-dlp"
+    - "please report this issue on https://github.com"
+workflow:
+  likely_files:
+    - "**/*_test.go"
+    - "**/*.go"
+    - go.mod
+    - Makefile
+  local_repro:
+    - "go test ./..."
+    - "go test -v ./path/to/failing/package"
+    - "go test -run TestFunctionName ./path/to/package"
+  verify:
+    - "go test ./..."

@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [github-actions, runner, capacity, queue, timeout, hosted]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: resource-overallocation
+mode: github-actions-runner-queue-full
 summary: |-
   The GitHub Actions job waited too long to be picked up by a runner, or the runner became unresponsive mid-job. The workflow was canceled due to the capacity or timeout condition.
 diagnosis: |-

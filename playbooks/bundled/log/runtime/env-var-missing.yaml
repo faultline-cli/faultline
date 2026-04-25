@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [env, environment-variable, config, missing]
 stage_hints: [build, deploy, test]
+domain: runtime
+class: env-not-persisted
+mode: env-var-missing
 summary: |-
   A required environment variable was not set or was empty when the process tried to read it. The application, build script, or test suite could not continue without it.
 diagnosis: |-

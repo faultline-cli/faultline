@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [ssh, git, auth, key, permission, publickey]
 stage_hints: [build, deploy]
+domain: auth
+class: credential-expired
+mode: ssh-permission-denied
 summary: |-
   SSH authentication to a Git host or remote server failed with explicit "Permission denied (publickey)" message. The private key is missing, not readable, or the public key is not registered on the server.
 diagnosis: |-

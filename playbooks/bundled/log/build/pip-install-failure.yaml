@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [python, pip, install, dependencies, build]
 stage_hints: [build]
+domain: dependency
+class: missing-package
+mode: pip-install-failed
 summary: |-
   `pip install` could not satisfy one or more package requirements. The package may not exist on PyPI, the version constraint is too restrictive, or a C extension failed to compile.
 diagnosis: |-

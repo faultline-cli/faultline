@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [python, pip, pep668, venv, environment, build]
 stage_hints: [build]
+domain: runtime
+class: interpreter-mismatch
+mode: python-externally-managed
 summary: |-
   pip refused to install packages because Python 3.11+ on Ubuntu 24.04 or similar distributions enforces PEP 668, marking the system Python as externally managed. Direct pip installs are blocked to prevent conflicts with system packages.
 diagnosis: |-

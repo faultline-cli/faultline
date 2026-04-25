@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [docker, daemon, socket, runtime, ci]
 stage_hints: [build, deploy]
+domain: container
+class: daemon-error
+mode: docker-daemon-not-running
 summary: |-
   Docker could not reach the daemon socket or service, so the step failed before it could inspect containers or run a build.
 diagnosis: |-

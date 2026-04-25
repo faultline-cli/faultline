@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [docker, daemon, config, daemon.json, startup]
 stage_hints: [build, deploy]
+domain: container
+class: daemon-error
+mode: docker-daemon-config-conflict
 summary: |-
   The Docker daemon failed to start because conflicting options were supplied — the same setting was configured both in `daemon.json` and on the daemon command line. The daemon exits instead of starting.
 diagnosis: |-

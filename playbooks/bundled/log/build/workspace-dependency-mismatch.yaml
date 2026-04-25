@@ -5,6 +5,9 @@ severity: high
 base_score: 0.85
 tags: [monorepo, lerna, nx, yarn, pnpm, workspace, dependency, version-mismatch]
 stage_hints: [build]
+domain: dependency
+class: version-conflict
+mode: workspace-dependency-mismatch
 summary: |-
   A package in the monorepo workspace depends on a version of another workspace package that doesn't match the version published in the workspace registry.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [architecture, docker, arm64, amd64, platform, exec-format, multi-arch]
 stage_hints: [build, deploy]
+domain: runtime
+class: arch-mismatch
+mode: cpu-architecture-mismatch
 summary: |-
   A binary, container image, or build artifact targets the wrong CPU architecture for the current runner. The most common form is pulling an `linux/amd64` image on an ARM runner, or running an x86 binary on Apple Silicon.
 diagnosis: |-

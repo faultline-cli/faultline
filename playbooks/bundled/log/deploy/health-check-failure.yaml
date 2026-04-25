@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [health-check, kubernetes, docker, deployment]
 stage_hints: [deploy]
+domain: platform
+class: health-check-failure
+mode: service-health-check-failed
 match:
   any:
     - health check failed

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [kubernetes, kubectl, auth, kubeconfig]
 stage_hints: [deploy]
+domain: auth
+class: credential-expired
+mode: kubectl-auth-failed
 summary: |-
   `kubectl` could not authenticate with the Kubernetes API server. This prevents cluster operations such as `apply`, `rollout`, or `get`.
 diagnosis: |-

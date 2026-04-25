@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [test, parallel, concurrency, port, database]
 stage_hints: [test]
+domain: test-runner
+class: concurrency-error
+mode: test-parallelism-conflict
 summary: |-
   Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or write to the same temporary file simultaneously.
 diagnosis: |-

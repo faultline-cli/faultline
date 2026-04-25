@@ -1,0 +1,73 @@
+id: openai-gym-test-failure
+title: OpenAI Gym environment test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [openai-gym, reinforcement-learning, python, environment, atari]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: openai-gym-test-failure
+summary: |-
+  A test failure in the OpenAI Gym reinforcement learning library. These tests
+  exercise environment registration, monitor lifecycle, and parametrized
+  environment step/reset/render conformance across all registered environments.
+diagnosis: |-
+  ## Diagnosis
+
+  OpenAI Gym's test suite runs three main categories of tests:
+
+  - **`gym.envs.tests.test_envs`** — parametrized test that instantiates every
+    registered Gym environment, calls `reset()`, takes a random `step()`, and
+    verifies the observation/reward/done/info tuple shape.
+  - **`gym.monitoring.tests.test_monitor_envs`** — tests the `Monitor` wrapper
+    that wraps environments to record episode statistics and video.
+  - **`test_envs.test_env`** — standalone environment conformance tests.
+
+  The tests are parametrized by environment ID (`:N` suffix in the log), so
+  failing tests point to a specific registered environment.
+
+  Common causes:
+
+  - **Missing renderer** — Atari or MuJoCo environments require system libraries
+    (`libgl`, `libglew`, MuJoCo license key) that are not available in CI.
+  - **Unregistered environment** — a new environment was added but not registered
+    in `gym/__init__.py` or `gym/envs/__init__.py`.
+  - **Observation space shape mismatch** — environment `reset()` or `step()`
+    returns an observation that does not conform to the declared `observation_space`.
+fix: |-
+  ## Fix steps
+
+  1. Identify the failing environment IDs from the `:N` suffix in the log.
+  2. Check if the environment requires system libraries:
+     ```bash
+     apt-get install -y libgl1-mesa-glx libglew-dev
+     pip install gym[atari]
+     ```
+  3. Run the failing environment test individually:
+     ```bash
+     python -m pytest gym/envs/tests/test_envs.py -k "CartPole" -v
+     ```
+  4. Verify the environment is properly registered:
+     ```python
+     import gym; gym.make('CartPole-v1')
+     ```
+validation: |-
+  ## Validation
+
+  Run the environment conformance tests:
+  ```bash
+  python -m pytest gym/envs/tests/ gym/monitoring/tests/ -v
+  ```
+match:
+  any:
+    - "gym.monitoring.tests."
+    - "gym.envs.tests.test_envs."
+    - "test_envs.test_env:"
+why_it_matters: |-
+  ## Why it matters
+
+  OpenAI Gym is the standard interface for reinforcement learning environments.
+  Failing environment conformance tests mean that RL algorithms trained against
+  those environments will encounter unexpected observation shapes or broken
+  lifecycle methods, producing incorrect or non-reproducible results.

@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [build, file, path, artifact, input]
 stage_hints: [build, test]
+domain: filesystem
+class: missing-file
+mode: build-input-file-missing
 match:
   any:
     - "cp: cannot stat"

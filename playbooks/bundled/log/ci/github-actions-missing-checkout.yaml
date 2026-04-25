@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [github-actions, ci, checkout, workflow]
 stage_hints: [build, test]
+domain: ci-config
+class: workflow-syntax
+mode: github-actions-missing-checkout
 summary: |-
   GitHub Actions job tried to access repository files (build, test, run scripts) but the repository was never checked out. The `actions/checkout` step is missing or runs after the file access step.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.1
 tags: [toolchain, executable, binary, path, runtime]
 stage_hints: [build, test, deploy]
+domain: runtime
+class: missing-executable
+mode: binary-not-found
 match:
   any:
     - executable file not found in $PATH

@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [github-actions, runner, update, permissions, ci]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: permission-denied
+mode: runner-update-permission-denied
 summary: |-
   A self-hosted runner tried to update itself or adjust worker process settings, but the environment denied access to the runner filesystem or proc entries.
 diagnosis: |-

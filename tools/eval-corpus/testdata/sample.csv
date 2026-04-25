@@ -1,0 +1,7 @@
+id,timestamp,message
+row-001,2024-01-01T00:00:00Z,Error response from daemon: unauthorized: authentication required
+row-002,2024-01-01T00:01:00Z,exec /__e/node20/bin/node: no such file or directory
+row-003,2024-01-01T00:02:00Z,generic log line that will not match any playbook
+row-001,2024-01-01T00:00:00Z,Error response from daemon: unauthorized: authentication required
+row-004,2024-01-01T00:03:00Z,another unmatched log line
+row-005,2024-01-01T00:04:00Z,user@example.com logged in with token ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

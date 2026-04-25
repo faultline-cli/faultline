@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [yarn, node, lockfile, dependencies]
 stage_hints: [build]
+domain: dependency
+class: lockfile-drift
+mode: yarn-lockfile-outdated
 summary: |-
   Yarn was run with `--frozen-lockfile` (the recommended CI flag) but the `yarn.lock` file is either missing or no longer matches `package.json`.
 diagnosis: |-

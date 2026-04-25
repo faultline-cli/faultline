@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [npm, node, permissions, node_modules, eacces]
 stage_hints: [build]
+domain: filesystem
+class: permission-denied
+mode: npm-eacces-permission-denied
 summary: |-
   npm failed with an `EACCES` error while trying to write to `node_modules` or the global npm cache.
 diagnosis: |-

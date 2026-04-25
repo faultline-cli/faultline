@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [docker, runtime, permission, nonroot, user]
 stage_hints: [deploy]
+domain: container
+class: permission-denied
+mode: docker-socket-permission-denied
 summary: |-
   A Docker container process running as a non-root user encountered a permission denied error while trying to access files or directories owned by root or another user.
 diagnosis: |-

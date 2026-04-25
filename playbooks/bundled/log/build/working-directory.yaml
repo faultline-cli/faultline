@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [directory, path, config]
 stage_hints: [build, test, deploy]
+domain: filesystem
+class: wrong-working-directory
+mode: wrong-working-directory
 summary: |-
   A command ran in an unexpected working directory. Relative paths expected a specific directory layout that did not exist at the time of execution.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [circleci, oom, memory, resource-class, ci]
 stage_hints: [build, test]
+domain: ci-config
+class: resource-overallocation
+mode: circleci-oom-resource-class
 summary: |-
   The CircleCI job was killed because it exceeded the memory limit of the selected resource class. The process received SIGKILL or the container was OOM-killed by the kernel, and the job exited non-zero without a clear user-visible error.
 diagnosis: |-

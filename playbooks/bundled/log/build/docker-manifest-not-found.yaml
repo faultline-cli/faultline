@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [docker, registry, image, tag, manifest]
 stage_hints: [build, deploy]
+domain: container
+class: image-not-found
+mode: docker-manifest-not-found
 summary: |-
   Docker could not pull an image because the tag does not exist in the registry, the manifest is missing, or the image reference is malformed.
 diagnosis: |-

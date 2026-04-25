@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [circleci, config, yaml, validation, ci]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: workflow-syntax
+mode: circleci-config-invalid
 summary: |-
   CircleCI rejected the `.circleci/config.yml` file because it contains a syntax error, references an undefined parameter or executor, or violates the CircleCI config schema. No jobs ran.
 diagnosis: |-

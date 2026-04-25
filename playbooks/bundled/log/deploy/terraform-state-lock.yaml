@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [terraform, state, lock, infra]
 stage_hints: [deploy]
+domain: platform
+class: concurrency-conflict
+mode: terraform-state-lock
 summary: |-
   Terraform could not acquire the state lock because another Terraform process is currently holding it. Only one Terraform operation can modify a given state at a time.
 diagnosis: |-

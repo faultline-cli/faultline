@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [gitlab, runner, stuck, ci]
 stage_hints: [build, deploy, test]
+domain: ci-config
+class: resource-overallocation
+mode: gitlab-no-matching-runner
 summary: |-
   GitLab CI could not find an available runner that matches the job's tag requirements or the project has no registered runners at all.
 diagnosis: |-

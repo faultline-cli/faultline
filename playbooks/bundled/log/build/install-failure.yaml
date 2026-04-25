@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [install, dependencies, npm, pip, apt]
 stage_hints: [build]
+domain: dependency
+class: missing-package
+mode: package-install-failed
 summary: |-
   The dependency installation step failed because the requested package or
   version could not be found in the configured registry, package index, or OS

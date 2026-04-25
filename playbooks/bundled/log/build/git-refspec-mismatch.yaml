@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [git, checkout, refspec, vcs, branch-not-found]
 stage_hints: [build]
+domain: source
+class: version-mismatch
+mode: git-refspec-not-found
 summary: |-
   A git checkout or clone operation failed because the requested refspec (branch name, tag, or commit reference) does not exist on the remote repository.
 diagnosis: |-
@@ -73,7 +76,9 @@ match:
   any:
     - "couldn't find remote ref"
     - "invalid refspec"
-    - "does not exist"
+    - "repository.*does not exist"
+    - "remote ref.*does not exist"
+    - "branch.*does not exist"
     - "ref.*does not match any"
     - "failed to fetch submodule"
   none:
@@ -87,6 +92,7 @@ match:
     - "no such file or directory"
     - "npm ERR!"
     - "npm error"
+    - "video.*does not exist"
 
 workflow:
   likely_files:

@@ -1,0 +1,115 @@
+id: ffmpeg-avconv-missing
+title: ffmpeg or avconv not available in the CI environment
+category: build
+severity: medium
+base_score: 1.0
+tags: [ffmpeg, avconv, media, toolchain, binary, path]
+stage_hints: [test, build]
+domain: runtime
+class: missing-executable
+mode: ffmpeg-avconv-missing
+summary: |-
+  The job requires ffmpeg (or its libav counterpart avconv) for media processing
+  but neither tool is installed or reachable on `$PATH` in the CI environment.
+diagnosis: |-
+  ## Diagnosis
+
+  A media-aware test or tool checked for ffmpeg or avconv and could not locate
+  either binary. This appears most often in projects that process video, audio,
+  or streaming formats (HLS/m3u8, DASH, MP4, WebM).
+
+  Common causes:
+
+  - **Missing system dependency** — the CI base image does not include ffmpeg.
+  - **Minimal runner image** — container jobs that use a stripped-down Linux
+    image (Alpine, debian-slim) often omit ffmpeg.
+  - **Changed image tag** — an update to the base container silently dropped
+    the ffmpeg package.
+  - **PATH mismatch** — ffmpeg is installed to a non-standard prefix that is not
+    included in the job's `$PATH`.
+fix: |-
+  ## Fix steps
+
+  ### Ubuntu / Debian CI (GitHub Actions, GitLab CI, CircleCI)
+
+  Add an installation step before any test steps that require ffmpeg:
+
+  ```yaml
+  - name: Install ffmpeg
+    run: sudo apt-get update && sudo apt-get install -y ffmpeg
+  ```
+
+  ### Alpine (Docker-based runner)
+
+  ```dockerfile
+  RUN apk add --no-cache ffmpeg
+  ```
+
+  ### macOS runner (Homebrew)
+
+  ```yaml
+  - name: Install ffmpeg
+    run: brew install ffmpeg
+  ```
+
+  ### Verify on the runner
+
+  ```bash
+  ffmpeg -version
+  which ffmpeg
+  ```
+
+  ### Pin to a specific version
+
+  If different test suites require different ffmpeg capabilities, pin the version
+  in your runner image or install step to avoid silent regressions when the
+  package is updated.
+validation: |-
+  ## Validation
+
+  - `which ffmpeg` exits zero and prints the binary path.
+  - `ffmpeg -version` prints a version string without errors.
+  - The failing test suite runs to completion without "ffmpeg could not be found"
+    in the output.
+why_it_matters: |-
+  ## Why it matters
+
+  Media-processing tests are silently skipped or produce opaque failures when
+  ffmpeg is absent. Without ffmpeg, any code that transcodes, probes, or
+  inspects audio/video files cannot run. These failures surface as
+  `command not found`, `exit status 127`, or friendly messages like
+  "ffmpeg or avconv could not be found" depending on the calling library.
+
+  ## Prevention
+
+  - Declare ffmpeg as a required system dependency in your project's
+    `CONTRIBUTING.md`, Dockerfile, and CI configuration.
+  - Add a CI check that verifies `ffmpeg -version` early in the job so
+    failures are caught before media-dependent tests run.
+  - Use a pre-built CI image that includes ffmpeg rather than installing it
+    in every job run.
+match:
+  any:
+    - "ffmpeg or avconv could not be found"
+    - "avconv could not be found"
+    - "ffmpeg could not be found"
+    - "please install ffmpeg"
+    - "please install one"
+    - "ffmpeg is not installed"
+    - "Unable to locate ffmpeg"
+  none:
+    - "fixture"
+    - "testdata"
+    - "install ffmpeg on your machine"
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .gitlab-ci.yml
+    - Dockerfile
+    - Makefile
+  local_repro:
+    - "which ffmpeg || echo 'ffmpeg not found'"
+    - "ffmpeg -version"
+  verify:
+    - "which ffmpeg"
+    - "ffmpeg -version"

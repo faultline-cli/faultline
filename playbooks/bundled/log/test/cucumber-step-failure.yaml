@@ -1,0 +1,112 @@
+id: cucumber-step-failure
+title: Cucumber/Gherkin scenario step failed
+category: test
+severity: medium
+base_score: 1.0
+tags: [cucumber, gherkin, bdd, ruby, acceptance-test, capybara, rspec]
+stage_hints: [test]
+domain: test-runner
+class: scenario-failure
+mode: cucumber-step-failed
+summary: |-
+  One or more Cucumber scenarios failed. The failing step is identified by its
+  feature file path and line number. Failures commonly indicate a broken
+  application flow, a missing environment dependency (browser driver, database,
+  external service), or a timing issue in a browser-based test.
+diagnosis: |-
+  ## Diagnosis
+
+  Cucumber runs acceptance tests written in Gherkin (`.feature` files). Each
+  scenario is a sequence of Given/When/Then steps; a single failing step fails
+  the whole scenario.
+
+  Common causes:
+
+  - **Application regression** — the feature behaviour changed and the scenario
+    now fails because the expected UI element, response, or side-effect is absent.
+  - **Missing environment dependency** — a browser driver (chromedriver, geckodriver),
+    database seed, external service mock, or required gem is absent or misconfigured
+    in the CI environment.
+  - **Timing/flakiness** — a Capybara or Selenium wait timeout was hit because
+    the page did not render fast enough on CI hardware.
+  - **Database state** — the database was not migrated, seeded, or reset between
+    scenarios, producing unexpected results.
+  - **Parallel execution conflict** — in parallel Cucumber runs (`-p travis`),
+    shared state caused scenario interference.
+fix: |-
+  ## Fix steps
+
+  1. Find the failing feature file and line number in the log output.
+  2. Run the failing scenario in isolation locally:
+
+     ```bash
+     bundle exec cucumber features/path/to/scenario.feature:42
+     ```
+
+  3. If the failure is environment-related, check that required services are
+     running and properly seeded:
+
+     ```bash
+     bundle exec rake db:test:prepare
+     bundle exec rails server -e test &
+     ```
+
+  4. For browser-based failures, confirm the expected browser driver is installed
+     and matches the configured browser version:
+
+     ```bash
+     which chromedriver && chromedriver --version
+     ```
+
+  5. For timeout failures, increase the Capybara wait time or check for slow
+     CI-specific rendering.
+  6. If the failure is in the application logic, review the diff for changes
+     to the affected feature area.
+validation: |-
+  ## Validation
+
+  - Run the failing scenario in isolation: `bundle exec cucumber <feature>:<line>`
+  - Run the full feature file: `bundle exec cucumber features/...feature`
+  - Confirm the integration test suite passes: `bundle exec rake cucumber`
+why_it_matters: |-
+  ## Why it matters
+
+  Cucumber acceptance tests describe visible application behaviour from the user's
+  perspective. A failing scenario means a user-visible flow is broken. These
+  failures block release until resolved because they represent regression in
+  shipped features or broken environment configuration that will affect all test
+  scenarios that depend on the same setup.
+
+  ## Prevention
+
+  - Keep Capybara wait times generous but bounded (`Capybara.default_max_wait_time`).
+  - Use `DatabaseCleaner` with a consistent strategy across all scenarios.
+  - Pin browser driver versions in CI and update them in lock-step with the browser.
+  - Run `bundle exec cucumber --dry-run` to catch parse errors before full runs.
+match:
+  any:
+    - ".feature"
+    - "Failing Scenarios:"
+    - "cucumber features"
+    - "capybara_features/"
+  none:
+    - ".feature-policy"
+    - "feature policy"
+    - node_modules
+    - "feature flag"
+    - "feature branch"
+    - "feature toggle"
+workflow:
+  likely_files:
+    - "features/**/*.feature"
+    - "features/**/*_steps.rb"
+    - "features/support/env.rb"
+    - "spec/support/**"
+    - Gemfile
+    - ".ruby-version"
+  local_repro:
+    - "bundle exec cucumber <feature_file>:<line_number>"
+    - "bundle exec cucumber features/"
+  verify:
+    - "bundle exec cucumber features/ --dry-run"
+    - "bundle exec cucumber features/"

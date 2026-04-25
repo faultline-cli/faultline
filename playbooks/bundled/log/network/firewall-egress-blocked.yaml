@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [firewall, security-group, egress, network, blocked]
 stage_hints: [build, deploy, test]
+domain: network
+class: egress-blocked
+mode: firewall-egress-blocked
 summary: |-
   An outbound network connection was blocked before reaching its destination. A firewall rule, VPC security group, or network policy denied the egress traffic from the CI runner.
 diagnosis: |-

@@ -1,0 +1,69 @@
+id: python-parser-test-failure
+title: Python parser or code-completion library test failure
+category: test
+severity: medium
+base_score: 1.0
+tags: [python, parser, jedi, code-completion, ast]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: python-parser-test-failure
+summary: |-
+  A unit test failure in a Python parser library (such as jedi or a custom parser).
+  Tests cover string literal handling, comprehension expressions, call argument
+  parsing, attribute access, and doctest validation of public API.
+diagnosis: |-
+  ## Diagnosis
+
+  These test failures come from two overlapping sources:
+
+  - **`test_parser.*`** — unit tests for a Python expression parser, testing how
+    string literals, dict/set comprehensions, function calls, and attribute chains
+    are parsed and round-tripped.
+  - **`[doctest] jedi`** — doctest failures in the jedi code-completion library,
+    covering `jedi.api`, `jedi.api.interpreter`, and `jedi.api.classes`.
+
+  Common causes:
+
+  - **Python version incompatibility** — the parser or jedi library has not been
+    updated to handle syntax changes in the target Python version.
+  - **AST structure change** — an upstream CPython change altered the parsed AST
+    tree structure expected by the tests.
+  - **Docstring drift** — a refactor changed a docstring example without updating
+    the corresponding doctest.
+fix: |-
+  ## Fix steps
+
+  1. Run the failing parser tests:
+     ```bash
+     python -m pytest test/test_parser.py -v
+     ```
+  2. For jedi doctest failures:
+     ```bash
+     python -m pytest --doctest-modules jedi/api/ -v
+     ```
+  3. Check if the installed Python version matches the tested syntax features.
+validation: |-
+  ## Validation
+
+  Re-run the full test_parser module and jedi doctests:
+  ```bash
+  python -m pytest test/test_parser.py --doctest-modules jedi/ -v
+  ```
+match:
+  any:
+    - "test_parser.test_str_"
+    - "test_parser.test_dict"
+    - "test_parser.test_setcomp"
+    - "test_parser.test_call_"
+    - "test_parser.test_getattr"
+    - "test_parser.test_for"
+    - "[doctest] jedi"
+why_it_matters: |-
+  ## Why it matters
+
+  Parser correctness is fundamental — if the parser mishandles comprehensions,
+  string operations, or call expressions, all downstream consumers (linters,
+  formatters, completion engines) will produce wrong results. For jedi specifically,
+  doctest failures indicate that the public API documentation diverges from the
+  actual behaviour, confusing users of the completion library.

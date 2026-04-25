@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [docker, build, context, dockerfile]
 stage_hints: [build]
+domain: container
+class: build-context-error
+mode: docker-build-context-invalid
 summary: |-
   Docker could not read the Dockerfile or a required file from the selected build context, so the image build stopped before executing the full build.
 diagnosis: |-

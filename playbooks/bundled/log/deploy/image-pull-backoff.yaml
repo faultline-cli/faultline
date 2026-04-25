@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [kubernetes, docker, image, registry, deploy]
 stage_hints: [deploy]
+domain: container
+class: image-not-found
+mode: image-pull-backoff
 summary: |-
   The deployment failed because the runtime could not pull the requested container image from the registry.
 diagnosis: |-

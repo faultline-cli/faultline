@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [port, network, bind, socket]
 stage_hints: [build, test, deploy]
+domain: runtime
+class: port-in-use
+mode: port-already-bound
 summary: |-
   A process attempted to bind to a TCP or UDP port that is already occupied by another process on the same CI runner.
 diagnosis: |-

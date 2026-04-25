@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.9
 tags: [npm, yarn, pnpm, lockfile, package-manager, dependency]
 stage_hints: [build, install]
+domain: dependency
+class: version-conflict
+mode: package-manager-lockfile-mismatch
 summary: |-
   CI used one package manager (e.g., npm) but the repository has a lockfile from a different manager (e.g., pnpm or yarn), causing version and integrity mismatches.
 diagnosis: |-

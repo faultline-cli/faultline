@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.1
 tags: [disk, storage, runner, ci, space]
 stage_hints: [build, test]
+domain: runtime
+class: disk-full
+mode: runner-disk-full
 summary: |-
   The CI runner has run out of available disk space. The build, test, or artifact step cannot write files and fails with ENOSPC.
 diagnosis: |-

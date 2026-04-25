@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.5
 tags: [case-sensitive, filesystem, import, path]
 stage_hints: [build]
+domain: filesystem
+class: wrong-working-directory
+mode: path-case-mismatch
 summary: |-
   A file or module import path uses a different capitalisation from the actual filename on disk. On case-sensitive filesystems (Linux CI runners), this causes an immediate build failure.
 diagnosis: |-

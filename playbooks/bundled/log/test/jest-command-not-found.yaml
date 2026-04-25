@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [jest, node, test, command, missing]
 stage_hints: [test]
+domain: runtime
+class: missing-executable
+mode: jest-command-not-found
 summary: |-
   The `jest` command could not be found. Jest is either not installed as a dependency, not in the PATH, or the wrong shell was used to run it.
 diagnosis: |-

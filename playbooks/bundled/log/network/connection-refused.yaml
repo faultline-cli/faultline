@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [network, connection, refused, service, dependency]
 stage_hints: [build, test, deploy]
+domain: network
+class: connection-refused
+mode: generic-connection-refused
 summary: |-
   A TCP connection attempt was actively refused by the target host. The service is either not running on that address and port, has not finished starting up, or is bound to a different interface.
 diagnosis: |-

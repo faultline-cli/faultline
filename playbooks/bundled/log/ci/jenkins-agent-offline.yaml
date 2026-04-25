@@ -5,6 +5,9 @@ severity: critical
 base_score: 1.0
 tags: [jenkins, agent, offline, ci, connection]
 stage_hints: [build, test, deploy]
+domain: platform
+class: scheduler-error
+mode: jenkins-agent-offline
 summary: |-
   The Jenkins build agent disconnected or went offline while running a job. The build was lost mid-execution and Jenkins cannot continue until the agent reconnects or the job is rescheduled on another agent.
 diagnosis: |-

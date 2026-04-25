@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [github-actions, token, permissions, ci]
 stage_hints: [build, deploy, test]
+domain: auth
+class: insufficient-scope
+mode: github-actions-token-permission
 summary: |-
   The `GITHUB_TOKEN` used by this workflow does not have the permissions required for the requested GitHub operation.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [config, env, secret, missing-variable, deployment]
 stage_hints: [deploy]
+domain: platform
+class: config-error
+mode: deployment-config-mismatch
 summary: |-
   The deployment failed because a required configuration value, environment
   variable, or secret was absent or had an unexpected value for the target

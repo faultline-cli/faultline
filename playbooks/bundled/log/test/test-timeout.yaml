@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [test, timeout, hang, slow]
 stage_hints: [test]
+domain: test-runner
+class: timeout
+mode: test-suite-timeout
 summary: |-
   A test (or the entire test suite) did not complete within the configured timeout period. The test runner killed the pending test and marked it as failed.
 diagnosis: |-

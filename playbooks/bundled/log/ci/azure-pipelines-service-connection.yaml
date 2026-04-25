@@ -5,6 +5,9 @@ severity: high
 base_score: 0.95
 tags: [azure-pipelines, azure-devops, service-connection, auth, ci]
 stage_hints: [build, deploy]
+domain: auth
+class: credential-expired
+mode: azure-service-connection-failed
 summary: |-
   An Azure Pipelines job failed because the service connection required by a task does not exist, is not authorized, or has expired credentials. The task cannot authenticate to the external service (Azure Resource Manager, GitHub, Docker Hub, etc.).
 diagnosis: |-

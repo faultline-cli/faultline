@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.90
 tags: [python, virtualenv, venv, interpreter, environment]
 stage_hints: [build, test]
+domain: runtime
+class: interpreter-mismatch
+mode: python-venv-not-activated
 summary: |-
   Python code is using a system interpreter or wrong virtualenv instead of the activated one, causing module import failures or version mismatches.
 diagnosis: |-

@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [gitlab, gitlab-ci, yaml, lint, pipeline, ci]
 stage_hints: [build]
+domain: ci-config
+class: workflow-syntax
+mode: gitlab-ci-config-invalid
 summary: |-
   The `.gitlab-ci.yml` configuration failed GitLab's built-in YAML and schema validation. No pipeline was started.
 diagnosis: |-

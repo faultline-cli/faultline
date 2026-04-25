@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [permissions, file, chmod, sudo]
 stage_hints: [build, deploy]
+domain: runtime
+class: permission-denied
+mode: filesystem-permission-denied
 summary: |-
   The process tried to read, write, execute, or connect to a resource it does not have permission to access.
 diagnosis: |-

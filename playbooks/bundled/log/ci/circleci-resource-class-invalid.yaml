@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [circleci, resource-class, machine-image, executor, ci]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: resource-overallocation
+mode: circleci-resource-class-invalid
 summary: |-
   A CircleCI job failed to start because the specified machine image or resource class is no longer valid, was removed, or was never available for the organization.
 diagnosis: |-

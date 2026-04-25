@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [testcontainers, docker, test, integration, container]
 stage_hints: [test]
+domain: container
+class: container-startup-failure
+mode: testcontainer-failed-to-start
 summary: |-
   A test using Testcontainers could not start the required Docker container. This usually means Docker is unavailable on the CI runner, or the runner cannot access the Docker socket.
 diagnosis: |-

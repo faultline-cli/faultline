@@ -5,6 +5,9 @@ severity: medium
 base_score: 1.0
 tags: [python, pip, modules, dependencies]
 stage_hints: [build, test]
+domain: dependency
+class: missing-package
+mode: python-module-not-found
 summary: |-
   Python could not import a required module because it is missing from the environment used by the failing CI step or the import path is wrong for the installed package.
 diagnosis: |-
