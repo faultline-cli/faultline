@@ -90,7 +90,7 @@ why_it_matters: |-
 match:
   any:
     - "--- FAIL:"
-    - "github.com/"
+    - "FAIL github.com/"
     - "Test ("
     - "TestIntegration"
     - "TestBootstrap"
