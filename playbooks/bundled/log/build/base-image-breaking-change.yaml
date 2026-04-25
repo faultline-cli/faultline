@@ -1,0 +1,136 @@
+id: base-image-breaking-change
+title: Docker base image update introduced a breaking change
+category: build
+severity: high
+base_score: 0.8
+tags: [docker, base-image, breaking-change, tag, update, floating-tag]
+stage_hints: [build]
+domain: dependency
+class: base-image-changed
+mode: base-image-breaking-update
+match:
+  any:
+    - "package.*not found"
+    - "executable.*not found"
+    - "command not found"
+    - "no such file or directory"
+    - "Unable to locate package"
+    - "Package.*has no installation candidate"
+    - "symbol lookup error"
+    - "version.*GLIBC"
+    - "undefined symbol"
+    - libc.so
+    - "incompatible library version"
+    - "API change"
+    - "binary.*incompatible"
+    - "shared library.*missing"
+    - "SONAME conflict"
+    - "base image.*changed"
+hypothesis:
+  supports:
+    - signal: runtime.version.mismatch
+      weight: 0.6
+    - signal: log.contains:version.*GLIBC
+      weight: 0.4
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.3
+    - signal: log.contains:invalid credentials
+      weight: -0.4
+  discriminators:
+    - description: Base image breaking changes often correlate with "executable not found" or glibc version errors that appear without application code changes.
+      signal: runtime.version.mismatch
+summary: |-
+  A Docker build that previously succeeded now fails because the base image
+  tag (e.g., `ubuntu:latest`, `node:20`) was updated and the new version
+  introduces a breaking change. The build or runtime behavior changed without
+  any modification to the project's Dockerfile or application code.
+diagnosis: |-
+  ## Diagnosis
+
+  Floating tags (`latest`, `20`, `3.12`) do not guarantee a stable image.
+  The upstream maintainer may:
+  - Upgrade the OS distribution (Ubuntu 22.04 → 24.04)
+  - Remove a tool or library that was previously included
+  - Change the default shell, user, or working directory
+  - Update a linked library that changes the ABI
+
+  Confirm the image changed:
+
+  ```bash
+  # Compare the image digest
+  docker pull node:20
+  docker inspect node:20 --format '{{.Id}}'
+
+  # Or check when the image was pushed
+  docker inspect node:20 --format '{{.Created}}'
+  ```
+
+  Check the upstream image changelog:
+  - Docker Hub: image > Tags tab for recent pushes
+  - GitHub Container Registry: packages page
+fix: |-
+  ## Fix steps
+
+  1. Pin the base image to an exact digest or patch-level tag:
+
+     ```dockerfile
+     # Instead of:
+     FROM node:20
+
+     # Use:
+     FROM node:20.11.0-alpine3.19
+     # Or with digest (strongest pin):
+     FROM node:20.11.0-alpine3.19@sha256:abc123...
+     ```
+
+  2. Now that the breakage is understood, fix the underlying issue:
+     - If a package was removed from the base image, install it explicitly in
+       the Dockerfile
+     - If a binary path changed, update the `CMD` or `ENTRYPOINT`
+     - If a glibc version changed, either use the old base image or recompile
+       binaries
+
+  3. Update dependencies to be compatible with the new base image:
+
+     ```dockerfile
+     # Install required system packages explicitly, don't rely on base image
+     RUN apt-get update && apt-get install -y --no-install-recommends \
+         libssl3 \
+         ca-certificates \
+     && rm -rf /var/lib/apt/lists/*
+     ```
+
+  4. Use Dependabot or Renovate to get automated, tested PRs when the base
+     image updates:
+
+     ```yaml
+     # .github/dependabot.yml
+     version: 2
+     updates:
+       - package-ecosystem: docker
+         directory: /
+         schedule:
+           interval: weekly
+     ```
+validation: |-
+  ## Validation
+
+  - Build the Docker image locally with the pinned base image tag.
+  - Run the container and confirm the application starts correctly.
+  - Re-run the CI pipeline.
+why_it_matters: |-
+  ## Why it matters
+
+  Base image updates that break builds are particularly insidious: the project
+  code has not changed, but the build suddenly fails. Teams often blame the CI
+  environment or their own code rather than the upstream image, wasting
+  significant investigation time.
+
+  ## Prevention
+
+  - Pin base images to specific version tags or digests.
+  - Use an automated dependency tool (Dependabot/Renovate) to receive and
+    test image updates as PRs with CI validation.
+  - Build a minimal, explicit Dockerfile that does not rely on implicit tools
+    provided by the base image.

@@ -1,0 +1,151 @@
+id: proxy-configuration
+title: Corporate or CI proxy misconfiguration blocking outbound traffic
+category: network
+severity: medium
+base_score: 0.6
+tags: [proxy, http-proxy, https-proxy, no-proxy, corporate, firewall, mitm, ssl-intercept]
+stage_hints: [build, test, deploy]
+domain: network
+class: proxy-misconfiguration
+mode: proxy-config
+match:
+  any:
+    - "CONNECT tunnel failed"
+    - "407 Proxy Authentication Required"
+    - "407 Proxy Auth"
+    - "tunneling socket"
+    - "HTTP_PROXY"
+    - "HTTPS_PROXY"
+    - "NO_PROXY"
+    - "SSL_CERT_FILE"
+    - "certificate verify failed.*proxy"
+    - "self signed certificate in certificate chain"
+    - "SSL interception"
+    - "ProxyConnectionError"
+    - "curl.*407"
+    - "pip.*ProxyError"
+    - "maven.*proxy"
+hypothesis:
+  supports:
+    - signal: log.contains:connection refused
+      weight: 0.7
+    - signal: log.contains:certificate verify failed
+      weight: 0.5
+  contradicts:
+    - signal: log.contains:token has expired
+      weight: -0.3
+    - signal: log.contains:rate limit exceeded
+      weight: -0.3
+  discriminators:
+    - description: Proxy confirmed by 407 response code or explicit proxy variable in environment.
+      signal: log.contains:connection refused
+summary: |-
+  Outbound HTTP(S) traffic from CI fails because the runner is behind a
+  corporate proxy that is not configured in the job environment, or because
+  the proxy intercepts TLS and the custom CA certificate is not trusted.
+diagnosis: |-
+  ## Diagnosis
+
+  Corporate proxies and network appliances often intercept TLS traffic by
+  re-signing it with a private CA. Tools fail if:
+
+  1. The proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY`) are not
+     set, and the proxy requires explicit configuration (no transparent proxy).
+  2. The proxy CA certificate is not in the trust store used by the tool.
+  3. `NO_PROXY` is missing internal hosts, causing all traffic (including
+     internal services) to route through the proxy.
+
+  Inspect the environment:
+
+  ```bash
+  env | grep -i proxy
+  curl -v https://registry.npmjs.org 2>&1 | grep -i 407
+  ```
+fix: |-
+  ## Fix steps
+
+  1. **Set proxy environment variables**:
+
+     ```yaml
+     # GitHub Actions / GitLab CI
+     env:
+       HTTP_PROXY: "http://proxy.corp.example.com:8080"
+       HTTPS_PROXY: "http://proxy.corp.example.com:8080"
+       NO_PROXY: "localhost,127.0.0.1,.corp.example.com,169.254.169.254"
+     ```
+
+     Some tools use lowercase variants; set both:
+
+     ```bash
+     export http_proxy="$HTTP_PROXY"
+     export https_proxy="$HTTPS_PROXY"
+     export no_proxy="$NO_PROXY"
+     ```
+
+  2. **Trust the proxy CA certificate for TLS interception**:
+
+     ```bash
+     # Ubuntu/Debian — add the proxy CA to the system trust store
+     sudo cp corp-proxy-ca.crt /usr/local/share/ca-certificates/
+     sudo update-ca-certificates
+
+     # Python (requests/pip)
+     export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+     # Node.js
+     export NODE_EXTRA_CA_CERTS=/usr/local/share/ca-certificates/corp-proxy-ca.crt
+
+     # Go (uses system trust store)
+     # Ruby
+     export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+     ```
+
+  3. **Configure tool-specific proxy settings** when env vars are ignored:
+
+     ```bash
+     # npm
+     npm config set proxy http://proxy.corp.example.com:8080
+     npm config set https-proxy http://proxy.corp.example.com:8080
+     npm config set cafile /path/to/corp-proxy-ca.crt
+
+     # git
+     git config --global http.proxy http://proxy.corp.example.com:8080
+     git config --global http.sslCAInfo /path/to/corp-proxy-ca.crt
+
+     # Docker daemon (edit /etc/docker/daemon.json)
+     {
+       "proxies": {
+         "http-proxy": "http://proxy.corp.example.com:8080",
+         "https-proxy": "http://proxy.corp.example.com:8080",
+         "no-proxy": "localhost,127.0.0.1"
+       }
+     }
+     ```
+
+  4. **Store proxy settings as CI secrets** to avoid exposing credentials in
+     logs:
+
+     ```yaml
+     env:
+       HTTPS_PROXY: ${{ secrets.CORP_PROXY_URL }}
+     ```
+validation: |-
+  ## Validation
+
+  - Run `curl -v https://registry.npmjs.org` in the CI job and confirm 200 OK.
+  - Re-run the failing build step.
+  - Verify `NO_PROXY` excludes internal registries to prevent routing them
+    through the external proxy.
+why_it_matters: |-
+  ## Why it matters
+
+  In corporate or on-premise CI environments, proxy misconfiguration is one
+  of the most common causes of package installation failures. It often blocks
+  all outbound package registries, npm, PyPI, Maven Central, container
+  registries, making the entire CI pipeline unusable until resolved.
+
+  ## Prevention
+
+  - Document required proxy settings in the repo's CI setup guide.
+  - Bake proxy CA certs into the base runner image.
+  - Use `NO_PROXY` to exclude internal services and reduce latency.

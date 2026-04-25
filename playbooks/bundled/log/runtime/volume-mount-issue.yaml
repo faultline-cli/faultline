@@ -1,0 +1,137 @@
+id: volume-mount-issue
+title: Docker volume mount failure or inaccessible mount
+category: runtime
+severity: medium
+base_score: 0.7
+tags: [docker, volume, mount, bind-mount, permissions, path]
+stage_hints: [build, test, deploy]
+domain: containerization
+class: volume-mount-failure
+mode: volume-mount-inaccessible
+match:
+  any:
+    - "mount.*failed"
+    - "cannot mount"
+    - "error response from daemon.*mount"
+    - "volume.*not found"
+    - "No such file or directory.*volume"
+    - "bind mount"
+    - "invalid mount config"
+    - "invalid volume specification"
+    - "mount path must be absolute"
+    - "source path.*does not exist"
+    - "permission denied.*volume"
+    - "read-only file system"
+    - "is not accessible"
+    - "mountpoint.*does not exist"
+    - volume mount error
+hypothesis:
+  supports:
+    - signal: log.contains:permission denied
+      weight: 0.7
+    - signal: log.contains:no such file or directory
+      weight: 0.5
+  contradicts:
+    - signal: log.contains:connection timed out
+      weight: -0.5
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+  discriminators:
+    - description: Volume mount failures are confirmed when the error originates from the Docker daemon or container runtime during container start.
+      signal: log.contains:permission denied
+summary: |-
+  A Docker container failed to start or operate correctly because a volume
+  or bind mount is inaccessible. The host path does not exist, the container
+  path is invalid, the mount is read-only when the container requires write
+  access, or the UID/GID inside the container does not match the mounted path's
+  ownership.
+diagnosis: |-
+  ## Diagnosis
+
+  Volume mount failures have several distinct categories:
+  1. **Path does not exist**: the host path in a bind mount was not created
+  2. **Wrong absolute path**: relative paths in `-v` are not supported on all
+     systems
+  3. **Permissions mismatch**: directory owned by root but container runs as
+     non-root
+  4. **Read-only volume**: container writes to a volume mounted `ro`
+  5. **Docker Desktop on macOS/Windows**: paths outside `/Users` (macOS) or
+     `C:\Users` (Windows) are not shared by default
+
+  Inspect the mount configuration:
+
+  ```bash
+  docker inspect <container> --format '{{json .Mounts}}' | python3 -m json.tool
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Verify the host path exists before running the container:
+
+     ```bash
+     ls -la /path/to/host/dir
+     mkdir -p /path/to/host/dir   # create if missing
+     ```
+
+  2. Always use absolute paths in volume mounts:
+
+     ```bash
+     # WRONG: relative path
+     docker run -v ./data:/app/data myimage
+
+     # CORRECT: absolute path
+     docker run -v "$(pwd)/data":/app/data myimage
+     ```
+
+  3. Fix ownership mismatches by setting the UID/GID:
+
+     ```bash
+     # Option A: run container as the host user
+     docker run --user "$(id -u):$(id -g)" -v "$(pwd)/data":/app/data myimage
+
+     # Option B: set correct ownership on the host directory
+     sudo chown -R 1000:1000 ./data
+     ```
+
+     ```dockerfile
+     # Option C: in Dockerfile, create the directory as the correct user
+     RUN mkdir -p /app/data && chown app:app /app/data
+     ```
+
+  4. If the volume is mounted read-only but needs write access, change the
+     mount mode:
+
+     ```yaml
+     # docker-compose.yml
+     volumes:
+       - ./data:/app/data:rw    # change from :ro to :rw
+     ```
+
+  5. For Docker Desktop on macOS, add the directory to the allowed file
+     sharing paths: Docker Desktop > Settings > Resources > File sharing.
+
+  6. For tmpfs-mounted paths in CI (e.g., `/run`, `/tmp`), ensure the
+     container is not trying to bind-mount those paths from outside.
+validation: |-
+  ## Validation
+
+  - Run `docker run --rm -v <mount_spec> busybox ls <container_path>` to
+    verify the mount is accessible.
+  - Re-run the failing CI job and confirm the container starts.
+why_it_matters: |-
+  ## Why it matters
+
+  Volume mount failures cause containers to crash on start or produce
+  permission-denied errors deep into execution. The errors are often
+  environment-specific (works locally on macOS, fails in Linux CI) because
+  file sharing and UID behavior differ.
+
+  ## Prevention
+
+  - Create required host directories in CI setup steps before running
+    containers.
+  - Document required volume mounts and their expected permissions.
+  - Use named Docker volumes instead of bind mounts where possible to avoid
+    host path issues.
+  - Set file sharing paths explicitly in Docker Desktop for reproducible
+    local development.

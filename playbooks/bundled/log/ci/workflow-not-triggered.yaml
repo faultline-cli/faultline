@@ -1,0 +1,128 @@
+id: workflow-not-triggered
+title: CI workflow not triggered due to path or branch filter
+category: ci
+severity: medium
+base_score: 0.7
+tags: [trigger, path-filter, branch, workflow, ci, skipped]
+stage_hints: [ci]
+domain: ci-config
+class: workflow-not-triggered
+mode: trigger-filter-mismatch
+match:
+  any:
+    - "no workflows matched"
+    - "workflow.*not triggered"
+    - path filter
+    - "paths.*not matched"
+    - "changes.*not in watched path"
+    - skipping workflow
+    - "workflow.*skipped"
+    - "not running.*no changes"
+    - workflow has no runs
+    - "trigger condition.*not met"
+    - "push.*filtered"
+    - "event.*filtered"
+hypothesis:
+  supports:
+    - signal: log.contains:invalid workflow file
+      weight: 0.6
+  contradicts:
+    - signal: log.contains:build failed
+      weight: -0.6
+    - signal: log.contains:environment variable not set
+      weight: -0.5
+  discriminators:
+    - description: Trigger filter issues are identified by the absence of any run rather than a failing run.
+      signal: log.contains:invalid workflow file
+summary: |-
+  A CI workflow was expected to run after a push or pull request but did not
+  trigger. The `paths`, `paths-ignore`, `branches`, or similar filter
+  conditions in the workflow configuration did not match the changed files or
+  target branch, so the CI system silently skipped the workflow.
+diagnosis: |-
+  ## Diagnosis
+
+  Trigger filters are evaluated against the exact paths and branch names
+  of the event. Common mistakes include:
+
+  1. A `paths` filter that does not cover a recently added directory
+  2. An overly specific `branches` filter that excludes a new naming pattern
+  3. A path glob that uses wrong syntax (e.g., `src/**` only matches
+     one directory deep in some systems vs. all descendants)
+  4. A `push` filter that does not include the branch the team now uses
+
+  GitHub Actions example of a filter that silently skips:
+
+  ```yaml
+  on:
+    push:
+      paths:
+        - 'src/**'      # Misses changes under 'lib/' or 'packages/'
+      branches:
+        - main          # Misses 'develop' or feature branches
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Verify the event type and branch match the `on:` / `trigger:` block.
+
+  2. In GitHub Actions, use the `workflow_dispatch` event to manually trigger
+     the workflow and confirm the job itself is functional:
+
+     ```yaml
+     on:
+       push: ...
+       workflow_dispatch:   # add this for manual testing
+     ```
+
+  3. Widen the path filter to include all relevant directories:
+
+     ```yaml
+     on:
+       push:
+         paths:
+           - 'src/**'
+           - 'lib/**'
+           - 'packages/**'
+           - '.github/workflows/*.yml'
+     ```
+
+  4. Check glob syntax: `**` in GitHub Actions matches zero or more path
+     segments, but in some CI systems it only matches within a directory.
+
+  5. For GitLab CI, review `rules:` and `only:/except:` conditions:
+
+     ```yaml
+     test:
+       rules:
+         - if: '$CI_PIPELINE_SOURCE == "push"'
+           changes:
+             - src/**/*    # use /**/* not just /**
+     ```
+
+  6. For CircleCI, check `filters.branches` and `when:` conditions.
+
+  7. Remove overly restrictive filters that were added to save CI cost but
+     now exclude needed branches or files.
+validation: |-
+  ## Validation
+
+  - Push a change that matches the filter and confirm the workflow appears
+    in CI.
+  - Use `act` (GitHub Actions local runner) or the CI platform's lint/dry-run
+    to preview which workflows would trigger for a given event.
+why_it_matters: |-
+  ## Why it matters
+
+  A silently skipped workflow is harder to debug than a failing one. There
+  is no error, no notification, and developers assume CI passed when it simply
+  did not run. Critical gates like security scans or integration tests can be
+  bypassed this way.
+
+  ## Prevention
+
+  - After adding path or branch filters, verify them by checking what runs are
+    created for a test push.
+  - Keep filters as broad as necessary — save CI cost with caching and job
+    conditions rather than trigger filters.
+  - Add a separate required workflow with no path filter as a status gate.

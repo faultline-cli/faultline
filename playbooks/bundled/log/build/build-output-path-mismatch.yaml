@@ -1,0 +1,128 @@
+id: build-output-path-mismatch
+title: Build output artifact not found at expected path
+category: build
+severity: medium
+base_score: 0.7
+tags: [build, output, artifact, path, dist, target]
+stage_hints: [build, deploy]
+domain: filesystem
+class: build-output-missing
+mode: build-output-path-mismatch
+match:
+  any:
+    - "dist.*not found"
+    - "build.*not found"
+    - "target.*not found"
+    - "output directory.*does not exist"
+    - "No such file or directory.*dist/"
+    - "No such file or directory.*build/"
+    - "artifact.*not found"
+    - "expected.*output.*path"
+    - "cannot find.*bundle"
+    - "binary.*not found"
+    - output path does not exist
+    - "could not find.*output"
+    - "output.*missing"
+    - archive.*not found
+    - "release binary.*missing"
+hypothesis:
+  supports:
+    - signal: log.contains:no such file or directory
+      weight: 0.8
+    - signal: log.contains:build failed
+      weight: 0.4
+  contradicts:
+    - signal: log.contains:environment variable not set
+      weight: -0.4
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+  discriminators:
+    - description: Build output path errors are confirmed when the file path contains a known output directory name such as dist/, build/, or target/.
+      signal: log.contains:no such file or directory
+summary: |-
+  A CI step that consumes the output of a prior build step cannot find the
+  expected artifact at the configured path. The build tool produced output
+  at a different location than the consumer expects, or the build step failed
+  silently without producing output.
+diagnosis: |-
+  ## Diagnosis
+
+  Build output path mismatches occur when:
+  1. The build tool's output directory changed in an upgrade
+  2. The CI config references a hardcoded path that differs from what the build
+     tool actually produces
+  3. A build configuration (`outDir`, `outputPath`, `target_dir`) was changed
+     locally but not updated in CI scripts
+  4. The build step exited non-zero but CI continued due to missing error
+     propagation
+
+  Investigate by listing expected paths after the build step:
+
+  ```bash
+  # Add a debug step before the consuming step
+  ls -la dist/ || echo "dist/ not found"
+  find . -name "*.whl" -o -name "*.jar" -o -name "*.tar.gz" | head -20
+  ```
+fix: |-
+  ## Fix steps
+
+  1. First confirm the build step actually ran and succeeded:
+
+     ```bash
+     # Check exit code of the build step
+     echo "Build exit: $?"
+     ```
+
+  2. Identify where the build tool actually wrote its output:
+
+     ```bash
+     find . -newer package.json -name "*.js" -not -path "*/node_modules/*" | head -20
+     ```
+
+  3. Align one of the two sides:
+     - Update the build tool config to write to the expected path:
+
+       ```json
+       // webpack.config.js
+       output: { path: path.resolve(__dirname, 'dist') }
+       ```
+
+       ```xml
+       <!-- Maven pom.xml -->
+       <build><directory>${project.basedir}/target</directory></build>
+       ```
+
+     - Update the CI step to reference the actual output path:
+
+       ```yaml
+       - name: Upload artifact
+         uses: actions/upload-artifact@v4
+         with:
+           path: target/release/mybinary   # was: dist/mybinary
+       ```
+
+  4. If using a multi-stage Dockerfile, ensure the `COPY --from=builder` path
+     matches where the builder stage places its output.
+
+  5. For Go: `go build -o ./bin/app ./cmd/app` — the `-o` flag controls the
+     exact output path.
+validation: |-
+  ## Validation
+
+  - Add a `ls -la <expected-path>` step before the consuming step and confirm
+    the artifact is present.
+  - Re-run the pipeline end to end.
+why_it_matters: |-
+  ## Why it matters
+
+  Build output path mismatches cause deploy or packaging steps to fail with
+  misleading "file not found" errors. Because the build step itself succeeded,
+  these failures are not obvious from the build log and require tracing back
+  through multiple steps.
+
+  ## Prevention
+
+  - Define output paths as shared variables or Make targets rather than
+    duplicating the path string in build config and CI config.
+  - Add a post-build validation step that confirms required artifacts exist
+    before proceeding to packaging or deployment.

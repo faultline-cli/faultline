@@ -1,0 +1,126 @@
+id: clock-drift
+title: CI clock drift or time synchronization failure
+category: test
+severity: low
+base_score: 0.5
+tags: [clock, time, ntp, skew, drift, container, ci, timezone, tls]
+stage_hints: [test, integration_test]
+domain: environment
+class: nondeterminism
+mode: clock-drift
+match:
+  any:
+    - "clock skew"
+    - "time skew"
+    - "NTP"
+    - "clock drift"
+    - "time drift"
+    - "certificate expired"
+    - "certificate is not yet valid"
+    - "the system time is off"
+    - "time_t overflow"
+    - "timestamp.*in the future"
+    - "timestamp.*in the past"
+    - "unexpected leap"
+    - "adjtimex"
+    - "MADV_WIPEONFORK"
+    - "clock_gettime"
+    - "monotonic clock"
+    - "wall clock"
+    - "before current time"
+    - "after current time"
+hypothesis:
+  supports:
+    - signal: log.contains:clock skew
+      weight: 0.7
+    - signal: log.contains:no such environment
+      weight: 0.5
+  contradicts:
+    - signal: dependency.resolution.conflict
+      weight: -0.3
+    - signal: log.contains:connection timed out
+      weight: -0.2
+  discriminators:
+    - description: Clock drift confirmed by TLS cert validation errors mentioning time, or explicit "clock skew" messages.
+      signal: log.contains:clock skew
+summary: |-
+  CI container or runner has a clock sufficiently out of sync to cause
+  TLS handshake failures, token expiry validation errors, or time-sensitive
+  test assertions to fail non-deterministically.
+diagnosis: |-
+  ## Diagnosis
+
+  Container runtimes inherit the host kernel clock. If the host NTP daemon
+  falls behind (common on ephemeral spot/preemptible VMs after sleep resume or
+  heavy load), the container clock drifts. Effects:
+
+  - TLS certificate validation fails with "not yet valid" or "has expired"
+  - `iat`/`exp` claims in JWTs are rejected
+  - `Date` headers or timestamps in tests fail exact comparisons
+  - Signed URLs or pre-signed S3 requests reject with 403 + "Request time too skewed"
+
+  Check the runner clock:
+
+  ```bash
+  date -u
+  # Compare against: curl -sI https://worldtimeapi.org/api/ip | grep -i date
+  ```
+
+  For Docker-in-Docker or nested containers, also check the inner clock:
+
+  ```bash
+  docker run --rm alpine date -u
+  ```
+fix: |-
+  ## Fix steps
+
+  1. **Sync the host clock** (if you manage the runner):
+
+     ```bash
+     # Ubuntu/Debian
+     sudo timedatectl set-ntp true
+     sudo systemctl restart systemd-timesyncd
+     timedatectl status
+
+     # Or force immediate sync
+     sudo chronyc makestep          # chrony
+     sudo ntpdate -u pool.ntp.org   # ntp
+     ```
+
+  2. **Restart the worker / runner**. Spot-instance runners often resume from
+     a saved state with a stale clock; a restart forces NTP re-sync.
+
+  3. **Add a clock-sync step** to the CI job:
+
+     ```yaml
+     # GitHub Actions — run before tests
+     - name: Sync clock
+       run: |
+         sudo timedatectl set-ntp true
+         sleep 2
+     ```
+
+  4. **Reduce time sensitivity in tests**: avoid `time.Now()` in assertions;
+     use relative comparisons with a 5–10 s tolerance.
+
+  5. **Set `AWS_RETRY_MODE=adaptive`** or pass `--max-clock-skew` to avoid
+     AWS SDK S3 signature failures on minor drift.
+validation: |-
+  ## Validation
+
+  - Run `date -u` on the runner before and after the sync step.
+  - Re-run the failing test/job.
+  - Check TLS or token validation errors are resolved.
+why_it_matters: |-
+  ## Why it matters
+
+  Clock drift is intermittent and hard to reproduce locally. Jobs fail with
+  cryptic TLS or time-assertion errors that look like flaky tests, wasting
+  investigation time. Ensuring NTP is active on ephemeral runners prevents it.
+
+  ## Prevention
+
+  - Use managed runners (GitHub-hosted, AWS CodeBuild) that sync clocks
+    automatically.
+  - Avoid hard-coded timestamps in tests; use relative time windows.
+  - Use `faketime` or `libfaketime` to control time in unit tests.

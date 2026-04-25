@@ -1,0 +1,131 @@
+id: cli-flag-changed
+title: CLI tool flag or command changed between versions
+category: build
+severity: medium
+base_score: 0.7
+tags: [cli, flags, breaking-change, tool-version, argument]
+stage_hints: [build, test]
+domain: toolchain
+class: cli-interface-changed
+mode: cli-flag-mismatch
+match:
+  any:
+    - "unknown flag"
+    - "unknown option"
+    - "unrecognized option"
+    - "invalid flag"
+    - "flag provided but not defined"
+    - "no such option"
+    - "option.*not recognized"
+    - "unexpected argument"
+    - "unknown command"
+    - "subcommand.*not found"
+    - "deprecated.*use.*instead"
+    - "option.*removed"
+    - "command.*renamed"
+    - "argument.*changed"
+hypothesis:
+  supports:
+    - signal: runtime.version.mismatch
+      weight: 0.7
+    - signal: log.contains:build failed
+      weight: 0.3
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+    - signal: log.contains:connection timed out
+      weight: -0.5
+  discriminators:
+    - description: CLI flag errors are confirmed when the error includes "unknown flag", "unrecognized option", or references a specific flag name.
+      signal: runtime.version.mismatch
+summary: |-
+  A CI script or Makefile invokes a CLI tool with a flag or subcommand that no
+  longer exists in the installed version. A tool upgrade introduced a
+  breaking change to its command-line interface, or the local and CI
+  environments have different tool versions.
+diagnosis: |-
+  ## Diagnosis
+
+  CLI interface changes commonly occur when:
+  1. A tool is upgraded in CI (via `latest` tag or unpinned install) and the
+     new version deprecates or removes a flag
+  2. A developer upgrades locally and updates scripts without noticing CI uses
+     an older version
+  3. A flag is renamed (e.g., `--no-color` → `--color=never`)
+
+  Identify the version mismatch:
+
+  ```bash
+  # Check what version CI is using
+  tool --version
+
+  # Compare against what the script expects
+  grep -r "tool --flag" . --include="*.sh" --include="Makefile" -l
+  ```
+
+  Look for recent changelog entries describing the change:
+
+  ```bash
+  # For npm packages
+  npx tool --help 2>&1 | grep -A2 "removed\|deprecated"
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Update the script to use the new flag syntax:
+
+     ```bash
+     # Before (deprecated flag)
+     tool --old-flag value
+
+     # After
+     tool --new-flag value
+     ```
+
+  2. If the change is accidental (a CI upgrade broke things), pin the tool
+     version:
+
+     ```yaml
+     # GitHub Actions
+     - uses: actions/setup-node@v4
+       with:
+         node-version: '20.11.0'   # pin, not '20' or 'lts/*'
+
+     # Generic
+     - run: npm install -g tool@2.1.0  # pin major+minor+patch
+     ```
+
+  3. For tools installed via `apt`, pin the version:
+
+     ```bash
+     apt-get install -y tool=2.1.0-1ubuntu1
+     ```
+
+  4. Align local and CI tool versions using a `.tool-versions` file (asdf) or
+     `mise.toml`:
+
+     ```toml
+     [tools]
+     mytool = "2.1.0"
+     ```
+
+  5. Add a `--version` check at the start of CI to surface version mismatches
+     early.
+validation: |-
+  ## Validation
+
+  - Run the updated command locally with the CI tool version.
+  - Push and confirm the CI step passes.
+why_it_matters: |-
+  ## Why it matters
+
+  CLI interface changes are silent: the tool installs fine, the version looks
+  reasonable, but the first invocation fails. Without pinned versions, any
+  tool upgrade can break pipelines with cryptic "unknown flag" errors.
+
+  ## Prevention
+
+  - Pin all tool versions (major.minor.patch).
+  - Use a `.tool-versions`, `mise.toml`, or similar single source of truth for
+    tool versions shared between local and CI.
+  - Subscribe to tool release notes or changelogs for breaking change notices.

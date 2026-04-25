@@ -1,0 +1,116 @@
+id: registry-outage
+title: Package registry or CDN outage
+category: network
+severity: medium
+base_score: 0.7
+tags: [registry, npm, pypi, maven, rubygems, outage, availability]
+stage_hints: [build]
+domain: network
+class: registry-unavailable
+mode: registry-outage
+match:
+  any:
+    - "registry is down"
+    - "npm ERR! network"
+    - "registry.*unavailable"
+    - "pypi.*down"
+    - "npmjs.*down"
+    - "maven.*unavailable"
+    - "central.sonatype.*unavailable"
+    - "rubygems.*unavailable"
+    - "fetch.*failed.*503"
+    - "ECONNREFUSED.*registry"
+    - "response.*unexpected status"
+    - "unexpected response from.*registry"
+hypothesis:
+  supports:
+    - signal: log.contains:connection timed out
+      weight: 0.6
+    - signal: log.contains:connection refused
+      weight: 0.6
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+    - signal: log.contains:invalid credentials
+      weight: -0.5
+  discriminators:
+    - description: Registry outage errors are most credible when the HTTP status code is 5xx or the connection is refused, and no authentication error accompanies the failure.
+      signal: log.contains:connection timed out
+summary: |-
+  The dependency installation step failed because the upstream package registry
+  (npm, PyPI, Maven Central, RubyGems, etc.) is temporarily unavailable or
+  returning errors. This is a transient infrastructure failure unrelated to
+  the project's code.
+diagnosis: |-
+  ## Diagnosis
+
+  Registry outages are typically short-lived (minutes to hours) and affect
+  all projects using the registry simultaneously. The failure will resolve
+  itself once the registry recovers.
+
+  Check registry status:
+  - npm: https://status.npmjs.org/
+  - PyPI: https://status.python.org/
+  - Maven Central: https://status.maven.org/
+  - RubyGems: https://status.rubygems.org/
+
+  Identify the outage symptom:
+  ```
+  npm ERR! network This is a problem related to network connectivity
+  error: Registry returned 503 for "https://pypi.org/simple/requests/"
+  Could not transfer artifact from/to central: 503 Service Unavailable
+  ```
+fix: |-
+  ## Fix steps
+
+  1. **Immediate:** Re-run the CI job. Registry outages are often brief and
+     the retry will succeed.
+
+  2. Configure automatic retries in your package manager:
+
+     ```bash
+     # npm — retry on transient errors
+     npm ci --fetch-retry-mintimeout 20000 --fetch-retry-maxtimeout 120000 --fetch-retries 3
+
+     # pip — retry with backoff
+     pip install --retries 5 --timeout 60 -r requirements.txt
+     ```
+
+  3. For production pipelines, configure a mirror or proxy registry that caches
+     packages locally:
+     - npm: Verdaccio or GitHub Packages as a proxy
+     - PyPI: devpi or Google Artifact Registry
+     - Maven: Nexus or Artifactory
+
+  4. Enable dependency caching in CI so subsequent runs do not need to reach
+     the registry at all:
+
+     ```yaml
+     # GitHub Actions
+     - uses: actions/setup-node@v4
+       with:
+         cache: 'npm'
+     ```
+
+  5. For time-critical pipelines, maintain a vendor directory with committed
+     dependencies as a fallback.
+validation: |-
+  ## Validation
+
+  - Check the registry status page to confirm recovery.
+  - Re-run the failing CI job.
+  - Confirm dependency installation completes without network errors.
+why_it_matters: |-
+  ## Why it matters
+
+  Registry outages block all CI pipelines simultaneously and cannot be fixed
+  within the project. The only mitigations are retries, caching, and
+  mirror registries. Without these safeguards, a registry outage causes
+  widespread pipeline failures and developer downtime.
+
+  ## Prevention
+
+  - Enable aggressive dependency caching so most runs do not hit the registry.
+  - Use a local registry proxy or artifact repository for critical projects.
+  - Configure retry logic in package manager invocations.
+  - Subscribe to registry status pages for early warning of outages.

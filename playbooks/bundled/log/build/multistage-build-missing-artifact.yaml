@@ -1,0 +1,136 @@
+id: multistage-build-missing-artifact
+title: Multi-stage Docker build artifact not copied correctly
+category: build
+severity: high
+base_score: 0.8
+tags: [docker, multistage, COPY, artifact, build-stage, missing]
+stage_hints: [build]
+domain: containerization
+class: multistage-artifact-missing
+mode: multistage-copy-failed
+match:
+  any:
+    - "COPY --from"
+    - "failed to copy files"
+    - "error copying files"
+    - "path does not exist in build context"
+    - "unable to find file"
+    - "binary.*not found"
+    - "artefact.*missing"
+    - "no artifacts in"
+    - "--from.*not found"
+    - "build stage.*failed"
+    - "intermediate container"
+    - "BuildKit.*copy"
+hypothesis:
+  supports:
+    - signal: log.contains:COPY --from
+      weight: 0.8
+    - signal: log.contains:build failed
+      weight: 0.3
+  contradicts:
+    - signal: log.contains:environment variable not set
+      weight: -0.5
+    - signal: log.contains:invalid credentials
+      weight: -0.5
+  discriminators:
+    - description: Multi-stage artifact failures are confirmed by a COPY --from instruction referencing a path that does not exist in the builder stage.
+      signal: log.contains:COPY --from
+summary: |-
+  A multi-stage Docker build failed because a `COPY --from=<builder>` instruction
+  references a file or directory that was not produced by the builder stage.
+  The artifact is either at a different path than expected, was not compiled
+  due to an earlier error, or the builder stage name is incorrect.
+diagnosis: |-
+  ## Diagnosis
+
+  In a multi-stage Dockerfile, the final stage copies built artifacts from an
+  earlier stage. The `COPY --from` instruction fails silently or loudly when
+  the source path does not exist in the named builder stage.
+
+  Common causes:
+  1. The build tool outputs to a path that differs from the `COPY --from` source
+  2. The builder stage's build command failed but the Docker build continued
+  3. A stage name typo (`--from=buider` instead of `--from=builder`)
+  4. The build tool is language-specific and changed its output directory
+
+  Debug by running the builder stage interactively:
+
+  ```bash
+  # Build only the builder stage
+  docker build --target builder -t debug-builder .
+
+  # Inspect what was produced
+  docker run --rm debug-builder find /app -type f | head -20
+  docker run --rm debug-builder ls -la /go/bin/
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Run the builder stage standalone and list its contents to find where the
+     artifact was actually written:
+
+     ```bash
+     docker build --target builder -t debug-builder .
+     docker run --rm debug-builder find / -name "myapp" -not -path "*/proc/*"
+     ```
+
+  2. Update the `COPY --from` source path to match the actual artifact location:
+
+     ```dockerfile
+     # Before (wrong path)
+     COPY --from=builder /app/server /app/server
+
+     # After (correct path found via debug)
+     COPY --from=builder /go/bin/server /app/server
+     ```
+
+  3. If the builder stage compile step may fail silently, add an explicit
+     validation:
+
+     ```dockerfile
+     RUN go build -o /go/bin/server ./cmd/server && \
+         test -f /go/bin/server || (echo "Build output missing" && exit 1)
+     ```
+
+  4. Verify stage names are consistent between definition and reference:
+
+     ```dockerfile
+     # STAGE DEFINITION
+     FROM golang:1.22 AS builder    # <-- name: "builder"
+
+     # COPY REFERENCE (must match exactly)
+     COPY --from=builder /go/bin/server .   # correct
+     COPY --from=build /go/bin/server .     # WRONG: "build" != "builder"
+     ```
+
+  5. For intermediate stages, use named stages explicitly:
+
+     ```dockerfile
+     FROM golang:1.22 AS build-deps
+     FROM build-deps AS builder
+     FROM scratch AS final
+     COPY --from=builder /go/bin/server /server
+     ```
+validation: |-
+  ## Validation
+
+  - Run `docker build .` and confirm it exits 0.
+  - Run `docker run --rm <image> <binary-cmd>` and confirm the artifact
+    executes correctly.
+why_it_matters: |-
+  ## Why it matters
+
+  Multi-stage builds are a best practice for minimal production images, but
+  incorrect `COPY --from` paths produce images that either fail to build or
+  produce containers that crash immediately on start. The failure is often
+  reported as a mysterious missing binary at runtime.
+
+  ## Prevention
+
+  - Test builder stages independently with `--target` during Dockerfile
+    development.
+  - Add an explicit `RUN test -f <expected-output>` after build commands
+    inside the builder stage.
+  - Use a `.dockerignore` and verify all required source files are in the
+    build context.

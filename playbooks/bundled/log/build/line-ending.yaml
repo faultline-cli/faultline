@@ -1,0 +1,127 @@
+id: line-ending
+title: Line ending mismatch (CRLF vs LF)
+category: build
+severity: medium
+base_score: 0.6
+tags: [line-ending, crlf, lf, git, windows, encoding]
+stage_hints: [build, test, lint]
+domain: filesystem
+class: encoding-mismatch
+mode: line-ending-mismatch
+match:
+  any:
+    - "CRLF will be replaced by LF"
+    - "LF will be replaced by CRLF"
+    - "\\r.*no such file or directory"
+    - bad line endings
+    - unexpected carriage return
+    - "\r': command not found"
+    - "\\r': No such file"
+    - syntax error near unexpected token
+    - contains CR
+    - mixed line endings
+hypothesis:
+  supports:
+    - signal: log.contains:bad interpreter
+      weight: 0.6
+    - signal: log.contains:carriage return
+      weight: 0.4
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.3
+  discriminators:
+    - description: CRLF/LF errors are most common when scripts are authored on Windows and run on Linux CI runners.
+      signal: log.contains:bad interpreter
+summary: |-
+  A script or source file contains Windows-style CRLF line endings where
+  Unix LF endings are expected. On Linux CI runners this causes shell scripts
+  to fail with cryptic "command not found" or "bad interpreter" errors because
+  the carriage return character becomes part of the command or path.
+diagnosis: |-
+  ## Diagnosis
+
+  Git can silently convert line endings on checkout. When `core.autocrlf` is
+  `true` on a Windows development machine, files are committed with CRLF and
+  converted back on checkout locally but left as CRLF in the committed object if
+  the remote does not enforce normalization.
+
+  On Linux CI runners the raw bytes are used, turning `#!/bin/bash\r` into a
+  missing interpreter path.
+
+  Common symptoms:
+  - Shell scripts exit with `'\r': command not found` or `bad interpreter`
+  - Python scripts fail with `SyntaxError: invalid syntax` at otherwise valid lines
+  - `git diff` shows no changes but files appear modified to the OS
+  - Linters report unexpected character errors on every line
+fix: |-
+  ## Fix steps
+
+  1. Identify the affected file:
+
+     ```bash
+     file path/to/script.sh          # reports "CRLF line terminators"
+     cat -A path/to/script.sh | head # shows ^M at line ends
+     ```
+
+  2. Convert the file to LF endings:
+
+     ```bash
+     # Using sed (in-place):
+     sed -i 's/\r//' path/to/script.sh
+
+     # Using dos2unix:
+     dos2unix path/to/script.sh
+
+     # Using tr:
+     tr -d '\r' < input.sh > output.sh && mv output.sh input.sh
+     ```
+
+  3. Add or update `.gitattributes` at the repo root to enforce normalization:
+
+     ```gitattributes
+     # Normalize all text files to LF in the repository
+     * text=auto eol=lf
+
+     # Explicitly mark shell scripts
+     *.sh text eol=lf
+     *.bash text eol=lf
+
+     # Windows-specific files can keep CRLF
+     *.bat text eol=crlf
+     *.cmd text eol=crlf
+     ```
+
+  4. Re-normalize the index after adding `.gitattributes`:
+
+     ```bash
+     git add --renormalize .
+     git commit -m "chore: normalize line endings to LF"
+     ```
+
+  5. On CI, verify the post-checkout state:
+
+     ```bash
+     grep -rlU $'\r' . --include='*.sh' | head -20
+     ```
+validation: |-
+  ## Validation
+
+  - Re-run the failing script after conversion.
+  - Confirm `file script.sh` reports "ASCII text" or "UTF-8 text" without
+    "CRLF line terminators".
+  - Run `grep -c $'\r' script.sh` and confirm it prints `0`.
+why_it_matters: |-
+  ## Why it matters
+
+  Line ending issues fail silently in editors but break loudly in CI. A single
+  CRLF in a shell script produces an undebuggable `command not found` error
+  that looks like a PATH or permission problem, wasting significant diagnostic
+  time.
+
+  ## Prevention
+
+  - Commit a `.gitattributes` file that enforces `eol=lf` for all text files.
+  - Add a CI lint step: `grep -rlU $'\r' . --include='*.sh'` and exit non-zero
+    if any results are returned.
+  - Use `EditorConfig` with `end_of_line = lf` so all editors produce correct
+    files at save time.

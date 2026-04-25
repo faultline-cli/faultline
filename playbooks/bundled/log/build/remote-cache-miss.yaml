@@ -1,0 +1,142 @@
+id: remote-cache-miss
+title: Remote build cache miss or misconfiguration
+category: build
+severity: low
+base_score: 0.5
+tags: [cache, remote-cache, bazel, turbo, gradle, nx, build-cache]
+stage_hints: [build]
+domain: build
+class: remote-cache-miss
+mode: remote-cache-misconfigured
+match:
+  any:
+    - "remote cache.*miss"
+    - "cache miss"
+    - "cache hit rate.*0%"
+    - "remote cache.*unavailable"
+    - "cache write.*failed"
+    - "cache read.*failed"
+    - "could not contact cache"
+    - "cache.*connection refused"
+    - "remote execution.*unavailable"
+    - "BUILD CACHE DISABLED"
+    - "cache not populated"
+    - "no remote cache configured"
+    - "TurboRepo.*MISS"
+    - "NX.*cache miss"
+    - remote cache disabled
+hypothesis:
+  supports:
+    - signal: dependency.cache.corrupt
+      weight: 0.4
+    - signal: log.contains:connection refused
+      weight: 0.4
+  contradicts:
+    - signal: log.contains:build failed
+      weight: -0.5
+    - signal: log.contains:invalid credentials
+      weight: -0.3
+  discriminators:
+    - description: Remote cache misses become build failures only when the cache is required or missing configurations cause exponential build time growth.
+      signal: dependency.cache.corrupt
+summary: |-
+  A remote build cache (Bazel remote cache, Gradle build cache, Turborepo
+  remote cache, Nx Cloud, etc.) is not populated, misconfigured, or
+  unavailable. The build falls back to full local builds on every run,
+  dramatically increasing build and CI execution time.
+diagnosis: |-
+  ## Diagnosis
+
+  Remote caches fail to populate or read for several reasons:
+  1. Cache credentials are absent or expired
+  2. The cache server URL is wrong or the server is down
+  3. The cache key inputs changed, invalidating all existing entries
+  4. CI runs on a different OS or architecture than the cached builds
+  5. The cache write permission is revoked for fork PRs
+
+  Check cache statistics in the build log:
+
+  ```
+  # Bazel
+  INFO: 42 processes: 42 linux-sandbox, 0 remote cache hit
+
+  # Gradle
+  17 tasks executed, 0 from cache
+
+  # Turborepo
+  Tasks:    10 successful, 0 cached, 0 skipped
+  ```
+
+  A 0% cache hit rate on repeated identical builds indicates the cache is
+  either not being written to or the key is always invalidating.
+fix: |-
+  ## Fix steps
+
+  1. Verify the remote cache endpoint is reachable from CI:
+
+     ```bash
+     curl -I https://cache.example.com/healthcheck
+     ```
+
+  2. Check that cache credentials are present in the CI environment:
+
+     ```bash
+     # Print non-secret credential presence (not value)
+     echo "credential set: $([ -n "$CACHE_TOKEN" ] && echo yes || echo NO)"
+     ```
+
+  3. Review cache key configuration — overly volatile inputs (timestamps,
+     random values) produce unique cache keys on every run:
+
+     ```yaml
+     # GitHub Actions cache
+     - uses: actions/cache@v4
+       with:
+         key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}
+         # NOT: key: ${{ github.sha }}  -- always misses
+     ```
+
+  4. For Turborepo, configure the remote cache:
+
+     ```bash
+     npx turbo run build --team=myteam --token=$TURBO_TOKEN
+     ```
+
+     Or in `turbo.json`:
+
+     ```json
+     {
+       "remoteCache": { "enabled": true }
+     }
+     ```
+
+  5. For fork PRs, remote caches are typically read-only. Ensure the fallback
+     to a local or read-from-upstream-cache strategy is configured.
+
+  6. For Bazel, check `.bazelrc` for remote cache settings:
+
+     ```
+     build --remote_cache=grpc://cache.example.com:9090
+     build --google_credentials=/path/to/credentials.json
+     ```
+validation: |-
+  ## Validation
+
+  - Trigger two identical CI runs back-to-back.
+  - The second run should show a high cache hit rate.
+  - Confirm build times on the second run are significantly shorter.
+why_it_matters: |-
+  ## Why it matters
+
+  A broken remote cache does not fail the build but causes every run to
+  rebuild from scratch, multiplying CI time and cost. For large monorepos
+  with many packages, a remote cache miss can turn a 2-minute build into a
+  20-minute one.
+
+  ## Prevention
+
+  - Monitor cache hit rates in CI dashboards.
+  - Alert when cache hit rate drops below a threshold.
+  - Test the cache configuration on every update to CI or build tooling.
+  - Use stable, deterministic cache key ingredients (file hashes, not
+    timestamps or commit SHAs).

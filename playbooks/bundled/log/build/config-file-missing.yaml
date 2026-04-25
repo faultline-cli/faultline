@@ -1,0 +1,124 @@
+id: config-file-missing
+title: Required configuration file not found
+category: build
+severity: high
+base_score: 0.8
+tags: [config, missing, file, not-found, setup]
+stage_hints: [build, test, deploy]
+domain: filesystem
+class: config-missing
+mode: config-file-missing
+match:
+  any:
+    - "config file not found"
+    - "configuration file.*not found"
+    - "No such file or directory.*config"
+    - "Cannot find.*config"
+    - "Could not find config"
+    - "Missing configuration"
+    - "config.*does not exist"
+    - ".env.*not found"
+    - ".env file is missing"
+    - "settings file not found"
+    - "application.yml.*not found"
+    - "application.properties.*not found"
+    - "appsettings.json.*not found"
+    - "no config file"
+    - "config not found"
+    - failed to load config
+    - "error loading configuration"
+hypothesis:
+  supports:
+    - signal: log.contains:no such file or directory
+      weight: 0.9
+    - signal: log.contains:environment variable not set
+      weight: 0.5
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+    - signal: log.contains:invalid credentials
+      weight: -0.3
+  discriminators:
+    - description: Config-not-found errors are most authoritative when the error message includes a specific filename or configuration key.
+      signal: log.contains:no such file or directory
+summary: |-
+  A required configuration file is absent from the CI workspace. The file
+  either was not committed to the repository, was excluded by `.gitignore`,
+  or was expected to be generated or templated at an earlier step that did not
+  run correctly.
+diagnosis: |-
+  ## Diagnosis
+
+  Configuration files are frequently absent in CI for one of these reasons:
+  1. The file is in `.gitignore` (common for `.env`, `*.local`, `secrets.yaml`)
+  2. The file is environment-specific and was not generated in a prior CI step
+  3. A required copy or template step was skipped or executed with the wrong
+     working directory
+  4. The file exists locally but was never committed
+
+  Identify which file is missing:
+
+  ```bash
+  # Check gitignore status
+  git check-ignore -v path/to/config.file
+
+  # List all tracked config files
+  git ls-files | grep -E '\.ya?ml$|\.json$|\.env'
+  ```
+fix: |-
+  ## Fix steps
+
+  1. If the file contains secrets (API keys, passwords), do not commit it.
+     Instead:
+     - Create a template `.env.example` or `config.template.yaml` with
+       placeholder values and commit that.
+     - Generate the real file in CI from secrets:
+
+       ```yaml
+       # GitHub Actions
+       - name: Create config
+         run: |
+           cat > config/app.yaml << EOF
+           database_url: ${{ secrets.DATABASE_URL }}
+           api_key: ${{ secrets.API_KEY }}
+           EOF
+       ```
+
+  2. If the file does not contain secrets, commit it:
+
+     ```bash
+     git add config/app.yaml
+     git commit -m "chore: add application configuration"
+     git push
+     ```
+
+  3. For generated configs, ensure the generation step runs before the step
+     that depends on it, and verify the step's working directory is correct.
+
+  4. For `.env` files, use a CI-native approach:
+     - Copy from a template: `cp .env.example .env`
+     - Populate from CI environment variables via a script
+
+  5. If using a config framework (Spring, Ruby on Rails, Django settings),
+     verify the environment-specific config file is present for `CI` or
+     `test` environments.
+validation: |-
+  ## Validation
+
+  - Re-run the failing job.
+  - Confirm `ls -la <config-path>` shows the file exists before the step
+    that requires it.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing config files are a common cause of silent failures or misleading
+  errors (null pointer, missing key) that do not mention the configuration issue
+  at all, making them time-consuming to root-cause.
+
+  ## Prevention
+
+  - Document all required configuration files in the README.
+  - Provide `.example` or `.template` variants of all config files that
+    require environment-specific values.
+  - Add a CI `preflight` step that checks for required files before starting
+    the build proper.

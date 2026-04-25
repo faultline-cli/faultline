@@ -1,0 +1,145 @@
+id: random-seed-not-fixed
+title: Non-deterministic failure due to unfixed random seed
+category: test
+severity: low
+base_score: 0.45
+tags: [random, seed, nondeterminism, flaky, shuffle, order, hash]
+stage_hints: [test, unit_test, integration_test]
+domain: test-quality
+class: nondeterminism
+mode: random-seed
+match:
+  any:
+    - "random seed"
+    - "seed:"
+    - "rand.Seed"
+    - "PYTHONHASHSEED"
+    - "random_state"
+    - "shuffle"
+    - "randomized"
+    - "non-deterministic"
+    - "flaky"
+    - "run with seed"
+    - "Randomize order"
+    - "randomizing"
+    - "--randomly-seed"
+    - "Math.random"
+    - "crypto.randomBytes"
+    - "order of test cases"
+    - "test ordering"
+    - "random_order"
+hypothesis:
+  supports:
+    - signal: test.order.dependency
+      weight: 0.8
+    - signal: test.retry.detected
+      weight: 0.6
+  contradicts:
+    - signal: dependency.resolution.conflict
+      weight: -0.3
+    - signal: log.contains:connection timed out
+      weight: -0.3
+  discriminators:
+    - description: Unfixed random seed confirmed if re-running the test with an explicit seed reproduces the failure consistently.
+      signal: test.order.dependency
+summary: |-
+  Tests pass locally but fail intermittently in CI because they depend on
+  random ordering or random data without a fixed seed, producing different
+  results on each run.
+diagnosis: |-
+  ## Diagnosis
+
+  Random seeds affect:
+  - Test execution order (pytest-randomly, go test -shuffle, Jest --randomize)
+  - Random data in fuzz or property-based tests
+  - Hash map iteration order (Python dict, Go map, HashMap in Java)
+  - Shuffled training data in ML pipelines
+
+  When a seed is not fixed, a test suite passes most runs but fails on some
+  orderings that expose hidden test coupling (test A mutates shared state, and
+  test B depends on the original state — only fails when B runs before A).
+
+  Check for implicit ordering dependencies:
+
+  ```bash
+  # Go: run with a random shuffle to expose order dependencies
+  go test -shuffle=on ./...
+
+  # Pytest: run with a specific failing seed
+  pytest --randomly-seed=<N>
+
+  # Jest: show seed in output
+  jest --randomize
+  ```
+fix: |-
+  ## Fix steps
+
+  1. **Reproduce with the failing seed**:
+
+     ```bash
+     # Pytest (output shows "Using --randomly-seed=<N>")
+     pytest --randomly-seed=12345
+
+     # Go
+     go test -shuffle=on -count=1 ./...   # outputs seed on failure
+
+     # Jest
+     jest --randomize --randomizeSeed=12345
+     ```
+
+  2. **Fix test isolation** — the real fix is removing hidden state coupling:
+
+     ```python
+     # BAD: test modifies global state
+     def test_a():
+         app.config['DEBUG'] = True
+
+     # GOOD: use setup/teardown or fixtures
+     @pytest.fixture
+     def app_config():
+         old = app.config.copy()
+         yield app.config
+         app.config.update(old)
+     ```
+
+  3. **If randomization is intentional**, pin the seed in CI for
+     deterministic runs:
+
+     ```yaml
+     # GitHub Actions
+     env:
+       PYTHONHASHSEED: "0"
+       RANDOM_SEED: "42"
+     ```
+
+     ```go
+     // Go test helper
+     rand.Seed(42)
+     ```
+
+  4. **Use explicit sort** instead of relying on map/set iteration order:
+
+     ```python
+     # BAD
+     for key in my_dict:     # order not guaranteed across Python versions
+     # GOOD
+     for key in sorted(my_dict):
+     ```
+validation: |-
+  ## Validation
+
+  - Re-run with the specific failing seed and confirm the failure is reproduced.
+  - Fix the state isolation, then re-run with multiple random seeds.
+  - Enable shuffle in CI by default so coverage is broad over time.
+why_it_matters: |-
+  ## Why it matters
+
+  Random-order failures mask test coupling that will eventually become a real
+  production bug. Tests that rely on execution order are fragile — any test
+  runner change or parallelization will break them.
+
+  ## Prevention
+
+  - Always run with `-shuffle=on` or `--randomly-seed` in CI.
+  - Treat each test as isolated: set up its own state and tear it down.
+  - Pin seeds for snapshot or property-based tests in CI; rotate them monthly.

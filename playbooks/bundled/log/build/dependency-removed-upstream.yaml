@@ -1,0 +1,127 @@
+id: dependency-removed-upstream
+title: Dependency removed or yanked from upstream registry
+category: build
+severity: high
+base_score: 0.8
+tags: [dependency, removed, yanked, deleted, npm, pypi, registry]
+stage_hints: [build]
+domain: dependency
+class: dependency-removed
+mode: dependency-unavailable
+match:
+  any:
+    - "404 Not Found"
+    - "Package.*not found"
+    - "no matching version found for"
+    - "yanked"
+    - "package has been deprecated"
+    - "package has been deleted"
+    - "package.*is no longer"
+    - "unable to find package"
+    - "package.*does not exist"
+    - "error getting.*package"
+    - "module.*is not available"
+hypothesis:
+  supports:
+    - signal: dependency.resolution.conflict
+      weight: 0.9
+    - signal: log.contains:connection refused
+      weight: 0.3
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+    - signal: log.contains:invalid credentials
+      weight: -0.5
+  discriminators:
+    - description: A 404 response or explicit "not found" message for a specific package is definitive evidence of removal.
+      signal: dependency.resolution.conflict
+summary: |-
+  A required dependency has been removed, yanked, or unpublished from the
+  upstream registry. Package managers cannot resolve the dependency and the
+  build fails. This is different from a version mismatch or lockfile error:
+  the exact version or the entire package no longer exists in the registry.
+diagnosis: |-
+  ## Diagnosis
+
+  Common causes:
+  1. An author unpublished the package (npm allows this within 72 hours)
+  2. A package was yanked for a security vulnerability (PyPI, RubyGems)
+  3. The package was renamed or moved to a new scope (e.g., `pkg` → `@org/pkg`)
+  4. A registry purged spam or abandoned packages
+  5. A private package was deleted from an internal registry
+
+  Distinguish from a network issue:
+
+  ```bash
+  # Test registry directly
+  # npm
+  npm view <package>@<version>
+
+  # pip
+  pip index versions <package>
+
+  # If the command returns "not found", the package is gone.
+  # If it times out, it's a network issue.
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Verify the package is truly gone (not a transient network failure):
+
+     ```bash
+     curl https://registry.npmjs.org/<package>/<version>   # should 404
+     curl https://pypi.org/pypi/<package>/<version>/json   # should 404
+     ```
+
+  2. Find a replacement or successor:
+     - Search the registry for the package name + readme for migration notes
+     - Check the package's GitHub repo for archival or redirect notices
+     - Look for a fork maintained by a different author
+
+  3. Update the dependency manifest to use the replacement:
+
+     ```bash
+     npm uninstall old-package && npm install new-package@latest
+     pip uninstall old-package && pip install new-package
+     ```
+
+  4. If the package was only yanked (not deleted), and you still need the
+     specific version, vendor the dependency:
+
+     ```bash
+     # npm workspaces can reference local packages
+     npm pack old-package-1.2.3.tgz
+     npm install ./old-package-1.2.3.tgz
+     ```
+
+  5. If the package was an internal/private package, restore it to the
+     internal registry or update the package source.
+
+  6. Update the lockfile after changing the dependency:
+
+     ```bash
+     npm ci          # regenerates node_modules from updated lockfile
+     pip-compile     # regenerates requirements.txt from pyproject.toml
+     ```
+validation: |-
+  ## Validation
+
+  - Run `npm install` or `pip install -r requirements.txt` and confirm it
+    succeeds without 404 errors.
+  - Re-run the full CI pipeline.
+why_it_matters: |-
+  ## Why it matters
+
+  Removed dependencies can break a project with no code changes. The `left-pad`
+  incident in 2016 demonstrated that even small, deeply-transitive dependencies
+  can take down entire ecosystems. Without lockfiles and dependency caching,
+  the failure is immediate and widespread.
+
+  ## Prevention
+
+  - Commit lockfiles so the exact version is pinned and CI does not re-resolve.
+  - Enable dependency caching so most CI runs do not contact the registry.
+  - Audit direct and transitive dependencies periodically with `npm audit` or
+    `pip-audit`.
+  - Mirror or vendor critical dependencies for projects with strict availability
+    requirements.

@@ -1,0 +1,117 @@
+id: symlink-in-ci
+title: Symlink resolution failure in CI
+category: build
+severity: medium
+base_score: 0.6
+tags: [symlink, symlinks, filesystem, ci, linux, dangling]
+stage_hints: [build, test]
+domain: filesystem
+class: symlink-failure
+mode: symlink-broken
+match:
+  any:
+    - "Too many levels of symbolic links"
+    - "dangling symlink"
+    - "broken symlink"
+    - "symlink.*not found"
+    - "readlink: Invalid argument"
+    - "ln: failed to create symbolic link"
+    - "symbolic link loop"
+    - "ELOOP"
+    - "ENOENT.*symlink"
+    - "cannot follow"
+    - "is not a file"
+    - "is a broken symbolic link"
+    - circular symlink
+hypothesis:
+  supports:
+    - signal: log.contains:no such file or directory
+      weight: 0.6
+    - signal: log.contains:command not found
+      weight: 0.5
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+  discriminators:
+    - description: Symlink failures are confirmed when the error code is ELOOP or the message explicitly says "symbolic link" or "dangling".
+      signal: log.contains:no such file or directory
+summary: |-
+  A symlink in the repository or the build workspace is broken or cannot be
+  resolved in the CI environment. Common causes include symlinks pointing to
+  absolute paths that only exist on a developer's machine, or symlinks that
+  survive a `git clone` but point to targets that are not checked out.
+diagnosis: |-
+  ## Diagnosis
+
+  Symlinks behave differently across operating systems and CI environments:
+  - Absolute symlinks (e.g., `/Users/dev/project/lib`) break on any other machine
+  - Symlinks inside a shallow clone may point to commits or paths not present
+  - Windows CI runners may not support symlinks without Developer Mode enabled
+  - Docker `COPY` with some configurations does not preserve symlinks
+
+  Find broken symlinks:
+
+  ```bash
+  # List all symlinks
+  find . -type l | head -20
+
+  # Find broken symlinks (dangling)
+  find . -xtype l 2>/dev/null
+
+  # Show what each symlink points to
+  find . -type l -exec ls -la {} \;
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Replace absolute symlinks with relative ones:
+
+     ```bash
+     # Remove the absolute symlink
+     rm path/to/broken-link
+
+     # Re-create as relative
+     ln -sr actual/target path/to/broken-link
+     # or manually:
+     ln -s ../actual/target path/to/broken-link
+     ```
+
+  2. If the symlink target is in `.gitignore`, either:
+     - Move the target into a tracked location, or
+     - Replace the symlink with a real file or a build step
+
+  3. Verify symlinks are committed correctly in git:
+
+     ```bash
+     git ls-files -s | grep "^120000"   # shows symlinks in index
+     ```
+
+  4. For Windows CI runners that do not support symlinks, replace them with
+     file copies or use `git config core.symlinks true` at job start:
+
+     ```yaml
+     - name: Enable symlinks
+       run: git config --global core.symlinks true
+       if: runner.os == 'Windows'
+     ```
+
+  5. In Docker, use `COPY --follow-link` (BuildKit) to dereference symlinks
+     during the build context transfer, or copy the target directly.
+validation: |-
+  ## Validation
+
+  - Run `find . -xtype l` and confirm it produces no output.
+  - Re-run the failing CI step.
+why_it_matters: |-
+  ## Why it matters
+
+  Symlink failures produce obscure "file not found" errors that are hard to
+  attribute to a symlink problem. They frequently work on macOS (case-insensitive
+  filesystem) but break on Linux CI runners, creating a local-passes-CI-fails
+  pattern.
+
+  ## Prevention
+
+  - Prefer relative symlinks over absolute ones.
+  - Add a CI lint step: `find . -xtype l` — exit non-zero on dangling symlinks.
+  - Document any symlinks in the README.

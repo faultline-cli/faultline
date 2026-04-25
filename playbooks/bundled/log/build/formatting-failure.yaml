@@ -1,0 +1,150 @@
+id: formatting-failure
+title: Code formatting check failure
+category: build
+severity: low
+base_score: 0.6
+tags: [formatting, prettier, black, gofmt, rustfmt, lint, style]
+stage_hints: [build, lint]
+domain: code-quality
+class: formatting-failure
+mode: formatting-check-failed
+match:
+  any:
+    - "Reformatting..."
+    - "would reformat"
+    - "files would be reformatted"
+    - "not formatted"
+    - "format check failed"
+    - "run gofmt"
+    - "run goimports"
+    - "prettier.*check"
+    - "check.*prettier"
+    - "black.*would reformat"
+    - "rustfmt.*diff"
+    - "clang-format.*error"
+    - formatting issues found
+    - "Code style issues found"
+    - "Run.*--fix to"
+    - "--write to fix"
+    - check failed.*format
+    - "format: FAIL"
+hypothesis:
+  supports:
+    - signal: log.contains:linting
+      weight: 0.7
+    - signal: log.contains:quality gate
+      weight: 0.5
+  contradicts:
+    - signal: log.contains:build failed
+      weight: -0.5
+    - signal: log.contains:environment variable not set
+      weight: -0.5
+  discriminators:
+    - description: Formatting failures are confirmed when the error message explicitly offers a --fix or --write flag to auto-correct the issue.
+      signal: log.contains:linting
+summary: |-
+  A CI formatting check failed because one or more source files do not match
+  the project's required code style as enforced by a formatter (Prettier,
+  Black, gofmt, rustfmt, etc.). The check runs in verification mode and
+  exits non-zero without modifying files.
+diagnosis: |-
+  ## Diagnosis
+
+  Most projects run a formatting check in `--check` mode in CI, which exits
+  non-zero if any file would be changed. The underlying code is syntactically
+  valid but does not conform to the configured style.
+
+  This commonly happens when:
+  - A developer's editor does not have format-on-save configured
+  - The developer used a different formatter version than CI
+  - Auto-generated code was committed without running the formatter
+  - A merge or rebase introduced formatting inconsistencies
+
+  Identify which files are affected:
+
+  ```bash
+  # Prettier
+  npx prettier --check .
+
+  # Black (Python)
+  black --check .
+
+  # Go
+  gofmt -l .     # lists files that differ
+
+  # Rust
+  cargo fmt -- --check
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Run the formatter in write mode locally to auto-fix all issues:
+
+     ```bash
+     # Prettier
+     npx prettier --write .
+
+     # Black
+     black .
+
+     # Go
+     gofmt -w .
+     goimports -w .
+
+     # Rust
+     cargo fmt
+
+     # C/C++
+     clang-format -i path/to/file.cpp
+     ```
+
+  2. Stage and commit the formatting changes:
+
+     ```bash
+     git add -u
+     git commit -m "style: apply formatter"
+     ```
+
+  3. Ensure all team members have format-on-save configured in their editors,
+     or install a pre-commit hook to format automatically:
+
+     ```bash
+     # Using pre-commit framework
+     # .pre-commit-config.yaml
+     repos:
+       - repo: https://github.com/psf/black
+         rev: 24.3.0
+         hooks:
+           - id: black
+     ```
+
+  4. If the formatter version in CI differs from local, pin or align them:
+
+     ```json
+     // package.json
+     "prettier": "3.2.5"
+     ```
+
+     ```toml
+     # pyproject.toml
+     [tool.black]
+     target-version = ['py311']
+     ```
+validation: |-
+  ## Validation
+
+  - Re-run the formatter in check mode and confirm it exits 0.
+  - Push the formatted commit and verify the CI formatting step passes.
+why_it_matters: |-
+  ## Why it matters
+
+  Formatting failures block PRs that contain otherwise valid work. While the
+  failure is trivial to fix, it slows down review cycles and wastes CI capacity
+  on a non-functional issue.
+
+  ## Prevention
+
+  - Install a pre-commit formatter hook so formatting is enforced before push.
+  - Configure editors to format on save using the same formatter version as CI.
+  - Pin the formatter version in both local and CI environments.
+  - Include formatting in the same step as linting so both run together.

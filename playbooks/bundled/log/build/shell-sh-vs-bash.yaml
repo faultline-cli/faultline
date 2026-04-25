@@ -1,0 +1,145 @@
+id: shell-sh-vs-bash
+title: Shell compatibility issue (sh vs bash)
+category: build
+severity: medium
+base_score: 0.7
+tags: [shell, bash, sh, posix, dash, container, script]
+stage_hints: [build, test]
+domain: runtime
+class: shell-incompatibility
+mode: shell-sh-bash-mismatch
+match:
+  any:
+    - "syntax error: unexpected"
+    - "source: not found"
+    - "local: not in a function"
+    - "[[: not found"
+    - "declare: not found"
+    - "function: not found"
+    - "Illegal option"
+    - "no such file or directory.*bash"
+    - "/bin/bash.*not found"
+    - "bash: command not found"
+    - "bad substitution"
+    - "sh: 1: local: can only"
+    - "arithmetic syntax error"
+    - "process substitution"
+hypothesis:
+  supports:
+    - signal: log.contains:build failed
+      weight: 0.6
+    - signal: log.contains:command not found
+      weight: 0.5
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+    - signal: log.contains:connection timed out
+      weight: -0.5
+  discriminators:
+    - description: Shell compatibility failures are confirmed by bash-specific syntax errors appearing in environments that default to /bin/sh (dash on Debian/Ubuntu or ash on Alpine).
+      signal: log.contains:build failed
+summary: |-
+  A shell script uses bash-specific syntax but is executed by `/bin/sh`, which
+  is commonly `dash` on Ubuntu/Debian or `ash` on Alpine. Constructs like
+  `[[ ]]`, `source`, `local` outside functions, arrays, and process
+  substitution are bash extensions and fail silently or loudly under POSIX sh.
+diagnosis: |-
+  ## Diagnosis
+
+  On many Linux distributions, `/bin/sh` is not bash:
+  - Ubuntu/Debian: `/bin/sh` → `dash` (faster POSIX sh, no bash extensions)
+  - Alpine: `/bin/sh` → `busybox ash` (minimal POSIX sh)
+  - macOS: `/bin/sh` → `bash 3.2` (old bash, missing newer features)
+
+  A script with `#!/bin/bash` shebang runs correctly. The same script run by a
+  CI step without a shebang, or run with `sh script.sh`, may fail.
+
+  Check the actual shell:
+
+  ```bash
+  ls -la /bin/sh   # reveals symlink target
+  sh --version 2>/dev/null || sh -c "echo $0"
+  ```
+
+  Find bash-specific syntax in scripts:
+
+  ```bash
+  # Common bash-only constructs
+  grep -rn '\[\[' --include="*.sh" .
+  grep -rn 'source ' --include="*.sh" .
+  grep -rn 'declare -' --include="*.sh" .
+  grep -rn '<<(' --include="*.sh" .   # process substitution
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Add a `#!/usr/bin/env bash` shebang to scripts that use bash extensions:
+
+     ```bash
+     #!/usr/bin/env bash
+     set -euo pipefail
+
+     # Now bash-specific syntax is safe
+     [[ -n "${VAR}" ]] && echo "set"
+     declare -a arr=(a b c)
+     source helpers.sh
+     ```
+
+  2. Install bash in Alpine containers that use bash scripts:
+
+     ```dockerfile
+     # Alpine does not include bash by default
+     RUN apk add --no-cache bash
+     ```
+
+  3. Alternatively, rewrite bash-specific constructs using POSIX sh equivalents:
+
+     ```bash
+     # bash: [[ ]]  →  POSIX: [ ]
+     if [ -n "$VAR" ]; then ...
+
+     # bash: source  →  POSIX: . (dot)
+     . helpers.sh
+
+     # bash: local   →  POSIX: only valid inside functions (both support it)
+     # bash arrays   →  No POSIX equivalent; restructure or use bash
+
+     # bash: <<()    →  POSIX alternative uses temporary files
+     ```
+
+  4. For GitHub Actions, specify the shell explicitly:
+
+     ```yaml
+     - name: Run script
+       shell: bash
+       run: |
+         [[ -n "$VAR" ]] && echo "set"
+     ```
+
+  5. Use ShellCheck to detect bash-isms in scripts intended to be portable:
+
+     ```bash
+     shellcheck --shell=sh script.sh   # strict POSIX mode
+     shellcheck script.sh              # uses shebang to determine shell
+     ```
+validation: |-
+  ## Validation
+
+  - Run `shellcheck script.sh` and resolve any issues it reports.
+  - Test with the target shell: `sh script.sh` and `bash script.sh`.
+  - Re-run the CI step and confirm the syntax error is resolved.
+why_it_matters: |-
+  ## Why it matters
+
+  Shell compatibility issues are extremely common when scripts are written
+  on macOS (bash 3.2 or zsh) and run in Alpine-based CI containers (ash).
+  They produce cryptic "syntax error: unexpected" messages that do not indicate
+  a bash vs sh problem.
+
+  ## Prevention
+
+  - Always include a shebang line in shell scripts.
+  - Run ShellCheck as part of CI lint.
+  - Install bash explicitly in Alpine Dockerfiles that use bash scripts.
+  - Prefer `#!/usr/bin/env bash` over `#!/bin/bash` for portability across
+    install locations.

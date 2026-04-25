@@ -1,0 +1,136 @@
+id: orphaned-resources
+title: Orphaned CI resources blocking subsequent runs
+category: ci
+severity: medium
+base_score: 0.6
+tags: [docker, container, volume, resource, orphan, cleanup, ci]
+stage_hints: [build, test, deploy]
+domain: runtime
+class: orphaned-resource
+mode: resource-not-cleaned-up
+match:
+  any:
+    - "container name.*already in use"
+    - "container.*already exists"
+    - "port.*already in use"
+    - "network.*already exists"
+    - "volume.*already exists"
+    - "address already in use"
+    - "EADDRINUSE"
+    - "resource.*already allocated"
+    - remove container
+    - "Cannot start service"
+    - "Conflict.*container"
+    - orphaned container
+    - leftover container
+    - "Could not create network"
+hypothesis:
+  supports:
+    - signal: log.contains:address already in use
+      weight: 0.7
+    - signal: log.contains:resource temporarily unavailable
+      weight: 0.4
+  contradicts:
+    - signal: log.contains:invalid credentials
+      weight: -0.5
+    - signal: log.contains:connection timed out
+      weight: -0.3
+  discriminators:
+    - description: Orphaned resource errors are confirmed when the error message names an existing container, volume, or port that blocks creation of a new one.
+      signal: log.contains:address already in use
+summary: |-
+  A CI job failed because a previous run left behind a container, network,
+  volume, or bound port that was not cleaned up. The current run cannot
+  create or start the same resource because it already exists.
+diagnosis: |-
+  ## Diagnosis
+
+  Orphaned resources appear when:
+  1. A previous CI run was cancelled or crashed before its teardown step
+  2. Docker Compose services were not stopped after a test run
+  3. A service container keeps its name between retried jobs on the same runner
+  4. The runner reuses workspace state without a clean slate
+
+  Inspect the runner for leftover resources:
+
+  ```bash
+  # Containers
+  docker ps -a | grep <project-prefix>
+  docker ps -a --filter "name=<service-name>"
+
+  # Networks
+  docker network ls
+
+  # Volumes
+  docker volume ls
+
+  # Ports
+  ss -tlnp | grep <port>
+  lsof -i :<port>
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Add a cleanup step at the start of the job to remove any stale resources:
+
+     ```bash
+     # At job start — remove stale containers
+     docker rm -f myservice 2>/dev/null || true
+     docker network rm mynetwork 2>/dev/null || true
+     ```
+
+  2. For Docker Compose, use `--remove-orphans` and clean up volumes:
+
+     ```bash
+     # Teardown
+     docker compose down --remove-orphans --volumes
+
+     # Pre-run cleanup
+     docker compose rm -f
+     ```
+
+  3. Add a cleanup step as an `always()` / post-job hook so it runs even on
+     failure:
+
+     ```yaml
+     # GitHub Actions
+     - name: Cleanup
+       if: always()
+       run: docker compose down --remove-orphans --volumes
+     ```
+
+  4. Use unique resource names per run to avoid collisions on shared runners:
+
+     ```yaml
+     env:
+       SERVICE_NAME: myservice-${{ github.run_id }}
+     ```
+
+  5. For port conflicts, run services on dynamic ports (port 0) and discover
+     the assigned port rather than using a fixed port number.
+
+  6. For persistent runners (self-hosted), schedule a periodic cleanup job:
+
+     ```bash
+     # prune stopped containers, unused networks, dangling volumes
+     docker system prune -f
+     ```
+validation: |-
+  ## Validation
+
+  - Run `docker ps -a` on the runner and confirm no stale containers exist.
+  - Re-run the failing job and confirm it starts cleanly.
+why_it_matters: |-
+  ## Why it matters
+
+  Orphaned resources are a self-reinforcing failure: each failed run leaves
+  more resources behind, causing subsequent runs to also fail. Without a
+  cleanup step, the problem escalates until the runner is manually reset.
+
+  ## Prevention
+
+  - Always add an `if: always()` cleanup step after Docker or service container
+    usage.
+  - Use `docker compose down --volumes` rather than just stopping services.
+  - Prefer ephemeral runners that start from a clean state on every job.
+  - Use run-unique resource names when cleanup is unreliable.

@@ -1,0 +1,143 @@
+id: entrypoint-misconfigured
+title: Docker entrypoint or CMD misconfiguration
+category: runtime
+severity: high
+base_score: 0.8
+tags: [docker, entrypoint, cmd, container, startup, exec-form, shell-form]
+stage_hints: [deploy, build]
+domain: containerization
+class: entrypoint-error
+mode: entrypoint-misconfigured
+match:
+  any:
+    - "no such file or directory"
+    - "exec format error"
+    - "not an executable"
+    - "entrypoint.*not found"
+    - "container.*exited immediately"
+    - "container.*exit code 127"
+    - "container.*exit code 126"
+    - "permission denied.*entrypoint"
+    - "cannot execute binary file"
+    - "Exec format error"
+    - OCI runtime exec failed
+    - "starting container process caused"
+    - "unable to start container"
+    - "invalid ELF header"
+hypothesis:
+  supports:
+    - signal: log.contains:OCI runtime exec failed
+      weight: 0.7
+    - signal: log.contains:permission denied
+      weight: 0.6
+    - signal: log.contains:exec format error
+      weight: 0.5
+  contradicts:
+    - signal: log.contains:connection timed out
+      weight: -0.5
+    - signal: dependency.lockfile.sync_error
+      weight: -0.5
+  discriminators:
+    - description: Entrypoint errors are confirmed by exit code 126 or 127 immediately after container start, or an explicit "exec format error" message.
+      signal: log.contains:exec format error
+summary: |-
+  A Docker container exits immediately after start because its `ENTRYPOINT`
+  or `CMD` is misconfigured. Common causes include a missing or non-executable
+  binary, an `exec format error` from an architecture mismatch, or incorrect
+  syntax mixing shell form and exec form.
+diagnosis: |-
+  ## Diagnosis
+
+  Exit codes immediately after container start indicate entrypoint problems:
+  - **Exit 126**: permission denied — binary exists but is not executable
+  - **Exit 127**: command not found — ENTRYPOINT path does not exist in image
+  - **Exec format error**: binary compiled for wrong architecture (e.g.,
+    arm64 binary on amd64 runner)
+
+  Inspect the entrypoint:
+
+  ```bash
+  # Show entrypoint and cmd in image
+  docker inspect <image> --format '{{json .Config.Entrypoint}} {{json .Config.Cmd}}'
+
+  # Verify the binary exists in the image
+  docker run --rm --entrypoint /bin/sh <image> -c "ls -la /app/server"
+
+  # Check the binary's architecture
+  docker run --rm --entrypoint /bin/sh <image> -c "file /app/server"
+  ```
+fix: |-
+  ## Fix steps
+
+  1. **Binary not found (exit 127)**:
+     Verify the `COPY` or build step placed the binary at the path `ENTRYPOINT`
+     references:
+
+     ```dockerfile
+     # Ensure binary is at /app/server not /usr/local/bin/server
+     COPY --from=builder /go/bin/server /app/server
+     ENTRYPOINT ["/app/server"]   # must match above
+     ```
+
+  2. **Not executable (exit 126)**:
+     Ensure the binary has execute permissions:
+
+     ```dockerfile
+     COPY --from=builder /go/bin/server /app/server
+     RUN chmod +x /app/server
+     ```
+
+  3. **Exec format error** (architecture mismatch):
+     Build the binary for the target platform:
+
+     ```bash
+     # Cross-compile for linux/amd64
+     GOOS=linux GOARCH=amd64 go build -o server ./cmd/server
+
+     # Or use multi-platform build
+     docker buildx build --platform linux/amd64,linux/arm64 -t myimage .
+     ```
+
+  4. **Entry point syntax**: use exec form (JSON array) not shell form for
+     signals and PID 1 correctness:
+
+     ```dockerfile
+     # Prefer exec form (receives SIGTERM directly)
+     ENTRYPOINT ["/app/server"]
+     CMD ["--port", "8080"]
+
+     # Shell form wraps in /bin/sh -c (SIGTERM goes to shell, not app)
+     ENTRYPOINT /app/server    # AVOID for servers
+     ```
+
+  5. **Shell dependencies in ENTRYPOINT**: if using shell form or a shell
+     script, ensure the shell is present in the image:
+
+     ```dockerfile
+     FROM scratch   # no shell available — use exec form only
+     ENTRYPOINT ["/app/server"]
+     ```
+validation: |-
+  ## Validation
+
+  - Run `docker run --rm <image> true` and confirm exit code 0.
+  - Run the container with a shell override to inspect contents:
+    `docker run --rm --entrypoint sh <image> -c "ls -la /app"`
+  - Re-run the CI deploy step and confirm the container stays running.
+why_it_matters: |-
+  ## Why it matters
+
+  An entrypoint failure means the container exits immediately after every
+  start, triggering CrashLoopBackOff in Kubernetes or immediate container
+  restart in other orchestrators. The failure is visible in health checks
+  but the root cause (wrong binary path or architecture) requires image
+  inspection to diagnose.
+
+  ## Prevention
+
+  - Add a `docker run --rm <image> <binary> --help` step after building the
+    image in CI to validate the entrypoint.
+  - Use `docker build --platform linux/amd64` explicitly to avoid platform
+    surprises when building on Apple Silicon.
+  - Separate the build and entrypoint tests so path changes in one fail
+    the CI build rather than the production deploy.

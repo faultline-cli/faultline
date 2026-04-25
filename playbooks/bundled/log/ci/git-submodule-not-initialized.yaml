@@ -1,0 +1,127 @@
+id: git-submodule-not-initialized
+title: Git submodule not initialized or updated
+category: ci
+severity: high
+base_score: 0.9
+tags: [git, submodule, init, checkout, ci]
+stage_hints: [build, test]
+domain: source-control
+class: submodule-missing
+mode: submodule-not-initialized
+match:
+  any:
+    - "No url found for submodule"
+    - "fatal: No url found for submodule path"
+    - "Submodule path"
+    - repository not found
+    - "submodule update --init"
+    - "'git submodule' is not a git command"
+    - "already exists and is not an empty directory"
+    - "does not contain .git"
+    - registered for path
+    - "submodule foreach"
+    - "missing or broken submodule"
+    - please make sure you have the correct access rights
+hypothesis:
+  supports:
+    - signal: log.contains:no such file or directory
+      weight: 0.8
+    - signal: log.contains:user authentication required
+      weight: 0.4
+  contradicts:
+    - signal: dependency.lockfile.sync_error
+      weight: -0.4
+  discriminators:
+    - description: Submodule errors appear when the superproject repo was cloned without submodule initialization.
+      signal: log.contains:no such file or directory
+summary: |-
+  A Git submodule referenced by the repository has not been initialized or
+  updated. CI clones the superproject but skips submodule initialization by
+  default, leaving dependent source files absent and causing build or test
+  failures.
+diagnosis: |-
+  ## Diagnosis
+
+  Git does not automatically clone or update submodules unless explicitly
+  instructed. A plain `git clone` or `actions/checkout` without
+  `submodules: recursive` leaves submodule directories empty.
+
+  Symptoms:
+  - Build tool reports a source file or include path does not exist
+  - Compiler or linker cannot find a vendored library
+  - `git submodule status` shows `-` prefix (not initialized) or `+` prefix
+    (out of sync with expected commit)
+  - CMake, Meson, or Make reports missing dependency paths
+
+  Check the state of all submodules:
+
+  ```bash
+  git submodule status --recursive
+  ```
+
+  An uninitialized submodule shows a leading `-`:
+
+  ```
+  -a3f7d82b4 vendor/some-lib (v1.2.3)
+  ```
+fix: |-
+  ## Fix steps
+
+  1. Initialize and fetch all submodules after cloning:
+
+     ```bash
+     git submodule update --init --recursive
+     ```
+
+  2. For GitHub Actions, add `submodules: recursive` to the checkout step:
+
+     ```yaml
+     - uses: actions/checkout@v4
+       with:
+         submodules: recursive
+     ```
+
+  3. For GitLab CI, set the job-level variable:
+
+     ```yaml
+     variables:
+       GIT_SUBMODULE_STRATEGY: recursive
+     ```
+
+  4. For CircleCI, use a checkout step with submodule initialization:
+
+     ```yaml
+     - checkout
+     - run: git submodule update --init --recursive
+     ```
+
+  5. If submodules reference private repositories, ensure the CI runner's SSH
+     key or deploy token has read access to each submodule remote.
+
+  6. If a submodule is no longer needed, remove it cleanly:
+
+     ```bash
+     git submodule deinit -f path/to/submodule
+     git rm path/to/submodule
+     rm -rf .git/modules/path/to/submodule
+     ```
+validation: |-
+  ## Validation
+
+  - Run `git submodule status --recursive` and confirm every entry starts with
+    a space (clean) rather than `-` or `+`.
+  - Re-run the build and confirm the missing-path errors are resolved.
+why_it_matters: |-
+  ## Why it matters
+
+  Missing submodule contents produce misleading errors (file not found, import
+  error, linker error) that look like missing system dependencies rather than
+  a checkout problem. Developers unfamiliar with submodules may spend hours
+  diagnosing a build issue that a single command resolves.
+
+  ## Prevention
+
+  - Configure CI checkout steps to always initialize submodules recursively.
+  - If the submodules are large, consider shallow submodule clones:
+    `git submodule update --init --recursive --depth=1`.
+  - Document the submodule requirement in the project README and CONTRIBUTING.md.
