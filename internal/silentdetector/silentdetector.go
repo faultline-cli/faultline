@@ -76,9 +76,9 @@ func detectorOrder() map[string]int {
 	return order
 }
 
-// SelectPrimary picks the highest-priority finding from a non-empty slice
-// using a deterministic ranking: severity (high > medium > low) then
-// confidence (high > medium > low) then detector order (already stable).
+// SelectPrimary picks the highest-priority finding from a non-empty slice.
+// It assumes the slice is already ranked by Run (severity desc, confidence
+// desc, detector order asc) and simply returns the first element.
 func SelectPrimary(findings []model.SilentFinding) *model.SilentFinding {
 	if len(findings) == 0 {
 		return nil
@@ -298,10 +298,12 @@ func (cacheMissNonFatalDetector) ID() string    { return "cache-miss-non-fatal" 
 func (cacheMissNonFatalDetector) Class() string { return "silent_failure" }
 
 func (cacheMissNonFatalDetector) Match(input AnalysisInput) []Finding {
+	// "cache miss" is intentionally absent here — it also appears in
+	// failSignals and would satisfy the AND on a single line.
 	cacheSignals := []string{
 		"restore cache", "save cache",
 		"actions/cache", "cache restore",
-		"cache hit", "cache miss",
+		"cache hit",
 	}
 	failSignals := []string{
 		"cache not found",
@@ -378,9 +380,11 @@ func (emptyDeploymentTargetDetector) ID() string    { return "empty-deployment-t
 func (emptyDeploymentTargetDetector) Class() string { return "silent_failure" }
 
 func (emptyDeploymentTargetDetector) Match(input AnalysisInput) []Finding {
+	// Prefer explicit tool names to avoid matching the generic token "deploy"
+	// inside emptySignals phrases such as "Nothing to deploy".
 	deploySignals := []string{
 		"kubectl apply", "helm upgrade", "helm install", "terraform apply",
-		"deploy", "release", "publish", "serverless deploy",
+		"serverless deploy",
 	}
 	emptySignals := []string{
 		"nothing to deploy",
@@ -432,7 +436,30 @@ func (emptyQualityCheckDetector) Match(input AnalysisInput) []Finding {
 		"coverage report not generated",
 		"no files were analyzed",
 	}
-	if !containsAny(input.RawLog, checkSignals...) || !containsAny(input.RawLog, emptySignals...) {
+
+	var hasCheckContext bool
+	var hasEmptyResult bool
+	for _, l := range input.Lines {
+		line := strings.TrimSpace(l.Normalized)
+		if line == "" {
+			continue
+		}
+
+		matchesCheck := containsAny(line, checkSignals...)
+		matchesEmpty := containsAny(line, emptySignals...)
+
+		if matchesCheck && !matchesEmpty {
+			hasCheckContext = true
+		}
+		if matchesEmpty {
+			hasEmptyResult = true
+		}
+		if hasCheckContext && hasEmptyResult {
+			break
+		}
+	}
+
+	if !hasCheckContext || !hasEmptyResult {
 		return nil
 	}
 	evidence := matchingLines(input.Lines, 5, append(checkSignals, emptySignals...)...)
