@@ -1,8 +1,10 @@
 # Faultline
 
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![142 playbooks](https://img.shields.io/badge/playbooks-142-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![174 real fixtures](https://img.shields.io/badge/real_fixtures-174-informational)](docs/fixture-corpus.md) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-7.3%25-lightgrey)](eval-work/coverage.md)
+
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
-Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 123 playbooks and returns evidence-backed diagnoses — the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
+Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 142 playbooks and returns evidence-backed diagnoses — the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
 
 **Your build just failed. Here's what the next 30 seconds looks like:**
 
@@ -26,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.4.0** — 123 bundled playbooks · 174 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
+**v0.4.0+** — 142 bundled playbooks · 174 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
 
 ## ⚡ Install
 
@@ -39,7 +41,7 @@ faultline analyze build.log
 
 ## ⚙ How it works
 
-1. **Analyze** — match the failing log against 123 bundled playbooks, extract evidence lines, score and rank candidates
+1. **Analyze** — match the failing log against 142 bundled playbooks, extract evidence lines, score and rank candidates
 2. **Diagnose** — return the top match with confidence, the exact evidence, and concrete fix steps
 3. **Handoff** — optionally emit a stable JSON artifact for your automation, agent, or post-mortem tool
 
@@ -56,7 +58,7 @@ Determinism is the contract, not a feature flag. The same log and playbook set p
 
 ## 🔍 What it catches
 
-123 playbooks covering the failures that actually break builds in production CI:
+142 playbooks covering the failures that actually break builds in production CI:
 
 | Category | Examples |
 |---|---|

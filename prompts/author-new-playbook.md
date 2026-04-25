@@ -29,8 +29,10 @@ Before writing YAML, answer these explicitly:
 2. What is the nearest existing playbook by ID? Run `faultline explain <id>` on it.
 3. Does the proposed pattern overlap with that neighbor's `match.any`? If yes, is the root cause boundary genuinely distinct?
 4. Can the neighbor's `match.none` be extended to cover this case instead?
+5. What are the `domain`, `class`, and `mode` values from `docs/ontology.md`?
 
 If you cannot answer question 1 with one sentence, do not author a playbook yet. Return to triage.
+If you cannot answer question 5, read `docs/ontology.md` before continuing.
 
 ## Placement Decision
 
@@ -54,6 +56,9 @@ severity: <critical|high|medium|low>
 base_score: <float, 0.0–1.0>
 tags: [<comma, separated, lowercase>]
 stage_hints: [<build|test|deploy|...>]
+domain: <from docs/ontology.md — e.g. dependency, runtime, database, network, auth>
+class: <from docs/ontology.md — e.g. missing-executable, migration-failure, tls-validation>
+mode: <concrete root cause slug — e.g. binary-not-found, postgres-enum-in-transaction>
 
 summary: |-
   One or two sentences. This appears in ranked output.
@@ -88,6 +93,11 @@ workflow:
 ```
 
 Optional fields: `why_it_matters`, `match.all`.
+
+> **Ontology note:** `domain`, `class`, and `mode` are required for every new playbook.
+> Consult `docs/ontology.md` for the full hierarchy and valid values. If the exact
+> class or mode is not yet in the ontology, choose the nearest valid parent and add a
+> comment in the PR describing the proposed addition.
 
 ## Pattern Authoring Rules
 
@@ -154,6 +164,7 @@ Do not consider the playbook shipped until all four commands pass.
 - the root cause is distinct from every existing neighbor
 - `match.any` phrases are grounded in at least one real log sample
 - `match.none` blocks the nearest confusable neighbor
+- `domain`, `class`, and `mode` ontology fields are populated (see `docs/ontology.md`)
 - a positive fixture exists and is part of the checked-in corpus or a minimal regression test
 - `make review`, `make test`, and `make fixture-check` all pass
 - `workflow.likely_files`, `workflow.local_repro`, and `workflow.verify` are populated with actionable content, not placeholders

@@ -25,6 +25,9 @@ diagnosis: |-
 
   - `Unable to extract <field>; please report this issue on https://yt-dl.org/bug`
   - `unable to download video data: HTTP Error 403: Forbidden`
+  - `unable to download video data: HTTP Error 404: Not Found`
+  - `unable to download video data: HTTP Error 401: Unauthorized`
+  - `unable to download video data: HTTP Error 429: Too Many Requests`
   - `Unsupported URL: <url>; please report this issue on https://yt-dl.org/bug`
   - `Unable to download webpage: timed out`
   - `YouTube said: This video is no longer available`
@@ -60,7 +63,10 @@ match:
     - "yt-dlp.org"
     - "unable to download webpage: timed out"
     - "unable to download video data: timed out"
-    - "unable to download video#"
+    - "unable to download video data: HTTP Error 403"
+    - "unable to download video data: HTTP Error 404"
+    - "unable to download video data: HTTP Error 401"
+    - "unable to download video data: HTTP Error 429"
     - "urlopen error timed out"
     - "youtube said:"
 workflow:

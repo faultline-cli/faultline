@@ -84,6 +84,15 @@ For each candidate cluster (top-N by fixture count):
    - **Skip**: Too few samples or too noisy/env-specific to generalise. Document
      and move to the next cluster.
 
+   For every **New** gap, classify in the ontology before writing any YAML:
+   ```
+   domain: <from docs/ontology.md>
+   class:  <from docs/ontology.md>
+   mode:   <concrete root-cause slug>
+   ```
+   Read `docs/ontology.md` if the mapping is unclear. Do not author a playbook
+   without a confirmed `domain`, `class`, and `mode`.
+
    > For the Travis Torrent corpus specifically: the `tr_log_tests_failed` field
    > stores test failures in a condensed format — space/`#`-separated package
    > paths and timing tokens — not the verbose test runner output. A gap that
@@ -124,6 +133,9 @@ For each candidate cluster (top-N by fixture count):
 
 12. Follow the `new-playbook-authoring` skill from step 1. Establish root-cause
     justification from the gap cluster samples before writing YAML.
+    Include `domain`, `class`, and `mode` fields — these are required for new
+    playbooks (see `docs/ontology.md`). Do not mark a new playbook done until
+    all three are present.
 
 ### Phase 4 — Sample Verification Loop
 

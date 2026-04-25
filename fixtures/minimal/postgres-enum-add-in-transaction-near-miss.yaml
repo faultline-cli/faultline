@@ -1,0 +1,14 @@
+id: postgres-enum-add-in-transaction-near-miss
+title: PostgreSQL type missing (near miss — version incompatibility, not enum-in-transaction)
+fixture_class: minimal
+normalized_log: |
+  $ python manage.py migrate
+  Running migrations:
+    Applying api.0001_initial...Traceback (most recent call last):
+  django.db.utils.ProgrammingError: type "json" does not exist
+
+  The command "python manage.py migrate" exited with 1.
+expectation:
+  expected_playbook: postgres-version-incompatible-migration
+  disallowed_playbooks:
+    - postgres-enum-add-in-transaction

@@ -1,0 +1,18 @@
+id: postgres-enum-add-in-transaction-noisy
+title: PostgreSQL ALTER TYPE ADD VALUE in transaction — noisy Django log
+fixture_class: minimal
+normalized_log: |
+  $ python manage.py migrate
+  Operations to perform:
+    Apply all migrations: billing, accounts
+  Running migrations:
+    Applying billing.0012_add_refund_status...Traceback (most recent call last):
+    File "manage.py", line 10, in <module>
+      execute_from_command_line(sys.argv)
+  django.db.utils.ProgrammingError: ALTER TYPE ... ADD VALUE cannot run inside a transaction block
+
+  HINT: Consider using a separate migration with migrations.RunSQL(..., atomic=False)
+
+  The command "python manage.py migrate" exited with 1.
+expectation:
+  expected_playbook: postgres-enum-add-in-transaction

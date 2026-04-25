@@ -1,0 +1,21 @@
+id: postgres-version-incompatible-migration-noisy
+title: PostgreSQL migration fails with version error — noisy log with context
+fixture_class: minimal
+normalized_log: |
+  $ python manage.py collectstatic --noinput
+  Copying '/app/static/css/main.css'
+  138 static files copied to '/app/staticfiles'.
+
+  $ python manage.py migrate --noinput
+  Operations to perform:
+    Apply all migrations: 28 migrations total
+  Running migrations:
+    Applying accounts.0001_initial... OK
+    Applying accounts.0002_auto_20150601...Traceback (most recent call last):
+    File "manage.py", line 10, in <module>
+      execute_from_command_line(sys.argv)
+  django.db.utils.ProgrammingError: type "json" does not exist
+
+  The command "python manage.py migrate --noinput" exited with 1.
+expectation:
+  expected_playbook: postgres-version-incompatible-migration

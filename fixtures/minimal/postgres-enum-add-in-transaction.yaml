@@ -1,0 +1,16 @@
+id: postgres-enum-add-in-transaction-canonical
+title: PostgreSQL ALTER TYPE ADD VALUE fails in transaction block
+fixture_class: minimal
+normalized_log: |
+  $ alembic upgrade head
+  INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+  INFO  [alembic.runtime.migration] Will assume transactional DDL.
+  INFO  [alembic.runtime.migration] Running upgrade a1b2c3 -> d4e5f6, add status enum value
+  sqlalchemy.exc.ProgrammingError: (psycopg2.errors.ActiveSqlTransaction) ALTER TYPE ... ADD cannot run inside a transaction block
+
+  [SQL: ALTER TYPE payment_status ADD VALUE 'refunded']
+  (Background on this error at: http://sqlalche.me/e/14/f405)
+
+  The command "alembic upgrade head" exited with 1.
+expectation:
+  expected_playbook: postgres-enum-add-in-transaction

@@ -1,0 +1,15 @@
+id: postgres-version-incompatible-migration-near-miss
+title: PostgreSQL migration fails — ALTER TYPE inside transaction (near miss, different root cause)
+fixture_class: minimal
+normalized_log: |
+  $ alembic upgrade head
+  INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+  INFO  [alembic.runtime.migration] Running upgrade  -> a1b2c3d4e5f6
+  sqlalchemy.exc.ProgrammingError: (psycopg2.errors.ActiveSqlTransaction)
+  ALTER TYPE ... ADD cannot run inside a transaction block
+
+  The command "alembic upgrade head" exited with 1.
+expectation:
+  expected_playbook: postgres-enum-add-in-transaction
+  disallowed_playbooks:
+    - postgres-version-incompatible-migration
