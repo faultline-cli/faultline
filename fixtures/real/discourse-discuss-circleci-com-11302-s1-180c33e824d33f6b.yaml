@@ -1,0 +1,38 @@
+id: discourse-discuss-circleci-com-11302-s1-180c33e824d33f6b
+title: 'Error starting userland proxy: listen tcp 0.0.0.0:3306: bind: address already in use'
+fixture_class: real
+normalized_log: |-
+    Hi there,
+    I am using the CircleCI 2.0 but for some reason, cannot post in the CircleCI 2.0 section.
+    Since this is still Database related, here’s my question:
+    I am using a docker-compose file that runs my dockerized app and a MySql DB.
+    The MySql Image exposes port 3306, however I keep getting this error when trying to bring it up:
+    ERROR: for db Cannot start service db: driver failed programming external connectivity on endpoint myrepo_db_1 (dc420fc36e196cfa9ac1e4ed70bf1a513fad39231ba11f0d05b6d16d066551c0): Error starting userland proxy: listen tcp 0.0.0.0:3306: bind: address already in use
+    ERROR: Encountered errors while bringing up the project.
+    My suspition is that CircleCI already has a MySql instance runnign to “help” me. Is there a way I can disable it?
+    I am using the Ruby 2.3 base image on the DockerExecutor.
+    version: 2
+    executorType: docker
+    jobs:
+    build:
+    docker:
+    - image: ruby:2.3
+expectation:
+    expected_playbook: orphaned-resources
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: discourse-topic
+    provider: discourse
+    url: https://discuss.circleci.com/t/error-starting-userland-proxy-listen-tcp-0-0-0-0-3306-bind-address-already-in-use/11302
+    repository: discuss.circleci.com
+    issue_number: 11302
+    comment_id: "20413"
+    title: 'Error starting userland proxy: listen tcp 0.0.0.0:3306: bind: address already in use'
+    author: superzadeh
+    snippet: 1
+    fetched_at: "2026-04-23T20:44:12Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:26:50Z"
+fingerprint: 180c33e824d33f6b

@@ -1,0 +1,28 @@
+id: github-inezhi-data-analyzer-3-s1-bf48241852ec5b7e
+title: 'ci: build failing due to Black formatting errors'
+fixture_class: real
+normalized_log: |-
+    would reformat src/data_analyzer/cleaner.py
+    would reformat tests/test_cleaner.py
+    Error: Process completed with exit code 1.
+expectation:
+    expected_playbook: formatting-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/inezhi/data-analyzer/issues/3
+    repository: inezhi/data-analyzer
+    issue_number: 3
+    title: 'ci: build failing due to Black formatting errors'
+    labels:
+        - bug
+    author: hkdj4hnnht-star
+    snippet: 1
+    fetched_at: "2026-04-26T00:35:24Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:35:42Z"
+fingerprint: bf48241852ec5b7e

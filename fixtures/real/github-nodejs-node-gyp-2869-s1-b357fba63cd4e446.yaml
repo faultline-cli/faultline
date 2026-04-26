@@ -1,0 +1,56 @@
+id: github-nodejs-node-gyp-2869-s1-b357fba63cd4e446
+title: distutils is removed in Python 3.12
+fixture_class: real
+normalized_log: |-
+    D:\a\pulsar\pulsar\ppm\node_modules\git-utils>if not defined npm_config_node_gyp (node "D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\npm-lifecycle\node-gyp-bin\\..\..\node_modules\node-gyp\bin\node-gyp.js" rebuild ) else (node "D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\node-gyp\bin\node-gyp.js" rebuild )
+    undefined
+    Traceback (most recent call last):
+    File "D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\node-gyp\gyp\gyp_main.py", line 42, in <module>
+    import gyp # noqa: E402
+    ^^^^^^^^^^
+    File "D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\node-gyp\gyp\pylib\gyp\__init__.py", line 9, in <module>
+    import gyp.input
+    File "D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\node-gyp\gyp\pylib\gyp\input.py", line 19, in <module>
+    from distutils.version import StrictVersion
+    ModuleNotFoundError: No module named 'distutils'
+    gyp ERR! configure error
+    gyp ERR! stack Error: `gyp` failed with exit code: 1
+    gyp ERR! stack at ChildProcess.onCpExit (D:\a\pulsar\pulsar\ppm\node_modules\npm\node_modules\node-gyp\lib\configure.js:305:16)
+    gyp ERR! stack at ChildProcess.emit (node:events:365:28)
+    gyp ERR! stack at Process.ChildProcess._handle.onexit (node:internal/child_process:290:12)
+    gyp ERR! System Windows_NT 10.0.20348
+    gyp ERR! command "D:\\a\\pulsar\\pulsar\\ppm\\bin\\node.exe" "D:\\a\\pulsar\\pulsar\\ppm\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js" "rebuild"
+    gyp ERR! cwd D:\a\pulsar\pulsar\ppm\node_modules\git-utils
+    gyp ERR! node -v v16.0.0
+    gyp ERR! node-gyp -v v9.4.0
+    gyp ERR! not ok
+    npm ERR! code ELIFECYCLE
+    npm ERR! errno 1
+    npm ERR! git-utils@5.7.3 install: `node-gyp rebuild`
+    npm ERR! Exit status 1
+    npm ERR!
+    npm ERR! Failed at the git-utils@5.7.3 install script.
+    npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+    npm ERR! A complete log of this run can be found in:
+    npm ERR! C:\npm\cache\_logs\2023-10-18T18_54_57_896Z-debug.log
+    Done in 208.45s.
+    Command completed after 1 attempt(s).
+expectation:
+    expected_playbook: node-gyp-missing-build-tools
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/nodejs/node-gyp/issues/2869
+    repository: nodejs/node-gyp
+    issue_number: 2869
+    comment_id: "1771839581"
+    title: distutils is removed in Python 3.12
+    author: cclauss
+    snippet: 1
+    fetched_at: "2026-04-25T23:29:25Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:33:05Z"
+fingerprint: b357fba63cd4e446

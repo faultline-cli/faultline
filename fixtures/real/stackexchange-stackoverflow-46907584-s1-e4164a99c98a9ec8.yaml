@@ -1,0 +1,33 @@
+id: stackexchange-stackoverflow-46907584-s1-e4164a99c98a9ec8
+title: 'Can&#39;t create a docker image for COPY failed: stat /var/lib/docker/tmp/docker-builder error'
+fixture_class: real
+normalized_log: |-
+    RUN python test.py
+    When i launch this command: docker build -f Dockerfile.in -t 637268723/test:1.0 .
+    It gives me this error:
+    `Step 1/5 : COPY ./test.json /home/test.json
+    ---> Using cache
+    ---> 6774cd225d60
+    Step 2/5 : COPY ./test.py /home/test.py
+    COPY failed: stat /var/lib/docker<tmp>:
+    no such file or directory`
+    Can anyone help me?
+expectation:
+    expected_playbook: dockerfile-copy-source-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/46907584
+    repository: stackoverflow
+    issue_number: 46907584
+    comment_id: "0"
+    title: 'Can&#39;t create a docker image for COPY failed: stat /var/lib/docker/tmp/docker-builder error'
+    author: EdoBen
+    snippet: 1
+    fetched_at: "2026-04-25T22:22:53Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:31:22Z"
+fingerprint: e4164a99c98a9ec8

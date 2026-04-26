@@ -55,6 +55,7 @@ match:
     - coverage threshold
     - minimum coverage
     - global coverage threshold
+    - does not meet global threshold
     - total coverage below
     - coverage requirement not met
     - lines below threshold

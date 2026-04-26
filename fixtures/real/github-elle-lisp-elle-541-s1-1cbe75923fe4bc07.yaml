@@ -1,0 +1,31 @@
+id: github-elle-lisp-elle-541-s1-1cbe75923fe4bc07
+title: 'ci: benchmarks job cancelled after ~4 minutes on PR'
+fixture_class: real
+normalized_log: |-
+    The benchmarks job on PR #536 (and others with the `performance` label) runs for ~4 minutes then is cancelled with "The operation was canceled." This happens consistently despite:
+    - `timeout-minutes: 30` set on the job
+    - `concurrency: { group: benchmarks-${{ github.ref }}, cancel-in-progress: false }`
+    - No subprocess hanging (removed benchmark-action step)
+    - All other jobs (tests, linting, etc.) pass
+expectation:
+    expected_playbook: github-actions-concurrency-cancel
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/elle-lisp/elle/issues/541
+    repository: elle-lisp/elle
+    issue_number: 541
+    title: 'ci: benchmarks job cancelled after ~4 minutes on PR'
+    labels:
+        - performance
+        - ci
+    author: disruptek
+    snippet: 1
+    fetched_at: "2026-04-26T00:33:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:33:35Z"
+fingerprint: 1cbe75923fe4bc07

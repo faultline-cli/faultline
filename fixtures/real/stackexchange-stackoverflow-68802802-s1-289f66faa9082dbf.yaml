@@ -1,0 +1,42 @@
+id: stackexchange-stackoverflow-68802802-s1-289f66faa9082dbf
+title: Repository &#39;http://security.debian.org/debian-security buster/updates InRelease&#39; changed its &#39;Suite&#39; value from &#39;stable&#39; to &#39;oldstable&#39;
+fixture_class: real
+normalized_log: |-
+    Note
+    This is a cross post from serverfault.com.
+    It feels relevant here too because I couldn't solve the issue with the accepted answer apt-get --allow-releaseinfo-change-suite update and the accepted answer has security implications and doesn't actually tackle the underlying issue of apt getting security updates from the wrong repo.
+    Issue
+    Faced this issue on a Debian Stretch (9) Docker image.
+    The below error came up when running apt-get update
+    W: The repository 'http://security.debian.org/debian-security stretch/updates Release' does not have a Release file.
+    W: The repository 'http://deb.debian.org/debian stretch Release' does not have a Release file.
+    W: The repository 'http://deb.debian.org/debian stretch-updates Release' does not have a Release file.
+    E: Failed to fetch http://security.debian.org/debian-security/dists/stretch/updates/main/binary-amd64/Packages 404 Not Found [IP: xx]
+    E: Failed to fetch http://deb.debian.org/debian/dists/stretch/main/binary-amd64/Packages 404 Not Found
+    E: Failed to fetch http://deb.debian.org/debian/dists/stretch-updates/main/binary-amd64/Packages 404 Not Found
+    E: Some index files failed to download. They have been ignored, or old ones used instead.
+    Background
+    This is related to the security repo in particular.
+    These repo definitions are used by apt to fetch update and they are defined in /etc/apt/sources.list
+    The official Debian Security recommendation - https://www.debian.org/security/
+    To keep your Debian operating system up-to-date with security patches, please add the following (single) line to your /etc/apt/sources.list file
+    deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+expectation:
+    expected_playbook: dependency-removed-upstream
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/68802802
+    repository: stackoverflow
+    issue_number: 68802802
+    comment_id: "76153964"
+    title: Repository &#39;http://security.debian.org/debian-security buster/updates InRelease&#39; changed its &#39;Suite&#39; value from &#39;stable&#39; to &#39;oldstable&#39;
+    author: alanionita
+    snippet: 1
+    fetched_at: "2026-04-22T12:11:25Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T21:50:42Z"
+fingerprint: 289f66faa9082dbf

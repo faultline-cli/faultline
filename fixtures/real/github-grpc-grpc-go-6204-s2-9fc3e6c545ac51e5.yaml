@@ -1,0 +1,57 @@
+id: github-grpc-grpc-go-6204-s2-9fc3e6c545ac51e5
+title: SIGSEGV fatal error while type casting status code
+fixture_class: real
+normalized_log: |-
+    service/internal/service.(*Service).getAttribute(0x400068c4b0, {0x400167f228, 0x5}) -- method name
+    Show context
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/logger.go:208 +0x58 fp=0x400180fbe0 sp=0x400180fbb0 pc=0x517d58
+    go.uber.org/zap.(*Logger).Error(0x89f02e?, {0x8c5703?, 0x836ea0?}, {0x4000cd6c80, 0x2, 0x2})
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/entry.go:220 +0x164 fp=0x400180fbb0 sp=0x400180fa00 pc=0x501434
+    go.uber.org/zap/zapcore.(*CheckedEntry).Write(0x4001622240, {0x4000cd6c80, 0x2, 0x2})
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/core.go:86 +0x5c fp=0x400180fa00 sp=0x400180f930 pc=0x4fee4c
+    go.uber.org/zap/zapcore.(*ioCore).Write(0x40002c0000, {0x2, {0xc100f188ecaf8cd1, 0x2e0bf7434399, 0xf37900}, {0x0, 0x0}, {0x8c5703, 0x37}, {0x1, ...}, ...}, ...)
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/console_encoder.go:119 +0x5a8 fp=0x400180f930 sp=0x400180f830 pc=0x4fe2c8
+    go.uber.org/zap/zapcore.consoleEncoder.EncodeEntry({0x5968c?}, {0x2, {0xc100f188ecaf8cd1, 0x2e0bf7434399, 0xf37900}, {0x0, 0x0}, {0x8c5703, 0x37}, {0x1, ...}, ...}, ...)
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/console_encoder.go:141 +0xdc fp=0x400180f830 sp=0x400180f710 pc=0x4fe5fc
+    go.uber.org/zap/zapcore.consoleEncoder.writeContext({0x9ab288?}, 0x400107a540, {0x4000cd6c80, 0x2, 0x1?})
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/field.go:210
+    go.uber.org/zap/zapcore.addFields(...)
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/field.go:176 +0x824 fp=0x400180f710 sp=0x400180f640 pc=0x502874
+    go.uber.org/zap/zapcore.Field.AddTo({{0x89d216, 0x5}, 0x1a, 0x0, {0x0, 0x0}, {0x7b3a00, 0x4000891960}}, {0x9b9460, 0x400124da00?})
+    /go/pkg/mod/go.uber.org/zap@v1.21.0/zapcore/error.go:63 +0x98 fp=0x400180f640 sp=0x400180f560 pc=0x5018f8
+    go.uber.org/zap/zapcore.encodeError({0x89d216, 0x5}, {0x9ab868, 0x4000891960}, {0x9b9460, 0x400124da00})
+    /go/pkg/mod/google.golang.org/grpc@v1.50.1/internal/status/status.go:150 +0x24 fp=0x400180f560 sp=0x400180f540 pc=0x453004
+    google.golang.org/grpc/internal/status.(*Error).Error(0x400124da00?)
+    /go/pkg/mod/google.golang.org/grpc@v1.50.1/internal/status/status.go:140 +0x28 fp=0x400180f540 sp=0x400180f4d0 pc=0x452f28
+    google.golang.org/grpc/internal/status.(*Status).String(0x7?)
+    /go/pkg/mod/google.golang.org/grpc@v1.50.1/internal/status/status.go:76
+    google.golang.org/grpc/internal/status.(*Status).Code(...)
+    /usr/local/go/src/runtime/signal_unix.go:825 +0x1a4 fp=0x400180f4c0 sp=0x400180f490 pc=0x5cfc4
+    runtime.sigpanic()
+    /usr/local/go/src/runtime/panic.go:992 +0x50 fp=0x400180f490 sp=0x400180f460 pc=0x45be0
+    runtime.throw({0x89d23e?, 0xffff9539aac0?})
+    goroutine 10825076 [running]:
+    [signal SIGSEGV: segmentation violation code=0x1 addr=0x74756f656d699c pc=0x452f28]
+    fatal error: fault
+expectation:
+    expected_playbook: segfault
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/grpc/grpc-go/issues/6204
+    repository: grpc/grpc-go
+    issue_number: 6204
+    title: SIGSEGV fatal error while type casting status code
+    labels:
+        - 'Status: Requires Reporter Clarification'
+        - 'Type: Bug'
+    author: abba5rangwala
+    snippet: 2
+    fetched_at: "2026-04-25T23:33:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:14:32Z"
+fingerprint: 9fc3e6c545ac51e5

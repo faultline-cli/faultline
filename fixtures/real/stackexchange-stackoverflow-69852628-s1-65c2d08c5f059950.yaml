@@ -1,0 +1,28 @@
+id: stackexchange-stackoverflow-69852628-s1-65c2d08c5f059950
+title: 'Docker: COPY failed: file not found in build context (Dockerfile)'
+fixture_class: real
+normalized_log: |-
+    @JustLudo's answer is correct, in this case. However, for those who have the correct files in the build directory and still seeing this issue; remove any trailing comments.
+    Coming from a C and javascript background, one may be forgiven for assuming that trailing comments are ignored (e.g. COPY my_file /etc/important/ # very important! ), but they are not! The error message won't point this out, as of my version of docker (20.10.11).
+    For example, the above erroneous line will give an error:
+    COPY failed: file not found in build context or excluded by .dockerignore: stat etc/important/: file does not exist
+    ... i.e. no mention that it is the trailing # important! that is tripping things up.
+expectation:
+    expected_playbook: dockerfile-copy-source-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/69852628
+    repository: stackoverflow
+    issue_number: 69852628
+    comment_id: "70437440"
+    title: 'Docker: COPY failed: file not found in build context (Dockerfile)'
+    author: goldfishalpha
+    snippet: 1
+    fetched_at: "2026-04-25T22:22:53Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:39:22Z"
+fingerprint: 65c2d08c5f059950

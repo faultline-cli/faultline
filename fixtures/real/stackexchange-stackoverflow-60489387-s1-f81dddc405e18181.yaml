@@ -1,0 +1,44 @@
+id: stackexchange-stackoverflow-60489387-s1-f81dddc405e18181
+title: Cannot connect to postgres in Gitlab CI
+fixture_class: real
+normalized_log: |-
+    I am trying to use GitLab CI PostgreSQL for my integration tests but it doesn´t work.
+    Here's the code of the stage:
+    integration_test:
+    stage: test
+    tags:
+    - custom_tag
+    services:
+    - postgres
+    variables:
+    POSTGRES_DB: test
+    POSTGRES_HOST: postgres
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_HOST_AUTH_METHOD: trust
+    script:
+    - docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD} ${DOCKER_REGISTRY}
+    - docker pull ${DOCKER_IMAGE_CI}
+    - export PGPASSWORD=${POSTGRES_PASSWORD}
+    - docker run --rm postgres psql -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT 'OK' AS status;"
+    It returns an error like this:
+    psql: error: could not connect to server: could not translate host name "postgres" to address: Name or service not known Anybody can help me?
+expectation:
+    expected_playbook: postgres-connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/60489387
+    repository: stackoverflow
+    issue_number: 60489387
+    comment_id: "0"
+    title: Cannot connect to postgres in Gitlab CI
+    author: Mario Cruzado
+    snippet: 1
+    fetched_at: "2026-04-25T22:45:50Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:03Z"
+fingerprint: f81dddc405e18181

@@ -1,0 +1,62 @@
+id: stackexchange-stackoverflow-47618823-s1-f097867db7ee3bba
+title: Cannot borrow as mutable because it is also borrowed as immutable
+fixture_class: real
+normalized_log: |-
+    A MRE of your problem can be reduced to this:
+    // This applies to the version of Rust this question
+    // was asked about; see below for updated examples.
+    fn main() {
+    let mut items = vec![1];
+    let item = items.last();
+    items.push(2);
+    }
+    error[E0502]: cannot borrow `items` as mutable because it is also borrowed as immutable
+    --> src/main.rs:4:5
+    |
+    3 | let item = items.last();
+    | ----- immutable borrow occurs here
+    4 | items.push(2);
+    | ^^^^^ mutable borrow occurs here
+    5 | }
+    | - immutable borrow ends here
+    This code exemplifies the exact scenario that Rust was designed to prevent. You have a reference pointing into the vector and are attempting to insert into the vector. Doing so might require that the memory of the vector be reallocated, invalidating any existing references. If that happened and you used the value in item , you'd be accessing uninitialized memory, potentially causing a crash.
+    In this particular case, you aren't actually using item (or source , in the original) so you could just... not call that line. I assume you did that for some reason, so you could wrap the references in a block so that they go away before you try to mutate the value again:
+    fn main() {
+    let mut items = vec![1];
+    {
+    let item = items.last();
+    }
+    items.push(2);
+    }
+    This trick is no longer needed in modern Rust because non-lexical lifetimes have been implemented, but the underlying restriction still remains — you cannot have a mutable reference while there are other references to the same thing. This is one of the rules of references covered in The Rust Programming Language . A modified example that still does not work with NLL:
+    let mut items = vec![1];
+    let item = items.last();
+    items.push(2);
+    println!("{:?}", item);
+    In other cases, you can copy or clone the value in the vector. The item will no longer be a reference and you can modify the vector as you see fit:
+    fn main() {
+    let mut items = vec![1];
+    let item = items.last().cloned();
+    items.push(2);
+    }
+    If your type isn't cloneable, you can transform it into a reference-counted value (such as Rc or Arc ) which can then be cloned. You may or may not also need to use interior mutability :
+    struct NonClone;
+expectation:
+    expected_playbook: cargo-compile-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/47618823
+    repository: stackoverflow
+    issue_number: 47618823
+    comment_id: "47619305"
+    title: Cannot borrow as mutable because it is also borrowed as immutable
+    author: Shepmaster
+    snippet: 1
+    fetched_at: "2026-04-25T22:25:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:31:35Z"
+fingerprint: f097867db7ee3bba

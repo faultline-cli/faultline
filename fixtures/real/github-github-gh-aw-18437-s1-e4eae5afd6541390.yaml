@@ -1,0 +1,27 @@
+id: github-github-gh-aw-18437-s1-e4eae5afd6541390
+title: '[CI Failure Doctor] fuzz job cancelled by newer main run (Run #37880)'
+fixture_class: real
+normalized_log: |-
+    ### Summary
+    The `fuzz` job ran through the parser and workflow fuzz suites but was cancelled because a newer CI run started while it was still executing, so the log ends with `##[error]The operation was canceled.` after `FuzzInputValidation` even though no test failed.
+expectation:
+    expected_playbook: github-actions-concurrency-cancel
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/github/gh-aw/issues/18437
+    repository: github/gh-aw
+    issue_number: 18437
+    title: '[CI Failure Doctor] fuzz job cancelled by newer main run (Run #37880)'
+    labels:
+        - cookie
+    author: github-actions[bot]
+    snippet: 1
+    fetched_at: "2026-04-26T00:33:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:33:35Z"
+fingerprint: e4eae5afd6541390

@@ -1,0 +1,39 @@
+id: github-istio-ztunnel-1869-s1-1a159860d1423706
+title: '[release-1.29] bump all-dependencies group minus hickory on master'
+fixture_class: real
+normalized_log: |-
+    Applying: Bump the all-dependencies group across 1 directory with 17 updates
+    Using index info to reconstruct a base tree...
+    M Cargo.lock
+    M Cargo.toml
+    Falling back to patching base and 3-way merge...
+    Auto-merging Cargo.toml
+    CONFLICT (content): Merge conflict in Cargo.toml
+    Auto-merging Cargo.lock
+    CONFLICT (content): Merge conflict in Cargo.lock
+    error: Failed to merge in the changes.
+    hint: Use 'git am --show-current-patch=diff' to see the failed patch
+    hint: When you have resolved this problem, run "git am --continue".
+    hint: If you prefer to skip this patch, run "git am --skip" instead.
+    hint: To restore the original branch and stop patching, run "git am --abort".
+    hint: Disable this message with "git config set advice.mergeConflict false"
+    Patch failed at 0001 Bump the all-dependencies group across 1 directory with 17 updates
+expectation:
+    expected_playbook: merge-conflict
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/istio/ztunnel/issues/1869
+    repository: istio/ztunnel
+    issue_number: 1869
+    title: '[release-1.29] bump all-dependencies group minus hickory on master'
+    author: istio-testing
+    snippet: 1
+    fetched_at: "2026-04-26T00:28:57Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:29:13Z"
+fingerprint: 1a159860d1423706

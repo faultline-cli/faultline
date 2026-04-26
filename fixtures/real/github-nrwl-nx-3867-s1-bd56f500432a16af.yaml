@@ -1,0 +1,28 @@
+id: github-nrwl-nx-3867-s1-bd56f500432a16af
+title: Linter fails after adding storybook config files
+fixture_class: real
+normalized_log: '"error Parsing error: "parserOptions.project" has been set for @typescript-eslint/parser."'
+expectation:
+    expected_playbook: eslint-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/nrwl/nx/issues/3867
+    repository: nrwl/nx
+    issue_number: 3867
+    comment_id: "782242208"
+    title: Linter fails after adding storybook config files
+    labels:
+        - 'type: bug'
+        - 'scope: storybook'
+        - 'scope: linter'
+        - outdated
+    author: puku0x
+    snippet: 1
+    fetched_at: "2026-04-25T23:06:38Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:27:02Z"
+fingerprint: bd56f500432a16af

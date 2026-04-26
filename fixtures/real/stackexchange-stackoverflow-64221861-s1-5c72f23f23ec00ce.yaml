@@ -1,0 +1,28 @@
+id: stackexchange-stackoverflow-64221861-s1-5c72f23f23ec00ce
+title: An error, &quot;failed to solve with frontend dockerfile.v0&quot;
+fixture_class: real
+normalized_log: |-
+    I was trying to build my Docker image for my Gatsby application. Whenever I run the command docker build . -t gatsbyapp , it gives me an error:
+    failed to solve with frontend dockerfile.v0: failed to build LLB:
+    failed to compute cache key: "/.env" not found: not found
+    Meanwhile my Dockerfile is shown below:
+    FROM node:13
+expectation:
+    expected_playbook: docker-build-context
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/64221861
+    repository: stackoverflow
+    issue_number: 64221861
+    comment_id: "0"
+    title: An error, &quot;failed to solve with frontend dockerfile.v0&quot;
+    author: Muhammad Yasir
+    snippet: 1
+    fetched_at: "2026-04-25T22:57:03Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:00:59Z"
+fingerprint: 5c72f23f23ec00ce

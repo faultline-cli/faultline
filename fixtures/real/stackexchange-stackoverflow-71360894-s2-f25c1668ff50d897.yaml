@@ -1,0 +1,23 @@
+id: stackexchange-stackoverflow-71360894-s2-f25c1668ff50d897
+title: 'Why does Vue.js3 `npm run build` give a bunch of errors: TS2304 &quot;Cannot find name &#39;foo&#39;&quot; &amp; TS2532 &quot;Object is possibly &#39;undefined&#39;&quot;?'
+fixture_class: real
+normalized_log: 'src/components/Register.vue:44:18 - error TS2304: Cannot find name ''user''.'
+expectation:
+    expected_playbook: typescript-compile
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/71360894
+    repository: stackoverflow
+    issue_number: 71360894
+    comment_id: "0"
+    title: 'Why does Vue.js3 `npm run build` give a bunch of errors: TS2304 &quot;Cannot find name &#39;foo&#39;&quot; &amp; TS2532 &quot;Object is possibly &#39;undefined&#39;&quot;?'
+    author: twk
+    snippet: 2
+    fetched_at: "2026-04-25T22:41:46Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:01Z"
+fingerprint: f25c1668ff50d897

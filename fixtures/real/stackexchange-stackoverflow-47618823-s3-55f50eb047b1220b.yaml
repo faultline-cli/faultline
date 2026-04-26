@@ -1,0 +1,43 @@
+id: stackexchange-stackoverflow-47618823-s3-55f50eb047b1220b
+title: Cannot borrow as mutable because it is also borrowed as immutable
+fixture_class: real
+normalized_log: |-
+    graph.add_node("destination".to_string());
+    }
+    }
+    ( playground )
+    This has the error
+    error[E0502]: cannot borrow `graph` as mutable because it is also borrowed as immutable
+    --> src/main.rs:50:9
+    |
+    47 | let source = graph.get_node_by_value("source").unwrap();
+    | ----- immutable borrow occurs here
+    ...
+    50 | graph.add_node("destination".to_string());
+    | ^^^^^ mutable borrow occurs here
+    51 | }
+    | - immutable borrow ends here
+    This example from Programming Rust is quite similar to what I have but it works:
+    pub struct Queue {
+    older: Vec<char>, // older elements, eldest last.
+    younger: Vec<char>, // younger elements, youngest last.
+    }
+expectation:
+    expected_playbook: cargo-compile-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/47618823
+    repository: stackoverflow
+    issue_number: 47618823
+    comment_id: "0"
+    title: Cannot borrow as mutable because it is also borrowed as immutable
+    author: Shulhi Sapli
+    snippet: 3
+    fetched_at: "2026-04-25T22:25:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:39:21Z"
+fingerprint: 55f50eb047b1220b

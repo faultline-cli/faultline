@@ -1,0 +1,49 @@
+id: github-vuejs-vue-cli-2995-s1-e2ed57738bc10940
+title: Unit Test snapshots differ on OSX and Unix
+fixture_class: real
+normalized_log: |-
+    FAIL src/components/CiLanguageChooser/__tests__/CiLanguageChooser.test.js
+    ● Unit | Component | CiLanguageChooser.vue › should match the snapshot
+    expect(value).toMatchSnapshot()
+    Received value does not match stored snapshot "Unit | Component | CiLanguageChooser.vue should match the snapshot 1".
+    - Snapshot
+    Received
+    @@ -11,11 11,11 @@
+    <div class="d-flex align-items-center">
+    <label class="form-group__label"></label>
+    <citooltip-stub infoiconcolor="black" direction="down" class="tooltip"></citooltip-stub>
+    </div>
+    <multiselect-stub name="" selectlabel="Press enter to select" selectgrouplabel="Press enter to select group" selectedlabel="Selected" deselectlabel="Press enter to remove" deselectgrouplabel="Press enter to deselect group" limit="99999" maxheight="300"
+    - limittext="function(t){return"and ".concat(t," more")}" opendirection="" shownooptions="true" shownoresults="true" tabindex="0" value="[object Object]" options="[object Object]" close-on-select="true" hideselected="true"
+    limittext="function (t){return"and ".concat(t," more")}" opendirection="" shownooptions="true" shownoresults="true" tabindex="0" value="[object Object]" options="[object Object]" close-on-select="true" hideselected="true"
+    track-by="code" label="code"></multiselect-stub>
+    </div>
+    </div>
+    </div>
+    </div>
+    44 | },
+    45 | })
+    > 46 | expect(wrapper).toMatchSnapshot()
+    | ^
+    47 | })
+expectation:
+    expected_playbook: snapshot-mismatch
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/vuejs/vue-cli/issues/2995
+    repository: vuejs/vue-cli
+    issue_number: 2995
+    title: Unit Test snapshots differ on OSX and Unix
+    labels:
+        - needs team repro
+    author: FlorianWerndl
+    snippet: 1
+    fetched_at: "2026-04-26T00:27:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:27:41Z"
+fingerprint: e2ed57738bc10940

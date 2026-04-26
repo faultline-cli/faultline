@@ -72,19 +72,14 @@ why_it_matters: |-
 
 match:
   any:
-    - "No such file or directory"
-    - "command not found"
-    - '\./.*not found'
-    - "file not found in current directory"
     - "actions/checkout"
-    - "The process.*cannot find the file"
     - "checkout step is missing"
+    - "Did you forget to run actions/checkout"
+    - "file not found in current directory"
+    - "The process.*cannot find the file"
   none:
     - "permission denied"
     - "EACCES"
-    - "npx: command not found"
-    - "cargo: command not found"
-    - "bundle: command not found"
     - "uses: actions/checkout"
 
 workflow:

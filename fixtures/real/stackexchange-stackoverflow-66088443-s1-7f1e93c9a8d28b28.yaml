@@ -1,0 +1,57 @@
+id: stackexchange-stackoverflow-66088443-s1-7f1e93c9a8d28b28
+title: Install Angular Unsupported Engine, OSX
+fixture_class: real
+normalized_log: |-
+    I am reinstalling my MacBook. And I receive the following message when I install ( npm install -g @angular/cli ) angular. Any idea why? I suspect the nom version but I comes along with node...
+    Developments npm install -g @angular/cli
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@angular/cli@11.1.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@angular-devkit/architect@0.1101.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@angular-devkit/core@11.1.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@angular-devkit/schematics@11.1.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@schematics/angular@11.1.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN EBADENGINE Unsupported engine {
+    npm WARN EBADENGINE package: '@schematics/update@0.1101.4',
+    npm WARN EBADENGINE required: { node: '>= 10.13.0', npm: '^6.11.0', yarn: '>= 1.13.0' },
+    npm WARN EBADENGINE current: { node: 'v15.8.0', npm: '7.5.2' }
+    npm WARN EBADENGINE }
+    npm WARN deprecated har-validator@5.1.5: this library is no longer supported
+    npm WARN deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+expectation:
+    expected_playbook: node-version-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66088443
+    repository: stackoverflow
+    issue_number: 66088443
+    comment_id: "0"
+    title: Install Angular Unsupported Engine, OSX
+    author: Jean-Philippe M
+    snippet: 1
+    fetched_at: "2026-04-25T22:25:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:39:22Z"
+fingerprint: 7f1e93c9a8d28b28

@@ -50,6 +50,8 @@ match:
     - "no such file or directory"
     - "Uploading artifacts..."
     - "artifacts to coordinator"
+    - "would reformat"
+    - "files would be reformatted"
     - "No artifacts will be uploaded"
 why_it_matters: |-
   ## Why it matters

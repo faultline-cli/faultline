@@ -1,0 +1,25 @@
+id: github-actions-checkout-417-s1-c8dc6b1c85d19e7f
+title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+fixture_class: real
+normalized_log: |-
+    Error: fatal: No url found for submodule path '/path/to/submodule' in .gitmodules
+    Error: The process '/usr/bin/git' failed with exit code 128
+expectation:
+    expected_playbook: git-submodule-not-initialized
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/checkout/issues/417
+    repository: actions/checkout
+    issue_number: 417
+    comment_id: "1640448307"
+    title: 'Error: The process ''/usr/bin/git'' failed with exit code 128'
+    author: arhue
+    snippet: 1
+    fetched_at: "2026-04-17T23:27:21Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T21:50:36Z"
+fingerprint: c8dc6b1c85d19e7f

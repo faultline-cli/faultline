@@ -1,0 +1,25 @@
+id: github-sysown-proxysql-3746-s2-1f2bb7889e00187c
+title: Connection Issue With Proxysql Port 6033 !
+fixture_class: real
+normalized_log: |-
+    [root@server19 proxysql]# mysql -u sbuser -psbpass -h 127.0.0.1 -P 6033
+    ERROR 2003 (HY000): Can’t connect to MySQL server on ‘127.0.0.1’ (111)
+expectation:
+    expected_playbook: mysql-connection-refused
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/sysown/proxysql/issues/3746
+    repository: sysown/proxysql
+    issue_number: 3746
+    title: Connection Issue With Proxysql Port 6033 !
+    author: naresh49kumar
+    snippet: 2
+    fetched_at: "2026-04-26T00:34:37Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:34:50Z"
+fingerprint: 1f2bb7889e00187c

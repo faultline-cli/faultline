@@ -1,0 +1,33 @@
+id: stackexchange-stackoverflow-72281133-s2-7296dcf65c516bf7
+title: 'error NU***0***: Unable to find package &lt;packageId&gt;. No packages exist with this id in source(s): github, nuget.org'
+fixture_class: real
+normalized_log: |-
+    - name: Build that shit
+    run: |
+    dotnet nuget add source https://nuget.pkg.github.com/myorg/index.json -n github -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text
+    dotnet restore ./project.sln
+    dotnet build ./project.sln --no-restore --configuration Release --nologo
+    Adding the nuget source is the same as recommended (as working) here . Unfortunately the Build step fails with an error like this
+    error NU***0***: Unable to find package <packageId>. No packages exist with this id in source(s): github, nuget.org
+    I have also tried using a dedicated nuget.config file instead of expicitly adding the source on the run. This also fails, but curiously, the Github Packages registry is not even listed.
+    In other workflows I am also using the GITHUB_TOKEN to publish/write to the Gihub Packages registry. Now I only need to read from it, but the permissions should be okay I guess.
+    Any thoughts on why this keeps crahing? Any help is appreciated! Thanks.
+expectation:
+    expected_playbook: dotnet-restore
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/72281133
+    repository: stackoverflow
+    issue_number: 72281133
+    comment_id: "0"
+    title: 'error NU***0***: Unable to find package &lt;packageId&gt;. No packages exist with this id in source(s): github, nuget.org'
+    author: baouss
+    snippet: 2
+    fetched_at: "2026-04-25T22:44:42Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:45:03Z"
+fingerprint: 7296dcf65c516bf7

@@ -1,0 +1,26 @@
+id: stackexchange-stackoverflow-8754304-s1-bbec762df4a82472
+title: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED
+fixture_class: real
+normalized_log: |-
+    Faced this issue in production when deploying to render , and got this below . I think an issue I did was to change the localhost path from loopback of localhost or 127.0.0.1 to a global 0.0.0.0 . Also remember to update the env store with the new variables if your code uses it in any way
+    [ioredis] Unhandled error event: Error: connect ECONNREFUSED 127.0.0.1:6379
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16)
+expectation:
+    expected_playbook: redis-connection-refused
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/8754304
+    repository: stackoverflow
+    issue_number: 8754304
+    comment_id: "79913440"
+    title: Redis connection to 127.0.0.1:6379 failed - connect ECONNREFUSED
+    author: Ganza Ian
+    snippet: 1
+    fetched_at: "2026-04-25T22:45:50Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:02Z"
+fingerprint: bbec762df4a82472

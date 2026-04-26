@@ -1,0 +1,30 @@
+id: stackexchange-stackoverflow-59797272-s1-636402924072fe96
+title: 'Receiving fatal: could not read Username for &#39;https://github.com&#39;: terminal prompts disabled while building project in terminal'
+fixture_class: real
+normalized_log: |-
+    Had the same issue with git fetch :
+    Fetching the repository
+    /usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +refs/heads/master*:refs/remotes/origin/master* +refs/tags/master*:refs/tags/master*
+    Error: fatal: could not read Username for 'https://github.com': terminal prompts disabled
+    The process '/usr/bin/git' failed with exit code 128
+    Waiting 14 seconds before trying again
+    To fix that you have to update the repo secrets token.
+expectation:
+    expected_playbook: git-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/59797272
+    repository: stackoverflow
+    issue_number: 59797272
+    comment_id: "70245137"
+    title: 'Receiving fatal: could not read Username for &#39;https://github.com&#39;: terminal prompts disabled while building project in terminal'
+    author: Andry
+    snippet: 1
+    fetched_at: "2026-04-25T22:23:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:36:42Z"
+fingerprint: 636402924072fe96

@@ -1,0 +1,37 @@
+id: stackexchange-stackoverflow-57924847-s1-5de4da8fcd009192
+title: Unsupported engine node / NPM only when building in Docker
+fixture_class: real
+normalized_log: |-
+    I have a dependency in my package.json which itself has the following dependency:
+    "node-rdkafka": "^2.5.0",
+    Using nvm on my local machine and setting my node version to 8.9.1 , and my npm version is 5.5.1 , I can successfully run
+    npm install node-rdkafka@2.7.1
+    But when running the same thing (i.e npm install ) from within my docker image:
+    FROM node:10.13.0-alpine or FROM node:8.9.1-alpine
+    I get the following error:
+    npm ERR! notsup Unsupported engine for node-rdkafka@2.7.1: wanted: {"node":">=12.0.0"} (current: {"node":"10.13.0","npm":"6.4.1"})
+    npm ERR! notsup Not compatible with your version of node/npm: node-rdkafka@2.7.1
+    npm ERR! notsup Not compatible with your version of node/npm: node-rdkafka@2.7.1
+    npm ERR! notsup Required: {"node":">=12.0.0"}
+    npm ERR! notsup Actual: {"npm":"6.4.1","node":"10.13.0"}
+    Any ideas about this inconsistency?
+    I clearly dont need a node version this high. But it says I do.
+expectation:
+    expected_playbook: node-version-mismatch
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/57924847
+    repository: stackoverflow
+    issue_number: 57924847
+    comment_id: "0"
+    title: Unsupported engine node / NPM only when building in Docker
+    author: Greg Peckory
+    snippet: 1
+    fetched_at: "2026-04-25T22:25:18Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:31:41Z"
+fingerprint: 5de4da8fcd009192

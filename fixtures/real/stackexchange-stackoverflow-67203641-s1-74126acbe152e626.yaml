@@ -1,0 +1,28 @@
+id: stackexchange-stackoverflow-67203641-s1-74126acbe152e626
+title: missing go.sum entry for module providing package &lt;package_name&gt;
+fixture_class: real
+normalized_log: |-
+    Using the buffalo framework, after bootstraping it via buffalo new <project_name>
+    I am trying to run buffalo dev Expecting to see:
+    project running on port 3000
+    But I am getting those error messages instead
+    actions/app.go:4:2: missing go.sum entry for module providing package github.com/gobuffalo/buffalo (imported by sc_api/actions); to add:go get sc_api/actions
+expectation:
+    expected_playbook: go-sum-missing
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/67203641
+    repository: stackoverflow
+    issue_number: 67203641
+    comment_id: "0"
+    title: missing go.sum entry for module providing package &lt;package_name&gt;
+    author: Paulo
+    snippet: 1
+    fetched_at: "2026-04-25T22:44:14Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:01Z"
+fingerprint: 74126acbe152e626

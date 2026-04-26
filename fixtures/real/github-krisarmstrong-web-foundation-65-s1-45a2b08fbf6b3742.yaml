@@ -1,0 +1,32 @@
+id: github-krisarmstrong-web-foundation-65-s1-45a2b08fbf6b3742
+title: "\U0001F7E1 Test coverage below 80% threshold"
+fixture_class: real
+normalized_log: |-
+    File | % Stmts | % Branch | % Funcs | % Lines
+    -------------------|---------|----------|---------|--------
+    All files | 59.68 | 49.37 | 59.34 | 59.33
+    ERROR: Coverage for lines (59.33%) does not meet global threshold (80%)
+    ERROR: Coverage for functions (59.34%) does not meet global threshold (80%)
+    ERROR: Coverage for statements (59.68%) does not meet global threshold (80%)
+    ERROR: Coverage for branches (49.37%) does not meet global threshold (80%)
+expectation:
+    expected_playbook: coverage-gate-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/krisarmstrong/web-foundation/issues/65
+    repository: krisarmstrong/web-foundation
+    issue_number: 65
+    title: "\U0001F7E1 Test coverage below 80% threshold"
+    labels:
+        - enhancement
+    author: krisarmstrong
+    snippet: 1
+    fetched_at: "2026-04-26T00:31:35Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:32:38Z"
+fingerprint: 45a2b08fbf6b3742

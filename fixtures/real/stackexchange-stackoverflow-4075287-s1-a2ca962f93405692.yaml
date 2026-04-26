@@ -1,0 +1,32 @@
+id: stackexchange-stackoverflow-4075287-s1-a2ca962f93405692
+title: 'Node / Express: EADDRINUSE, Address already in use - how can I stop the process using the port?'
+fixture_class: real
+normalized_log: |-
+    First find out what is running using:
+    sudo lsof -nP -i4TCP:3000 | grep LISTEN
+    You will get something like:
+    php-fpm 110 root 6u IPv4 0x110e2ba1cc64b26d 0t0 TCP 127.0.0.1:3000 (LISTEN)
+    php-fpm 274 _www 0u IPv4 0x110e2ba1cc64b26d 0t0 TCP 127.0.0.1:3000 (LISTEN)
+    php-fpm 275 _www 0u IPv4 0x110e2ba1cc64b26d 0t0 TCP 127.0.0.1:3000 (LISTEN)
+    Then you can kill the process as followed:
+    sudo kill 110
+    Then you will be able to run without getting the listen EADDRINUSE :::3000 errors
+expectation:
+    expected_playbook: port-in-use
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/4075287
+    repository: stackoverflow
+    issue_number: 4075287
+    comment_id: "53723449"
+    title: 'Node / Express: EADDRINUSE, Address already in use - how can I stop the process using the port?'
+    author: ejntaylor
+    snippet: 1
+    fetched_at: "2026-04-25T22:19:45Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:35:00Z"
+fingerprint: a2ca962f93405692

@@ -1,0 +1,30 @@
+id: github-akashchi-openvino-64-s1-e51fabf0a0d773f7
+title: 'CI Failure DoctorCI Failure Investigation - Run #31 - Manylinux 2_28 Smart_CI Job Failure'
+fixture_class: real
+normalized_log: |-
+    ERROR: Could not open requirements file: .github/actions/smart-ci/requirements.txt
+    Can't find 'action.yml', 'action.yaml' or 'Dockerfile' under '.github/actions/smart-ci'.
+    Did you forget to run actions/checkout before running your local action?
+expectation:
+    expected_playbook: github-actions-missing-checkout
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/akashchi/openvino/issues/64
+    repository: akashchi/openvino
+    issue_number: 64
+    comment_id: "3983580707"
+    title: 'CI Failure DoctorCI Failure Investigation - Run #31 - Manylinux 2_28 Smart_CI Job Failure'
+    labels:
+        - automation
+        - ci
+    author: github-actions[bot]
+    snippet: 1
+    fetched_at: "2026-04-26T00:37:06Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:37:20Z"
+fingerprint: e51fabf0a0d773f7

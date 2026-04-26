@@ -1,0 +1,42 @@
+id: stackexchange-stackoverflow-64573177-s1-361265764d0b3e57
+title: Unable to resolve dependency tree error when installing npm packages
+fixture_class: real
+normalized_log: |-
+    We had the same issue, resulting in the error below:
+    npm ERR! code ERESOLVE
+    npm ERR! ERESOLVE could not resolve
+    npm ERR!
+    npm ERR! While resolving: @angular/material-moment-adapter@12.1.4
+    npm ERR! Found: @angular/material@12.0.6 npm
+    npm ERR! node_modules/@angular/material
+    npm ERR! @angular/material@"~12.0.4" from the root project
+    [...]
+    We use npm ci for c lean i nstall in Azure Pipelines .
+    The issue was very often that package.json and package-lock.json were not in sync anymore.
+    The solution to it was to execute npm install local and push the new package-lock.json .
+    As an additional hint, we added a new task in the pipeline for additional information if the job fails.
+    - task: Npm@1
+    displayName: npm install
+    inputs:
+    command: custom
+    customCommand: ci
+    customRegistry: useNpmrc
+expectation:
+    expected_playbook: npm-eresolve-conflict
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/64573177
+    repository: stackoverflow
+    issue_number: 64573177
+    comment_id: "74948455"
+    title: Unable to resolve dependency tree error when installing npm packages
+    author: Astrophage
+    snippet: 1
+    fetched_at: "2026-04-25T22:45:50Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:01:07Z"
+fingerprint: 361265764d0b3e57

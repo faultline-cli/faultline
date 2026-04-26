@@ -1,0 +1,23 @@
+id: github-francisrod01-advancednodeapp-1-s1-ebe934147b2863c3
+title: Async callback was not invoked within the 30000ms timeout specified by jest.setTimeout
+fixture_class: real
+normalized_log: 'Timeout - Async callback was not invoked within the 30000ms timeout specified by jest.setTimeout.Timeout - Async callback was not invoked within the 30000ms timeout specified by jest.setTimeout.Error:'
+expectation:
+    expected_playbook: test-timeout
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/francisrod01/AdvancedNodeApp/issues/1
+    repository: francisrod01/AdvancedNodeApp
+    issue_number: 1
+    title: Async callback was not invoked within the 30000ms timeout specified by jest.setTimeout
+    author: francisrod01
+    snippet: 1
+    fetched_at: "2026-04-26T00:27:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:27:41Z"
+fingerprint: ebe934147b2863c3

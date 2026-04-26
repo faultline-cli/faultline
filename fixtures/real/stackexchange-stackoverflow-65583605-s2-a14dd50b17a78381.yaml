@@ -1,0 +1,23 @@
+id: stackexchange-stackoverflow-65583605-s2-a14dd50b17a78381
+title: 'upgrade from 0.12 to 0.13: Failed to instantiate provider &quot;registry.terraform.io/-/aws&quot; to obtain'
+fixture_class: real
+normalized_log: 'Error: Could not load plugin'
+expectation:
+    expected_playbook: terraform-init
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/65583605
+    repository: stackoverflow
+    issue_number: 65583605
+    comment_id: "0"
+    title: 'upgrade from 0.12 to 0.13: Failed to instantiate provider &quot;registry.terraform.io/-/aws&quot; to obtain'
+    author: allan.simon
+    snippet: 2
+    fetched_at: "2026-04-25T22:46:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:02Z"
+fingerprint: a14dd50b17a78381

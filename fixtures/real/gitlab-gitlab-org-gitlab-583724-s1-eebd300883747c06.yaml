@@ -1,0 +1,28 @@
+id: gitlab-gitlab-org-gitlab-583724-s1-eebd300883747c06
+title: license-exporter release job fails to find license-group-server image
+fixture_class: real
+normalized_log: 'Error response from daemon: manifest for registry.gitlab.com/gitlab-org/security-products/license-db/license-exporter/license-group-server:<COMMIT_SHA> not found: manifest unknown: manifest unknown'
+expectation:
+    expected_playbook: docker-manifest-not-found
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/gitlab/-/issues/583724
+    repository: gitlab-org/gitlab
+    issue_number: 583724
+    title: license-exporter release job fails to find license-group-server image
+    labels:
+        - composition analysis
+        - devops::application security testing
+        - group::composition analysis
+        - section::sec
+        - type::maintenance
+    author: onaaman
+    snippet: 1
+    fetched_at: "2026-04-25T23:51:04Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:52:16Z"
+fingerprint: eebd300883747c06

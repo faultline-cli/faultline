@@ -1,0 +1,66 @@
+id: github-ctrlplusb-react-universally-503-s1-ddbf75180157ddd4
+title: Snapshot test failing for `HomeRoute` and `AboutRoute`
+fixture_class: real
+normalized_log: |-
+    → yarn test
+    yarn run v1.1.0
+    warning ../../package.json: No license field
+    $ jest
+    FAIL shared/components/DemoApp/AsyncHomeRoute/__tests__/HomeRoute.test.js
+    ● <HomeRoute /> › renders
+    expect(value).toMatchSnapshot()
+    Received value does not match stored snapshot 1.
+    - Snapshot
+    + Received
+    @@ -1,8 +1,7 @@
+    <div>
+    <HelmetWrapper
+    - defer={true}
+    encodeSpecialCharacters={true}
+    >
+    <title>
+    Home
+    </title>
+    at Object.test (shared/components/DemoApp/AsyncHomeRoute/__tests__/HomeRoute.test.js:11:21)
+    at Promise.resolve.then.el (node_modules/p-map/index.js:42:16)
+    at process._tickCallback (internal/process/next_tick.js:109:7)
+    PASS shared/components/DemoApp/Error404/__tests__/Error404.test.js
+    FAIL shared/components/DemoApp/AsyncAboutRoute/__tests__/AboutRoute.test.js
+    ● <AboutRoute /> › renders
+    expect(value).toMatchSnapshot()
+    Received value does not match stored snapshot 1.
+    - Snapshot
+    + Received
+    @@ -4,11 +4,10 @@
+    "textAlign": "center",
+    }
+    }
+    >
+    <HelmetWrapper
+    - defer={true}
+    encodeSpecialCharacters={true}
+    >
+    <title>
+    About
+    </title>
+    at Object.test (shared/components/DemoApp/AsyncAboutRoute/__tests__/AboutRoute.test.js:11:21)
+    at Promise.resolve.then.el (node_modules/p-map/index.js:42:16)
+expectation:
+    expected_playbook: snapshot-mismatch
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/ctrlplusb/react-universally/issues/503
+    repository: ctrlplusb/react-universally
+    issue_number: 503
+    title: Snapshot test failing for `HomeRoute` and `AboutRoute`
+    author: oyeanuj
+    snippet: 1
+    fetched_at: "2026-04-26T00:27:20Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:28:25Z"
+fingerprint: ddbf75180157ddd4

@@ -1,0 +1,58 @@
+id: stackexchange-stackoverflow-40458948-s2-050a33c1efc33b1c
+title: Docker jenkins container, host key verification failed
+fixture_class: real
+normalized_log: |-
+    Please make sure you have the correct access rights
+    and the repository exists.
+    Then I tried just ssh into the bitbucket server.
+    + ssh git@mybitbucketserver.org
+    Pseudo-terminal will not be allocated because stdin is not a terminal.
+    Host key verification failed.
+    I realized when I ssh via the -oStrictHostKeyChecking=no the host key is saved anyways but the ssh client returns with 255 because of sshd and the pipeline fails so I've put a || true at the end.
+    Pseudo-terminal will not be allocated because stdin is not a terminal.
+    Warning: Permanently added 'mybitbucketserver.org,10.5.132.51' (RSA) to the list of known hosts.
+    shell request failed on channel 0
+    + true
+    After this the host key is 'verified' so git clone ssh:// works therefore ansible-galaxy too.
+    ...
+    stage('get ansible roles') {
+    sh 'ssh -oStrictHostKeyChecking=no git@mybitbucketserver.org || true'
+    sh 'ansible-galaxy install -r requirements.yaml -p roles/'
+    ...
+    }
+    ...
+    output:
+    + ssh -oStrictHostKeyChecking=no git@mybitbucketserver.org
+    Pseudo-terminal will not be allocated because stdin is not a terminal.
+    Warning: Permanently added 'mybitbucketserver.org,10.5.132.51' (RSA) to the list of known hosts.
+    shell request failed on channel 0
+    + true
+    [Pipeline] sh
+    + /usr/bin/git clone ssh://git@mybitbucketserver.org/project/ans_rol_test.git
+    Cloning into 'ans_rol_test'...
+    [Pipeline] sh
+    + ansible-galaxy install -r requirements.yaml -p roles/
+    - extracting ans_rol_test to /home/jenkins/agent/workspace/configuration/roles/ans_rol_test
+    - ans_rol_test (1.0.0) was installed successfully
+    Worth noting that setting GIT_SSH_COMMAND environment variable with
+    "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+    is not working.
+expectation:
+    expected_playbook: ssh-key-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/40458948
+    repository: stackoverflow
+    issue_number: 40458948
+    comment_id: "58730385"
+    title: Docker jenkins container, host key verification failed
+    author: Wax
+    snippet: 2
+    fetched_at: "2026-04-25T22:57:03Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:01:07Z"
+fingerprint: 050a33c1efc33b1c

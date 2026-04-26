@@ -1,0 +1,31 @@
+id: stackexchange-stackoverflow-7577052-s1-b112967369ff35ce
+title: Unbound variable error in bash when expanding empty array
+fixture_class: real
+normalized_log: |-
+    Interesting inconsistency; this lets you define something which is "not considered set" yet shows up in the output of declare -p
+    arr=()
+    set -o nounset
+    echo ${arr[@]}
+    => -bash: arr[@]: unbound variable
+    declare -p arr
+    => declare -a arr='()'
+    UPDATE: as others mentioned, fixed in 4.4 released after this answer was posted.
+expectation:
+    expected_playbook: missing-env
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/7577052
+    repository: stackoverflow
+    issue_number: 7577052
+    comment_id: "29020297"
+    title: Unbound variable error in bash when expanding empty array
+    author: MarcH
+    snippet: 1
+    fetched_at: "2026-04-25T22:43:39Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:27:02Z"
+fingerprint: b112967369ff35ce

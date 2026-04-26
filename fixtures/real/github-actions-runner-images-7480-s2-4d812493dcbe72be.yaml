@@ -1,0 +1,40 @@
+id: github-actions-runner-images-7480-s2-4d812493dcbe72be
+title: Builds running on ubuntu-latest are consistently failing
+fixture_class: real
+normalized_log: |-
+    Ign:1 http://deb.debian.org/debian stretch InRelease
+    Ign:2 http://security.debian.org/debian-security stretch/updates InRelease
+    Ign:3 http://deb.debian.org/debian stretch-updates InRelease
+    Err:4 http://security.debian.org/debian-security stretch/updates Release
+    404 Not Found [IP: 151.101.2.132 80]
+    Err:5 http://deb.debian.org/debian stretch Release
+    404 Not Found
+    Err:6 http://deb.debian.org/debian stretch-updates Release
+    404 Not Found
+    Reading package lists...
+    E: The repository 'http://security.debian.org/debian-security stretch/updates Release' does not have a Release file.
+    E: The repository 'http://deb.debian.org/debian stretch Release' does not have a Release file.
+    E: The repository 'http://deb.debian.org/debian stretch-updates Release' does not have a Release file.
+    The command '/bin/sh -c apt update' returned a non-zero code: 100
+expectation:
+    expected_playbook: dependency-removed-upstream
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner-images/issues/7480
+    repository: actions/runner-images
+    issue_number: 7480
+    comment_id: "1520400049"
+    title: Builds running on ubuntu-latest are consistently failing
+    labels:
+        - 'OS: Ubuntu'
+        - bug report
+    author: mike-soak
+    snippet: 2
+    fetched_at: "2026-04-22T12:04:17Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T21:50:42Z"
+fingerprint: 4d812493dcbe72be

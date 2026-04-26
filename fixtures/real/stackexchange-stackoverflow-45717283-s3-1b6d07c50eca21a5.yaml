@@ -1,0 +1,25 @@
+id: stackexchange-stackoverflow-45717283-s3-1b6d07c50eca21a5
+title: 'VSTS build: Packages failed to restore - Unable to resolve &#39;NETStandard.Library (&gt;= 1.6.1)&#39; for &#39;.NETStandard,Version=v2.0&#39;'
+fixture_class: real
+normalized_log: |-
+    Errors in d:\a\1\s\src\CommandStack\CommandStack.csproj
+    Unable to resolve 'NETStandard.Library (>= 1.6.1)' for '.NETStandard,Version=v2.0'.
+expectation:
+    expected_playbook: dotnet-restore
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/45717283
+    repository: stackoverflow
+    issue_number: 45717283
+    comment_id: "0"
+    title: 'VSTS build: Packages failed to restore - Unable to resolve &#39;NETStandard.Library (&gt;= 1.6.1)&#39; for &#39;.NETStandard,Version=v2.0&#39;'
+    author: Liero
+    snippet: 3
+    fetched_at: "2026-04-25T22:44:42Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:45:03Z"
+fingerprint: 1b6d07c50eca21a5

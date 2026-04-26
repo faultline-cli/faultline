@@ -1,0 +1,27 @@
+id: github-enginescript-enginescript-site-exporter-74-s1-774d824e7da66be1
+title: Psalm Static Analysis Failed
+fixture_class: real
+normalized_log: '## Psalm Static Analysis Failed'
+expectation:
+    expected_playbook: quality-gate-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/EngineScript/enginescript-site-exporter/issues/74
+    repository: EngineScript/enginescript-site-exporter
+    issue_number: 74
+    title: Psalm Static Analysis Failed
+    labels:
+        - bug
+        - static-analysis
+        - psalm
+    author: github-actions[bot]
+    snippet: 1
+    fetched_at: "2026-04-26T00:36:19Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:36:34Z"
+fingerprint: 774d824e7da66be1

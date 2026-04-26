@@ -1,0 +1,32 @@
+id: stackexchange-stackoverflow-16107789-s1-7bc10d6b3b44e3e8
+title: 'Failed to deploy artifacts: Could not find artifact'
+fixture_class: real
+normalized_log: |-
+    I want to deploy a library to my companies remote repository.
+    It's the first time I want to deploy the library project to the remote repository.
+    I get the following error message:
+    org.sonatype.aether.transfer.ArtifactNotFoundException: Could not find artifact com.http:httpkit:jar:0.0.1 in internal.repo ( http://jenkins.internal.com/ )
+    Maybe I understand something complete wrong, but the error message says, that in the remote repository doesn't exist the artifact that I try to deploy for the first time. So of course there is not such artifact. Why does maven tries to fetch the artifact when I try to upload the artifact?
+    My pom file:
+    <?xml version="1.0" encoding="UTF-8"?>
+    <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0http://maven.apache.org/maven-v4_0_0.xsd">
+expectation:
+    expected_playbook: maven-dependency-resolution
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/16107789
+    repository: stackoverflow
+    issue_number: 16107789
+    comment_id: "0"
+    title: 'Failed to deploy artifacts: Could not find artifact'
+    author: sockeqwe
+    snippet: 1
+    fetched_at: "2026-04-25T22:23:10Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:36:42Z"
+fingerprint: 7bc10d6b3b44e3e8

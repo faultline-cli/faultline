@@ -1,0 +1,44 @@
+id: stackexchange-stackoverflow-7577052-s1-6e5a061f031f9266
+title: Unbound variable error in bash when expanding empty array
+fixture_class: real
+normalized_log: |-
+    "Interesting" inconsistency indeed.
+    Furthermore,
+    $ set -u
+    $ echo $#
+    0
+    $ echo "$1"
+    bash: $1: unbound variable # makes sense (I didn't set any)
+    $ echo "$@" | cat -e
+    $ # blank line, no error
+    While I agree that the current behavior may not be a bug in the sense that @ikegami explains, IMO we could say the bug is in the definition (of "set") itself, and/or the fact that it's inconsistently applied. The preceding paragraph in the man page says
+    ... ${name[@]} expands each element of name to a separate word. When there are no array members, ${name[@]} expands to nothing.
+    which is entirely consistent with what it says about the expansion of positional parameters in "$@" . Not that there aren't other inconsistencies in the behaviors of arrays and positional parameters... but to me there's no hint that this detail should be inconsistent between the two.
+    Continuing,
+    $ arr=()
+    $ echo "${arr[@]}"
+    bash: arr[@]: unbound variable # as we've observed. BUT...
+    $ echo "${#arr[@]}"
+    0 # no error
+    $ echo "${!arr[@]}" | cat -e
+    $ # no error
+    So arr[] isn't so unbound that we can't get a count of its elements (0), or a (empty) list of its keys? To me these are sensible, and useful -- the only outlier seems to be the ${arr[@]} (and ${arr[*]} ) expansion.
+expectation:
+    expected_playbook: missing-env
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/7577052
+    repository: stackoverflow
+    issue_number: 7577052
+    comment_id: "35353851"
+    title: Unbound variable error in bash when expanding empty array
+    author: don311
+    snippet: 1
+    fetched_at: "2026-04-25T22:43:39Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:11:57Z"
+fingerprint: 6e5a061f031f9266

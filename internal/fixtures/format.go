@@ -83,6 +83,9 @@ func FormatStatsReport(report Report, jsonOut bool) (string, error) {
 	if len(report.UnmatchedFixtureIDs) > 0 {
 		lines = append(lines, "unmatched_ids: "+strings.Join(report.UnmatchedFixtureIDs, ", "))
 	}
+	if len(report.FalsePositiveFixtureIDs) > 0 {
+		lines = append(lines, "false_positive_ids: "+strings.Join(report.FalsePositiveFixtureIDs, ", "))
+	}
 	if len(report.WeakMatchFixtureIDs) > 0 {
 		lines = append(lines, "weak_ids: "+strings.Join(report.WeakMatchFixtureIDs, ", "))
 	}

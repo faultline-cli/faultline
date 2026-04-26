@@ -1,0 +1,32 @@
+id: stackexchange-stackoverflow-34901259-s1-00f43e2610694476
+title: 'go imported and not used: as, undefined'
+fixture_class: real
+normalized_log: |-
+    I renamed file as File,and renamed moetemplate as htmlparts then go build
+    ./router.go:8: imported and not used: "github.com/golangframework/File" as file
+    ./router.go:11: imported and not used: "github.com/golangframework/htmlparts" as moetemplate
+    ./router.go:21: undefined: File in File.ReadAllBytes
+    ./router.go:61: undefined: htmlparts in htmlparts.LoadPartFile
+    ./router.go:62: undefined: File in File.ReadAllText
+    ./router.go:65: undefined: htmlparts in htmlparts.Render
+    my import is this
+    package main
+expectation:
+    expected_playbook: go-compile-error
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/34901259
+    repository: stackoverflow
+    issue_number: 34901259
+    comment_id: "0"
+    title: 'go imported and not used: as, undefined'
+    author: li peng
+    snippet: 1
+    fetched_at: "2026-04-25T22:42:28Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:01Z"
+fingerprint: 00f43e2610694476

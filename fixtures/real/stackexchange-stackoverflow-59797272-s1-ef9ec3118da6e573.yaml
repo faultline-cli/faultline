@@ -1,0 +1,30 @@
+id: stackexchange-stackoverflow-59797272-s1-ef9ec3118da6e573
+title: 'Receiving fatal: could not read Username for &#39;https://github.com&#39;: terminal prompts disabled while building project in terminal'
+fixture_class: real
+normalized_log: |-
+    I have started working on Golang project. While building with make, I am getting following error:
+    fatal: could not read Username for 'https://github.com': terminal prompts disabled
+    To handle this, I have done following after going through similar post go get results in 'terminal prompts disabled' error for github private repo :
+    export GIT_TERMINAL_PROMPT=1
+    But this did not solve the problem, now it seems to be asking username and password in infinite loop.
+    My git config is as follows:
+    $git config --list
+expectation:
+    expected_playbook: git-auth
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/59797272
+    repository: stackoverflow
+    issue_number: 59797272
+    comment_id: "0"
+    title: 'Receiving fatal: could not read Username for &#39;https://github.com&#39;: terminal prompts disabled while building project in terminal'
+    author: Joy
+    snippet: 1
+    fetched_at: "2026-04-25T22:23:02Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:39:21Z"
+fingerprint: ef9ec3118da6e573

@@ -48,8 +48,9 @@ type Report struct {
 	RecurringPatterns   map[string]int
 	Providers           map[string]int
 	Adapters            map[string]int
-	UnmatchedFixtureIDs []string
-	WeakMatchFixtureIDs []string
+	UnmatchedFixtureIDs       []string
+	FalsePositiveFixtureIDs   []string
+	WeakMatchFixtureIDs       []string
 	ThresholdViolations []string
 	AppliedThresholds   Thresholds
 	AppliedBaselinePath string
@@ -111,6 +112,7 @@ func EvaluateFixtures(layout Layout, class Class, loaded []Fixture, opts Evaluat
 		}
 		if item.FalsePositive {
 			report.FalsePositiveCount++
+			report.FalsePositiveFixtureIDs = append(report.FalsePositiveFixtureIDs, fixture.ID)
 		}
 		if item.WeakMatch {
 			report.WeakMatchCount++
@@ -118,6 +120,7 @@ func EvaluateFixtures(layout Layout, class Class, loaded []Fixture, opts Evaluat
 		}
 	}
 	sort.Strings(report.UnmatchedFixtureIDs)
+	sort.Strings(report.FalsePositiveFixtureIDs)
 	sort.Strings(report.WeakMatchFixtureIDs)
 	return report, nil
 }

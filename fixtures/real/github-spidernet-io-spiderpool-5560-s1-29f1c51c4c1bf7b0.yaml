@@ -1,0 +1,43 @@
+id: github-spidernet-io-spiderpool-5560-s1-29f1c51c4c1bf7b0
+title: failed to cherry pick PR 5553 from taoyounger, to branch release-v1.0
+fixture_class: real
+normalized_log: |-
+    Auto-merging charts/spiderpool/templates/role.yaml
+    CONFLICT (content): Merge conflict in charts/spiderpool/templates/role.yaml
+    Auto-merging pkg/ipam/allocate.go
+    CONFLICT (content): Merge conflict in pkg/ipam/allocate.go
+    Auto-merging pkg/k8s/apis/spiderpool.spidernet.io/v2beta1/rbac.go
+    CONFLICT (content): Merge conflict in pkg/k8s/apis/spiderpool.spidernet.io/v2beta1/rbac.go
+    Auto-merging pkg/multuscniconfig/utils.go
+    Auto-merging test/doc/spidermultus.md
+    CONFLICT (content): Merge conflict in test/doc/spidermultus.md
+    Auto-merging test/e2e/spidermultus/spidermultus_test.go
+    error: could not apply 385f2cc6f... fix: IPAM cannot allocate IP when k8s.v1.cni.cncf.io/networks is JSON array (#5553)
+    hint: After resolving the conflicts, mark them with
+    hint: "git add/rm <pathspec>", then run
+    hint: "git cherry-pick --continue".
+    hint: You can instead skip this commit with "git cherry-pick --skip".
+    hint: To abort and get back to the state before "git cherry-pick",
+    hint: run "git cherry-pick --abort".
+    hint: Disable this message with "git config set advice.mergeConflict false"
+expectation:
+    expected_playbook: merge-conflict
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/spidernet-io/spiderpool/issues/5560
+    repository: spidernet-io/spiderpool
+    issue_number: 5560
+    title: failed to cherry pick PR 5553 from taoyounger, to branch release-v1.0
+    labels:
+        - robot-cherrypick
+    author: weizhoublue
+    snippet: 1
+    fetched_at: "2026-04-26T00:28:57Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-26T00:29:14Z"
+fingerprint: 29f1c51c4c1bf7b0

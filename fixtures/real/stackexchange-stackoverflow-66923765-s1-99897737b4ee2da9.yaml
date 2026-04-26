@@ -1,0 +1,43 @@
+id: stackexchange-stackoverflow-66923765-s1-99897737b4ee2da9
+title: AWS EKS EBS mounting issue / ExpiredTokenException / Instance not found at the same time
+fixture_class: real
+normalized_log: |-
+    AWS EKS Cluster 1.18 with AWS CSI EBS driver. Some pods had EBS volumes statically provisioned and everything was working.
+    Next. At some point all the pods using EBS volumes stopped responding, services had infinite waiting time and the proxy pod was killing the connection because of the timeout.
+    Logs (CloudWatch) for kube-controller-manager were filled with such messages:
+    kubernetes.io/csi: attachment for vol-00c1763<removed-by-me> failed:
+    rpc error:
+    code = NotFound desc = Instance "i-0c356612<removed-by-me>" not found
+    and
+    event.go:278] Event(v1.ObjectReference{Kind:"Pod", Namespace:"default", Name:"podname-65df9bc5c4-2vtj8", UID:"ad4d30b7-<removed-by-me>", APIVersion:"v1", ResourceVersion:"4414194", FieldPath:""}):
+    type: 'Warning'
+    reason: 'FailedAttachVolume' AttachVolume.Attach failed for volume "ebs-volumename" :
+    rpc error: code = NotFound desc = Instance "i-0c356<removed-by-me>" not found
+    The instance is there, we checked it like 20 times. We tried to kill the instance, so the CloudFormation creates a new one for us, the error persists, just the instance ID is different.
+    Next. We started deleting pods and unmounting volumes / deleting sc/pvc/pv. kubectl stuck at the end of deleting pv. We were only able to get them out of this state by patching no finalizers to both pv and volumemounts. The logs contain the following:
+    csi_attacher.go:662] kubernetes.io/csi: detachment for VolumeAttachment for volume [vol-00c176<removed-by-me>] failed:
+    rpc error: code = Internal desc = Could not detach volume "vol-00c176<removed-by-me>" from node "i-0c3566<removed-by-me>":
+    error listing AWS instances:
+    "WebIdentityErr: failed to retrieve credentials\n
+    caused by: ExpiredTokenException: Token expired: current date/time 1617384213 must be before the expiration date/time1616724855\n\
+    tstatus code: 400, request id: c1cf537f-a14d<removed-by-me>"
+    I've read about the tokens for Kubernetes, but in our case we have everything being managed by EKS. Googling the ExpiredTokenException brings us to the pages of how you should solve the issues with your own applications, again, we manage everything on AWS using kubectl.
+expectation:
+    expected_playbook: expired-credentials
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/66923765
+    repository: stackoverflow
+    issue_number: 66923765
+    comment_id: "0"
+    title: AWS EKS EBS mounting issue / ExpiredTokenException / Instance not found at the same time
+    author: Alex Smirnoff
+    snippet: 1
+    fetched_at: "2026-04-25T22:46:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T22:52:03Z"
+fingerprint: 99897737b4ee2da9

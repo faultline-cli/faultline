@@ -1,0 +1,53 @@
+id: gitlab-gitlab-org-container-registry-2138-s1-2c64eaad6f5cc3bc
+title: '[Flaky] coverage-1_24::github.com/docker/distribution/registry/storage.TestPurgeAll'
+fixture_class: real
+normalized_log: |-
+    === RUN TestPurgeAll
+    time="2026-02-13T23:15:41Z" level=info msg="PurgeUploads starting: olderThan=<timestamp> +0000 UTC m=+17.084908935, actuallyDelete=true"
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo2/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Upload files in /docker/registry/v2/repositories/test-repo/_uploads/<id> have older date (<timestamp> +0000 UTC) than purge date (<timestamp> +0000 UTC m=+17.084908935). Removing upload directory."
+    time="2026-02-13T23:15:41Z" level=info msg="Purge uploads finished. Num deleted=10, num errors=0"
+    purgeuploads_test.go:65:
+    Error Trace: /builds/gitlab-org/container-registry/registry/storage/purgeuploads_test.go:65
+    Error: "[/docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo2/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id> /docker/registry/v2/repositories/test-repo/_uploads/<id>]" should have 11 item(s), but has 10
+    Test: TestPurgeAll
+    Messages: unexpectedly deleted file count
+    --- FAIL: TestPurgeAll (0.00s)
+expectation:
+    expected_playbook: go-test-failure
+    top_n: 3
+    min_confidence: 0.55
+source:
+    adapter: gitlab-issue
+    provider: gitlab
+    url: https://gitlab.com/gitlab-org/container-registry/-/issues/2138
+    repository: gitlab-org/container-registry
+    issue_number: 2138
+    title: '[Flaky] coverage-1_24::github.com/docker/distribution/registry/storage.TestPurgeAll'
+    labels:
+        - Category:Container Registry
+        - backend
+        - devops::package
+        - failure::flaky-test
+        - flaky-occurrences::1-3
+        - flaky::auto
+        - golang
+        - group::container registry
+        - maintenance::pipelines
+        - section::ci
+        - type::maintenance
+    author: project_13831684_bot_b6077f780c08c6981d060e7b5619faff
+    snippet: 1
+    fetched_at: "2026-04-25T23:57:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-04-25T23:58:56Z"
+fingerprint: 2c64eaad6f5cc3bc
