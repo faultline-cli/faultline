@@ -1,10 +1,10 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![181 playbooks](https://img.shields.io/badge/playbooks-181-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-79.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-74.0%25-brightgreen)](eval-work/badge.json.md)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![181 playbooks](https://img.shields.io/badge/playbooks-181-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-81.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-74.0%25-brightgreen)](eval-work/badge.json.md)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
-Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 170 playbooks and returns evidence-backed diagnoses — the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
+Faultline is a deterministic diagnosis engine for CI failures. It matches your failing build log against an explicit, versioned catalog of 181 playbooks and returns evidence-backed diagnoses — the exact matched lines, the root cause, and the fix. No AI. No guesswork. Same log in, same result out.
 
 **Your build just failed. Here's what the next 30 seconds looks like:**
 
@@ -28,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.4.1+** — 170 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
+**v0.4.2** — 181 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
 
 ## ⚡ Install
 
@@ -41,7 +41,7 @@ faultline analyze build.log
 
 ## ⚙ How it works
 
-1. **Analyze** — match the failing log against 170 bundled playbooks, extract evidence lines, score and rank candidates
+1. **Analyze** — match the failing log against 181 bundled playbooks, extract evidence lines, score and rank candidates
 2. **Diagnose** — return the top match with confidence, the exact evidence, and concrete fix steps
 3. **Handoff** — optionally emit a stable JSON artifact for your automation, agent, or post-mortem tool
 
@@ -58,7 +58,7 @@ Determinism is the contract, not a feature flag. The same log and playbook set p
 
 ## 🔍 What it catches
 
-170 playbooks covering the failures that actually break builds in production CI:
+181 playbooks covering the failures that actually break builds in production CI:
 
 | Category | Examples |
 |---|---|
@@ -91,7 +91,7 @@ Add a single step to your failure path. The CLI contract is identical in CI and 
 - name: Diagnose failure
   if: failure()
   run: |
-    VERSION=v0.4.1 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+    VERSION=v0.4.2 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
     faultline analyze build.log --json > faultline-analysis.json
     faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
@@ -118,16 +118,17 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 }
 ```
 
-## ◆ What's new in v0.4.1
+## ◆ What's new in v0.4.2
 
-**Corpus expansion and coverage hardening.** 54 new real fixtures raising the accepted corpus from 174 to 228 — without any change to the bundled playbook count.
+**Playbook quality and test coverage.** Three new playbooks, expanded patterns across 12 existing playbooks, and a sharp drop in weak matches — from 0.132 to 0.009.
 
-- **170 bundled playbooks** (unchanged from v0.4.0)
-- **228 accepted real fixtures**, up from 174 in v0.4.0. New coverage spans artifact upload failures, connection-refused across MySQL/Redis/Postgres, docker-daemon-unavailable, env-var-missing, pip-install-failure, permission-denied, runtime-mismatch, and more — sourced from GitHub, GitLab, Stack Exchange, Reddit, and Discourse
-- **Top-1 accuracy 1.000** maintained across the expanded corpus with zero false positives
-- **Go test coverage 79.7%** — now tracked and reported in CI
+- **181 bundled playbooks** (+3 new: `junit-test-failure`, `link-checker-failure`, `test-assertion-with-reason`)
+- **12 playbooks with expanded pattern coverage** — auth, build, network, runtime, test, and silent categories
+- **Weak-match rate 0.009** — down from 0.132 in v0.4.1; only 2 of 228 accepted fixtures produce a weak match
+- **Top-1 accuracy 1.000** maintained with zero false positives
+- **Go test coverage 81.7%** — up from 79.7%
 
-Full release notes: [docs/releases/v0.4.1.md](docs/releases/v0.4.1.md)
+Full release notes: [docs/releases/v0.4.2.md](docs/releases/v0.4.2.md)
 
 ## ◈ Free vs Team
 
@@ -173,7 +174,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 ```
 
 ```bash
-VERSION=v0.4.1
+VERSION=v0.4.2
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
