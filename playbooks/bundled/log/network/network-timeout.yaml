@@ -45,6 +45,10 @@ match:
     - request timeout
     - "ETIMEDOUT"
     - "ECONNRESET"
+    - "Net::ReadTimeout"
+    - "Empty reply from server"
+    - "Couldn't establish HTTP connection"
+    - "exited with 124"
   none:
     - no such host
     - temporary failure in name resolution

@@ -29,6 +29,8 @@ match:
     - "wall clock"
     - "before current time"
     - "after current time"
+  none:
+    - "DockerClientProviderStrategy"
 hypothesis:
   supports:
     - signal: log.contains:clock skew

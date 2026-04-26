@@ -82,6 +82,7 @@ why_it_matters: |-
 match:
   any:
     - "COPY failed"
+    - "COPY failed: stat"
     - "failed: file not found in build context"
     - "ADD failed: file not found"
     - "no such file or directory"
@@ -90,6 +91,7 @@ match:
     - "permission denied"
     - "command not found"
     - "command 'gcc' failed"
+    - "ib_buffer_pool"
 
 workflow:
   likely_files:

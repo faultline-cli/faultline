@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-068  (1 unmatched fixtures)
+# Suspected class: unknown  confidence: 0.30
+# Notes: No known failure class matched. Manual review recommended.
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-unknown-cluster-068
+name: "unknown (stub cluster-068)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - unknown
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # overfull hbox (<n>.64194pt too wide) in paragraph at lines <n>--<n> overfull hbox (<n>.98665pt too wide) in paragraph at
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

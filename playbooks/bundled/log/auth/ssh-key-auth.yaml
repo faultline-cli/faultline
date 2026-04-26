@@ -35,6 +35,7 @@ match:
     - "ssh: handshake failed"
     - "ssh: connect to host"
     - "Warning: Permanently added"
+    - "Pseudo-terminal will not be allocated"
   none:
     - password
     - "Permission denied (publickey)"

@@ -1,0 +1,1 @@
+1) ComposerTestDependencyResolverSolverTest::testUnsatisfiableRequires Failed asserting that two strings are equal. --- Expected +++ Actual @@ @@   - It's a private package and you forgot to add a custom repository to find it + - It's a private package and you forgot to configure the required authentication credentials    Read  for further common problems.'

@@ -1,0 +1,1 @@
+shellcheck.hs:442:19: error:     Variable not in scope: doesPathExist :: [Char] -> IO Bool

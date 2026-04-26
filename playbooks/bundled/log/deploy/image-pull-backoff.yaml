@@ -43,7 +43,6 @@ match:
     - imagepullbackoff
     - errimagepull
     - failed to pull image
-    - manifest unknown
     - pull access denied for
     - back-off pulling image
     - "rpc error: code = unknown desc = error response from daemon"

@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-014  (1 unmatched fixtures)
+# Suspected class: network-timeout  confidence: 0.40
+# Notes: Token patterns suggest a network or connectivity failure. (partial match)
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-network-timeout-cluster-014
+name: "network timeout (stub cluster-014)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - network-timeout
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # the command "$timeout 35m ci/build.sh" exited with <n>.
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

@@ -1,0 +1,1 @@
+-> ReactiveCocoa [31m -> [0mReactiveCocoa (10.0.0)      - WARN  | file patterns: The `public_header_files` pattern did not match any file.      - ERROR | xcodebuild: Returned an unsuccessful exit code. You can use `--verbose` for more information.      - NOTE  | xcodebuild:  note: Using new build system      - NOTE  | xcodebuild:  note: Planning build

@@ -1,0 +1,96 @@
+id: test-assertion-with-reason
+title: Test assertion failure with explicit reason message
+category: test
+severity: high
+base_score: 1.0
+tags: [test, assertion, erlang, eunit, reason]
+stage_hints: [test]
+domain: test-runner
+class: test-assertion
+mode: test-assertion-reason
+summary: |-
+  A test case assertion failed with an explicit reason message. The test ran but
+  the expected condition did not hold, producing a deterministic failure reason
+  that names the broken expectation.
+diagnosis: |-
+  ## Diagnosis
+
+  Test assertion failures provide explicit reason messages that name what was
+  expected versus what occurred. Common patterns:
+
+  - **Erlang EUnit/Common Test**: `SUITE_NAME:test_function failed ... Reason: expected_value_got_other`
+  - **Queue/messaging tests**: `expecting_nack_got_ack`, `expected_empty_got_n_messages`
+  - **State machine tests**: `expected_state_X_got_state_Y`
+
+  The `Reason:` message tells you exactly what the test was checking.
+
+  Common causes:
+
+  - **Logic error** — the implementation changed and now produces different output than the test expects.
+  - **Test data setup** — the test fixture or seed data does not match the test assumption.
+  - **Timing or ordering** — concurrent code or queue processing order changed.
+  - **API change** — a dependency changed its behavior and the code did not adapt.
+fix: |-
+  ## Fix steps
+
+  1. Read the `Reason:` message carefully — it names both the expected and actual state.
+  2. Locate the failing test in the source:
+     ```bash
+     grep -r "expected_.*_got_" src/test/ eunit_SUITE.erl
+     ```
+  3. Run the test in isolation to reproduce:
+     ```bash
+     erl -name test@localhost -s mymodule test_function
+     rebar3 eunit -m mymodule
+     ```
+  4. Add debug output or inspect the intermediate state:
+     - Print the actual state before the assertion
+     - Check if external dependencies behave as expected
+  5. Fix either the implementation to match the test, or update the test if the
+     new behavior is correct and documented.
+validation: |-
+  ## Validation
+
+  - Run the failing test again — it should pass.
+  - Run the full test suite to ensure no regressions.
+why_it_matters: |-
+  ## Why it matters
+
+  Test assertions with explicit reasons are deterministic and reproducible. They
+  stop the pipeline but pinpoint exactly what broke, making fixes straightforward.
+
+  ## Prevention
+
+  - Write tests with descriptive assertion messages that name both the expected
+    and actual values.
+  - Run tests locally before pushing:
+    ```bash
+    rebar3 eunit
+    rebar3 ct  # for Common Test
+    ```
+  - Use parameterized tests to cover multiple scenarios but keep each test
+    focused on a single behavior.
+match:
+  any:
+    - "SUITE:.*failed"
+    - "SUITE_.*failed"
+    - "failed.*Reason:"
+    - "Reason: expecting"
+    - "Reason: expected_"
+    - "init_per_group failed Reason"
+  none:
+    - "pytest"
+    - "FAILED.*::"
+    - "junit"
+    - "AssertionError"
+workflow:
+  likely_files:
+    - "**/*_SUITE.erl"
+    - "**/test/**/*.erl"
+    - "src/test/**/*.erl"
+    - "rebar.config"
+  local_repro:
+    - "rebar3 eunit"
+    - "rebar3 ct"
+  verify:
+    - "rebar3 eunit"

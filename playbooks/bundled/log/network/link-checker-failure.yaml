@@ -1,0 +1,116 @@
+id: link-checker-failure
+title: Link checker found broken or redirecting URLs
+category: network
+severity: medium
+base_score: 1.0
+tags: [link-checker, html-proofer, htmltest, documentation, urls]
+stage_hints: [test, deploy]
+domain: documentation
+class: link-checker-failure
+mode: link-checker-reported-failures
+summary: |-
+  A link-checking tool (html-proofer, htmltest, or similar) found broken, missing,
+  or permanently redirecting URLs in the project's documentation or web output.
+diagnosis: |-
+  ## Diagnosis
+
+  A CI step that validates documentation links found one or more failures. Common
+  output formats:
+
+  **HTML-Proofer:**
+  ```
+  htmlproofer 3.x.x | Starting the crawl
+  - https://example.com/old-path - 301
+  HTML-Proofer found 3 failures!
+  ```
+
+  **htmltest:**
+  ```
+  > Links
+    1. [L0239] 522 http://example.com/image.jpg
+    2. [L1581] 404 https://example.com/missing-page
+  > Dupes
+    None ✓
+  ```
+
+  Common causes:
+
+  - **Moved content** — an external resource was permanently redirected (301) or
+    removed (404/410). These were valid links when written but have since changed.
+  - **Rate-limited or unreachable** — external hosts return 5xx or 522 during CI
+    runs due to rate limiting or transient unavailability.
+  - **Internal broken link** — an anchor, page path, or section heading was
+    renamed without updating all references.
+  - **Image asset missing** — an image referenced in documentation was moved,
+    renamed, or never committed.
+fix: |-
+  ## Fix steps
+
+  1. Review the list of failing URLs in the checker output.
+
+  2. For **301 redirects** — update the link in documentation to point to the
+     canonical (redirected) destination URL.
+
+  3. For **404 / gone** — find an equivalent replacement page or remove the link.
+     Web archives (archive.org) can help recover vanished content.
+
+  4. For **transient failures (5xx, timeout)** — consider adding the domain to
+     the checker's ignore list if it rate-limits CI requests, or retry the job.
+
+  5. For **image assets** — verify the asset is committed and the path in the
+     documentation matches the actual file location.
+
+  6. To run locally:
+     ```bash
+     # html-proofer (Ruby)
+     htmlproofer ./_site --checks Links,Images,Scripts
+
+     # htmltest (Go)
+     htmltest
+
+     # markdown-link-check
+     find . -name "*.md" -exec markdown-link-check {} \;
+     ```
+why_it_matters: |-
+  ## Why it matters
+
+  Broken links in documentation erode user trust and reduce discoverability.
+  Unresolved 301 redirects add unnecessary latency for every visitor and may
+  eventually become 404s when the redirect target is also removed.
+validation: |-
+  ## Validation
+
+  - The link checker exits zero with no failures reported.
+  - Run `htmlproofer ./_site` or `htmltest` locally to confirm all links resolve.
+match:
+  any:
+    - "HTML-Proofer found"
+    - "htmlproofer"
+    - "htmltest"
+    - "linkcheck"
+    - "> Links"
+  none:
+    - "curl"
+    - "fetch failed"
+    - "connection refused"
+hypothesis:
+  supports:
+    - signal: log.contains:link-check
+      weight: 0.8
+  discriminators:
+    - description: Link checker output with broken URL list points to dead or moved documentation links.
+      signal: log.contains:link-check
+workflow:
+  likely_files:
+    - "README.md"
+    - "docs/**/*.md"
+    - "_config.yml"
+    - ".htmltest.yml"
+    - ".htmlprooferrc"
+  local_repro:
+    - "htmlproofer ./_site"
+    - "htmltest"
+    - "bundle exec htmlproofer ./_site"
+  verify:
+    - "htmlproofer ./_site --checks Links"
+    - "htmltest"

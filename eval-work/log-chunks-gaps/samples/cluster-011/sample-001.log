@@ -1,0 +1,1 @@
+1) AtomApplication command-line interface behavior atom:// URLs with a "core" host sends a URI message to the most recently focused non-spec window that owns the open locations:      Error: timeout of 2000ms exceeded. Ensure the done() callback is being called in this test.

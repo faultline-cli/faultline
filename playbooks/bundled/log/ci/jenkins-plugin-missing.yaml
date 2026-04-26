@@ -61,6 +61,7 @@ match:
     - "Connection was broken"
     - "Job's timeout exceeded"
     - "No space left on device"
+    - "Error: Could not load plugin"
 workflow:
   likely_files:
     - Jenkinsfile

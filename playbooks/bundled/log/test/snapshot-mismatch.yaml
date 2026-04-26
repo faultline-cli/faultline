@@ -55,6 +55,7 @@ match:
     - golden file mismatch
     - does not match the expected snapshot
     - update snapshots
+    - "toMatchSnapshot"
 
 workflow:
   likely_files:

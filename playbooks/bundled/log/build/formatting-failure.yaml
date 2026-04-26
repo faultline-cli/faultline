@@ -24,10 +24,20 @@ match:
     - "clang-format.*error"
     - formatting issues found
     - "Code style issues found"
+    - "Line longer than 80 characters"
+    - "Line longer than 100 characters"
+    - "Line longer than 120 characters"
+    - "blanks-around-fences"
+    - "MD013"
+    - "MD031"
     - "Run.*--fix to"
     - "--write to fix"
     - check failed.*format
     - "format: FAIL"
+    - "Package size limit has exceeded"
+    - "Expected indentation of"
+    - "declaration-block-no-duplicate-properties"
+    - "Overfull hbox"
 hypothesis:
   supports:
     - signal: log.contains:linting

@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-045  (1 unmatched fixtures)
+# Suspected class: dependency-resolution  confidence: 0.40
+# Notes: Token patterns suggest a package or dependency resolution failure. (partial match)
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-dependency-resolution-cluster-045
+name: "dependency resolution (stub cluster-045)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - dependency-resolution
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # <n>) ngpackagesinstaller installlocaldependencies() when there is no local package marker should overwrite package.json wi
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

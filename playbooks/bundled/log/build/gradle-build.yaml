@@ -43,6 +43,7 @@ match:
     - "imported and not used"
     - "declared and not used"
     - "undefined: "
+    - "npm ERR!"
 workflow:
   likely_files:
     - build.gradle

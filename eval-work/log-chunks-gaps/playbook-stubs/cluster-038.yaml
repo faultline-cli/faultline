@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-038  (1 unmatched fixtures)
+# Suspected class: dependency-resolution  confidence: 0.40
+# Notes: Token patterns suggest a package or dependency resolution failure. (partial match)
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-dependency-resolution-cluster-038
+name: "dependency resolution (stub cluster-038)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - dependency-resolution
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # package size limit has exceeded by <n> b[39m package size: [1m[31m103.<n> kb[39m[22m size limit: [1m103 kb[22m [90m
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

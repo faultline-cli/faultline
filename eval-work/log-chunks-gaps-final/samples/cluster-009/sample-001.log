@@ -1,0 +1,1 @@
+Error found:         in module [33mMain[0m         at /home/travis/build/purescript/purescript/sdist-test/tests/purs/passing/Coercible.purs:6:1 - 6:28 (line 6, column 1 - line 6, column 28)                    Module [33mSafe.Coerce[0m was not found.           Make sure the source file exists, and that it has been provided as an input to the compiler.

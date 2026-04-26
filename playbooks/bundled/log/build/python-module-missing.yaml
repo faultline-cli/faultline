@@ -45,6 +45,8 @@ match:
     - "ImportError: No module named"
     - "cannot import name"
     - "No module named"
+  none:
+    - "gyp ERR!"
 workflow:
   likely_files:
     - requirements.txt

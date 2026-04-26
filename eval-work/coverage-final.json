@@ -1,0 +1,204 @@
+{
+  "coverage": {
+    "source": "log-chunks",
+    "total": 117,
+    "matched": 98,
+    "unmatched": 19,
+    "errors": 1,
+    "match_rate": 0.8376068376068376
+  },
+  "distribution": [
+    {
+      "failure_id": "junit-test-failure",
+      "count": 19,
+      "pct": 19.387755102040817
+    },
+    {
+      "failure_id": "syntax-error",
+      "count": 14,
+      "pct": 14.285714285714285
+    },
+    {
+      "failure_id": "formatting-failure",
+      "count": 12,
+      "pct": 12.244897959183673
+    },
+    {
+      "failure_id": "link-checker-failure",
+      "count": 7,
+      "pct": 7.142857142857142
+    },
+    {
+      "failure_id": "missing-executable",
+      "count": 7,
+      "pct": 7.142857142857142
+    },
+    {
+      "failure_id": "segfault",
+      "count": 7,
+      "pct": 7.142857142857142
+    },
+    {
+      "failure_id": "go-test-failure",
+      "count": 6,
+      "pct": 6.122448979591836
+    },
+    {
+      "failure_id": "alpine-debian-incompatibility",
+      "count": 3,
+      "pct": 3.061224489795918
+    },
+    {
+      "failure_id": "ssl-cert-error",
+      "count": 3,
+      "pct": 3.061224489795918
+    },
+    {
+      "failure_id": "build-input-file-missing",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "env-var-missing",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "network-timeout",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "test-assertion-with-reason",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "topology-boundary-crossed",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "typescript-compile",
+      "count": 2,
+      "pct": 2.0408163265306123
+    },
+    {
+      "failure_id": "cargo-compile-error",
+      "count": 1,
+      "pct": 1.0204081632653061
+    },
+    {
+      "failure_id": "dependency-removed-upstream",
+      "count": 1,
+      "pct": 1.0204081632653061
+    },
+    {
+      "failure_id": "docker-manifest-not-found",
+      "count": 1,
+      "pct": 1.0204081632653061
+    },
+    {
+      "failure_id": "eslint-failure",
+      "count": 1,
+      "pct": 1.0204081632653061
+    },
+    {
+      "failure_id": "maven-dependency-resolution",
+      "count": 1,
+      "pct": 1.0204081632653061
+    }
+  ],
+  "clusters": [
+    {
+      "tag": "0bbcd4ef",
+      "snippet": "beam_ssa.erl:127: import lists:umerge/1 is unused",
+      "count": 1
+    },
+    {
+      "tag": "2272ca91",
+      "snippet": "_________________________________ test_readme __________________________________[0m  source_root = posixpath('/home/trav",
+      "count": 1
+    },
+    {
+      "tag": "2327c072",
+      "snippet": "the locale dependent function fprintf(...) appears to be used: src/bitcoin-cli.cpp:                fprintf(stderr, \"rpc ",
+      "count": 1
+    },
+    {
+      "tag": "307d2546",
+      "snippet": "fail [39m[22m[27m[0m [2mtest/[22m[1mautoprefixer.test.js[22m ([0m[1m[41m11.3s[49m[22m[0m) [1m[31m  [1m● [1mhacks › s",
+      "count": 1
+    },
+    {
+      "tag": "3684447d",
+      "snippet": "the command \"test/run !\" exited with 1.",
+      "count": 1
+    },
+    {
+      "tag": "47db2471",
+      "snippet": "error found:         in module [33mmain[0m         at /home/travis/build/purescript/purescript/sdist-test/tests/purs/pas",
+      "count": 1
+    },
+    {
+      "tag": "6556c2ef",
+      "snippet": "getwithnullurl(retrofit2.requestfactorytest)  time elapsed: 0.007 sec   error! java.lang.illegalargumentexception: @url ",
+      "count": 1
+    },
+    {
+      "tag": "6759585f",
+      "snippet": "app/assets/javascripts/discourse/routes/about.js.es6",
+      "count": 1
+    },
+    {
+      "tag": "8f5a3d64",
+      "snippet": "[1;31muse io::interactive::is_interactive() instead of -t at line 69, column 28.  see page 218 of pbp.  (severity: 5)[0m",
+      "count": 1
+    },
+    {
+      "tag": "9d7988b7",
+      "snippet": "../xml/erl_parse.xml:72: element name: validity error : element marker is not declared in name list of possible children",
+      "count": 1
+    },
+    {
+      "tag": "a1e52136",
+      "snippet": "005+ error: stat1 do not match with stat2 at key value: 8  006+ error: stat1 do not match with stat2 at key value: atime",
+      "count": 1
+    },
+    {
+      "tag": "b300f02f",
+      "snippet": "the command \"$timeout 35m ci/build.sh\" exited with 124.",
+      "count": 1
+    },
+    {
+      "tag": "b51e8c39",
+      "snippet": "error                                                                                                              -----",
+      "count": 1
+    },
+    {
+      "tag": "c0ed01bb",
+      "snippet": "1) composertestrepositorycomposerrepositorytest::testcanonicalizeurl with data set #0 ('https://example.org/path/to/file",
+      "count": 1
+    },
+    {
+      "tag": "dbed32d9",
+      "snippet": "-\u003e reactivecocoa [31m -\u003e [0mreactivecocoa (10.0.0)      - warn  | file patterns: the `public_header_files` pattern did n",
+      "count": 1
+    },
+    {
+      "tag": "dda976d1",
+      "snippet": "latex warning: there were undefined references.",
+      "count": 1
+    },
+    {
+      "tag": "df1f4e99",
+      "snippet": "error[0m] [0m[0m/home/travis/build/akka/akka/akka-stream/src/main/scala/akka/stream/impl/reactivestreamscompliance.scala",
+      "count": 1
+    },
+    {
+      "tag": "fb682258",
+      "snippet": "** (throw) \"words not in order \"exjprop\" and \"ex_progress\"\"",
+      "count": 1
+    }
+  ]
+}

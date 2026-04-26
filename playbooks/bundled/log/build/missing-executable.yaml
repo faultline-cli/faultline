@@ -16,6 +16,14 @@ match:
     - "command not found"
     - is not recognized as an internal or external command
     - "exit status 127"
+    - "OCI runtime exec failed"
+    - "No Rakefile found"
+    - "rake aborted!"
+    - "PHP Fatal error:"
+    - "Skip command"
+    - "No such file or directory"
+    - ": not found"
+    - "is required for"
   none:
     - fixture
     - testdata

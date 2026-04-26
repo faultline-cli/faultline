@@ -1,0 +1,1 @@
+PHP Fatal error:  Class 'ComposerUtilResponse' not found in /home/travis/build/composer/composer/src/Composer/Util/RemoteFilesystem.php on line 286

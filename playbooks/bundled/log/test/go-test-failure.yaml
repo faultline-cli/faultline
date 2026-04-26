@@ -90,6 +90,7 @@ why_it_matters: |-
 match:
   any:
     - "--- FAIL:"
+    - "FAIL: Test"
     - "FAIL github.com/"
     - "Test ("
     - "TestIntegration"
@@ -98,6 +99,7 @@ match:
     - "#datastore"
     - "#api/http"
     - "#server"
+    - "=== RUN"
   none:
     - "WARNING: DATA RACE"
     - "DATA RACE"

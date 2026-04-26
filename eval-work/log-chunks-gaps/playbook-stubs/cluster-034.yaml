@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-034  (1 unmatched fixtures)
+# Suspected class: test-assertion  confidence: 0.38
+# Notes: Token patterns suggest a test assertion or expectation failure. (partial match)
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-test-assertion-cluster-034
+name: "test assertion (stub cluster-034)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - test-assertion
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # <n>) composertestutilstreamcontextfactorytest::testhttpsproxyoverride failed asserting that two arrays are equal. --- expe
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

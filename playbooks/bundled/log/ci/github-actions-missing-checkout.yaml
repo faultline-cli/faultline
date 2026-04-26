@@ -81,6 +81,7 @@ match:
     - "permission denied"
     - "EACCES"
     - "uses: actions/checkout"
+    - "fetch-depth"
 
 workflow:
   likely_files:

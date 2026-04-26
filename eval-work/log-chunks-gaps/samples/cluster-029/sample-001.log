@@ -1,0 +1,1 @@
+1) test reloads on every request (Phoenix.CodeReloaderTest)      [1m[30mtest/phoenix/code_reloader_test.exs:39[0m      [31m** (ArgumentError) argument error[0m      [36mcode: [0m:erlang.trace(pid, true, [:receive])      [36mstacktrace:[0m        :erlang.trace(nil, true, [:receive])        test/phoenix/code_reloader_test.exs:41: (test)

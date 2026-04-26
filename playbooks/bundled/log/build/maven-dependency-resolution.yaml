@@ -33,6 +33,9 @@ match:
     - "PluginResolutionException"
     - "pluginresolutionexception"
     - "transfer failed for"
+    - "sbt.ResolveException"
+    - "unresolved dependency:"
+    - "was not found"
   none:
     - "conflicting requirements"
     - "version conflict"

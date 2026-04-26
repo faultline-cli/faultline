@@ -105,6 +105,8 @@ match:
     - "SIGABRT"
     - "SIGBUS"
     - "signal: bus error"
+    - "AddressSanitizer:"
+    - "Access violation in generated code"
   none:
     - OOMKilled
     - "out of memory"

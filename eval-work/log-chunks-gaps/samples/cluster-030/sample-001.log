@@ -1,0 +1,1 @@
+../vendor/github.com/elastic/gosigar/sigar_darwin.go:12:10: fatal error: 'libproc.h' file not found  #include            ^~~~~~~~~~~  1 error generated.

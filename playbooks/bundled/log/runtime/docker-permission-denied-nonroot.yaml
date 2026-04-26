@@ -103,6 +103,9 @@ match:
     - "for relation"
     - "manage.py migrate"
     - "(publickey)"
+    - "using password:"
+    - "apparmor"
+    - "InRelease"
 
 workflow:
   likely_files:

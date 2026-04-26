@@ -77,7 +77,7 @@ match:
     - "no such image"
     - "invalid reference format"
     - "manifest unknown"
-    - "manifest for.*not found"
+    - "manifest for"
     - "no such manifest"
     - "tag.*not found"
 workflow:

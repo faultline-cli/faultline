@@ -18,6 +18,14 @@ match:
     - expected ';' before
     - "error: expected expression"
     - invalid syntax
+    - "Variable not in scope"
+    - "Not in scope:"
+    - "unknown type name"
+    - "Failed to load interface for"
+    - "Couldn't match type"
+    - "** (CompileError)"
+    - "Compilation failed"
+    - "undefined reference to"
 summary: |-
   The compiler or interpreter hit invalid source syntax and stopped before the
   build could continue.

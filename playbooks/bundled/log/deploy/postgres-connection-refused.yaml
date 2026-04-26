@@ -100,6 +100,7 @@ match:
   any:
     - "psql: error: could not connect"
     - "pg_isready.*rejecting"
+    - "could not translate host name"
   none:
     - "authentication failed"
     - "database.*does not exist"

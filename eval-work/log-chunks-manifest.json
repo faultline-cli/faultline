@@ -1,0 +1,9 @@
+{
+  "corpus_id": "log-chunks",
+  "created_at": "2026-04-26T03:39:36Z",
+  "input_sources": [
+    "log-chunks"
+  ],
+  "fixture_count": 117,
+  "overall_corpus_hash": "46161c3b6ddb33ba80625e535e4b223cb4028797479db3d156bb2b11b1a771ce"
+}

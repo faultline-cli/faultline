@@ -58,6 +58,8 @@ match:
     - "test exceeded"
     - "async test timed out"
     - "waiting for assertion"
+    - "exited with 1"
+    - "ms exceeded"
   none:
     - "ETIMEDOUT"
     - "read timeout"

@@ -18,7 +18,6 @@ match:
     - "shuffle"
     - "randomized"
     - "non-deterministic"
-    - "flaky"
     - "run with seed"
     - "Randomize order"
     - "randomizing"

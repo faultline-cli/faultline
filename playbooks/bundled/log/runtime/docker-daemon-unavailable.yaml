@@ -69,6 +69,7 @@ match:
     - "containerd failed"
     - "timeout waiting for containerd"
     - "daemon.*not running"
+    - "systemctl restart docker"
   none:
     - "permission denied while trying to connect to the Docker daemon socket"
     - "pull access denied"

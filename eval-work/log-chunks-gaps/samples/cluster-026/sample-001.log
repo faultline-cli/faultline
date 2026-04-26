@@ -1,0 +1,1 @@
+src/ShellCheck/Fixer.hs:38:10: error: [0m[ 6 of 19] Compiling Paths_ShellCheck ( dist/build/autogen/Paths_ShellCheck.hs, dist/build/Paths_ShellCheck.o ) [ 7 of 19] Compiling ShellCheck.Data  ( src/ShellCheck/Data.hs, dist/build/ShellCheck/Data.o ) [91m    Not in scope: type constructor or class `Semigroup'

@@ -118,6 +118,7 @@ match:
     - "ECONNREFUSED ::1:6379"
     - "[ioredis] Unhandled error event"
     - "ioredis unhandled error"
+    - "[ioredis]"
   none:
     - "NOAUTH Authentication required"
     - "WRONGPASS invalid username-password pair"

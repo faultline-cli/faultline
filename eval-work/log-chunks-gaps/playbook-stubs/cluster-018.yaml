@@ -1,0 +1,27 @@
+# Auto-generated stub for review — NOT production-ready.
+# Cluster: cluster-018  (1 unmatched fixtures)
+# Suspected class: missing-executable  confidence: 0.42
+# Notes: Token patterns suggest a missing binary or file. (partial match)
+#
+# TODO: Replace the pattern below with a real regex drawn from the sample logs.
+# TODO: Fill in links, remediation steps, and severity.
+# TODO: Remove this comment block when the playbook is production-ready.
+
+id: stub-missing-executable-cluster-018
+name: "missing executable (stub cluster-018)"
+description: "TODO: Describe the failure pattern."
+severity: error
+tags:
+  - missing-executable
+  - unverified-stub
+patterns:
+  - type: regex
+    value: "TODO: replace with a real regex"
+    # Representative error line (normalized):
+    # getwithnullurl(retrofit2.requestfactorytest) time elapsed: <n>.<n> sec error! java.lang.illegalargumentexception: @url
+evidence:
+  - type: log_line
+    label: "TODO: describe what to capture"
+    pattern: "TODO: replace with real pattern"
+links: []
+remediation: "TODO: add remediation guidance."

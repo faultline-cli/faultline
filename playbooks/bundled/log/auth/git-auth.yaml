@@ -58,6 +58,7 @@ match:
     - repository not found
     - "remote: invalid username or password"
     - "fatal: credential helper"
+    - "Fetching the repository"
   none:
     - Host key verification failed
     - "ssh: handshake failed"

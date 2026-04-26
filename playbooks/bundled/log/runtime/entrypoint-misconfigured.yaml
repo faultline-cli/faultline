@@ -24,6 +24,8 @@ match:
     - "starting container process caused"
     - "unable to start container"
     - "invalid ELF header"
+  none:
+    - "executable file not found in $PATH"
 hypothesis:
   supports:
     - signal: log.contains:OCI runtime exec failed

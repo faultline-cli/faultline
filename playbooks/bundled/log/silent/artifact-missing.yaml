@@ -59,6 +59,9 @@ match:
     - "Path does not exist"
     - "0 files uploaded"
     - "no artifacts"
+  none:
+    - "No artifacts will be uploaded"
+    - "No files were found with the provided path"
 workflow:
   likely_files:
     - ".github/workflows/*.yml"

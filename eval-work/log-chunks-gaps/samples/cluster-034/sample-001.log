@@ -1,0 +1,1 @@
+1) ComposerTestUtilStreamContextFactoryTest::testHttpsProxyOverride Failed asserting that two arrays are equal. --- Expected +++ Actual @@ @@  Array (      'http' => Array ( -        'proxy' => 'ssl://woopproxy.net:443' +        'proxy' => 'tcp://woopproxy.net:443'          'request_fulluri' => true

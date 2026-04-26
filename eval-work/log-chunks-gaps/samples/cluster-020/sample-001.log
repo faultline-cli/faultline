@@ -1,0 +1,1 @@
+** (CompileError) (for doctest at) lib/list.ex:102: undefined function i/1     (elixir 1.10.0-dev) src/elixir_locals.erl:108: :elixir_locals."-ensure_no_undefined_local/3-lc$^0/1-0-"/2     (elixir 1.10.0-dev) src/elixir_locals.erl:109: anonymous fn/3 in :elixir_locals.ensure_no_undefined_local/3

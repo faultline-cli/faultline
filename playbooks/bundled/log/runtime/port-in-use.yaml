@@ -50,6 +50,7 @@ match:
     - "bind: address already in use"
     - listen tcp
     - "EADDRINUSE"
+    - "lsof"
   none:
     - port conflict
     - cannot start service

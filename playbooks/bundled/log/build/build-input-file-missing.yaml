@@ -14,9 +14,11 @@ match:
     - "cannot stat"
     - "withBinaryFile: does not exist"
     - "does not exist (No such file or directory)"
+    - "{error,{enoent,"
+    - "file not found"
   none:
     - "exec /"
-    - "executable file not found in $PATH"
+    - "executable file not found"
     - "working directory not found"
     - "failed to change directory"
     - "chdir"
@@ -25,6 +27,7 @@ match:
     - "package-lock.json"
     - "yarn.lock"
     - "Dockerfile: no such file or directory"
+    - "in build context"
 summary: |-
   A build or lint step referenced a file that was never generated, was copied to the wrong path, or is missing from the repository checkout.
 diagnosis: |-

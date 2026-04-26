@@ -56,6 +56,9 @@ match:
     - "x509:"
     - ssl_error
     - certificate signed by unknown authority
+    - "subject alternative name"
+    - "SSL connect error"
+    - "handshake failure"
 why_it_matters: |-
   ## Why it matters
 
