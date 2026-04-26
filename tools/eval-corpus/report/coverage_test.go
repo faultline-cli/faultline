@@ -3,6 +3,7 @@ package report_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"strings"
 	"testing"
 
@@ -126,5 +127,93 @@ func TestDecodeResultsRoundTrip(t *testing.T) {
 		if r.FixtureID != original[i].FixtureID {
 			t.Errorf("[%d] FixtureID = %q, want %q", i, r.FixtureID, original[i].FixtureID)
 		}
+	}
+}
+
+// --- PrintJSON ---
+
+func TestPrintJSONProducesValidJSON(t *testing.T) {
+	results := []model.EvalResult{
+		{FixtureID: "a", Matched: true, FailureID: "docker-auth"},
+		{FixtureID: "b", Matched: false, FirstLineTag: "t1"},
+	}
+	rpt := report.Compute(results, 10)
+
+	var buf bytes.Buffer
+	if err := report.PrintJSON(&buf, rpt); err != nil {
+		t.Fatalf("PrintJSON: %v", err)
+	}
+
+	var decoded report.Report
+	if err := json.Unmarshal(buf.Bytes(), &decoded); err != nil {
+		t.Fatalf("unmarshal PrintJSON output: %v", err)
+	}
+	if decoded.Coverage.Total != 2 {
+		t.Errorf("decoded Total = %d, want 2", decoded.Coverage.Total)
+	}
+	if decoded.Coverage.Matched != 1 {
+		t.Errorf("decoded Matched = %d, want 1", decoded.Coverage.Matched)
+	}
+}
+
+func TestPrintJSONIsIndented(t *testing.T) {
+	rpt := report.Compute(nil, 10)
+	var buf bytes.Buffer
+	if err := report.PrintJSON(&buf, rpt); err != nil {
+		t.Fatalf("PrintJSON: %v", err)
+	}
+	if !strings.Contains(buf.String(), "\n") {
+		t.Error("expected indented JSON (with newlines)")
+	}
+}
+
+// --- LoadResults ---
+
+func TestLoadResultsFromFile(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/results.jsonl"
+	lines := `{"fixture_id":"aaa","matched":true,"failure_id":"docker-auth","confidence":0.9}
+{"fixture_id":"bbb","matched":false}
+`
+	if err := os.WriteFile(path, []byte(lines), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	results, err := report.LoadResults(path)
+	if err != nil {
+		t.Fatalf("LoadResults: %v", err)
+	}
+	if len(results) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(results))
+	}
+	if results[0].FixtureID != "aaa" {
+		t.Errorf("results[0].FixtureID = %q, want %q", results[0].FixtureID, "aaa")
+	}
+	if !results[0].Matched {
+		t.Errorf("results[0].Matched should be true")
+	}
+	if results[1].Matched {
+		t.Errorf("results[1].Matched should be false")
+	}
+}
+
+func TestLoadResultsMissingFile(t *testing.T) {
+	_, err := report.LoadResults("/tmp/__nonexistent_faultline_test__.jsonl")
+	if err == nil {
+		t.Fatal("expected error for missing file, got nil")
+	}
+}
+
+func TestLoadResultsEmptyFile(t *testing.T) {
+	dir := t.TempDir()
+	path := dir + "/empty.jsonl"
+	if err := os.WriteFile(path, []byte(""), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	results, err := report.LoadResults(path)
+	if err != nil {
+		t.Fatalf("LoadResults empty: %v", err)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 results for empty file, got %d", len(results))
 	}
 }

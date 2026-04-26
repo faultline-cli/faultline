@@ -273,3 +273,307 @@ func TestCloneEnvDiffCopiesEntries(t *testing.T) {
 		t.Fatal("expected blank key to be dropped")
 	}
 }
+
+// --- ratio ---
+
+func TestRatioZeroDenominatorReturnsZero(t *testing.T) {
+	if got := ratio(5, 0); got != 0 {
+		t.Errorf("expected 0 for zero denominator, got %f", got)
+	}
+}
+
+func TestRatioNegativeDenominatorReturnsZero(t *testing.T) {
+	if got := ratio(3, -1); got != 0 {
+		t.Errorf("expected 0 for negative denominator, got %f", got)
+	}
+}
+
+func TestRatioNormalCase(t *testing.T) {
+	if got := ratio(1, 2); got != 0.5 {
+		t.Errorf("expected 0.5, got %f", got)
+	}
+}
+
+func TestRatioClampsToOne(t *testing.T) {
+	if got := ratio(10, 3); got != 1.0 {
+		t.Errorf("expected 1.0 for num > denom, got %f", got)
+	}
+}
+
+// --- classifyDeltaFile ---
+
+func TestClassifyDeltaFileRuntimeToolchain(t *testing.T) {
+	kind, reason, score := classifyDeltaFile(".nvmrc")
+	if kind != "runtime_toolchain" {
+		t.Errorf("expected runtime_toolchain for .nvmrc, got %q", kind)
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
+	}
+	if score == 0 {
+		t.Error("expected non-zero score")
+	}
+}
+
+func TestClassifyDeltaFileEnvironment(t *testing.T) {
+	kind, _, score := classifyDeltaFile(".env")
+	if kind != "environment" {
+		t.Errorf("expected environment for .env, got %q", kind)
+	}
+	if score == 0 {
+		t.Error("expected non-zero score for environment file")
+	}
+}
+
+func TestClassifyDeltaFileTestFile(t *testing.T) {
+	kind, reason, score := classifyDeltaFile("main_test.go")
+	if kind != "test_data" {
+		t.Errorf("expected test_data for main_test.go, got %q", kind)
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
+	}
+	if score == 0 {
+		t.Error("expected non-zero score")
+	}
+}
+
+func TestClassifyDeltaFileSourceCode(t *testing.T) {
+	kind, reason, score := classifyDeltaFile("main.go")
+	if kind != "source_code" {
+		t.Errorf("expected source_code for main.go, got %q", kind)
+	}
+	if reason == "" {
+		t.Error("expected non-empty reason")
+	}
+	if score == 0 {
+		t.Error("expected non-zero score")
+	}
+}
+
+func TestClassifyDeltaFileUnknownReturnsEmpty(t *testing.T) {
+	kind, reason, score := classifyDeltaFile("somefile.xyz")
+	if kind != "" || reason != "" || score != 0 {
+		t.Errorf("expected empty classification for unknown file, got kind=%q reason=%q score=%f", kind, reason, score)
+	}
+}
+
+// --- buildDelta edge cases ---
+
+func TestBuildDeltaHotfixSignalPopulatesEnvironmentCause(t *testing.T) {
+	delta := buildDelta(&RepoState{
+		HotfixSignals: []string{"hotfix: revert broken deploy"},
+	})
+	if delta == nil {
+		t.Fatal("expected non-nil delta for hotfix signals")
+	}
+	found := false
+	for _, cause := range delta.Causes {
+		if cause.Kind == "environment" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected environment cause from hotfix signal, got %#v", delta.Causes)
+	}
+}
+
+func TestBuildDeltaDriftSignalPopulatesEnvironmentCause(t *testing.T) {
+	delta := buildDelta(&RepoState{
+		DriftSignals: []string{"config drift detected"},
+	})
+	if delta == nil {
+		t.Fatal("expected non-nil delta for drift signals")
+	}
+	found := false
+	for _, cause := range delta.Causes {
+		if cause.Kind == "environment" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected environment cause from drift signal, got %#v", delta.Causes)
+	}
+}
+
+func TestBuildDeltaReturnsNilForAllEmptyState(t *testing.T) {
+	delta := buildDelta(&RepoState{})
+	if delta != nil {
+		t.Fatalf("expected nil delta for empty state, got %#v", delta)
+	}
+}
+
+func TestBuildDeltaVersionDefaultsWhenWeightsHaveVersion(t *testing.T) {
+	delta := buildDelta(&RepoState{
+		ChangedFiles: []string{"go.mod"},
+	})
+	if delta == nil {
+		t.Fatal("expected non-nil delta")
+	}
+	if delta.Version == "" {
+		t.Error("expected non-empty version in delta")
+	}
+}
+
+// --- buildDeltaSignals ---
+
+func TestBuildDeltaSignalsIncludesErrorsAdded(t *testing.T) {
+	signals := buildDeltaSignals(&RepoState{
+		ErrorsAdded: []string{"error: module not found"},
+	})
+	found := false
+	for _, s := range signals {
+		if s.ID == "delta.error.new" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected delta.error.new signal for ErrorsAdded, got %#v", signals)
+	}
+}
+
+func TestBuildDeltaSignalsNilStateReturnsNil(t *testing.T) {
+	if got := buildDeltaSignals(nil); got != nil {
+		t.Fatalf("expected nil for nil state, got %#v", got)
+	}
+}
+
+// --- logMatchCoverage ---
+
+func TestLogMatchCoverageSourceDetector(t *testing.T) {
+	result := model.Result{
+		Detector: "source",
+		Playbook: model.Playbook{
+			Source: model.SourceSpec{
+				Triggers: []model.SignalMatcher{
+					{ID: "missing-error-check"},
+					{ID: "unhandled-error"},
+				},
+			},
+		},
+		EvidenceBy: model.EvidenceBundle{
+			Triggers: []model.Evidence{
+				{Detail: "missing-error-check at line 42"},
+			},
+		},
+	}
+	got := logMatchCoverage(Inputs{}, result)
+	// 1 trigger evidence / 2 total triggers = 0.5
+	if got != 0.5 {
+		t.Errorf("expected 0.5 for source detector with 1/2 triggers, got %f", got)
+	}
+}
+
+func TestLogMatchCoverageSourceDetectorNoTriggers(t *testing.T) {
+	result := model.Result{
+		Detector: "source",
+		Playbook: model.Playbook{
+			Source: model.SourceSpec{Triggers: nil},
+		},
+	}
+	got := logMatchCoverage(Inputs{}, result)
+	if got != 0 {
+		t.Errorf("expected 0 for source detector with no triggers defined, got %f", got)
+	}
+}
+
+func TestLogMatchCoverageUnknownDetectorReturnsZero(t *testing.T) {
+	result := model.Result{Detector: "other"}
+	got := logMatchCoverage(Inputs{}, result)
+	if got != 0 {
+		t.Errorf("expected 0 for unknown detector, got %f", got)
+	}
+}
+
+// --- deltaPlaybookFeatures ---
+
+func TestDeltaPlaybookFeaturesNotRequestedReturnsNil(t *testing.T) {
+	result := model.Result{
+		Playbook: model.Playbook{ID: "some-playbook", RequiresDelta: true},
+	}
+	got := deltaPlaybookFeatures(Inputs{DeltaRequested: false}, result, nil)
+	if got != nil {
+		t.Fatalf("expected nil features when DeltaRequested=false, got %#v", got)
+	}
+}
+
+// --- Bayes scoring regression guard ---
+//
+// This test pins the ordering and key structural properties of the Bayes
+// scorer for a well-defined input. It will fail if the scoring logic regresses
+// in a way that changes result ordering or removes ranking metadata.
+
+func TestBayesScoringRegressionGuard(t *testing.T) {
+	line := "npm ci can only install packages when your package.json and package-lock.json"
+	results := []model.Result{
+		{
+			Playbook: model.Playbook{
+				ID:         "npm-lockfile-mismatch",
+				Title:      "npm lockfile out of sync",
+				Category:   "build",
+				StageHints: []string{"build"},
+				Tags:       []string{"npm", "lockfile"},
+				Match: model.MatchSpec{
+					Any: []string{"npm ci can only install packages when your package.json and package-lock.json"},
+				},
+				Workflow: model.WorkflowSpec{
+					LikelyFiles: []string{"package.json", "package-lock.json"},
+				},
+			},
+			Detector:   "log",
+			Score:      4.0,
+			Confidence: 0.88,
+			Evidence:   []string{line},
+		},
+		{
+			Playbook: model.Playbook{
+				ID:       "npm-peer-conflict",
+				Title:    "npm peer dependency conflict",
+				Category: "build",
+				Tags:     []string{"npm"},
+			},
+			Detector:   "log",
+			Score:      1.5,
+			Confidence: 0.45,
+		},
+	}
+	scored, delta, err := Score(Inputs{
+		Context: model.Context{Stage: "build"},
+		Lines: []model.Line{
+			{Original: line, Normalized: normalizeText(line)},
+		},
+		Results: results,
+		RepoState: &RepoState{
+			ChangedFiles: []string{"package.json", "package-lock.json"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Score: %v", err)
+	}
+	// Top result must remain npm-lockfile-mismatch after Bayes scoring.
+	if scored[0].Playbook.ID != "npm-lockfile-mismatch" {
+		t.Fatalf("regression: expected npm-lockfile-mismatch to remain top, got %s", scored[0].Playbook.ID)
+	}
+	// Bayes must always attach a Ranking payload.
+	if scored[0].Ranking == nil {
+		t.Fatal("regression: expected Ranking payload on top result")
+	}
+	if scored[0].Ranking.Mode != ModeBayes {
+		t.Fatalf("regression: expected mode %q, got %q", ModeBayes, scored[0].Ranking.Mode)
+	}
+	// Good-evidence candidate should never score lower than its baseline after Bayes.
+	if scored[0].Ranking.FinalScore < scored[0].Ranking.BaselineScore {
+		t.Fatalf("regression: FinalScore %.2f < BaselineScore %.2f for well-matched candidate", scored[0].Ranking.FinalScore, scored[0].Ranking.BaselineScore)
+	}
+	// Delta must be populated when changed files are present.
+	if delta == nil {
+		t.Fatal("regression: expected non-nil delta for changed repo state")
+	}
+	// Version field must be stable and non-empty.
+	if scored[0].Ranking.Version == "" {
+		t.Fatal("regression: Ranking.Version must be set")
+	}
+}

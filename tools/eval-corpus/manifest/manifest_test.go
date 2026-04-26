@@ -1,6 +1,8 @@
 package manifest_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -112,5 +114,83 @@ func TestHashFileMatchesContent(t *testing.T) {
 	}
 	if len(h1) != 64 {
 		t.Errorf("HashFile len = %d, want 64 (SHA-256 hex)", len(h1))
+	}
+}
+
+// --- BuildFromFile ---
+
+func TestBuildFromFileProducesManifest(t *testing.T) {
+	tmp := filepath.Join(t.TempDir(), "corpus.jsonl")
+	if err := os.WriteFile(tmp, []byte(sampleCorpus), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	m, err := manifest.BuildFromFile(tmp, "file-corpus", "cfg-abc", "v0.1.0")
+	if err != nil {
+		t.Fatalf("BuildFromFile: %v", err)
+	}
+	if m.FixtureCount != 3 {
+		t.Errorf("FixtureCount = %d, want 3", m.FixtureCount)
+	}
+	if m.CorpusID != "file-corpus" {
+		t.Errorf("CorpusID = %q, want %q", m.CorpusID, "file-corpus")
+	}
+}
+
+func TestBuildFromFileMissingFileErrors(t *testing.T) {
+	_, err := manifest.BuildFromFile("/tmp/__nonexistent_faultline_manifest__.jsonl", "c", "", "")
+	if err == nil {
+		t.Fatal("expected error for missing file")
+	}
+}
+
+func TestBuildFromFileHashMatchesBuild(t *testing.T) {
+	tmp := filepath.Join(t.TempDir(), "corpus.jsonl")
+	if err := os.WriteFile(tmp, []byte(sampleCorpus), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	fromFile, err := manifest.BuildFromFile(tmp, "c", "", "")
+	if err != nil {
+		t.Fatalf("BuildFromFile: %v", err)
+	}
+	fromReader, err := manifest.Build(strings.NewReader(sampleCorpus), "c", "", "")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	if fromFile.OverallCorpusHash != fromReader.OverallCorpusHash {
+		t.Errorf("hash mismatch: file=%q reader=%q", fromFile.OverallCorpusHash, fromReader.OverallCorpusHash)
+	}
+}
+
+// --- Write ---
+
+func TestWriteProducesValidJSON(t *testing.T) {
+	r := strings.NewReader(sampleCorpus)
+	m, err := manifest.Build(r, "w-corpus", "cfg", "v1")
+	if err != nil {
+		t.Fatalf("Build: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := manifest.Write(&buf, m); err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	var decoded manifest.Manifest
+	if err := json.Unmarshal(buf.Bytes(), &decoded); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if decoded.FixtureCount != m.FixtureCount {
+		t.Errorf("FixtureCount = %d, want %d", decoded.FixtureCount, m.FixtureCount)
+	}
+	if decoded.CorpusID != "w-corpus" {
+		t.Errorf("CorpusID = %q, want w-corpus", decoded.CorpusID)
+	}
+}
+
+func TestWriteIsIndented(t *testing.T) {
+	r := strings.NewReader(sampleCorpus)
+	m, _ := manifest.Build(r, "c", "", "")
+	var buf bytes.Buffer
+	_ = manifest.Write(&buf, m)
+	if !strings.Contains(buf.String(), "\n") {
+		t.Error("expected indented JSON output")
 	}
 }

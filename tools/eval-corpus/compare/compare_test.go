@@ -1,10 +1,14 @@
 package compare_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"faultline/tools/eval-corpus/compare"
 	"faultline/tools/eval-corpus/model"
+	"faultline/tools/eval-corpus/report"
 )
 
 func makeResult(id string, matched bool, failureID string) model.EvalResult {
@@ -142,5 +146,253 @@ func TestCompareDeterministicOutput(t *testing.T) {
 	}
 	if r1.Delta != r2.Delta {
 		t.Error("Delta differs between runs")
+	}
+}
+
+// --- AttachNondeterminism ---
+
+func TestAttachNondeterminismDoesNothingForNoDifferences(t *testing.T) {
+	det := report.DeterminismResult{Deterministic: true}
+	res := &compare.Result{Pass: true}
+	compare.AttachNondeterminism(res, det, compare.Options{})
+	if len(res.NondeterministicFixtureIDs) != 0 {
+		t.Errorf("expected no non-deterministic IDs, got %v", res.NondeterministicFixtureIDs)
+	}
+	if !res.Pass {
+		t.Error("expected Pass to remain true")
+	}
+}
+
+func TestAttachNondeterminismPopulatesIDs(t *testing.T) {
+	det := report.DeterminismResult{
+		Deterministic: false,
+		Differences: []report.Difference{
+			{FixtureID: "fix-aaa", Field: "matched"},
+			{FixtureID: "fix-bbb", Field: "failure_id"},
+			{FixtureID: "fix-aaa", Field: "confidence"}, // duplicate — should be deduplicated
+		},
+	}
+	res := &compare.Result{Pass: true}
+	compare.AttachNondeterminism(res, det, compare.Options{})
+	if len(res.NondeterministicFixtureIDs) != 2 {
+		t.Errorf("expected 2 unique IDs, got %v", res.NondeterministicFixtureIDs)
+	}
+}
+
+func TestAttachNondeterminismSkipsFixtureIDField(t *testing.T) {
+	det := report.DeterminismResult{
+		Deterministic: false,
+		Differences: []report.Difference{
+			{FixtureID: "fix-aaa", Field: "fixture_id"}, // should be skipped
+		},
+	}
+	res := &compare.Result{Pass: true}
+	compare.AttachNondeterminism(res, det, compare.Options{})
+	if len(res.NondeterministicFixtureIDs) != 0 {
+		t.Errorf("expected 0 IDs (fixture_id field skipped), got %v", res.NondeterministicFixtureIDs)
+	}
+}
+
+func TestAttachNondeterminismFailsGateWhenEnabled(t *testing.T) {
+	det := report.DeterminismResult{
+		Deterministic: false,
+		Differences: []report.Difference{
+			{FixtureID: "fix-aaa", Field: "matched"},
+		},
+	}
+	res := &compare.Result{Pass: true}
+	compare.AttachNondeterminism(res, det, compare.Options{FailOnNewNondeterminism: true})
+	if res.Pass {
+		t.Error("expected Pass=false when FailOnNewNondeterminism is set")
+	}
+	if len(res.FailReasons) == 0 {
+		t.Error("expected at least one fail reason")
+	}
+}
+
+func TestAttachNondeterminismDoesNotFailGateWhenDisabled(t *testing.T) {
+	det := report.DeterminismResult{
+		Deterministic: false,
+		Differences: []report.Difference{
+			{FixtureID: "fix-aaa", Field: "matched"},
+		},
+	}
+	res := &compare.Result{Pass: true}
+	compare.AttachNondeterminism(res, det, compare.Options{FailOnNewNondeterminism: false})
+	if !res.Pass {
+		t.Error("expected Pass to remain true when FailOnNewNondeterminism is disabled")
+	}
+}
+
+// --- PrintTextReport ---
+
+func TestPrintTextReportPass(t *testing.T) {
+	res := compare.Result{
+		Pass:              true,
+		GeneratedAt:       "2026-04-26T00:00:00Z",
+		BaselineTotal:     10,
+		CurrentTotal:      10,
+		BaselineMatchRate: 0.70,
+		CurrentMatchRate:  0.80,
+		Delta:             0.10,
+	}
+	var buf bytes.Buffer
+	compare.PrintTextReport(&buf, res)
+	out := buf.String()
+	if !strings.Contains(out, "Gate: PASS") {
+		t.Errorf("expected 'Gate: PASS' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "70.00%") {
+		t.Errorf("expected baseline rate in output:\n%s", out)
+	}
+}
+
+func TestPrintTextReportFail(t *testing.T) {
+	res := compare.Result{
+		Pass:              false,
+		GeneratedAt:       "2026-04-26T00:00:00Z",
+		BaselineTotal:     10,
+		CurrentTotal:      10,
+		BaselineMatchRate: 0.80,
+		CurrentMatchRate:  0.60,
+		Delta:             -0.20,
+		FailReasons:       []string{"coverage dropped by 0.2000"},
+	}
+	var buf bytes.Buffer
+	compare.PrintTextReport(&buf, res)
+	out := buf.String()
+	if !strings.Contains(out, "Gate: FAIL") {
+		t.Errorf("expected 'Gate: FAIL' in output:\n%s", out)
+	}
+	if !strings.Contains(out, "coverage dropped") {
+		t.Errorf("expected fail reason in output:\n%s", out)
+	}
+}
+
+func TestPrintTextReportIncludesLostAndGainedPlaybooks(t *testing.T) {
+	res := compare.Result{
+		Pass:              false,
+		BaselineMatchRate: 0.8,
+		CurrentMatchRate:  0.7,
+		Delta:             -0.1,
+		PlaybooksLostMatches: []compare.PlaybookDelta{
+			{FailureID: "docker-auth", BaselineCount: 5, CurrentCount: 3, Delta: -2},
+		},
+		PlaybooksGainedMatches: []compare.PlaybookDelta{
+			{FailureID: "missing-exec", BaselineCount: 1, CurrentCount: 3, Delta: 2},
+		},
+		NondeterministicFixtureIDs: []string{"fix-abc"},
+	}
+	var buf bytes.Buffer
+	compare.PrintTextReport(&buf, res)
+	out := buf.String()
+	if !strings.Contains(out, "docker-auth") {
+		t.Errorf("expected docker-auth in lost playbooks:\n%s", out)
+	}
+	if !strings.Contains(out, "missing-exec") {
+		t.Errorf("expected missing-exec in gained playbooks:\n%s", out)
+	}
+	if !strings.Contains(out, "fix-abc") {
+		t.Errorf("expected non-deterministic fixture in output:\n%s", out)
+	}
+}
+
+// --- PrintMarkdownReport ---
+
+func TestPrintMarkdownReportPass(t *testing.T) {
+	res := compare.Result{
+		Pass:              true,
+		GeneratedAt:       "2026-04-26T00:00:00Z",
+		BaselineTotal:     10,
+		CurrentTotal:      12,
+		BaselineMatchRate: 0.70,
+		CurrentMatchRate:  0.75,
+		Delta:             0.05,
+	}
+	var buf bytes.Buffer
+	compare.PrintMarkdownReport(&buf, res)
+	out := buf.String()
+	if !strings.Contains(out, "✅ PASS") {
+		t.Errorf("expected PASS status in markdown output:\n%s", out)
+	}
+	if !strings.Contains(out, "## Coverage") {
+		t.Errorf("expected Coverage section:\n%s", out)
+	}
+}
+
+func TestPrintMarkdownReportFail(t *testing.T) {
+	res := compare.Result{
+		Pass:              false,
+		GeneratedAt:       "2026-04-26T00:00:00Z",
+		BaselineTotal:     10,
+		CurrentTotal:      10,
+		BaselineMatchRate: 0.80,
+		CurrentMatchRate:  0.60,
+		Delta:             -0.20,
+		FailReasons:       []string{"coverage dropped by 0.2000"},
+		PlaybooksLostMatches: []compare.PlaybookDelta{
+			{FailureID: "docker-auth", BaselineCount: 4, CurrentCount: 2, Delta: -2},
+		},
+		PlaybooksGainedMatches: []compare.PlaybookDelta{
+			{FailureID: "new-failure", BaselineCount: 0, CurrentCount: 2, Delta: 2},
+		},
+	}
+	var buf bytes.Buffer
+	compare.PrintMarkdownReport(&buf, res)
+	out := buf.String()
+	if !strings.Contains(out, "❌ FAIL") {
+		t.Errorf("expected FAIL status:\n%s", out)
+	}
+	if !strings.Contains(out, "docker-auth") {
+		t.Errorf("expected docker-auth in lost section:\n%s", out)
+	}
+	if !strings.Contains(out, "new-failure") {
+		t.Errorf("expected new-failure in gained section:\n%s", out)
+	}
+	if !strings.Contains(out, "## Gate Failures") {
+		t.Errorf("expected Gate Failures section:\n%s", out)
+	}
+}
+
+// --- WriteJSON ---
+
+func TestWriteJSONProducesValidJSON(t *testing.T) {
+	res := compare.Result{
+		Pass:              true,
+		GeneratedAt:       "2026-04-26T00:00:00Z",
+		BaselineTotal:     5,
+		CurrentTotal:      5,
+		BaselineMatchRate: 0.60,
+		CurrentMatchRate:  0.80,
+		Delta:             0.20,
+	}
+	var buf bytes.Buffer
+	if err := compare.WriteJSON(&buf, res); err != nil {
+		t.Fatalf("WriteJSON: %v", err)
+	}
+	var decoded compare.Result
+	if err := json.Unmarshal(buf.Bytes(), &decoded); err != nil {
+		t.Fatalf("unmarshal WriteJSON output: %v", err)
+	}
+	if decoded.Pass != res.Pass {
+		t.Errorf("Pass = %v, want %v", decoded.Pass, res.Pass)
+	}
+	if decoded.BaselineTotal != res.BaselineTotal {
+		t.Errorf("BaselineTotal = %d, want %d", decoded.BaselineTotal, res.BaselineTotal)
+	}
+	if decoded.Delta != res.Delta {
+		t.Errorf("Delta = %v, want %v", decoded.Delta, res.Delta)
+	}
+}
+
+func TestWriteJSONIsIndented(t *testing.T) {
+	res := compare.Result{Pass: true}
+	var buf bytes.Buffer
+	if err := compare.WriteJSON(&buf, res); err != nil {
+		t.Fatalf("WriteJSON: %v", err)
+	}
+	// Indented JSON contains newlines
+	if !strings.Contains(buf.String(), "\n") {
+		t.Error("expected indented JSON output with newlines")
 	}
 }

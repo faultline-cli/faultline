@@ -561,3 +561,126 @@ func TestRivalryKeyUsesEvidenceWhenNoHypothesis(t *testing.T) {
 		t.Fatal("expected non-empty rivalry key with evidence")
 	}
 }
+
+// --- unionSignal via registry ---
+
+func TestUnionSignalMatchesWhenAnyChildMatches(t *testing.T) {
+	// dependency.lockfile.sync_error is a unionSignal over several child signals.
+	// Trigger the npm child signal.
+	env := newTestEnv(makeLines(
+		"npm ci can only install packages when your package.json and package-lock.json",
+	), "", nil)
+	result := env.evaluate("dependency.lockfile.sync_error")
+	if !result.matched {
+		t.Fatal("expected dependency.lockfile.sync_error to match via npm child signal")
+	}
+	if len(result.evidence) == 0 {
+		t.Error("expected evidence from union child match")
+	}
+}
+
+func TestUnionSignalNoMatchWhenNoChildMatches(t *testing.T) {
+	env := newTestEnv(makeLines("everything is fine, build passed"), "", nil)
+	result := env.evaluate("dependency.lockfile.sync_error")
+	if result.matched {
+		t.Fatal("expected dependency.lockfile.sync_error to not match when no child signals present")
+	}
+}
+
+func TestUnionSignalDeduplicatesEvidence(t *testing.T) {
+	// Both npm and pnpm signals could emit evidence; union should dedup overlapping lines.
+	env := newTestEnv(makeLines(
+		"npm ci can only install packages when your package.json and package-lock.json",
+		"err_pnpm_outdated_lockfile",
+	), "", nil)
+	result := env.evaluate("dependency.lockfile.sync_error")
+	if !result.matched {
+		t.Fatal("expected match with multiple child signals present")
+	}
+	seen := map[string]int{}
+	for _, e := range result.evidence {
+		seen[e]++
+		if seen[e] > 1 {
+			t.Errorf("duplicate evidence line in union result: %q", e)
+		}
+	}
+}
+
+func TestUnionSignalRuntimeVersionMismatch(t *testing.T) {
+	// runtime.version.mismatch unions node + language version signals.
+	env := newTestEnv(makeLines(
+		`the engine "node" is incompatible with this module`,
+	), "", nil)
+	result := env.evaluate("runtime.version.mismatch")
+	if !result.matched {
+		t.Fatal("expected runtime.version.mismatch to match via node child signal")
+	}
+}
+
+// --- deltaSignal via registry ---
+
+func TestDeltaSignalMatchesWhenPresent(t *testing.T) {
+	// dependency.lockfile.changed is built from deltaSignal targeting delta.dependency.changed.
+	env := newEnvironment(nil, model.Context{}, &model.Delta{
+		Signals: []model.DeltaSignal{
+			{ID: "delta.dependency.changed", Detail: "package.json changed"},
+		},
+	})
+	result := env.evaluate("dependency.lockfile.changed")
+	if !result.matched {
+		t.Fatal("expected dependency.lockfile.changed to match when delta.dependency.changed is present")
+	}
+	if len(result.evidence) == 0 {
+		t.Error("expected evidence from delta signal detail")
+	}
+}
+
+func TestDeltaSignalNoMatchWhenAbsent(t *testing.T) {
+	env := newEnvironment(nil, model.Context{}, nil)
+	result := env.evaluate("dependency.lockfile.changed")
+	if result.matched {
+		t.Fatal("expected dependency.lockfile.changed to not match when delta signal absent")
+	}
+}
+
+func TestDeltaSignalTestFailureIntroduced(t *testing.T) {
+	env := newEnvironment(nil, model.Context{}, &model.Delta{
+		Signals: []model.DeltaSignal{
+			{ID: "delta.test.failure.introduced", Detail: "TestFoo newly failing"},
+		},
+	})
+	result := env.evaluate("test.failure.introduced")
+	if !result.matched {
+		t.Fatal("expected test.failure.introduced to match when delta signal present")
+	}
+	if len(result.evidence) == 0 || result.evidence[0] != "TestFoo newly failing" {
+		t.Errorf("expected evidence %q, got %v", "TestFoo newly failing", result.evidence)
+	}
+}
+
+func TestDeltaSignalErrorNew(t *testing.T) {
+	env := newEnvironment(nil, model.Context{}, &model.Delta{
+		Signals: []model.DeltaSignal{
+			{ID: "delta.error.new", Detail: "TypeError: cannot read property 'x' of undefined"},
+		},
+	})
+	result := env.evaluate("error.new")
+	if !result.matched {
+		t.Fatal("expected error.new to match when delta.error.new signal is present")
+	}
+}
+
+func TestDeltaSignalNoEvidenceWhenDetailEmpty(t *testing.T) {
+	env := newEnvironment(nil, model.Context{}, &model.Delta{
+		Signals: []model.DeltaSignal{
+			{ID: "delta.dependency.changed", Detail: "   "},
+		},
+	})
+	result := env.evaluate("dependency.lockfile.changed")
+	if !result.matched {
+		t.Fatal("expected match even when detail is blank")
+	}
+	if len(result.evidence) != 0 {
+		t.Errorf("expected no evidence for blank detail, got %v", result.evidence)
+	}
+}

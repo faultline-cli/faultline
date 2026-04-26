@@ -1,6 +1,8 @@
 package report_test
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 
 	"faultline/tools/eval-corpus/model"
@@ -75,5 +77,69 @@ func TestCheckDeterminismIgnoresDurationMS(t *testing.T) {
 	dr := report.CheckDeterminism(baseline, compare)
 	if !dr.Deterministic {
 		t.Errorf("DurationMS should be excluded from determinism check, got diffs: %v", dr.Differences)
+	}
+}
+
+// --- PrintDeterminismText ---
+
+func TestPrintDeterminismTextDeterministic(t *testing.T) {
+	dr := report.DeterminismResult{
+		Deterministic: true,
+		BaselineCount: 10,
+		CompareCount:  10,
+	}
+	var buf bytes.Buffer
+	report.PrintDeterminismText(&buf, dr)
+	out := buf.String()
+	if !strings.Contains(out, "DETERMINISTIC") {
+		t.Errorf("expected DETERMINISTIC in output:\n%s", out)
+	}
+	if !strings.Contains(out, "Determinism Check") {
+		t.Errorf("expected header in output:\n%s", out)
+	}
+}
+
+func TestPrintDeterminismTextNonDeterministic(t *testing.T) {
+	dr := report.DeterminismResult{
+		Deterministic: false,
+		BaselineCount: 5,
+		CompareCount:  5,
+		Differences: []report.Difference{
+			{FixtureID: "aaa111222333", Field: "matched", Baseline: true, Compare: false},
+			{FixtureID: "bbb444555666", Field: "failure_id", Baseline: "docker-auth", Compare: ""},
+		},
+	}
+	var buf bytes.Buffer
+	report.PrintDeterminismText(&buf, dr)
+	out := buf.String()
+	if !strings.Contains(out, "NON-DETERMINISTIC") {
+		t.Errorf("expected NON-DETERMINISTIC in output:\n%s", out)
+	}
+	if !strings.Contains(out, "matched") {
+		t.Errorf("expected 'matched' field in output:\n%s", out)
+	}
+}
+
+func TestPrintDeterminismTextTruncatesLongDiffList(t *testing.T) {
+	diffs := make([]report.Difference, 25)
+	for i := range diffs {
+		diffs[i] = report.Difference{
+			FixtureID: strings.Repeat("a", 12+i%3), // valid fixture IDs >=12 chars
+			Field:     "matched",
+			Baseline:  true,
+			Compare:   false,
+		}
+	}
+	dr := report.DeterminismResult{
+		Deterministic: false,
+		BaselineCount: 25,
+		CompareCount:  25,
+		Differences:   diffs,
+	}
+	var buf bytes.Buffer
+	report.PrintDeterminismText(&buf, dr)
+	out := buf.String()
+	if !strings.Contains(out, "and") || !strings.Contains(out, "more") {
+		t.Errorf("expected truncation message for >20 diffs:\n%s", out)
 	}
 }
