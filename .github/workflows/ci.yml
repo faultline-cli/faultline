@@ -21,8 +21,17 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Run tests
-        run: make test
+      - name: Run tests with coverage
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic
+
+      - name: Report coverage summary
+        run: go tool cover -func=coverage.out | tail -1
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.out
+          fail_ci_if_error: false
 
       - name: Review bundled playbook conflicts
         run: make review

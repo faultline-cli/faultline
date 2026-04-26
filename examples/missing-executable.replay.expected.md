@@ -1,7 +1,7 @@
 # Required executable or runtime binary missing
 
 - ID: `missing-executable`
-- Confidence: 57%
+- Confidence: 56%
 - Category: build
 - Severity: high
 - Score: 2.10
@@ -17,7 +17,7 @@ The job tried to launch a required tool or runtime binary, but that executable w
 
 ## Confidence Breakdown
 
-- reported confidence: 57%
+- reported confidence: 56%
 - detector score: 2.10
 
 ## Suggested Fix

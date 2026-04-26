@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![170 playbooks](https://img.shields.io/badge/playbooks-170-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![174 real fixtures](https://img.shields.io/badge/real_fixtures-174-informational)](docs/fixture-corpus.md) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-7.3%25-lightgrey)](eval-work/coverage.md)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![170 playbooks](https://img.shields.io/badge/playbooks-170-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-79.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-7.3%25-lightgrey)](eval-work/coverage.md)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
@@ -28,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.5.0+** — 170 bundled playbooks · 174 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
+**v0.4.1+** — 170 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
 
 ## ⚡ Install
 
@@ -91,7 +91,7 @@ Add a single step to your failure path. The CLI contract is identical in CI and 
 - name: Diagnose failure
   if: failure()
   run: |
-    VERSION=v0.5.0 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+    VERSION=v0.4.1 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
     faultline analyze build.log --json > faultline-analysis.json
     faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
@@ -118,15 +118,16 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 }
 ```
 
-## ◆ What's new in v0.5.0
+## ◆ What's new in v0.4.1
 
-**Broadest catalog to date.** 28 new playbooks filling the remaining gaps from the top-100 CI failure analysis.
+**Corpus expansion and coverage hardening.** 54 new real fixtures raising the accepted corpus from 174 to 228 — without any change to the bundled playbook count.
 
-- **170 bundled playbooks**, up from 142 in v0.4.0. New coverage: `line-ending`, `git-submodule-not-initialized`, `timezone-diff`, `process-killed-no-logs`, `expired-credentials`, `config-file-missing`, `invalid-config-schema`, `formatting-failure`, `build-output-path-mismatch`, `registry-outage`, `symlink-in-ci`, `encoding-unicode`, `cli-flag-changed`, `dependency-removed-upstream`, `workflow-not-triggered`, `step-skipped-unexpectedly`, `orphaned-resources`, `remote-cache-miss`, `base-image-breaking-change`, `multistage-build-missing-artifact`, `volume-mount-issue`, `entrypoint-misconfigured`, `shell-sh-vs-bash`, `alpine-debian-incompatibility`, `clock-drift`, `random-seed-not-fixed`, `proxy-configuration`, `ipv6-ipv4-resolution`
-- **174 accepted real fixtures** with zero unmatched and zero false positives — validated against real CI logs from GitHub, GitLab, Reddit, Discourse, and Stack Exchange
-- **Top-1 accuracy 1.000** maintained across the expanded catalog
+- **170 bundled playbooks** (unchanged from v0.4.0)
+- **228 accepted real fixtures**, up from 174 in v0.4.0. New coverage spans artifact upload failures, connection-refused across MySQL/Redis/Postgres, docker-daemon-unavailable, env-var-missing, pip-install-failure, permission-denied, runtime-mismatch, and more — sourced from GitHub, GitLab, Stack Exchange, Reddit, and Discourse
+- **Top-1 accuracy 1.000** maintained across the expanded corpus with zero false positives
+- **Go test coverage 79.7%** — now tracked and reported in CI
 
-Full release notes: [docs/releases/v0.5.0.md](docs/releases/v0.5.0.md)
+Full release notes: [docs/releases/v0.4.1.md](docs/releases/v0.4.1.md)
 
 ## ◈ Free vs Team
 
@@ -172,7 +173,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 ```
 
 ```bash
-VERSION=v0.5.0
+VERSION=v0.4.1
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

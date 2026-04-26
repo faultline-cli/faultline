@@ -4,13 +4,13 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 101
-- Accepted real fixtures: 153
-- Top-1 match rate: 100% (153/153)
-- Top-3 match rate: 100% (153/153)
+- Bundled playbooks: 170
+- Accepted real fixtures: 228
+- Top-1 match rate: 100% (228/228)
+- Top-3 match rate: 100% (228/228)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 0 (0.0%)
+- Weak matches: 27 (11.8%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
@@ -69,14 +69,14 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-23 auth-and-lock ingestion pass | 100 | 126 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-24 mixed-source ingestion + source-boundary refinement | 101 | 138 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-24 diverse-adapter ingestion pass | 101 | 153 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-26 v0.4.1 corpus expansion (228 fixtures) | 170 | 228 | 32 | 100% | 100% | 0 | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The shipped corpus is strongest on build, network, and CI failures, with 99 of 153 accepted fixtures concentrated in those three categories.
-- Provider diversity has improved: the accepted real corpus is now 88 GitHub fixtures (57%), 31 Stack Exchange fixtures (20%), 17 GitLab fixtures (11%), 12 Reddit fixtures (8%), and 5 Discourse fixtures (3%). Stack Exchange representation increased through diverse-adapter ingestion pass.
-- The `test` category is no longer a single-fixture blind spot, but it is still the thinnest accepted real slice relative to the 13 bundled test playbooks. Future ingestion should keep biasing toward high-signal test failures before adding more test rules.
+- The shipped corpus is strongest on build, network, and CI failures. Provider breakdown: 116 GitHub (51%), 70 Stack Exchange (31%), 24 GitLab (11%), 12 Reddit (5%), 6 Discourse (3%) out of 228 accepted fixtures.
+- The `test` category remains the thinnest accepted real slice relative to the 13 bundled test playbooks.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
   the noisy variant corpus under `internal/signature/testdata/variants/` plus
