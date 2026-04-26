@@ -7,8 +7,8 @@
 
 ## Outcome
 
-- Score: 2.10
-- Confidence: 56%
+- Score: 2.27
+- Confidence: 60%
 
 ## Rule Evaluation
 
@@ -36,6 +36,38 @@
   pattern: `exit status 127`
   evidence: none
   note: trigger rule did not match
+- `MISSING` `match.any[6]`
+  pattern: `OCI runtime exec failed`
+  evidence: none
+  note: trigger rule did not match
+- `MISSING` `match.any[7]`
+  pattern: `No Rakefile found`
+  evidence: none
+  note: trigger rule did not match
+- `MISSING` `match.any[8]`
+  pattern: `rake aborted!`
+  evidence: none
+  note: trigger rule did not match
+- `MISSING` `match.any[9]`
+  pattern: `PHP Fatal error:`
+  evidence: none
+  note: trigger rule did not match
+- `MISSING` `match.any[10]`
+  pattern: `Skip command`
+  evidence: none
+  note: trigger rule did not match
+- `MATCHED` `match.any[11]`
+  pattern: `No such file or directory`
+  evidence: line 1: exec /__e/node20/bin/node: no such file or directory
+  note: trigger rule matched the log
+- `MISSING` `match.any[12]`
+  pattern: `: not found`
+  evidence: none
+  note: trigger rule did not match
+- `MISSING` `match.any[13]`
+  pattern: `is required for`
+  evidence: none
+  note: trigger rule did not match
 - `CLEAR` `match.none[0]`
   pattern: `fixture`
   evidence: none
@@ -60,11 +92,19 @@
   pattern: `Dockerfile: no such file or directory`
   evidence: none
   note: exclusion rule stayed clear
+- `CLEAR` `match.none[6]`
+  pattern: `Syncing repository`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[7]`
+  pattern: `Retrieving the default branch name`
+  evidence: none
+  note: exclusion rule stayed clear
 
 ## Why This Result
 
-- 1 trigger rule(s) matched explicit log evidence
-- 6 exclusion rule(s) stayed clear
+- 2 trigger rule(s) matched explicit log evidence
+- 8 exclusion rule(s) stayed clear
 - matched evidence was pulled directly from the input log
 
 ## Signature
