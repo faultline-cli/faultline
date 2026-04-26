@@ -65,6 +65,8 @@ match:
     - "read timeout"
     - "dial timeout"
     - "failed to connect"
+    - "ALTER TYPE"
+    - "ProgrammingError"
 hypothesis:
   supports:
     - signal: test.timeout.detected

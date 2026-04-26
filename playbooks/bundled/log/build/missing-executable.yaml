@@ -31,6 +31,8 @@ match:
     - "withBinaryFile:"
     - package-lock.json
     - "Dockerfile: no such file or directory"
+    - "Syncing repository"
+    - "Retrieving the default branch name"
 summary: |-
   The job tried to launch a required tool or runtime binary, but that executable was missing from the image, runner, or expected path.
 diagnosis: |-

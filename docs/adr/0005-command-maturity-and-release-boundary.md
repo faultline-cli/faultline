@@ -19,6 +19,8 @@ Faultline keeps a maturity-tier model for command surfaces:
 
 The default narrative and docs must stay centered on the stable path even when companion commands are fully supported and validated.
 
+As of v0.4.1, **silent failure detection runs automatically** on all analysis via the stable `analyze` and `workflow` commands (see [ADR 0007](0007-silent-failures-as-first-class-detection.md)). Silent findings appear in text, markdown, and JSON output by default; users can opt into failure-exit behavior with `--fail-on-silent`.
+
 ## Consequences
 
 - New user-facing capabilities should start hidden, flagged, or non-default until deterministic validation and docs are in place.

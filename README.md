@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![170 playbooks](https://img.shields.io/badge/playbooks-170-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-79.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-7.3%25-lightgrey)](eval-work/coverage.md)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![181 playbooks](https://img.shields.io/badge/playbooks-181-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-79.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-7.3%25-lightgrey)](eval-work/coverage.md)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
