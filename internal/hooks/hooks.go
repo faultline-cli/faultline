@@ -228,6 +228,12 @@ func isCommandHook(kind model.HookKind) bool {
 
 func runFileExists(_ context.Context, runner Runner, def model.HookDefinition, hookCtx HookContext) model.HookResult {
 	path := resolvePath(hookCtx.WorkDir, def.Path)
+	if path == "" {
+		return model.HookResult{
+			Status: model.HookStatusFailed,
+			Reason: "path traversal outside working directory is not permitted",
+		}
+	}
 	info, err := runner.Stat(path)
 	if err != nil {
 		return model.HookResult{
@@ -251,6 +257,12 @@ func runFileExists(_ context.Context, runner Runner, def model.HookDefinition, h
 
 func runDirExists(_ context.Context, runner Runner, def model.HookDefinition, hookCtx HookContext) model.HookResult {
 	path := resolvePath(hookCtx.WorkDir, def.Path)
+	if path == "" {
+		return model.HookResult{
+			Status: model.HookStatusFailed,
+			Reason: "path traversal outside working directory is not permitted",
+		}
+	}
 	info, err := runner.Stat(path)
 	if err != nil {
 		return model.HookResult{
@@ -340,6 +352,12 @@ func runCommandOutputCapture(ctx context.Context, runner Runner, def model.HookD
 
 func runReadFileExcerpt(_ context.Context, runner Runner, def model.HookDefinition, hookCtx HookContext) model.HookResult {
 	path := resolvePath(hookCtx.WorkDir, def.Path)
+	if path == "" {
+		return model.HookResult{
+			Status: model.HookStatusFailed,
+			Reason: "path traversal outside working directory is not permitted",
+		}
+	}
 	data, err := runner.ReadFile(path)
 	if err != nil {
 		return model.HookResult{
@@ -380,7 +398,12 @@ func resolvePath(workDir, path string) string {
 	if filepath.IsAbs(path) || strings.TrimSpace(workDir) == "" {
 		return filepath.Clean(path)
 	}
-	return filepath.Clean(filepath.Join(workDir, path))
+	resolved := filepath.Clean(filepath.Join(workDir, path))
+	cleanWorkDir := filepath.Clean(workDir)
+	if resolved != cleanWorkDir && !strings.HasPrefix(resolved, cleanWorkDir+string(filepath.Separator)) {
+		return ""
+	}
+	return resolved
 }
 
 func excerptLines(text string, maxBytes, maxLines int) []string {

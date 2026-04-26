@@ -30,6 +30,8 @@ type AnalyzeOptions struct {
 	// CIAnnotations emits GitHub Actions-style ::warning:: lines.
 	CIAnnotations bool
 	// NoHistory skips reading and writing the local history store.
+	//
+	// Deprecated: set Store to "off" instead.
 	NoHistory bool
 	// PlaybookDir overrides the default playbook directory.
 	PlaybookDir string

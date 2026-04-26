@@ -153,10 +153,7 @@ func DefaultPath() (string, error) {
 	return filepath.Join(home, defaultStoreSubdir, defaultStoreFile), nil
 }
 
-func ResolveConfig(raw string, disable bool) (Config, error) {
-	if disable {
-		return Config{Mode: ModeOff}, nil
-	}
+func ResolveConfig(raw string) (Config, error) {
 	value := strings.TrimSpace(raw)
 	switch {
 	case value == "", strings.EqualFold(value, string(ModeAuto)):

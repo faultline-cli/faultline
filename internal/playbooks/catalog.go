@@ -122,10 +122,12 @@ func (c Catalog) Explain(id string) (model.Playbook, error) {
 	if err != nil {
 		return model.Playbook{}, err
 	}
+	index := make(map[string]model.Playbook, len(pbs))
 	for _, pb := range pbs {
-		if pb.ID == id {
-			return pb, nil
-		}
+		index[pb.ID] = pb
+	}
+	if pb, ok := index[id]; ok {
+		return pb, nil
 	}
 	return model.Playbook{}, fmt.Errorf("unknown playbook %q", id)
 }

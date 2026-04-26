@@ -91,7 +91,7 @@ func TestOpenBestEffortAutoModeWithValidPath(t *testing.T) {
 
 func TestResolveConfigWhitespaceTrimmed(t *testing.T) {
 	// Whitespace-only should be treated as empty → auto
-	cfg, err := ResolveConfig("   ", false)
+	cfg, err := ResolveConfig("   ")
 	if err != nil {
 		t.Fatalf("ResolveConfig: %v", err)
 	}
@@ -104,15 +104,16 @@ func TestResolveConfigWhitespaceTrimmed(t *testing.T) {
 }
 
 func TestResolveConfigDisableOverridesExplicitPath(t *testing.T) {
-	cfg, err := ResolveConfig("/some/path.db", true)
+	// Passing "off" as raw string should return ModeOff regardless of any other value.
+	cfg, err := ResolveConfig("off")
 	if err != nil {
 		t.Fatalf("ResolveConfig: %v", err)
 	}
 	if cfg.Mode != ModeOff {
-		t.Errorf("expected off when disable=true, got %v", cfg.Mode)
+		t.Errorf("expected off when raw=off, got %v", cfg.Mode)
 	}
 	if cfg.Path != "" {
-		t.Errorf("expected empty path when disable=true, got %q", cfg.Path)
+		t.Errorf("expected empty path when raw=off, got %q", cfg.Path)
 	}
 }
 
@@ -570,7 +571,7 @@ func TestOpenBestEffortDefaultPathFallback(t *testing.T) {
 // --- ResolveConfig ModeOff explicit value ---
 
 func TestResolveConfigExplicitOffMode(t *testing.T) {
-	cfg, err := ResolveConfig("off", false)
+	cfg, err := ResolveConfig("off")
 	if err != nil {
 		t.Fatalf("ResolveConfig('off'): %v", err)
 	}

@@ -11,8 +11,8 @@ import (
 
 // --- ResolveConfig ---
 
-func TestResolveConfigDisableReturnsOff(t *testing.T) {
-	cfg, err := ResolveConfig("anything", true)
+func TestResolveConfigOffStringReturnsOffDirect(t *testing.T) {
+	cfg, err := ResolveConfig("off")
 	if err != nil {
 		t.Fatalf("ResolveConfig: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestResolveConfigDisableReturnsOff(t *testing.T) {
 }
 
 func TestResolveConfigEmptyStringReturnsAuto(t *testing.T) {
-	cfg, err := ResolveConfig("", false)
+	cfg, err := ResolveConfig("")
 	if err != nil {
 		t.Fatalf("ResolveConfig: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestResolveConfigEmptyStringReturnsAuto(t *testing.T) {
 
 func TestResolveConfigAutoStringReturnsAuto(t *testing.T) {
 	for _, raw := range []string{"auto", "AUTO", "Auto"} {
-		cfg, err := ResolveConfig(raw, false)
+		cfg, err := ResolveConfig(raw)
 		if err != nil {
 			t.Fatalf("ResolveConfig(%q): %v", raw, err)
 		}
@@ -45,7 +45,7 @@ func TestResolveConfigAutoStringReturnsAuto(t *testing.T) {
 
 func TestResolveConfigOffStringReturnsOff(t *testing.T) {
 	for _, raw := range []string{"off", "OFF", "Off"} {
-		cfg, err := ResolveConfig(raw, false)
+		cfg, err := ResolveConfig(raw)
 		if err != nil {
 			t.Fatalf("ResolveConfig(%q): %v", raw, err)
 		}
@@ -56,7 +56,7 @@ func TestResolveConfigOffStringReturnsOff(t *testing.T) {
 }
 
 func TestResolveConfigExplicitPathReturnsAutoWithPath(t *testing.T) {
-	cfg, err := ResolveConfig("/tmp/custom.db", false)
+	cfg, err := ResolveConfig("/tmp/custom.db")
 	if err != nil {
 		t.Fatalf("ResolveConfig: %v", err)
 	}

@@ -19,7 +19,13 @@ import (
 // appear across many playbooks are automatically less decisive than patterns
 // unique to a single playbook. match.all and match.none semantics are unchanged.
 func Rank(playbooks []model.Playbook, lines []model.Line, ctx model.Context) []model.Result {
-	weights := computeAnyWeights(playbooks)
+	return RankPrecomputed(playbooks, computeAnyWeights(playbooks), lines, ctx)
+}
+
+// RankPrecomputed is identical to Rank but accepts pre-computed IDF weights so
+// callers that issue many analyses against the same playbook set can compute
+// the weights once and reuse them across calls.
+func RankPrecomputed(playbooks []model.Playbook, weights map[string]float64, lines []model.Line, ctx model.Context) []model.Result {
 	results := make([]model.Result, 0, len(playbooks))
 	for _, pb := range playbooks {
 		r := matchPlaybook(pb, lines, ctx, weights)
@@ -263,6 +269,13 @@ func stageBonus(pb model.Playbook, ctx model.Context) float64 {
 		}
 	}
 	return 0
+}
+
+// AnyWeights returns the IDF weight map for match.any patterns across the
+// given playbook set. Pass the result to RankPrecomputed when analysing
+// multiple log sources against the same playbook set.
+func AnyWeights(playbooks []model.Playbook) map[string]float64 {
+	return computeAnyWeights(playbooks)
 }
 
 // computeAnyWeights returns a map from normalized pattern string to its IDF

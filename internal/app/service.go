@@ -87,15 +87,6 @@ func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Write
 		return err
 	}
 
-	playbooks, err := engine.New(engine.Options{
-		PlaybookDir:      opts.PlaybookDir,
-		PlaybookPackDirs: opts.PlaybookPackDirs,
-		NoHistory:        true,
-	}).List()
-	if err != nil {
-		return err
-	}
-
 	playbookID, err := tracePlaybookID(loaded.Analysis, opts)
 	if err != nil {
 		return err
@@ -104,7 +95,7 @@ func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Write
 		return writeAnalysis(loaded.Analysis, AnalyzeOptions{Top: 1, Mode: output.ModeQuick, Format: opts.Format, JSON: opts.JSON}, w)
 	}
 
-	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, playbooks, playbookID, opts.ShowRejected)
+	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, loaded.Playbooks, playbookID, opts.ShowRejected)
 	if err != nil {
 		return err
 	}
@@ -553,8 +544,9 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string,
 }
 
 type loadedAnalysisInput struct {
-	Analysis *model.Analysis
-	Lines    []model.Line
+	Analysis  *model.Analysis
+	Lines     []model.Line
+	Playbooks []model.Playbook
 }
 
 func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedAnalysisInput, error) {
@@ -566,12 +558,20 @@ func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedA
 	if err != nil {
 		return loadedAnalysisInput{}, err
 	}
+	pbs, err := playbooks.NewCatalogWithOptions(playbooks.CatalogOptions{
+		OverrideDir:   opts.PlaybookDir,
+		ExtraPackDirs: opts.PlaybookPackDirs,
+	}).Load()
+	if err != nil {
+		return loadedAnalysisInput{}, err
+	}
 	baseOpts := opts
 	baseOpts.HookMode = model.HookModeOff
 	analysis, err := analyzeLog(bytes.NewReader(data), source, baseOpts, "trace", false)
 	return loadedAnalysisInput{
-		Analysis: analysis,
-		Lines:    lines,
+		Analysis:  analysis,
+		Lines:     lines,
+		Playbooks: pbs,
 	}, err
 }
 

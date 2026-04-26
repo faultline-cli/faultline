@@ -29,7 +29,11 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 		prepared.InputHash = store.InputHashForLog(rawInput)
 	}
 
-	cfg, err := store.ResolveConfig(opts.Store, opts.NoHistory)
+	storePath := opts.Store
+	if opts.NoHistory {
+		storePath = string(store.ModeOff)
+	}
+	cfg, err := store.ResolveConfig(storePath)
 	if err != nil {
 		return prepared, err
 	}

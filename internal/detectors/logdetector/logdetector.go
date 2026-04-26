@@ -13,5 +13,9 @@ func (Detector) Kind() detectors.Kind {
 }
 
 func (Detector) Detect(playbooks []model.Playbook, target detectors.Target) []model.Result {
-	return matcher.Rank(playbooks, target.LogLines, target.LogContext)
+	weights := target.LogAnyWeights
+	if weights == nil {
+		weights = matcher.AnyWeights(playbooks)
+	}
+	return matcher.RankPrecomputed(playbooks, weights, target.LogLines, target.LogContext)
 }

@@ -17,6 +17,7 @@ import (
 	"faultline/internal/detectors/sourcedetector"
 	enginedelta "faultline/internal/engine/delta"
 	"faultline/internal/engine/hypothesis"
+	"faultline/internal/matcher"
 	"faultline/internal/model"
 	"faultline/internal/playbooks"
 	"faultline/internal/repo"
@@ -40,6 +41,8 @@ type Options struct {
 	PlaybookPackDirs []string
 	// NoHistory is retained for caller compatibility; persistence is now owned
 	// by the app layer instead of the engine.
+	//
+	// Deprecated: set Store to "off" via the app layer instead.
 	NoHistory bool
 	// GitContextEnabled enables enrichment of analysis results with local git history.
 	GitContextEnabled bool
@@ -74,6 +77,8 @@ type Options struct {
 	GitLabAPIBaseURL string
 	// MetricsHistoryFile is retained for caller compatibility; metrics are now
 	// computed by the app layer instead of the engine.
+	//
+	// Deprecated: pass MetricsHistoryFile via app.AnalyzeOptions instead.
 	MetricsHistoryFile string
 }
 
@@ -150,9 +155,11 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	if e.opts.GitContextEnabled {
 		snapshot = e.loadRepoSnapshot()
 	}
-	results := logDetector.Detect(detectors.FilterPlaybooks(pbs, detectors.KindLog), detectors.Target{
-		LogLines:   lines,
-		LogContext: ctx,
+	logPbs := detectors.FilterPlaybooks(pbs, detectors.KindLog)
+	results := logDetector.Detect(logPbs, detectors.Target{
+		LogLines:      lines,
+		LogContext:    ctx,
+		LogAnyWeights: matcher.AnyWeights(logPbs),
 	})
 
 	if len(results) == 0 {
@@ -179,8 +186,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	repoState := mergeRepoStates(repoStateFromSnapshot(snapshot), deltaState)
 	if !e.opts.BayesEnabled {
 		delta = scoring.DiagnoseDelta(repoState)
-	}
-	if e.opts.BayesEnabled {
+	} else {
 		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
 			Context:        ctx,
 			Lines:          lines,
@@ -279,8 +285,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 	repoState := repoStateFromSnapshot(snapshot)
 	if !e.opts.BayesEnabled {
 		delta = scoring.DiagnoseDelta(repoState)
-	}
-	if e.opts.BayesEnabled {
+	} else {
 		reranked, scoredDelta, scoreErr := scoring.Score(scoring.Inputs{
 			Results:        results,
 			RepoState:      repoState,

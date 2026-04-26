@@ -152,7 +152,7 @@ func (Service) VerifyDeterminism(r io.Reader, source, storePath string, jsonOut 
 }
 
 func openHistoryStore(storePath string) (store.Store, store.Info, error) {
-	cfg, err := store.ResolveConfig(storePath, false)
+	cfg, err := store.ResolveConfig(storePath)
 	if err != nil {
 		return nil, store.Info{}, err
 	}
