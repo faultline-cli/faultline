@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![181 playbooks](https://img.shields.io/badge/playbooks-181-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-81.7%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-74.0%25-brightgreen)](eval-work/badge.json.md)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![181 playbooks](https://img.shields.io/badge/playbooks-181-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-82.9%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-74.0%25-brightgreen)](eval-work/badge.json.md)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
@@ -126,7 +126,7 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 - **12 playbooks with expanded pattern coverage** — auth, build, network, runtime, test, and silent categories
 - **Weak-match rate 0.009** — down from 0.132 in v0.4.1; only 2 of 228 accepted fixtures produce a weak match
 - **Top-1 accuracy 1.000** maintained with zero false positives
-- **Go test coverage 81.7%** — up from 79.7%
+- **Go test coverage 82.9%** — up from 79.7%
 
 Full release notes: [docs/releases/v0.4.2.md](docs/releases/v0.4.2.md)
 
