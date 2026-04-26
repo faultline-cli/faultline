@@ -513,3 +513,139 @@ func TestSQLiteStoreNullableBoolViaHookResult(t *testing.T) {
 		t.Errorf("FailedCount = %d, want 1 for hook-false-passed", failedHook.FailedCount)
 	}
 }
+
+// --- OpenBestEffort ModeOff ---
+
+func TestOpenBestEffortModeOffReturnsNoop(t *testing.T) {
+	st, info, err := OpenBestEffort(Config{Mode: ModeOff})
+	if err != nil {
+		t.Fatalf("OpenBestEffort(ModeOff): %v", err)
+	}
+	if info.Mode != ModeOff {
+		t.Errorf("expected mode=off, got %v", info.Mode)
+	}
+	if info.Degraded {
+		t.Error("expected non-degraded for explicit off mode")
+	}
+	// Noop store must not error on any operation
+	ctx := context.Background()
+	handle, err := st.BeginRun(ctx, BeginRunParams{
+		Surface:    "test",
+		SourceKind: "log",
+		Source:     "stdin",
+		InputHash:  "test-hash",
+		StartedAt:  time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("Noop BeginRun: %v", err)
+	}
+	if err := st.CompleteRun(ctx, handle, CompleteRunParams{
+		CompletedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("Noop CompleteRun: %v", err)
+	}
+	st.Close()
+}
+
+// TestOpenBestEffortDefaultPathFallback verifies that when no explicit path is
+// provided, OpenBestEffort calls DefaultPath() and opens an SQLite store there.
+func TestOpenBestEffortDefaultPathFallback(t *testing.T) {
+	// Point HOME to a temp dir so DefaultPath() resolves to a writable location.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	st, info, err := OpenBestEffort(Config{Mode: ModeAuto, Path: ""})
+	if err != nil {
+		t.Fatalf("OpenBestEffort default path fallback: %v", err)
+	}
+	defer st.Close()
+	if info.Path == "" {
+		t.Error("expected non-empty resolved path from DefaultPath fallback")
+	}
+	if info.Backend != "sqlite" {
+		t.Errorf("expected sqlite backend, got %q", info.Backend)
+	}
+}
+
+// --- ResolveConfig ModeOff explicit value ---
+
+func TestResolveConfigExplicitOffMode(t *testing.T) {
+	cfg, err := ResolveConfig("off", false)
+	if err != nil {
+		t.Fatalf("ResolveConfig('off'): %v", err)
+	}
+	if cfg.Mode != ModeOff {
+		t.Errorf("expected off mode, got %v", cfg.Mode)
+	}
+	if cfg.Path != "" {
+		t.Errorf("expected empty path, got %q", cfg.Path)
+	}
+}
+
+// --- boolToInt internal helper exercised via analysis with/without results ---
+
+// TestBoolToIntBothBranchesViaCompleteRun exercises boolToInt(false) by
+// completing a run whose analysis has no results, and boolToInt(true) by
+// completing one that has results.
+func TestBoolToIntBothBranchesViaCompleteRun(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "faultline.db")
+	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
+	if err != nil {
+		t.Fatalf("OpenBestEffort: %v", err)
+	}
+	defer st.Close()
+
+	ctx := context.Background()
+	now := time.Date(2026, 4, 26, 14, 0, 0, 0, time.UTC)
+
+	// Run 1: analysis has zero results → boolToInt(false)
+	handle1, err := st.BeginRun(ctx, BeginRunParams{
+		Surface: "analyze", SourceKind: "log", Source: "stdin",
+		InputHash: "no-results-input", StartedAt: now,
+	})
+	if err != nil {
+		t.Fatalf("BeginRun 1: %v", err)
+	}
+	if err := st.CompleteRun(ctx, handle1, CompleteRunParams{
+		CompletedAt: now,
+		Analysis: &model.Analysis{
+			Source:     "stdin",
+			InputHash:  "no-results-input",
+			OutputHash: "no-results-output",
+			Results:    []model.Result{},
+		},
+	}); err != nil {
+		t.Fatalf("CompleteRun no-results: %v", err)
+	}
+
+	// Run 2: analysis has one result → boolToInt(true)
+	sig := SignatureForResult(model.Result{
+		Playbook: model.Playbook{ID: "docker-auth"},
+		Evidence: []string{"auth failure"},
+	}).Hash
+	handle2, err := st.BeginRun(ctx, BeginRunParams{
+		Surface: "analyze", SourceKind: "log", Source: "stdin",
+		InputHash: "with-results-input", StartedAt: now.Add(time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("BeginRun 2: %v", err)
+	}
+	if err := st.CompleteRun(ctx, handle2, CompleteRunParams{
+		CompletedAt: now.Add(time.Minute),
+		Analysis: &model.Analysis{
+			Source:     "stdin",
+			InputHash:  "with-results-input",
+			OutputHash: "with-results-output",
+			Results: []model.Result{{
+				Playbook:      model.Playbook{ID: "docker-auth", Title: "Docker Auth", Category: "auth"},
+				Detector:      "log",
+				Score:         4.0,
+				Confidence:    0.85,
+				Evidence:      []string{"auth failure"},
+				SignatureHash: sig,
+			}},
+		},
+	}); err != nil {
+		t.Fatalf("CompleteRun with-results: %v", err)
+	}
+}
