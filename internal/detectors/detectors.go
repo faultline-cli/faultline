@@ -12,8 +12,8 @@ const (
 
 // Target is the canonical analysis input passed to detector modules.
 type Target struct {
-	LogLines       []model.Line
-	LogContext     model.Context
+	LogLines   []model.Line
+	LogContext model.Context
 	// LogAnyWeights holds pre-computed IDF weights for match.any patterns.
 	// When non-nil the log detector uses them directly, avoiding a redundant
 	// recompute. Set by the engine after loading playbooks.
