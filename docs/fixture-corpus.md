@@ -10,7 +10,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Top-3 match rate: 100% (228/228)
 - Unmatched fixtures: 0
 - False positives: 0
-- Weak matches: 27 (11.8%)
+- Weak matches: 30 (13.2%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
