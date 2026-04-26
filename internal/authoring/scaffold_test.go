@@ -1,11 +1,31 @@
 package authoring_test
 
 import (
+	"os"
 	"strings"
 	"testing"
 
 	"faultline/internal/authoring"
+
+	"gopkg.in/yaml.v3"
 )
+
+type scaffoldYAML struct {
+	Category string `yaml:"category"`
+	Match    struct {
+		Any []string `yaml:"any"`
+	} `yaml:"match"`
+}
+
+func parseScaffoldYAML(t *testing.T, text string) scaffoldYAML {
+	t.Helper()
+
+	var got scaffoldYAML
+	if err := yaml.Unmarshal([]byte(text), &got); err != nil {
+		t.Fatalf("unmarshal scaffold yaml: %v\n%s", err, text)
+	}
+	return got
+}
 
 // ── ExtractCandidatePatterns ────────────────────────────────────────────────
 
@@ -100,6 +120,35 @@ func TestExtractCandidatePatternsDeterministic(t *testing.T) {
 	for i := range first {
 		if first[i] != second[i] {
 			t.Errorf("non-deterministic at index %d: %q vs %q", i, first[i], second[i])
+		}
+	}
+}
+
+func TestExtractCandidatePatternsDefaultMaxAndAlphabeticalTieBreak(t *testing.T) {
+	log := strings.Join([]string{
+		"cannot resolve workspace lockfile",
+		"cannot open workspace lockfile",
+		"cannot parse workspace lockfile",
+		"cannot read workspace lockfile",
+		"cannot stat workspace lockfile",
+		"cannot create workspace lockfile",
+	}, "\n")
+
+	got := authoring.ExtractCandidatePatterns(log, 0)
+	want := []string{
+		"cannot create workspace lockfile",
+		"cannot open workspace lockfile",
+		"cannot parse workspace lockfile",
+		"cannot read workspace lockfile",
+		"cannot resolve workspace lockfile",
+	}
+
+	if len(got) != len(want) {
+		t.Fatalf("expected default max of %d candidates, got %d: %v", len(want), len(got), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("expected alphabetical tie-break at index %d: want %q got %q", i, want[i], got[i])
 		}
 	}
 }
@@ -253,5 +302,93 @@ func TestScaffoldPlaybookWritesToPackDir(t *testing.T) {
 	}
 	if !strings.HasPrefix(result.OutputPath, packDir) {
 		t.Errorf("expected output path under %q, got %q", packDir, result.OutputPath)
+	}
+}
+
+func TestScaffoldPlaybookNormalizesCategoryAndPreservesAllCandidates(t *testing.T) {
+	log := strings.Join([]string{
+		"fatal error: pull access denied for private/image",
+		"Error response from daemon: unauthorized: authentication required",
+		"permission denied while fetching image metadata",
+	}, "\n")
+
+	result, err := authoring.ScaffoldPlaybook(log, authoring.ScaffoldOptions{
+		Category: " auth ",
+		MaxMatch: 1,
+	})
+	if err != nil {
+		t.Fatalf("ScaffoldPlaybook: %v", err)
+	}
+
+	parsed := parseScaffoldYAML(t, result.YAML)
+	if parsed.Category != "auth" {
+		t.Fatalf("expected trimmed category auth, got %q", parsed.Category)
+	}
+	if len(parsed.Match.Any) != 1 {
+		t.Fatalf("expected one emitted match pattern, got %d", len(parsed.Match.Any))
+	}
+	if len(result.Candidates) < 2 {
+		t.Fatalf("expected full candidate list to be preserved, got %v", result.Candidates)
+	}
+	if parsed.Match.Any[0] != result.Candidates[0] {
+		t.Fatalf("expected emitted pattern %q to match top candidate %q", parsed.Match.Any[0], result.Candidates[0])
+	}
+}
+
+func TestScaffoldPlaybookDefaultMaxMatchUsesFivePatterns(t *testing.T) {
+	log := strings.Join([]string{
+		"cannot create workspace lockfile",
+		"cannot open workspace lockfile",
+		"cannot parse workspace lockfile",
+		"cannot read workspace lockfile",
+		"cannot resolve workspace lockfile",
+		"cannot stat workspace lockfile",
+	}, "\n")
+
+	result, err := authoring.ScaffoldPlaybook(log, authoring.ScaffoldOptions{Category: "build"})
+	if err != nil {
+		t.Fatalf("ScaffoldPlaybook: %v", err)
+	}
+
+	parsed := parseScaffoldYAML(t, result.YAML)
+	if len(parsed.Match.Any) != 5 {
+		t.Fatalf("expected default match cap of 5, got %d: %v", len(parsed.Match.Any), parsed.Match.Any)
+	}
+}
+
+func TestScaffoldPlaybookYAMLPreservesQuotedPatterns(t *testing.T) {
+	log := "Error: invalid image \"repo/app:latest\" # tag mismatch\n"
+
+	result, err := authoring.ScaffoldPlaybook(log, authoring.ScaffoldOptions{Category: "build", MaxMatch: 1})
+	if err != nil {
+		t.Fatalf("ScaffoldPlaybook: %v", err)
+	}
+
+	parsed := parseScaffoldYAML(t, result.YAML)
+	if len(parsed.Match.Any) != 1 {
+		t.Fatalf("expected one match pattern, got %d", len(parsed.Match.Any))
+	}
+	if parsed.Match.Any[0] != `Error: invalid image "repo/app:latest" # tag mismatch` {
+		t.Fatalf("expected yaml round-trip to preserve pattern, got %q", parsed.Match.Any[0])
+	}
+}
+
+func TestScaffoldPlaybookWritesExactYAMLToDisk(t *testing.T) {
+	packDir := t.TempDir()
+
+	result, err := authoring.ScaffoldPlaybook(
+		"fatal error: connection reset by peer\n",
+		authoring.ScaffoldOptions{Category: "network", PackDir: packDir},
+	)
+	if err != nil {
+		t.Fatalf("ScaffoldPlaybook: %v", err)
+	}
+
+	content, err := os.ReadFile(result.OutputPath)
+	if err != nil {
+		t.Fatalf("read scaffold output: %v", err)
+	}
+	if string(content) != result.YAML {
+		t.Fatalf("expected written scaffold to match returned YAML\nwritten:\n%s\nreturned:\n%s", string(content), result.YAML)
 	}
 }
