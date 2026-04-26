@@ -227,6 +227,32 @@ func TestTraceSpecificPlaybookWithoutWinningMatch(t *testing.T) {
 	}
 }
 
+func TestTraceEmptyInputReturnsErrNoInput(t *testing.T) {
+	svc := NewService()
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader(""), "trace.log", opts, &buf)
+	if !errors.Is(err, engine.ErrNoInput) {
+		t.Fatalf("expected engine.ErrNoInput for empty input, got %v", err)
+	}
+}
+
+func TestTraceSelectOnNoMatchErrors(t *testing.T) {
+	svc := NewService()
+	// A log with no match plus Select=1 causes tracePlaybookID to return an error.
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	opts.Select = 1
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader("everything is perfectly fine\n"), "trace.log", opts, &buf)
+	if err == nil {
+		t.Fatal("expected error for Select=1 with no matching result")
+	}
+}
+
 func TestReplayRendersSavedAnalysis(t *testing.T) {
 	svc := NewService()
 	log := "pull access denied\nError response from daemon: authentication required\n"
@@ -1015,5 +1041,405 @@ func TestHelperFunctions(t *testing.T) {
 	}
 	if source := fallbackSource(""); source != "stdin" {
 		t.Errorf("fallbackSource empty: expected 'stdin', got %s", source)
+	}
+}
+
+// ── Fix (JSON format) ─────────────────────────────────────────────────────────
+
+func TestFixJSONOutput(t *testing.T) {
+	svc := NewService()
+	log := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+	opts := baseOpts()
+	opts.JSON = true
+	var buf bytes.Buffer
+
+	err := svc.Fix(strings.NewReader(log), "", opts, &buf)
+	if err != nil {
+		t.Fatalf("Fix JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
+		t.Fatalf("unmarshal fix JSON: %v", err)
+	}
+}
+
+// ── Compare (additional format variants) ─────────────────────────────────────
+
+func TestCompareArtifactsJSONFormat(t *testing.T) {
+	svc := NewService()
+	leftLog := "pull access denied\nError response from daemon: authentication required\n"
+	rightLog := "permission denied opening /app/data/config.yaml\n"
+
+	makeArtifact := func(log string) string {
+		var buf bytes.Buffer
+		opts := baseOpts()
+		opts.JSON = true
+		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+			t.Fatalf("Analyze to artifact: %v", err)
+		}
+		return buf.String()
+	}
+
+	var out bytes.Buffer
+	err := svc.Compare(
+		strings.NewReader(makeArtifact(leftLog)),
+		strings.NewReader(makeArtifact(rightLog)),
+		AnalyzeOptions{JSON: true},
+		&out,
+	)
+	if err != nil {
+		t.Fatalf("Compare JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal compare JSON: %v", err)
+	}
+}
+
+func TestCompareArtifactsTerminalFormat(t *testing.T) {
+	svc := NewService()
+	leftLog := "pull access denied\nError response from daemon: authentication required\n"
+	rightLog := "permission denied opening /app/data/config.yaml\n"
+
+	makeArtifact := func(log string) string {
+		var buf bytes.Buffer
+		opts := baseOpts()
+		opts.JSON = true
+		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+			t.Fatalf("Analyze to artifact: %v", err)
+		}
+		return buf.String()
+	}
+
+	var out bytes.Buffer
+	err := svc.Compare(
+		strings.NewReader(makeArtifact(leftLog)),
+		strings.NewReader(makeArtifact(rightLog)),
+		AnalyzeOptions{},
+		&out,
+	)
+	if err != nil {
+		t.Fatalf("Compare terminal: %v", err)
+	}
+	if out.Len() == 0 {
+		t.Error("expected non-empty terminal compare output")
+	}
+}
+
+func TestCompareInvalidLeftJSONErrors(t *testing.T) {
+	svc := NewService()
+	var out bytes.Buffer
+	err := svc.Compare(
+		strings.NewReader("{not valid json}"),
+		strings.NewReader(`{"matched":false,"results":[]}`),
+		AnalyzeOptions{},
+		&out,
+	)
+	if err == nil {
+		t.Fatal("expected error for invalid left JSON")
+	}
+}
+
+func TestCompareInvalidRightJSONErrors(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	opts := baseOpts()
+	opts.JSON = true
+	if err := svc.Analyze(strings.NewReader("pull access denied\n"), "stdin", opts, &buf); err != nil {
+		t.Fatalf("Analyze to artifact: %v", err)
+	}
+	artifact := buf.String()
+
+	var out bytes.Buffer
+	err := svc.Compare(
+		strings.NewReader(artifact),
+		strings.NewReader("{not valid json}"),
+		AnalyzeOptions{},
+		&out,
+	)
+	if err == nil {
+		t.Fatal("expected error for invalid right JSON")
+	}
+}
+
+// ── Trace (JSON and Markdown format variants) ─────────────────────────────────
+
+func TestTraceJSONOutput(t *testing.T) {
+	svc := NewService()
+	log := "exec /__e/node20/bin/node: no such file or directory\n"
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	opts.JSON = true
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Trace JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
+		t.Fatalf("unmarshal trace JSON: %v", err)
+	}
+}
+
+func TestTraceMarkdownOutput(t *testing.T) {
+	svc := NewService()
+	log := "exec /__e/node20/bin/node: no such file or directory\n"
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	opts.Format = output.FormatMarkdown
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Trace markdown: %v", err)
+	}
+	if !strings.HasPrefix(buf.String(), "#") {
+		t.Errorf("expected markdown heading in trace output, got:\n%s", buf.String()[:min(100, buf.Len())])
+	}
+}
+
+func TestTraceNoMatchWritesAnalysisOutput(t *testing.T) {
+	svc := NewService()
+	// A log that matches nothing ensures playbookID == "" inside Trace.
+	log := "everything is completely fine and normal\n"
+	opts := baseOpts()
+	opts.TraceEnabled = true
+	var buf bytes.Buffer
+
+	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	if err != nil {
+		t.Fatalf("Trace no-match: %v", err)
+	}
+	// writeAnalysis should produce output even on no-match.
+	if buf.Len() == 0 {
+		t.Error("expected non-empty output even when no playbook matches")
+	}
+}
+
+// ── History (writeHistoryOverview and writeHistorySignature) ──────────────────
+
+func TestHistoryEmptyStoreText(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+	var buf bytes.Buffer
+
+	err := svc.History("", storePath, 10, false, &buf)
+	if err != nil {
+		t.Fatalf("History empty text: %v", err)
+	}
+	if !strings.Contains(buf.String(), "History") {
+		t.Errorf("expected 'History' header, got %q", buf.String())
+	}
+}
+
+func TestHistoryEmptyStoreJSON(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+	var buf bytes.Buffer
+
+	err := svc.History("", storePath, 10, true, &buf)
+	if err != nil {
+		t.Fatalf("History empty JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal History JSON: %v", err)
+	}
+}
+
+func TestHistoryOverviewWithDataText(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	// Seed the store with two runs of the same signature to create a recurring entry.
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		JSON:        true,
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
+	}
+	for range 2 {
+		var analysisBuf bytes.Buffer
+		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+			t.Fatalf("Analyze: %v", err)
+		}
+	}
+
+	var buf bytes.Buffer
+	err := svc.History("", storePath, 10, false, &buf)
+	if err != nil {
+		t.Fatalf("History overview text: %v", err)
+	}
+	if !strings.Contains(buf.String(), "docker-auth") {
+		t.Errorf("expected docker-auth in history, got:\n%s", buf.String())
+	}
+}
+
+func TestHistoryOverviewWithDataJSON(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		JSON:        true,
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
+	}
+	for range 2 {
+		var analysisBuf bytes.Buffer
+		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+			t.Fatalf("Analyze: %v", err)
+		}
+	}
+
+	var buf bytes.Buffer
+	err := svc.History("", storePath, 10, true, &buf)
+	if err != nil {
+		t.Fatalf("History overview JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal History overview JSON: %v", err)
+	}
+}
+
+func TestHistorySignatureHashTextAndJSON(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		JSON:        true,
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
+	}
+
+	var analysisBuf bytes.Buffer
+	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+
+	var analysisPayload struct {
+		Results []struct {
+			SignatureHash string `json:"signature_hash"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(analysisBuf.Bytes(), &analysisPayload); err != nil {
+		t.Fatalf("unmarshal analysis: %v", err)
+	}
+	if len(analysisPayload.Results) == 0 || analysisPayload.Results[0].SignatureHash == "" {
+		t.Skip("no signature hash in analysis result; skipping history-by-signature tests")
+	}
+	sigHash := analysisPayload.Results[0].SignatureHash
+
+	// Text format
+	var textBuf bytes.Buffer
+	if err := svc.History(sigHash, storePath, 10, false, &textBuf); err != nil {
+		t.Fatalf("History by signature (text): %v", err)
+	}
+	if !strings.Contains(textBuf.String(), "Signature") {
+		t.Errorf("expected 'Signature' in text output, got %q", textBuf.String())
+	}
+
+	// JSON format
+	var jsonBuf bytes.Buffer
+	if err := svc.History(sigHash, storePath, 10, true, &jsonBuf); err != nil {
+		t.Fatalf("History by signature (JSON): %v", err)
+	}
+	var jsonPayload map[string]interface{}
+	if err := json.Unmarshal(jsonBuf.Bytes(), &jsonPayload); err != nil {
+		t.Fatalf("unmarshal signature history JSON: %v", err)
+	}
+	if jsonPayload["signature"] == nil {
+		t.Errorf("expected 'signature' key in JSON output, got %v", jsonPayload)
+	}
+}
+
+func TestVerifyDeterminismJSONOutput(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		JSON:        true,
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
+	}
+	var analysisBuf bytes.Buffer
+	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err := svc.VerifyDeterminism(strings.NewReader(log), "stdin", storePath, true, &buf)
+	if err != nil {
+		t.Fatalf("VerifyDeterminism JSON: %v", err)
+	}
+	var payload map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal determinism JSON: %v", err)
+	}
+	if payload["determinism"] == nil {
+		t.Errorf("expected 'determinism' key in JSON output, got %v", payload)
+	}
+}
+
+// TestHistorySignatureNotInDB calls History with a signature hash that has no
+// matching database entry so that writeHistorySignature exercises the
+// OccurrenceCount==0 branch ("no stored occurrences yet").
+func TestHistorySignatureNotInDB(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+	var buf bytes.Buffer
+
+	err := svc.History("deadbeef00000000deadbeef00000000deadbeef00000000deadbeef00000000", storePath, 10, false, &buf)
+	if err != nil {
+		t.Fatalf("History unknown signature text: %v", err)
+	}
+	if !strings.Contains(buf.String(), "Signature") {
+		t.Errorf("expected 'Signature' header in output, got %q", buf.String())
+	}
+	if !strings.Contains(buf.String(), "no stored occurrences yet") {
+		t.Errorf("expected 'no stored occurrences yet' for unknown hash, got %q", buf.String())
+	}
+}
+
+// TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence exercises the
+// case 1 branch in writeHistorySignature ("1 recorded occurrence").
+func TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		JSON:        true,
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
+	}
+	var analysisBuf bytes.Buffer
+	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+
+	var analysisPayload struct {
+		Results []struct {
+			SignatureHash string `json:"signature_hash"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(analysisBuf.Bytes(), &analysisPayload); err != nil {
+		t.Fatalf("unmarshal analysis: %v", err)
+	}
+	if len(analysisPayload.Results) == 0 || analysisPayload.Results[0].SignatureHash == "" {
+		t.Skip("no signature hash in analysis result")
+	}
+	sigHash := analysisPayload.Results[0].SignatureHash
+
+	var buf bytes.Buffer
+	if err := svc.History(sigHash, storePath, 10, false, &buf); err != nil {
+		t.Fatalf("History single occurrence text: %v", err)
+	}
+	if !strings.Contains(buf.String(), "1 recorded occurrence") {
+		t.Errorf("expected '1 recorded occurrence' in output, got %q", buf.String())
 	}
 }

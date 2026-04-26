@@ -734,3 +734,83 @@ func TestDetectPackageManagerStepExecuteNoManagerErrors(t *testing.T) {
 		t.Fatal("expected error when no package manager is found")
 	}
 }
+
+// --- DetodeExpect error branches ---
+
+// TestDetectPackageManagerStepDecodeExpectUnknownFieldErrors exercises the
+// error branch of detectPackageManagerStep.DecodeExpect when the map contains
+// a field that is not present in the (empty) expect struct.
+func TestDetectPackageManagerStepDecodeExpectUnknownFieldErrors(t *testing.T) {
+	s := detectPackageManagerStep{}
+	if _, err := s.DecodeExpect(map[string]any{"unknown_field": true}); err == nil {
+		t.Fatal("expected error for unknown field in detect_package_manager expect")
+	}
+}
+
+// TestInstallPackageStepDecodeExpectUnknownFieldErrors exercises the error
+// branch of installPackageStep.DecodeExpect.
+func TestInstallPackageStepDecodeExpectUnknownFieldErrors(t *testing.T) {
+	s := installPackageStep{}
+	if _, err := s.DecodeExpect(map[string]any{"unknown_field": true}); err == nil {
+		t.Fatal("expected error for unknown field in install_package expect")
+	}
+}
+
+// TestFailStepDecodeExpectUnknownFieldErrors exercises the error branch of
+// failStep.DecodeExpect.
+func TestFailStepDecodeExpectUnknownFieldErrors(t *testing.T) {
+	s := failStep{}
+	if _, err := s.DecodeExpect(map[string]any{"unknown_field": true}); err == nil {
+		t.Fatal("expected error for unknown field in fail expect")
+	}
+}
+
+// TestInstallPackageStepExecuteInstallFailsReturnsError verifies that
+// installPackageStep.Execute returns an error when the install command fails.
+// It creates a fake apt-get binary that exits 1 so the test does not depend
+// on real system packages.
+func TestInstallPackageStepExecuteInstallFailsReturnsError(t *testing.T) {
+	tmp := t.TempDir()
+	// Create a fake "apt-get" that immediately exits with code 1.
+	script := "#!/bin/sh\nexit 1\n"
+	if err := os.WriteFile(filepath.Join(tmp, "apt-get"), []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake apt-get: %v", err)
+	}
+	t.Setenv("PATH", tmp)
+
+	s := installPackageStep{}
+	_, err := s.Execute(context.Background(), Runtime{}, installPackageArgs{
+		Package:      "nonexistent-package-xyz",
+		Manager:      "apt-get",
+		CheckCommand: "nonexistent_cmd_xyz_abc",
+	})
+	if err == nil {
+		t.Fatal("expected error when install command fails")
+	}
+}
+
+// TestInstallPackageStepExecuteInstallSucceedsReturnsChanged verifies the
+// happy-path branch of installPackageStep.Execute: when the install command
+// exits 0, Changed should be true.
+func TestInstallPackageStepExecuteInstallSucceedsReturnsChanged(t *testing.T) {
+	tmp := t.TempDir()
+	// Create a fake "apt-get" that exits 0.
+	script := "#!/bin/sh\nexit 0\n"
+	if err := os.WriteFile(filepath.Join(tmp, "apt-get"), []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake apt-get: %v", err)
+	}
+	t.Setenv("PATH", tmp)
+
+	s := installPackageStep{}
+	result, err := s.Execute(context.Background(), Runtime{}, installPackageArgs{
+		Package:      "curl",
+		Manager:      "apt-get",
+		CheckCommand: "nonexistent_cmd_xyz_abc",
+	})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if result.Changed == nil || !*result.Changed {
+		t.Fatalf("expected Changed=true for successful install, got %v", result.Changed)
+	}
+}
