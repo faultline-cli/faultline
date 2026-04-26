@@ -735,7 +735,7 @@ func TestDetectPackageManagerStepExecuteNoManagerErrors(t *testing.T) {
 	}
 }
 
-// --- DetodeExpect error branches ---
+// --- DecodeExpect error branches ---
 
 // TestDetectPackageManagerStepDecodeExpectUnknownFieldErrors exercises the
 // error branch of detectPackageManagerStep.DecodeExpect when the map contains
