@@ -2,13 +2,17 @@
 
 | Metric | Value |
 |--------|-------|
-| Fixtures | 46231 |
-| Matched | 3357 |
-| Coverage | 7.26% |
+| Fixtures | 46,348 |
+| Matched | 34,309 |
+| Coverage | 74.02% |
 | Determinism | unknown |
 
-_Generated: 2026-04-25T07:08:00Z_
+_Generated: 2026-04-26T08:28:17.005389Z_
 
-**Top covered**: network-timeout, missing-test-fixture, dns-enotfound, connection-refused, permission-denied
+**Top covered**: ffmpeg-avconv-missing, youtube-dl-test-failure, go-test-failure, tox-invocation-error, cucumber-step-failure
 
-**Top gaps**: unable to extract embed url; please report this issue on https://yt-dl.org/bug . make sure you are using the latest vers, unable to download json metadata: http error 401: unauthorized; please report this issue on https://yt-dl.org/bug . make, no video formats found; please report this issue on https://yt-dl.org/bug . make sure you are using the latest version; , unable to extract episode_id; please report this issue on https://yt-dl.org/bug . be sure to call youtube-dl with the --, unable to extract video urls; please report this issue on https://yt-dl.org/bug . make sure you are using the latest ver
+**Top gaps**: 2f3942e9 (11 cases); 249d8ae2 (11 cases); 8b75bb23 (10 cases); 9851e304 (10 cases); df423c00 (10 cases)
+
+**Datasets included:**
+- log-chunks: 102/117 (87.18%)
+- travis-torrent-2017: 34207/46231 (73.99%)
