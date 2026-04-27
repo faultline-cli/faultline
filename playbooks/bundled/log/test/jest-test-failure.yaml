@@ -115,6 +115,8 @@ match:
   any:
     - "● "
     - "Test Suites:.*failed"
+    - "Warning: Failed prop type"
+    - "Invalid prop "
   none:
     - "jest: command not found"
     - "path.*\\.bin/jest"

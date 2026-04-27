@@ -78,6 +78,10 @@ match:
     - "Reason: expecting"
     - "Reason: expected_"
     - "init_per_group failed Reason"
+    - "assertion failed: expected"
+    - "AssertionError: expected"
+    - "expected.*but (was|got)"
+    - "want.*got.*assertion"
   none:
     - "pytest"
     - "FAILED.*::"

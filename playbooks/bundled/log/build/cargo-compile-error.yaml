@@ -101,6 +101,8 @@ match:
     - "error: could not compile"
     - "aborting due to previous error"
     - "aborting due to"
+    - "undefined reference to"
+    - "multiple definition of"
   none:
     - "test failed"
     - "test result: FAILED"

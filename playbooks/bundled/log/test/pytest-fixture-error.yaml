@@ -41,6 +41,9 @@ match:
     - "DuplicateOptionError"
     - "PytestWarning: PytestUnraisableExceptionWarning"
     - "conftest.py"
+    - "Failed doctest:"
+    - "FAIL (doctest"
+    - "doctest failed"
   none:
     - "AssertionError"
 workflow:

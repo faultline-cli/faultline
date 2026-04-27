@@ -24,6 +24,12 @@ match:
     - "job.*killed"
     - runner killed
     - task was canceled
+  none:
+    - OOMKilled
+    - "out of memory"
+    - "oom killer"
+    - "JavaScript heap out of memory"
+    - "FATAL ERROR: Reached heap limit"
 hypothesis:
   supports:
     - signal: log.contains:out of memory

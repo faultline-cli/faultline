@@ -44,7 +44,6 @@ match:
     - operation timed out
     - request timeout
     - "ETIMEDOUT"
-    - "ECONNRESET"
     - "Net::ReadTimeout"
     - "Empty reply from server"
     - "Couldn't establish HTTP connection"

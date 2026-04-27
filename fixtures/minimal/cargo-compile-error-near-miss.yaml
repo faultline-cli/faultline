@@ -26,6 +26,6 @@ normalized_log: |
   test result: FAILED. 1 failed; 13 passed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
   Error: Process completed with exit code 101.
 expectation:
-  expected_playbook: topology-failure-clustered
+  expected_playbook: cargo-test-failure
   disallowed_playbooks:
     - cargo-compile-error

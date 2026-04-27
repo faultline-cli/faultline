@@ -25,7 +25,12 @@ match:
     - "Couldn't match type"
     - "** (CompileError)"
     - "Compilation failed"
+  none:
     - "undefined reference to"
+    - "successfully installed"
+    - "warning:"
+    - passed
+    - "BUILD SUCCESSFUL"
 summary: |-
   The compiler or interpreter hit invalid source syntax and stopped before the
   build could continue.

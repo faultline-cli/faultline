@@ -34,6 +34,7 @@ match:
     - concurrent
     - "too many connections"
     - database locked
+    - "concurrent ="
   none:
     - port conflict
     - failed to bind to port
@@ -47,6 +48,10 @@ match:
     - "tls handshake"
     - "ssl connection"
     - "concurrent/futures"
+    - "concurrent mark"
+    - "concurrent gc"
+    - "concurrent sweep"
+    - "concurrent compaction"
 hypothesis:
   supports:
     - signal: test.parallel.resource_conflict

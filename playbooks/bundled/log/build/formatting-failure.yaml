@@ -34,10 +34,8 @@ match:
     - "--write to fix"
     - check failed.*format
     - "format: FAIL"
-    - "Package size limit has exceeded"
     - "Expected indentation of"
     - "declaration-block-no-duplicate-properties"
-    - "Overfull hbox"
 hypothesis:
   supports:
     - signal: log.contains:linting

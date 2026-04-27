@@ -1,0 +1,114 @@
+id: cargo-test-failure
+title: Cargo test suite reported one or more test failures
+category: test
+severity: high
+base_score: 1.0
+tags: [rust, cargo, test, fail, assertion]
+stage_hints: [test]
+domain: test-runner
+class: test-failure
+mode: cargo-test-reported-failures
+summary: |-
+  One or more Rust tests failed. The `cargo test` runner reported individual
+  failures with `test X ... FAILED` and the suite summary shows
+  `failures: N tests failed`.
+diagnosis: |-
+  ## Diagnosis
+
+  `cargo test` terminated with a non-zero exit code. Individual failing tests
+  are reported as:
+
+  ```
+  test path::to::test_name ... FAILED
+
+  failures:
+
+  ---- path::to::test_name stdout ----
+  thread 'main' panicked at 'assertion `left == right` failed', src/lib.rs:42
+
+  failures:
+      path::to::test_name
+
+  test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out
+  ```
+
+  Common causes:
+
+  - **Assertion failure** — `assert_eq!`, `assert!`, or `panic!` did not hold;
+    the implementation changed or a test expectation is stale.
+  - **Panic in test** — the code under test panicked (index out of bounds,
+    unwrap on None, etc.).
+  - **Compile error in test** — the test file has a type error or missing
+    dependency; `cargo test` reports `error[E...]` before the test run.
+  - **Thread panic** — a spawned thread panicked and the test did not catch it.
+fix: |-
+  ## Fix steps
+
+  1. Reproduce locally:
+
+     ```bash
+     cargo test
+     cargo test -- --nocapture  # show stdout from failing tests
+     ```
+
+  2. Run only the failing test:
+
+     ```bash
+     cargo test path::to::test_name
+     cargo test test_name -- --nocapture
+     ```
+
+  3. Read the panic message and backtrace:
+
+     ```bash
+     RUST_BACKTRACE=1 cargo test path::to::test_name -- --nocapture
+     ```
+
+  4. For `assert_eq!` failures, the output shows both left and right values —
+     identify which side changed.
+
+  5. For compile errors in tests, run `cargo check --tests` to see all type
+     errors without executing tests.
+validation: |-
+  ## Validation
+
+  - `cargo test` exits zero.
+  - Individual test: `cargo test path::to::test_name` passes.
+why_it_matters: |-
+  ## Why it matters
+
+  Cargo test failures are deterministic and block the pipeline. The failure output
+  names the exact test function and the assertion that failed, making root-cause
+  analysis straightforward. Even a single test failure returns a non-zero exit
+  code, preventing downstream publish or deploy steps.
+
+  ## Prevention
+
+  - Run `cargo test` as a pre-push hook.
+  - Use `cargo test -- --nocapture` locally to see all output during development.
+  - Keep tests hermetic: avoid relying on file paths, environment variables, or
+    network access in unit tests.
+match:
+  any:
+    - "test result: FAILED"
+    - "test.*\\.\\.\\.\\s*FAILED"
+    - "failures:"
+    - "FAILED tests"
+    - "error\\[E"
+  none:
+    - "test result: ok"
+    - "running 0 tests"
+    - "BUILD FAILED"
+    - "linker"
+    - "undefined reference"
+workflow:
+  likely_files:
+    - "src/**/*.rs"
+    - "tests/**/*.rs"
+    - Cargo.toml
+  local_repro:
+    - "cargo test"
+    - "cargo test -- --nocapture"
+    - "RUST_BACKTRACE=1 cargo test -- --nocapture"
+  verify:
+    - "cargo test"

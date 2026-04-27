@@ -49,11 +49,17 @@ match:
     - intermittent failure
     - test is flaky
     - flaky test
+    - flakey test
     - timeout waiting for
     - race condition detected
     - "retry attempt"
     - test passed on retry
     - sporadically fails
+    - "Retrying test"
+    - "re-run attempt"
+    - "FLAKY"
+    - "Rerunning tests"
+    - "nondeterministic test"
 hypothesis:
   supports:
     - signal: test.retry.detected
