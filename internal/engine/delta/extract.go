@@ -3,6 +3,7 @@ package delta
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"io"
 	"path/filepath"
 	"regexp"
@@ -10,6 +11,13 @@ import (
 	"strings"
 
 	"faultline/internal/model"
+)
+
+// maxZipEntrySize caps the decompressed size of a single log entry (20 MiB).
+// maxZipTotalSize caps the total decompressed size across all entries (50 MiB).
+const (
+	maxZipEntrySize = 20 * 1024 * 1024
+	maxZipTotalSize = 50 * 1024 * 1024
 )
 
 var (
@@ -42,6 +50,7 @@ func unzipLogs(data []byte) (string, error) {
 		body string
 	}
 	var entries []entry
+	totalRead := int64(0)
 	for _, file := range reader.File {
 		if file.FileInfo().IsDir() {
 			continue
@@ -50,10 +59,14 @@ func unzipLogs(data []byte) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		body, err := io.ReadAll(rc)
+		body, err := io.ReadAll(io.LimitReader(rc, maxZipEntrySize))
 		rc.Close()
 		if err != nil {
 			return "", err
+		}
+		totalRead += int64(len(body))
+		if totalRead > maxZipTotalSize {
+			return "", fmt.Errorf("log archive exceeds maximum decompressed size of %d bytes", maxZipTotalSize)
 		}
 		entries = append(entries, entry{
 			name: filepath.ToSlash(file.Name),

@@ -15,6 +15,30 @@ import (
 	"faultline/internal/model"
 )
 
+// isPrivateHost returns true for hostnames that resolve to loopback, link-local,
+// RFC-1918, or other private/reserved IP ranges — used to block SSRF.
+func isPrivateHost(host string) bool {
+	// Reject obvious loopback and link-local hostnames.
+	switch strings.ToLower(host) {
+	case "localhost", "[::1]", "::1":
+		return true
+	}
+	// Reject literal RFC-1918, loopback, link-local, and metadata IP ranges.
+	for _, prefix := range []string{
+		"10.", "172.16.", "172.17.", "172.18.", "172.19.",
+		"172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
+		"172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
+		"172.30.", "172.31.", "192.168.",
+		"127.", "169.254.", "0.",
+		"fc", "fd", "fe80",
+	} {
+		if strings.HasPrefix(host, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 type gitlabJob struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
@@ -180,7 +204,7 @@ func (r Resolver) gitlabJobTrace(ctx context.Context, opts GitLabOptions, jobID 
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
 		return "", fmt.Errorf("gitlab ci trace: %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxLogBodySize))
 	if err != nil {
 		return "", err
 	}
@@ -235,6 +259,13 @@ func (r Resolver) gitlabNewRequest(ctx context.Context, opts GitLabOptions, meth
 	parsed, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
+	}
+	if !strings.EqualFold(parsed.Scheme, "https") {
+		return nil, fmt.Errorf("gitlab api base URL must use HTTPS, got %q", parsed.Scheme)
+	}
+	host := parsed.Hostname()
+	if isPrivateHost(host) {
+		return nil, fmt.Errorf("gitlab api base URL resolves to a private or reserved host: %s", host)
 	}
 	parsed.Path = path.Join(parsed.Path, strings.TrimPrefix(endpoint, "/"))
 	values := parsed.Query()

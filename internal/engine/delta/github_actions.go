@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"faultline/internal/model"
 )
@@ -18,9 +19,12 @@ type Resolver struct {
 	client *http.Client
 }
 
+// maxLogBodySize caps the number of bytes read from a CI log response (50 MiB).
+const maxLogBodySize = 50 * 1024 * 1024
+
 func NewResolver(client *http.Client) Resolver {
 	if client == nil {
-		client = http.DefaultClient
+		client = &http.Client{Timeout: 60 * time.Second}
 	}
 	return Resolver{client: client}
 }
@@ -185,7 +189,7 @@ func (r Resolver) runLog(ctx context.Context, opts GitHubOptions, runID int64) (
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
 		return "", fmt.Errorf("github actions logs: %s: %s", resp.Status, strings.TrimSpace(string(body)))
 	}
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxLogBodySize))
 	if err != nil {
 		return "", err
 	}

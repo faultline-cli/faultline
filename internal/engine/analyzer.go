@@ -702,10 +702,15 @@ func (e *Engine) loadPlaybooks() ([]model.Playbook, error) {
 	return e.catalog.Load()
 }
 
+// maxLogInputBytes caps the total bytes read from the log reader (100 MiB).
+// This prevents OOM when very large files or streams (e.g. /dev/zero) are piped
+// into faultline without a size limit.
+const maxLogInputBytes = 100 * 1024 * 1024
+
 // readLines reads all bytes from r and splits into normalised Line values.
 // Blank lines and lines that become empty after trimming are discarded.
 func readLines(r io.Reader) ([]model.Line, error) {
-	data, err := io.ReadAll(r)
+	data, err := io.ReadAll(io.LimitReader(r, maxLogInputBytes))
 	if err != nil {
 		return nil, fmt.Errorf("read log input: %w", err)
 	}

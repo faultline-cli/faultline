@@ -217,6 +217,14 @@ func (fileExistsStep) Execute(_ context.Context, runtime Runtime, args any) (Res
 	if !filepath.IsAbs(target) && strings.TrimSpace(runtime.WorkDir) != "" {
 		target = filepath.Join(runtime.WorkDir, target)
 	}
+	target = filepath.Clean(target)
+	// Enforce working-directory boundary when one is set.
+	if strings.TrimSpace(runtime.WorkDir) != "" {
+		cleanWork := filepath.Clean(runtime.WorkDir)
+		if target != cleanWork && !strings.HasPrefix(target, cleanWork+string(filepath.Separator)) {
+			return Result{}, fmt.Errorf("file_exists: path %q is outside the working directory", typed.Path)
+		}
+	}
 	_, err := os.Stat(target)
 	exists := err == nil
 	return Result{

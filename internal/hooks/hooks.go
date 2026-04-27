@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"os/exec"
@@ -11,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"faultline/internal/model"
 )
@@ -19,6 +21,9 @@ const (
 	maxHookConfidenceDelta = 0.30
 	defaultExcerptBytes    = 256
 	defaultExcerptLines    = 6
+	// hookCommandTimeout is the per-command deadline applied to command hooks.
+	// It prevents a hung child process from blocking analysis indefinitely.
+	hookCommandTimeout = 30 * time.Second
 )
 
 type HookContext struct {
@@ -164,7 +169,16 @@ func (e HookExecutor) executeDefinition(ctx context.Context, category model.Hook
 		result.Reason = fmt.Sprintf("unsupported hook kind %q", def.Kind)
 		return result
 	}
-	item := handler(ctx, e.runner, def, hookCtx)
+	// Apply a tight deadline to command hooks so a hung child process cannot
+	// block analysis indefinitely. Non-command hooks are pure in-process reads
+	// and do not need a separate deadline beyond the caller's context.
+	execCtx := ctx
+	if isCommandHook(def.Kind) {
+		var cancel context.CancelFunc
+		execCtx, cancel = context.WithTimeout(ctx, hookCommandTimeout)
+		defer cancel()
+	}
+	item := handler(execCtx, e.runner, def, hookCtx)
 	item.ID = result.ID
 	item.Category = result.Category
 	item.Kind = result.Kind
@@ -395,11 +409,20 @@ func commandFacts(command []string, exitCode int) []model.HookFact {
 }
 
 func resolvePath(workDir, path string) string {
-	if filepath.IsAbs(path) || strings.TrimSpace(workDir) == "" {
+	if strings.TrimSpace(workDir) == "" {
+		// No working directory constraint; clean and return as-is.
 		return filepath.Clean(path)
 	}
-	resolved := filepath.Clean(filepath.Join(workDir, path))
 	cleanWorkDir := filepath.Clean(workDir)
+	if filepath.IsAbs(path) {
+		// Absolute paths must still be inside the working directory.
+		clean := filepath.Clean(path)
+		if clean != cleanWorkDir && !strings.HasPrefix(clean, cleanWorkDir+string(filepath.Separator)) {
+			return ""
+		}
+		return clean
+	}
+	resolved := filepath.Clean(filepath.Join(workDir, path))
 	if resolved != cleanWorkDir && !strings.HasPrefix(resolved, cleanWorkDir+string(filepath.Separator)) {
 		return ""
 	}
@@ -464,8 +487,17 @@ func (systemRunner) Stat(path string) (os.FileInfo, error) {
 	return os.Stat(path)
 }
 
+// maxReadFileBytes caps the number of bytes read by ReadFile (1 MiB) to
+// prevent memory exhaustion from large or special files (e.g. /dev/zero).
+const maxReadFileBytes = 1 * 1024 * 1024
+
 func (systemRunner) ReadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return io.ReadAll(io.LimitReader(f, maxReadFileBytes))
 }
 
 func (systemRunner) LookupEnv(key string) (string, bool) {
