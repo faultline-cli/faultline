@@ -5,6 +5,9 @@ severity: high
 detector: source
 base_score: 1.0
 tags: [source, javascript, typescript, async, promise, unhandled-rejection]
+domain: source
+class: runtime-fault
+mode: unawaited-promise
 source:
   triggers:
     - id: async_wrapper

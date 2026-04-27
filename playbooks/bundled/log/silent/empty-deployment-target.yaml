@@ -5,6 +5,9 @@ severity: high
 base_score: 0.75
 tags: [silent-failure, deploy, publish, release, empty-target]
 stage_hints: [deploy]
+domain: ci-config
+class: silent-failure
+mode: empty-deployment-target
 summary: |-
   A deploy, apply, publish, or release step ran, but the log indicates there
   was nothing deployable to apply or publish. CI continued successfully, but no

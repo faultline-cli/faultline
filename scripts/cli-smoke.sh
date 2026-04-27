@@ -108,4 +108,11 @@ grep -F "panic-in-http-handler" "$TMP_DIR/guard.txt" >/dev/null
 HOME="$TMP_DIR/home" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs list >"$TMP_DIR/packs.txt"
 grep -F "No installed playbook packs." "$TMP_DIR/packs.txt" >/dev/null
 
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage >"$TMP_DIR/coverage.txt"
+grep -F "Playbook coverage report" "$TMP_DIR/coverage.txt" >/dev/null
+grep -F "Total playbooks" "$TMP_DIR/coverage.txt" >/dev/null
+
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage --json >"$TMP_DIR/coverage.json"
+grep -F '"total_playbooks"' "$TMP_DIR/coverage.json" >/dev/null
+
 printf '%s\n' "cli smoke passed"

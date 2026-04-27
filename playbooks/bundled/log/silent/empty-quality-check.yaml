@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.7
 tags: [silent-failure, lint, scan, security, coverage, empty-check]
 stage_hints: [build, test]
+domain: ci-config
+class: silent-failure
+mode: empty-quality-scope
 summary: |-
   A lint, security-scan, or coverage step ran, but the log shows it processed
   zero files or produced no meaningful report. The step may have exited zero,

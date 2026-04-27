@@ -367,6 +367,9 @@ func newFixCommand() *cobra.Command {
 		noStore       bool
 		storePath     string
 		bayes         bool
+		commandsOnly  bool
+		withPrecons   bool
+		withRisks     bool
 	)
 
 	cmd := &cobra.Command{
@@ -393,6 +396,9 @@ func newFixCommand() *cobra.Command {
 				Store:             firstNonEmpty(storePath, os.Getenv(storeEnv)),
 				GitContextEnabled: true,
 				BayesEnabled:      bayes,
+				FixCommandsOnly:      commandsOnly,
+				FixWithPreconditions: withPrecons,
+				FixWithRisks:         withRisks,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -404,6 +410,9 @@ func newFixCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
 	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	cmd.Flags().BoolVar(&commandsOnly, "commands-only", false, "show only runnable code blocks from fix steps")
+	cmd.Flags().BoolVar(&withPrecons, "with-preconditions", false, "include preconditions section when present in fix steps")
+	cmd.Flags().BoolVar(&withRisks, "with-risks", false, "include risks section when present in fix steps")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")

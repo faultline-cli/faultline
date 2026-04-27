@@ -1,0 +1,144 @@
+id: jest-test-failure
+title: Jest test suite reported one or more test failures
+category: test
+severity: high
+base_score: 1.0
+tags: [jest, node, javascript, typescript, react, test, fail, assertion]
+stage_hints: [test]
+domain: test-runner
+class: test-failure
+mode: jest-test-reported-failures
+summary: |-
+  One or more Jest tests failed. The runner exited non-zero. Individual failures
+  are listed with `●` (bullet) markers and the suite summary shows
+  `Test Suites: N failed`.
+diagnosis: |-
+  ## Diagnosis
+
+  Jest ran and collected results, but one or more tests did not pass. The output
+  follows this structure:
+
+  ```
+  FAIL src/utils/formatDate.test.js
+    ● formatDate › formats a timestamp correctly
+
+      expect(received).toEqual(expected)
+
+      Expected: "2024-01-15"
+      Received: "01/15/2024"
+
+  Test Suites: 1 failed, 3 total
+  Tests:       1 failed, 4 passed, 5 total
+  ```
+
+  Common causes:
+
+  - **Assertion failure** — `expect(received).toEqual(expected)` does not pass;
+    an implementation change or a stale snapshot broke the contract.
+  - **Snapshot mismatch** — a snapshot test sees output that differs from the
+    stored `.snap` file; update with `jest --updateSnapshot` after verifying
+    the change is intentional.
+  - **Missing DOM element** — RTL / Enzyme query (`getByRole`, `findByText`)
+    cannot find an element, often because of a render error, wrong query, or
+    incorrect test setup.
+  - **Thrown error in test body** — the test itself threw synchronously or
+    rejected a promise, causing Jest to mark the test as failed.
+  - **Module mock mismatch** — a `jest.mock()` factory returns unexpected data
+    or a spy was not properly reset between tests.
+  - **`● Test suite failed to run`** — the test file itself could not be
+    compiled or executed—a syntax error, missing import, or top-level `throw`.
+fix: |-
+  ## Fix steps
+
+  1. Reproduce locally:
+
+     ```bash
+     npx jest
+     npx jest --verbose
+     ```
+
+  2. Run only the failing suite to isolate the failure:
+
+     ```bash
+     npx jest src/utils/formatDate.test.js
+     npx jest --testNamePattern "formats a timestamp correctly"
+     ```
+
+  3. Read the full `●` block in the output — it shows the file path, failing
+     *describe/it* name, expected vs. received values, and the exact line.
+
+  4. For a snapshot mismatch, review the diff then update if the change is
+     intentional:
+
+     ```bash
+     npx jest --updateSnapshot
+     ```
+
+  5. For a `● Test suite failed to run` error, run the file through your
+     bundler or TypeScript compiler directly to surface the build error:
+
+     ```bash
+     npx tsc --noEmit
+     npx jest --showConfig 2>&1 | grep transform
+     ```
+
+  6. For DOM/RTL failures, add `screen.debug()` before the failing assertion to
+     inspect the rendered output.
+
+  7. Re-run with `--detectOpenHandles` if Jest appears to hang after failures:
+
+     ```bash
+     npx jest --detectOpenHandles
+     ```
+validation: |-
+  ## Validation
+
+  - `npx jest` exits zero.
+  - `npx jest --coverage` exits zero with no threshold violations.
+  - The specific failing test: `npx jest --testNamePattern "<test name>"` exits zero.
+why_it_matters: |-
+  ## Why it matters
+
+  Jest reports test failures deterministically: the `●` block names the test
+  file, the describe/it path, and the exact assertion that failed. A non-zero
+  exit code will block any downstream CI step that depends on tests passing
+  (build, deploy, publish). Even a single failing test stops the gate.
+
+  ## Prevention
+
+  - Run `npx jest --watch` during development to get instant feedback.
+  - Enable coverage thresholds in `jest.config.js` to catch regressions early.
+  - Reset mocks between tests with `jest.clearAllMocks()` in `afterEach` or via
+    `clearMocks: true` in config.
+  - Commit snapshots intentionally — review all `.snap` changes in code review.
+match:
+  any:
+    - "● "
+    - "Test Suites:.*failed"
+  none:
+    - "jest: command not found"
+    - "path.*\\.bin/jest"
+    - "A worker process has quit unexpectedly"
+    - "Jest worker exited"
+    - "Force exiting Jest"
+    - "worker crashed"
+    - "Test Files"
+workflow:
+  likely_files:
+    - "**/*.test.js"
+    - "**/*.test.ts"
+    - "**/*.test.jsx"
+    - "**/*.test.tsx"
+    - "**/*.spec.js"
+    - "**/*.spec.ts"
+    - jest.config.js
+    - jest.config.ts
+    - jest.setup.js
+    - package.json
+  local_repro:
+    - "npx jest"
+    - "npx jest --verbose"
+    - "npx jest path/to/failing.test.js"
+    - "npx jest --testNamePattern 'failing test name'"
+  verify:
+    - "npx jest"

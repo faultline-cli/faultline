@@ -272,10 +272,105 @@ Core hardening and any v0.4 implementation work should satisfy these checks:
 - verify quarantine recommendations never trigger retries or CI mutations inside
   Faultline itself
 
-## Later, Not v0.4
+## v0.4.3 Release
+
+### Theme
+
+**Corpus accuracy, command promotion, and operator ergonomics**
+
+v0.4.3 ships the highest-leverage improvements that are unblocked today:
+narrow the corpus gap with targeted playbooks, promote tested commands out of
+hidden status, and expose the operator flags most requested for `fix`.
+
+### Delivery Order
+
+#### 1. Top-5 corpus gap playbook sprint
+
+Address the five largest unmatched clusters from the current eval corpus
+(2f3942e9, 249d8ae2, 8b75bb23, 9851e304, df423c00). Each cluster represents
+10–11 unmatched fixtures. Closing all five raises large-corpus coverage by
+approximately 0.11–0.12 percentage points and validates the playbook sprint
+workflow as a repeatable quality lever.
+
+Why first: highest coverage ROI, fully unblocked, and each new playbook ships
+with a checked-in fixture so regressions are immediately visible.
+
+#### 2. Jest test failure playbook
+
+A dedicated `jest-test-failure` playbook for the Jest test runner failure
+pattern accounts for roughly 0.9% of unmatched corpus cases. Ships with a
+checked-in fixture and follows the standard review gate.
+
+Why second: small, self-contained, and immediately measurable against the
+eval corpus.
+
+#### 3. Promote `faultline coverage` to stable
+
+Remove `Hidden: true` from `newCoverageCommand()`. Add unit tests and a
+smoke snapshot. Coverage becomes a documented command in `faultline --help`
+and the ship-ready command list.
+
+Why third: two-day task, zero risk, immediate utility for playbook authors
+and CI pipelines verifying catalog completeness.
+
+#### 4. Ontology Phase 2–4 (tag existing playbooks)
+
+Tag all 181 bundled playbooks with ontology labels from the Phase 1 design.
+Extend the coverage command to report by ontology tag. This completes the
+Phase 1 design intent and makes the catalog machine-navigable.
+
+Why fourth: safe additive change to YAML metadata with no analysis path
+impact; best done after coverage is promoted so the tag report is immediately
+visible.
+
+#### 5. `faultline fix` operator flags
+
+Add `--commands-only`, `--with-preconditions`, and `--with-risks` flags to
+`faultline fix`. No new fix logic; these flags filter the existing structured
+fix output rendered by each playbook.
+
+Why fifth: operator ergonomics with zero analysis risk; depends only on the
+existing structured fix model.
+
+#### 6. Promote `faultline compare` to stable
+
+Remove the experimental flag from `faultline compare`. Add smoke snapshot.
+Promote to the default command narrative.
+
+Why sixth: compare is fully implemented and useful; the only blocker is a
+missing smoke snapshot and the experimental gate.
+
+### Scope Summary
+
+| Item | Effort | Coverage delta | Risk |
+|------|--------|---------------|------|
+| Top-5 corpus gap sprint | 8–10 days | +0.11–0.12% (large corpus) | Low |
+| Jest playbook | 2–3 days | +0.9% (large corpus) | Low |
+| Promote coverage | 2–3 days | — | Very low |
+| Ontology Phase 2–4 | 14–17 days | — | Low (metadata only) |
+| fix operator flags | 3–5 days | — | Very low |
+| Promote compare | 2–3 days | — | Very low |
+
+### Success Criteria
+
+- `make test` and `make cli-smoke` pass on all changes
+- eval corpus large-corpus coverage moves from 74.0% toward 74.1%+
+- `faultline coverage` and `faultline compare` appear in `faultline --help`
+- all new playbooks pass `make review`
+- no regressions in existing `analyze`, `workflow`, `fix`, or `explain` flows
+
+### Team Layer Deferral
+
+The Team layer (`faultline report`, `faultline login`, `faultline sync`) is
+deferred to v0.5. The local forensic store is shipped and the patterns in
+`internal/app/history.go` provide the implementation template. v0.4.3 should
+not touch the Team command surface.
+
+## Later, Not v0.4.3
 
 The roadmap should stay disciplined about what it is not doing in this release:
 
+- Team layer commands (`faultline report`, `faultline login`, `faultline sync`)
 - hosted pack registry
 - runtime remote pack fetch during analysis
 - dashboards or a hosted analytics surface

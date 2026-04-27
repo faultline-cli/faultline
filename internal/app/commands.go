@@ -87,6 +87,12 @@ type AnalyzeOptions struct {
 	// FailOnSilent causes Analyze to return ErrSilentFailure when a silent
 	// failure finding is detected, regardless of whether a playbook also matched.
 	FailOnSilent bool
+	// FixCommandsOnly restricts fix output to runnable code blocks only.
+	FixCommandsOnly bool
+	// FixWithPreconditions includes any preconditions section present in fix output.
+	FixWithPreconditions bool
+	// FixWithRisks includes any risks section present in fix output.
+	FixWithRisks bool
 }
 
 // writeAnalysis dispatches to the appropriate formatter based on opts.

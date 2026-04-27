@@ -11,6 +11,9 @@ type Playbook struct {
 	BaseScore        float64         `yaml:"base_score" json:"base_score"`
 	Tags             []string        `yaml:"tags" json:"tags"`
 	StageHints       []string        `yaml:"stage_hints" json:"stage_hints"`
+	Domain           string          `yaml:"domain,omitempty" json:"domain,omitempty"`
+	Class            string          `yaml:"class,omitempty" json:"class,omitempty"`
+	Mode             string          `yaml:"mode,omitempty" json:"mode,omitempty"`
 	Match            MatchSpec       `yaml:"match" json:"match"`
 	Source           SourceSpec      `yaml:"source,omitempty" json:"source,omitempty"`
 	Summary          string          `yaml:"summary,omitempty" json:"summary,omitempty"`

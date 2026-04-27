@@ -1,0 +1,35 @@
+FAIL src/utils/formatDate.test.js
+  ● formatDate › formats a timestamp correctly
+
+    expect(received).toEqual(expected)
+
+    Expected: "2024-01-15"
+    Received: "01/15/2024"
+
+      7 |   it('formats a timestamp correctly', () => {
+      8 |     const result = formatDate(1705276800000);
+    > 9 |     expect(result).toEqual('2024-01-15');
+        |                    ^
+     10 |   });
+     11 | });
+
+    at Object.<anonymous> (src/utils/formatDate.test.js:9:20)
+
+FAIL src/components/UserCard.test.jsx
+  ● UserCard › renders user name
+
+    expect(received).toBeInTheDocument()
+
+    Received element is not present in the document.
+
+    > 8 |     expect(screen.getByRole('heading', { name: /alice/i })).toBeInTheDocument();
+        |                                                              ^
+      9 |   });
+
+    at Object.<anonymous> (src/components/UserCard.test.jsx:8:62)
+
+Test Suites: 2 failed, 5 total
+Tests:       2 failed, 8 passed, 10 total
+Snapshots:   0 total
+Time:        3.847 s
+Ran all test suites.

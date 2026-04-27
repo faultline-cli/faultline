@@ -110,6 +110,9 @@ type raw struct {
 	BaseScore  float64  `yaml:"base_score"`
 	Tags       []string `yaml:"tags"`
 	StageHints []string `yaml:"stage_hints"`
+	Domain     string   `yaml:"domain,omitempty"`
+	Class      string   `yaml:"class,omitempty"`
+	Mode       string   `yaml:"mode,omitempty"`
 	Match      struct {
 		Any     []string               `yaml:"any"`
 		All     []string               `yaml:"all"`
@@ -310,8 +313,9 @@ func loadFile(path string) (model.Playbook, error) {
 		Detector:   normalizeDetector(r.Detector),
 		BaseScore:  r.BaseScore,
 		Tags:       r.Tags,
-		StageHints: r.StageHints,
-		Match: model.MatchSpec{
+		StageHints: r.StageHints,			Domain:     r.Domain,
+			Class:      r.Class,
+			Mode:       r.Mode,		Match: model.MatchSpec{
 			Any:     r.Match.Any,
 			All:     r.Match.All,
 			None:    r.Match.None,

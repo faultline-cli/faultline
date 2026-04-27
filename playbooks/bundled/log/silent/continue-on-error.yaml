@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [silent-failure, continue-on-error, allow_failure, github-actions, gitlab-ci]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: silent-failure
+mode: continue-on-error-suppressed
 summary: |-
   A CI step uses `continue-on-error: true` or `allow_failure: true`, which
   causes the pipeline to proceed even when the step exits non-zero.  This can

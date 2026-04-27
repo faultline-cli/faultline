@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [silent-failure, artifact, upload, github-actions, ci, path]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: silent-failure
+mode: artifact-upload-empty
 summary: |-
   An artifact upload step was executed but reported that no files matched the
   configured path.  The CI job continued and marked itself as passing even

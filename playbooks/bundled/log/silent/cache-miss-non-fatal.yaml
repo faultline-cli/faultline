@@ -5,6 +5,9 @@ severity: medium
 base_score: 0.8
 tags: [silent-failure, cache, github-actions, ci, performance]
 stage_hints: [build, test]
+domain: ci-config
+class: silent-failure
+mode: cache-restore-failed
 summary: |-
   A cache restore or save step failed (cache not found, restore error, or save
   error), but the CI job continued without flagging this as a failure.  Repeated

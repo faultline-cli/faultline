@@ -18,6 +18,12 @@ type Options struct {
 	Plain          bool
 	Width          int
 	DarkBackground bool
+	// FixCommandsOnly restricts fix output to runnable code blocks only.
+	FixCommandsOnly bool
+	// FixWithPreconditions includes any preconditions section present in fix output.
+	FixWithPreconditions bool
+	// FixWithRisks includes any risks section present in fix output.
+	FixWithRisks bool
 }
 
 func DetectOptions(w io.Writer) Options {

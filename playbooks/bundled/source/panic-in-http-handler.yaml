@@ -5,6 +5,9 @@ severity: high
 detector: source
 base_score: 1.1
 tags: [source, go, panic, http, rpc, recovery, middleware]
+domain: source
+class: runtime-fault
+mode: panic-in-http-handler
 source:
   triggers:
     - id: http_handler

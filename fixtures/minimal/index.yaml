@@ -195,3 +195,7 @@ fixtures:
     path: internal/engine/testdata/fixtures/arch-mismatch.log
     expectation:
       expected_playbook: arch-mismatch
+  - id: minimal-jest-test-failure
+    path: internal/engine/testdata/fixtures/jest-test-failure.log
+    expectation:
+      expected_playbook: jest-test-failure

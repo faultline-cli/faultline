@@ -1,0 +1,102 @@
+id: translate-toolkit-test-failure
+title: Translate Toolkit conversion test failure
+category: test
+severity: high
+base_score: 1.0
+tags: [translate-toolkit, python, po, xliff, localization, i18n, unittest]
+stage_hints: [test]
+domain: test-runner
+class: test-framework-failure
+mode: translate-toolkit-test-failure
+summary: |-
+  One or more test cases in the Translate Toolkit localisation library failed.
+  The toolkit covers PO, XLIFF, MO, and other translation format conversions.
+  Failures indicate a format-parsing regression, a broken conversion pipeline,
+  or a lxml/icu dependency version mismatch.
+diagnosis: |-
+  ## Diagnosis
+
+  The Translate Toolkit test suite exercises format converters and file handlers:
+
+  - `test_open_office_to_xliff` / `test_po_to_xliff` — bidirectional conversion
+    between OpenOffice SDF and PO/XLIFF. A failure here is usually a parsing
+    change in the source format or a namespace mismatch in the output XML.
+  - `TestPO2Sub.test_subrip` / `TestPO2SubCommand.test_subrip` — conversion of PO
+    files to SubRip subtitle format. Fails when timestamp parsing or escaping
+    changes.
+  - `TestCPOFile.test_obsolete` / `TestCPOFile.test_obsolete_with_prev_msgid` —
+    handling of obsolete translation units in compiled PO (CPO) format.
+  - `TestMOFile.test_output` — binary MO (compiled gettext) file serialisation.
+  - `TestDTD.test_invalid_quoting` — DTD entity file round-trip for Firefox
+    localisations.
+
+  Common root causes:
+
+  - **lxml or icu version change** — many converters depend on XML/Unicode
+    libraries whose output format changed between versions.
+  - **Python 2→3 byte string difference** — the toolkit historically ran on both;
+    some tests write bytes then read strings.
+  - **Fixture file encoding** — test fixtures stored with CRLF line endings break
+    PO parsers that expect LF.
+fix: |-
+  ## Fix steps
+
+  1. Install the development dependencies:
+     ```bash
+     pip install -e ".[dev]"
+     ```
+  2. Run only the failing tests to isolate the scope:
+     ```bash
+     python -m pytest translate/storage/test_pypo.py -k "test_obsolete" -v
+     python -m pytest translate/convert/test_po2sub.py -v
+     python -m pytest translate/convert/test_oo2xliff.py -v
+     ```
+  3. Check the lxml version matches what the CI baseline used:
+     ```bash
+     python -c "import lxml; print(lxml.__version__)"
+     ```
+  4. Run the full conversion test matrix to see the extent of breakage:
+     ```bash
+     python -m pytest translate/convert/ -v
+     ```
+validation: |-
+  ## Validation
+
+  - `python -m pytest translate/convert/ translate/storage/ -v` all pass.
+  - `python -m pytest translate/convert/test_po2xliff.py -v` passes.
+match:
+  any:
+    - "test_open_office_to_xliff"
+    - "test_po_to_xliff"
+    - "TestPO2Sub.test_subrip"
+    - "TestCPOFile.test_obsolete"
+    - "TestMOFile.test_output"
+    - "TestDTD.test_invalid_quoting"
+workflow:
+  likely_files:
+    - translate/convert/oo2xliff.py
+    - translate/convert/po2xliff.py
+    - translate/convert/po2sub.py
+    - translate/storage/pypo.py
+    - translate/storage/cpo.py
+    - translate/storage/dtd.py
+  local_repro:
+    - python -m pytest translate/convert/test_oo2xliff.py -v
+    - python -m pytest translate/convert/test_po2xliff.py -v
+    - python -m pytest translate/convert/test_po2sub.py -v
+  verify:
+    - python -m pytest translate/convert/ translate/storage/ -v
+why_it_matters: |-
+  ## Why it matters
+
+  The Translate Toolkit is a foundational library for many localisation workflows
+  (Pootle, Virtaal, Weblate). A regression in the PO↔XLIFF or PO→MO pipeline
+  breaks downstream tools that depend on format fidelity. The CPO and MO tests
+  are particularly important because compiled formats are shipped to end users.
+
+  ## Prevention
+
+  - Pin lxml to a validated version range and test upgrades explicitly.
+  - Add a CI step that checks Python 3 byte/string boundary points in the storage
+    layer after any change to encoding handling.
+  - Use parametrised tests over a set of known-good fixture files for each format.

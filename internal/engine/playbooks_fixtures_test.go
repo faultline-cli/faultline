@@ -74,6 +74,11 @@ func TestBundledPlaybookFixtures(t *testing.T) {
 		{name: "jest command not found", file: "jest-command-not-found.log", wantID: "jest-command-not-found"},
 		{name: "postgres connection refused", file: "postgres-connection-refused.log", wantID: "postgres-connection-refused"},
 		{name: "docker permission denied nonroot", file: "docker-permission-denied-nonroot.log", wantID: "docker-permission-denied-nonroot"},
+		{name: "sentry elasticsearch test failure", file: "sentry-elasticsearch-test-failure.log", wantID: "sentry-elasticsearch-test-failure"},
+		{name: "flexget test failure", file: "flexget-test-failure.log", wantID: "flexget-test-failure"},
+		{name: "translate toolkit test failure", file: "translate-toolkit-test-failure.log", wantID: "translate-toolkit-test-failure"},
+		{name: "pip install test failure", file: "pip-install-test-failure.log", wantID: "pip-install-test-failure"},
+		{name: "nikola build test failure", file: "nikola-build-test-failure.log", wantID: "nikola-build-test-failure"},
 	}
 
 	for _, tc := range tests {

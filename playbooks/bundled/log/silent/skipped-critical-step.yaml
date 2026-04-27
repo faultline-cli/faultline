@@ -5,6 +5,9 @@ severity: high
 base_score: 0.9
 tags: [silent-failure, skipped, condition, if, step, ci, build, test, deploy, security]
 stage_hints: [build, test, deploy, ci]
+domain: ci-config
+class: silent-failure
+mode: conditional-step-skipped
 summary: |-
   A CI step was skipped because its `if:` condition evaluated to false.  The
   context suggests the skipped step may have been a critical one (build, test,

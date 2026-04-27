@@ -5,6 +5,9 @@ severity: high
 base_score: 1.0
 tags: [silent-failure, exit-code, set+e, bash, shell, ci]
 stage_hints: [build, test, deploy]
+domain: ci-config
+class: silent-failure
+mode: exit-code-override
 summary: |-
   A failing command's exit code was deliberately suppressed using `|| true`,
   `set +e`, or similar shell constructs.  CI continued without surfacing the

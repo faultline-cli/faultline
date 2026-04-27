@@ -5,6 +5,9 @@ severity: high
 detector: source
 base_score: 1.0
 tags: [source, error-handling, go, silent-failure, observability]
+domain: source
+class: silent-failure
+mode: missing-error-propagation
 source:
   triggers:
     - id: error_discarded

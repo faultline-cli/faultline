@@ -33,10 +33,9 @@ func newCoverageCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:    "coverage",
-		Short:  "Report playbook count, category breakdown, and fixture coverage",
-		Hidden: true,
-		Args:   cobra.NoArgs,
+		Use:   "coverage",
+		Short: "Report playbook count, category breakdown, and fixture coverage",
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load playbooks using the same resolution as analyze.
 			pbs, err := loadPlaybooksForCoverage(playbookDir, playbookPacks)
@@ -201,6 +200,33 @@ func printCoverageText(w io.Writer, pbs []model.Playbook, byCategory map[string]
 	}
 	_ = tw.Flush()
 
+	// Domain breakdown.
+	byDomain := map[string]int{}
+	untagged := 0
+	for _, pb := range pbs {
+		if pb.Domain == "" {
+			untagged++
+		} else {
+			byDomain[pb.Domain]++
+		}
+	}
+	if len(byDomain) > 0 || untagged > 0 {
+		fmt.Fprintf(w, "\nBy domain:\n")
+		domains := make([]string, 0, len(byDomain))
+		for d := range byDomain {
+			domains = append(domains, d)
+		}
+		sort.Strings(domains)
+		tw2 := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+		for _, d := range domains {
+			fmt.Fprintf(tw2, "  %s\t%d playbooks\n", d, byDomain[d])
+		}
+		if untagged > 0 {
+			fmt.Fprintf(tw2, "  (untagged)\t%d playbooks\n", untagged)
+		}
+		_ = tw2.Flush()
+	}
+
 	if len(missingFixtures) > 0 {
 		fmt.Fprintf(w, "\nPlaybooks missing fixtures (%d):\n", len(missingFixtures))
 		for _, id := range missingFixtures {
@@ -225,6 +251,7 @@ type coverageReportJSON struct {
 	WithFixtures    int                    `json:"with_fixtures"`
 	FixtureDir      string                 `json:"fixture_dir,omitempty"`
 	ByCategory      []coverageCategoryJSON `json:"by_category"`
+	ByDomain        []coverageDomainJSON   `json:"by_domain"`
 	MissingFixtures []string               `json:"missing_fixtures"`
 	DuplicateIDs    []string               `json:"duplicate_ids"`
 }
@@ -234,6 +261,11 @@ type coverageCategoryJSON struct {
 	Count        int      `json:"count"`
 	WithFixtures int      `json:"with_fixtures"`
 	PlaybookIDs  []string `json:"playbook_ids"`
+}
+
+type coverageDomainJSON struct {
+	Domain string `json:"domain"`
+	Count  int    `json:"count"`
 }
 
 func printCoverageJSON(w io.Writer, pbs []model.Playbook, byCategory map[string][]string, missingFixtures, duplicates []string, fixtureRoot string) error {
@@ -266,6 +298,26 @@ func printCoverageJSON(w io.Writer, pbs []model.Playbook, byCategory map[string]
 		})
 	}
 
+	// Build domain breakdown.
+	domainCounts := map[string]int{}
+	for _, pb := range pbs {
+		if pb.Domain != "" {
+			domainCounts[pb.Domain]++
+		}
+	}
+	domainKeys := make([]string, 0, len(domainCounts))
+	for d := range domainCounts {
+		domainKeys = append(domainKeys, d)
+	}
+	sort.Strings(domainKeys)
+	domainItems := make([]coverageDomainJSON, 0, len(domainKeys))
+	for _, d := range domainKeys {
+		domainItems = append(domainItems, coverageDomainJSON{Domain: d, Count: domainCounts[d]})
+	}
+	if domainItems == nil {
+		domainItems = []coverageDomainJSON{}
+	}
+
 	mf := missingFixtures
 	if mf == nil {
 		mf = []string{}
@@ -280,6 +332,7 @@ func printCoverageJSON(w io.Writer, pbs []model.Playbook, byCategory map[string]
 		WithFixtures:    len(pbs) - len(missingFixtures),
 		FixtureDir:      fixtureRoot,
 		ByCategory:      items,
+		ByDomain:        domainItems,
 		MissingFixtures: mf,
 		DuplicateIDs:    dups,
 	}

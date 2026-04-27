@@ -987,6 +987,68 @@ func TestFormatFixNilAnalysis(t *testing.T) {
 	}
 }
 
+func TestFormatFixCommandsOnly(t *testing.T) {
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, []string{"terminal prompts disabled"})
+	a.Results[0].Playbook.Fix = "1. Run:\n```bash\ngit config --global credential.helper store\n```\n2. Retry."
+	out := FormatFix(a, renderer.Options{Plain: true, Width: 88, FixCommandsOnly: true})
+	if !strings.Contains(out, "git config") {
+		t.Errorf("expected command in --commands-only output, got %q", out)
+	}
+	if strings.Contains(out, "Retry") {
+		t.Errorf("expected prose stripped in --commands-only output, got %q", out)
+	}
+}
+
+func TestFormatFixCommandsOnlyNoBlocks(t *testing.T) {
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, nil)
+	a.Results[0].Playbook.Fix = "1. Check your config.\n2. Try again."
+	out := FormatFix(a, renderer.Options{Plain: true, Width: 88, FixCommandsOnly: true})
+	if !strings.Contains(out, "No runnable commands") {
+		t.Errorf("expected no-commands message, got %q", out)
+	}
+}
+
+func TestFormatFixWithPreconditions(t *testing.T) {
+	fixText := "## Fix steps\n1. Do something.\n## Preconditions\n- You have write access.\n## Risks\n- May break things."
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, nil)
+	a.Results[0].Playbook.Fix = fixText
+
+	outWith := FormatFix(a, renderer.Options{Plain: true, Width: 88, FixWithPreconditions: true})
+	if !strings.Contains(outWith, "write access") {
+		t.Errorf("expected preconditions in output, got %q", outWith)
+	}
+	if strings.Contains(outWith, "May break things") {
+		t.Errorf("expected risks absent without --with-risks, got %q", outWith)
+	}
+}
+
+func TestFormatFixWithRisks(t *testing.T) {
+	fixText := "## Fix steps\n1. Do something.\n## Preconditions\n- You have write access.\n## Risks\n- May break things."
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, nil)
+	a.Results[0].Playbook.Fix = fixText
+
+	outWith := FormatFix(a, renderer.Options{Plain: true, Width: 88, FixWithRisks: true})
+	if !strings.Contains(outWith, "May break things") {
+		t.Errorf("expected risks in output, got %q", outWith)
+	}
+	if strings.Contains(outWith, "write access") {
+		t.Errorf("expected preconditions absent without --with-preconditions, got %q", outWith)
+	}
+}
+
+func TestFormatFixSectionsAbsent(t *testing.T) {
+	// Flags for sections that don't exist in the fix text should not error.
+	a := makeAnalysis("git-auth", "Git auth failure", "auth", 1.0, nil)
+	a.Results[0].Playbook.Fix = "1. Export GH_TOKEN\n2. Retry the push"
+	out := FormatFix(a, renderer.Options{Plain: true, Width: 88, FixWithPreconditions: true, FixWithRisks: true})
+	if out == "" {
+		t.Fatal("expected non-empty output even when sections absent")
+	}
+	if !strings.Contains(out, "git-auth") {
+		t.Errorf("expected playbook ID in output, got %q", out)
+	}
+}
+
 // ── FormatPlaybookDetailsJSON ─────────────────────────────────────────────────
 
 func TestFormatPlaybookDetailsJSON(t *testing.T) {

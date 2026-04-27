@@ -95,19 +95,152 @@ func (r Renderer) RenderFix(a *model.Analysis) string {
 		return r.RenderNoMatch()
 	}
 	result := a.Results[0]
-	header := r.renderHeader(result.Playbook, fmt.Sprintf("%d%% confidence", int(math.Round(result.Confidence*100))), "")
-	body := r.renderMarkdownSection("Fix Steps", result.Playbook.Fix)
+	fix := result.Playbook.Fix
+
+	if r.opts.FixCommandsOnly {
+		return r.renderFixCommandsOnly(result.Playbook.ID, fix)
+	}
+
+	// Strip opt-in sections from the primary fix render; they are shown
+	// separately only when the corresponding flag is set.
+	fixBase := stripFixSections(fix, "Preconditions", "Risks")
+	body := r.renderMarkdownSection("Fix Steps", fixBase)
 	if strings.TrimSpace(body) == "" {
 		body = "No fix steps defined for this playbook."
 	}
-	return strings.TrimSpace(strings.Join([]string{
-		header,
+	sections := []string{
+		r.renderHeader(result.Playbook, fmt.Sprintf("%d%% confidence", int(math.Round(result.Confidence*100))), ""),
 		r.renderMetaRows([]string{
 			metaRow("ID", result.Playbook.ID),
 			metaRow("Category", result.Playbook.Category),
 		}),
 		r.renderSection("Fix Steps", body),
-	}, "\n\n")) + "\n"
+	}
+	if r.opts.FixWithPreconditions {
+		if sec := extractFixSection(fix, "Preconditions"); sec != "" {
+			sections = append(sections, r.renderSection("Preconditions", sec))
+		}
+	}
+	if r.opts.FixWithRisks {
+		if sec := extractFixSection(fix, "Risks"); sec != "" {
+			sections = append(sections, r.renderSection("Risks", sec))
+		}
+	}
+	return strings.TrimSpace(strings.Join(sections, "\n\n")) + "\n"
+}
+
+// renderFixCommandsOnly emits only the runnable code blocks from the fix
+// field, preceded by a compact header. It is used when --commands-only is set.
+func (r Renderer) renderFixCommandsOnly(playbookID, fix string) string {
+	commands := extractFixCodeBlocks(fix)
+	var sb strings.Builder
+	sb.WriteString(playbookID)
+	sb.WriteString(": commands\n")
+	sb.WriteString(strings.Repeat("─", min(len(playbookID)+10, r.opts.Width)))
+	sb.WriteByte('\n')
+	if len(commands) == 0 {
+		sb.WriteString("No runnable commands found in fix steps.\n")
+		return sb.String()
+	}
+	for i, cmd := range commands {
+		if i > 0 {
+			sb.WriteByte('\n')
+		}
+		sb.WriteString(cmd)
+		sb.WriteByte('\n')
+	}
+	return sb.String()
+}
+
+// extractFixCodeBlocks returns the content of each fenced code block in the
+// fix markdown, without the fence delimiters.
+func extractFixCodeBlocks(fix string) []string {
+	var blocks []string
+	lines := strings.Split(fix, "\n")
+	var inBlock bool
+	var current []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "```") {
+			if inBlock {
+				inBlock = false
+				if len(current) > 0 {
+					blocks = append(blocks, strings.Join(current, "\n"))
+				}
+				current = nil
+			} else {
+				inBlock = true
+			}
+			continue
+		}
+		if inBlock {
+			current = append(current, line)
+		}
+	}
+	return blocks
+}
+
+// extractFixSection finds a heading-delimited section in fix markdown by its
+// title (case-insensitive) and returns its content. Returns empty string when
+// not found.
+func extractFixSection(fix, title string) string {
+	lines := strings.Split(fix, "\n")
+	titleLower := strings.ToLower(title)
+	var collecting bool
+	var headPrefix string
+	var result []string
+	for _, line := range lines {
+		stripped := strings.TrimLeft(line, "#")
+		prefix := line[:len(line)-len(stripped)]
+		content := strings.TrimSpace(stripped)
+		if collecting {
+			// Stop at next heading of same or higher level.
+			if len(prefix) > 0 && len(prefix) <= len(headPrefix) {
+				break
+			}
+			result = append(result, line)
+			continue
+		}
+		if len(prefix) > 0 && strings.ToLower(content) == titleLower {
+			collecting = true
+			headPrefix = prefix
+		}
+	}
+	return strings.TrimSpace(strings.Join(result, "\n"))
+}
+
+// stripFixSections removes named heading-delimited sections from fix markdown.
+// This is used to exclude opt-in sections (e.g. Preconditions, Risks) from
+// the default fix rendering.
+func stripFixSections(fix string, titles ...string) string {
+	titleSet := make(map[string]struct{}, len(titles))
+	for _, t := range titles {
+		titleSet[strings.ToLower(t)] = struct{}{}
+	}
+	lines := strings.Split(fix, "\n")
+	var out []string
+	var skipPrefix string
+	for _, line := range lines {
+		stripped := strings.TrimLeft(line, "#")
+		prefix := line[:len(line)-len(stripped)]
+		content := strings.ToLower(strings.TrimSpace(stripped))
+		if skipPrefix != "" {
+			// Inside a skipped section; stop skipping at same or higher heading.
+			if len(prefix) > 0 && len(prefix) <= len(skipPrefix) {
+				skipPrefix = ""
+			} else {
+				continue
+			}
+		}
+		if len(prefix) > 0 {
+			if _, skip := titleSet[content]; skip {
+				skipPrefix = prefix
+				continue
+			}
+		}
+		out = append(out, line)
+	}
+	return strings.TrimSpace(strings.Join(out, "\n"))
 }
 
 func (r Renderer) RenderExplain(pb model.Playbook) string {

@@ -5,6 +5,9 @@ severity: high
 base_score: 0.8
 tags: [silent-failure, test, coverage, zero-tests, pytest, jest, go-test]
 stage_hints: [test]
+domain: test-runner
+class: silent-failure
+mode: zero-tests-executed
 summary: |-
   A test runner command was invoked but discovered or executed zero tests.
   CI marked the job as passing because the test runner exited zero, but no

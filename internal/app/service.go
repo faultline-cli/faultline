@@ -204,7 +204,11 @@ func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer)
 		_, werr := fmt.Fprint(w, output.FormatFixMarkdown(a))
 		return werr
 	}
-	_, werr := fmt.Fprint(w, output.FormatFix(a, renderer.DetectOptions(w)))
+	rendOpts := renderer.DetectOptions(w)
+	rendOpts.FixCommandsOnly = opts.FixCommandsOnly
+	rendOpts.FixWithPreconditions = opts.FixWithPreconditions
+	rendOpts.FixWithRisks = opts.FixWithRisks
+	_, werr := fmt.Fprint(w, output.FormatFix(a, rendOpts))
 	return werr
 }
 
