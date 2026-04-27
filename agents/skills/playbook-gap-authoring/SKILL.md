@@ -129,9 +129,21 @@ For each candidate cluster (top-N by fixture count):
     ```
     Ensure the playbook does not fire on unrelated failure categories.
 
+12. Run the `playbook-linter` skill against the modified playbook. All critical criteria must
+    PASS before continuing. Pay special attention to Criterion 3 (false positive risk) when
+    broad new phrases were added.
+
+13. Run `make review` and `make test` to confirm no pattern conflict was introduced:
+    ```sh
+    make review
+    make test
+    ```
+    If `make review` reports a conflict, tighten the new patterns or add `match.none`
+    exclusions before proceeding.
+
 **For New (authoring a new playbook):**
 
-12. Follow the `new-playbook-authoring` skill from step 1. Establish root-cause
+14. Follow the `new-playbook-authoring` skill from step 1. Establish root-cause
     justification from the gap cluster samples before writing YAML.
     Include `domain`, `class`, and `mode` fields — these are required for new
     playbooks (see `docs/ontology.md`). Do not mark a new playbook done until
@@ -139,7 +151,7 @@ For each candidate cluster (top-N by fixture count):
 
 ### Phase 4 — Sample Verification Loop
 
-13. Batch-verify all samples for the cluster:
+15. Batch-verify all samples for the cluster:
     ```sh
     for f in eval-work/gaps/samples/cluster-NNN/*.log; do
       echo -n "$f: "
@@ -150,7 +162,7 @@ For each candidate cluster (top-N by fixture count):
 
 ### Phase 5 — Full Eval and Delta Measurement
 
-14. Run a full eval with the updated playbooks. Use `--workers` to parallelise:
+16. Run a full eval with the updated playbooks. Use `--workers` to parallelise:
     ```sh
     ./bin/faultline-eval run \
       --corpus  eval-work/corpus.jsonl \
@@ -160,13 +172,13 @@ For each candidate cluster (top-N by fixture count):
     > Playbooks are loaded from the filesystem at runtime (not compiled in).
     > No rebuild is needed between pattern edits and eval runs.
 
-15. Report the new coverage:
+17. Report the new coverage:
     ```sh
     ./bin/faultline-eval report --results eval-work/results-new.jsonl
     ```
     Compare to the baseline from step 1. Record the delta (matched count, rate).
 
-16. Regenerate gaps from the new results to see remaining work:
+18. Regenerate gaps from the new results to see remaining work:
     ```sh
     ./bin/faultline-eval gaps \
       --results   eval-work/results-new.jsonl \
@@ -175,7 +187,7 @@ For each candidate cluster (top-N by fixture count):
       --max-samples 5
     ```
 
-17. Commit when `make test` passes and the delta is confirmed positive.
+19. Commit when `make review` and `make test` both pass and the delta is confirmed positive.
 
 ## Guardrails
 
@@ -191,7 +203,7 @@ For each candidate cluster (top-N by fixture count):
   output file stays at 0 bytes until all fixtures are processed.
 - Do not commit `eval-work/` output (results JSONL, gap clusters, comparison
   artifacts). These are transient. Only commit playbook YAML changes.
-- Run `make test` before declaring the sprint complete.
+- Run `make review` and `make test` before declaring the sprint complete.
 - When the top-N cluster gains are small (< 22 fixtures per top cluster), the
   remaining unmatched population is long-tail noise. Assess whether further
   coverage work has diminishing returns.

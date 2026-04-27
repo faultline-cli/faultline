@@ -45,9 +45,9 @@ Run the `coverage-gaps.md` procedure:
 ./bin/faultline list
 ```
 
-Apply Steps 1–4 of the procedure to produce a ranked list of gap records. Select the top **5** gap records (highest impact × determinism, `safe` batch preferred). Each gap record is an input to Phase 1; execute the full Phase 1–7 sprint for each gap in priority order.
+Apply Steps 1–4 of the procedure to produce a ranked list of gap records. Select up to **5** gap records (highest impact × determinism, `safe` batch preferred), or all remaining safe-batch gaps if fewer than 5 remain. Each gap record is an input to Phase 1; execute the full Phase 1–7 sprint for each gap in priority order.
 
-If fewer than 5 safe-batch gaps remain uncovered, fill the remainder with top experimental-batch gaps and note them in the deliverable.
+If fewer than 5 safe-batch gaps remain uncovered, fill the remainder with top experimental-batch gaps. Mark experimental-batch items clearly in the deliverable so they are distinguishable from safe-batch work.
 
 ### Phase 1 — Orient
 

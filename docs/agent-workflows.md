@@ -334,6 +334,42 @@ The ontology is read-only metadata on the playbook. It does not change matching 
 Trigger: no input needed — or provide a failure type, gap name, or public failure URL to skip Phase 0.  
 Key distinction from the "Author" chain: this one starts *before* triage, handles real evidence collection and synthetic generation, and can self-start by finding the highest-priority gap automatically.
 
+### Close Eval Corpus Gaps (full chain)
+
+```
+eval-corpus skill
+  → bin/faultline-eval ingest + run + report + gaps
+  → eval-work/gaps/cluster-summary.md produced
+
+  → playbook-gap-authoring skill
+      Phase 1: establish baseline + regenerate clusters
+      Phase 2: triage each top cluster (Extend / New / Skip)
+      Phase 3: extend existing playbook (linter + make review + make test)
+             OR new-playbook-authoring skill (New path)
+      Phase 4: batch-verify samples
+      Phase 5: full eval re-run + delta measurement
+```
+
+Trigger: `eval-work/gaps/cluster-summary.md` exists and has unresolved clusters.  
+Key distinction from the Sprint chain: starts from an eval corpus's labelled gap output rather than from a single failure type or URL.
+
+### Refine Repository-Local Source Findings (full chain)
+
+```
+faultline inspect . / faultline guard .
+  → source finding surfaced
+
+  → source-playbook-refinement skill
+      → compare against nearest bundled source playbook (faultline explain)
+      → refine or author source playbook
+      → pair positive + nearby negative fixtures under internal/engine/testdata/source/
+      → make review → make test → make build → make cli-smoke
+      → [if real corpus affected] fixtures stats --check-baseline
+```
+
+Trigger: `inspect` or `guard` surfaces a finding that belongs in a bundled source playbook rather than the real log corpus.  
+Key constraint: repository-local findings stay in `internal/engine/testdata/source/` — do not promote them into `fixtures/real/`.
+
 The next useful upgrades should stay small and repo-native.
 
 1. Make the new prompt set the default workflow surface for agents working in the repo.

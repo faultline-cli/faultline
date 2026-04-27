@@ -68,6 +68,7 @@ Confidence score: 0–100
 - A minimal one-liner fixture fails the realism check. This is a critical issue.
 - Ontology incompleteness is a critical issue for new playbooks. Existing playbooks: not required but record as an improvement.
 - After fixing critical issues, re-run the linter before proceeding.
+- If the same critical criterion fails after two fix iterations, stop and escalate: report the blocking criterion and re-triage the gap. The root cause may be too ambiguous or too broad to match deterministically.
 
 ## Deliverable
 

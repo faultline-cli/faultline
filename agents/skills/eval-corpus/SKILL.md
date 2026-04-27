@@ -159,14 +159,22 @@ Column 65 is `tr_status`, column 60 is `tr_log_tests_failed`. Adjust if needed.
 
 Use `fixtures/datasets/travis-torrent-2017.yaml` as the ingest config.
 
-## Promoting a Gap Cluster Into a Playbook
+## Promoting Gap Clusters Into Playbooks
 
-1. Review `eval-work/gaps/cluster-summary.md` for the top unmatched cluster.
-2. Copy the corresponding stub from `eval-work/gaps/playbook-stubs/` to `playbooks/bundled/`.
-3. Inspect sample log files in `eval-work/gaps/samples/<cluster>/`.
-4. Fill in `patterns`, `severity`, and `remediation`.
-5. Re-run `faultline-eval run` and `compare` to verify improvement.
-6. Commit the new playbook when `make test` passes.
+After generating gap cluster data, use the `playbook-gap-authoring` skill to close them
+systematically. That skill reads the cluster summary, triages each gap, extends or authors
+playbooks, runs linting and validation, and measures the coverage delta.
+
+Hand off directly after producing `eval-work/gaps/cluster-summary.md`:
+
+```sh
+# Hand-off trigger for playbook-gap-authoring skill:
+# "Close the top coverage gaps in eval-work/gaps/cluster-summary.md"
+```
+
+Do not manually edit playbook stubs from `eval-work/gaps/playbook-stubs/`. Those are
+starting-point scaffolding only — they require real sample verification and the full
+linter + `make review` gate before they are safe to commit.
 
 ## Guardrails
 

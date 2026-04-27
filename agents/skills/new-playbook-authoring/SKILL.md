@@ -46,6 +46,7 @@ Do not use it for:
    - if no staged fixture exists, use the `fixture-generation` skill to produce canonical, noisy, and near-miss variants under `fixtures/minimal/`
 5. Run the `playbook-linter` skill. All critical criteria must PASS before proceeding.
    - If FAIL: resolve all critical issues and re-run the linter before continuing.
+   - If the same critical criterion still fails after two fix attempts, re-triage the gap — the root cause may be too ambiguous for deterministic matching. Stop and report the blocking criterion.
 6. Run the full validation sequence in order:
    ```bash
    make review

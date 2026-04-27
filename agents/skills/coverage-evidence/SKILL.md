@@ -51,7 +51,7 @@ Do not use it for:
 7. Run `faultline fixtures review` to check for staging duplicates.
 8. Escalate gap candidates to the appropriate follow-on workflow:
    - Gap — known category → `playbook-refinement` skill
-   - Gap — new category → `triage-unmatched-log.md` prompt, then `playbook-refinement` skill if confirmed
+   - Gap — new category → `triage-unmatched-log.md` prompt, then `new-playbook-authoring` skill if gap is confirmed as genuinely new
 9. Run `make build && ./bin/faultline fixtures stats --class real --check-baseline` to confirm the real corpus is stable.
 
 ## Evidence Metadata To Capture Per Sample
