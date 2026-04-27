@@ -26,7 +26,6 @@ func TestMinimalFixtureCorpusIsStrict(t *testing.T) {
 	}
 	report, err := Evaluate(layout, ClassMinimal, EvaluateOptions{
 		PlaybookDir: bundledPlaybookDir(t),
-		NoHistory:   true,
 	})
 	if err != nil {
 		t.Fatalf("evaluate minimal corpus: %v", err)
@@ -52,7 +51,6 @@ func TestRealFixtureCorpusBaseline(t *testing.T) {
 	}
 	report, err := Evaluate(layout, ClassReal, EvaluateOptions{
 		PlaybookDir: bundledPlaybookDir(t),
-		NoHistory:   true,
 	})
 	if err != nil {
 		t.Fatalf("evaluate real corpus: %v", err)

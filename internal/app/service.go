@@ -92,7 +92,7 @@ func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Write
 		return err
 	}
 	if playbookID == "" {
-		return writeAnalysis(loaded.Analysis, AnalyzeOptions{Top: 1, Mode: output.ModeQuick, Format: opts.Format, JSON: opts.JSON}, w)
+		return writeAnalysis(loaded.Analysis, AnalyzeOptions{OutputOptions: OutputOptions{Top: 1, Mode: output.ModeQuick, Format: opts.Format, JSON: opts.JSON}}, w)
 	}
 
 	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, loaded.Playbooks, playbookID, opts.ShowRejected)
@@ -217,7 +217,6 @@ func (Service) List(category, playbookDir string, playbookPacks []string, w io.W
 	pbs, err := engine.New(engine.Options{
 		PlaybookDir:      playbookDir,
 		PlaybookPackDirs: playbookPacks,
-		NoHistory:        true,
 	}).List()
 	if err != nil {
 		return err
@@ -231,7 +230,6 @@ func (Service) Explain(id, playbookDir string, playbookPacks []string, format ou
 	pb, err := engine.New(engine.Options{
 		PlaybookDir:      playbookDir,
 		PlaybookPackDirs: playbookPacks,
-		NoHistory:        true,
 	}).Explain(id)
 	if err != nil {
 		return err
@@ -489,7 +487,6 @@ func (Service) Guard(root string, opts AnalyzeOptions, w io.Writer) error {
 	a, err := engine.New(engine.Options{
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
-		NoHistory:        true,
 		GitSince:         opts.GitSince,
 		RepoPath:         scanner.Root,
 		BayesEnabled:     true,

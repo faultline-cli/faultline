@@ -210,7 +210,7 @@ func TestGuardFindingsPreservesMetadata(t *testing.T) {
 // ── writeGuardNoFindings ──────────────────────────────────────────────────────
 
 func TestWriteGuardNoFindingsJSONWritesEmptyAnalysis(t *testing.T) {
-	opts := AnalyzeOptions{JSON: true, NoHistory: true, PlaybookDir: repoPlaybookDir()}
+	opts := AnalyzeOptions{OutputOptions: OutputOptions{JSON: true}, Store: "off", PlaybookDir: repoPlaybookDir()}
 	var buf bytes.Buffer
 	if err := writeGuardNoFindings("/tmp/repo", opts, &buf); err != nil {
 		t.Fatalf("writeGuardNoFindings JSON: %v", err)
@@ -226,9 +226,9 @@ func TestWriteGuardNoFindingsJSONWritesEmptyAnalysis(t *testing.T) {
 
 func TestWriteGuardNoFindingsJSONFormatWritesEmptyAnalysis(t *testing.T) {
 	opts := AnalyzeOptions{
-		Format:      output.FormatJSON,
-		NoHistory:   true,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{Format: output.FormatJSON},
+		Store:         "off",
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	var buf bytes.Buffer
 	if err := writeGuardNoFindings("/tmp/repo", opts, &buf); err != nil {
@@ -241,7 +241,7 @@ func TestWriteGuardNoFindingsJSONFormatWritesEmptyAnalysis(t *testing.T) {
 
 func TestWriteGuardNoFindingsTextProducesNoOutput(t *testing.T) {
 	// For non-JSON format, writeGuardNoFindings should not write anything.
-	opts := AnalyzeOptions{NoHistory: true, PlaybookDir: repoPlaybookDir()}
+	opts := AnalyzeOptions{Store: "off", PlaybookDir: repoPlaybookDir()}
 	var buf bytes.Buffer
 	if err := writeGuardNoFindings("/tmp/repo", opts, &buf); err != nil {
 		t.Fatalf("writeGuardNoFindings text: %v", err)
@@ -254,7 +254,7 @@ func TestWriteGuardNoFindingsTextProducesNoOutput(t *testing.T) {
 // ── tracePlaybookID ───────────────────────────────────────────────────────────
 
 func TestTracePlaybookIDFromTracePlaybookOption(t *testing.T) {
-	opts := AnalyzeOptions{TracePlaybook: "my-playbook"}
+	opts := AnalyzeOptions{TraceOptions: TraceOptions{TracePlaybook: "my-playbook"}}
 	id, err := tracePlaybookID(nil, opts)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -265,7 +265,7 @@ func TestTracePlaybookIDFromTracePlaybookOption(t *testing.T) {
 }
 
 func TestTracePlaybookIDSelectWithNilAnalysisErrors(t *testing.T) {
-	opts := AnalyzeOptions{Select: 1}
+	opts := AnalyzeOptions{OutputOptions: OutputOptions{Select: 1}}
 	_, err := tracePlaybookID(nil, opts)
 	if err == nil {
 		t.Fatal("expected error for nil analysis with Select > 0")
@@ -273,7 +273,7 @@ func TestTracePlaybookIDSelectWithNilAnalysisErrors(t *testing.T) {
 }
 
 func TestTracePlaybookIDSelectWithEmptyResultsErrors(t *testing.T) {
-	opts := AnalyzeOptions{Select: 1}
+	opts := AnalyzeOptions{OutputOptions: OutputOptions{Select: 1}}
 	_, err := tracePlaybookID(&model.Analysis{Results: []model.Result{}}, opts)
 	if err == nil {
 		t.Fatal("expected error for empty results with Select > 0")
@@ -284,7 +284,7 @@ func TestTracePlaybookIDSelectOutOfRangeErrors(t *testing.T) {
 	a := &model.Analysis{Results: []model.Result{
 		{Playbook: model.Playbook{ID: "p1"}},
 	}}
-	opts := AnalyzeOptions{Select: 5}
+	opts := AnalyzeOptions{OutputOptions: OutputOptions{Select: 5}}
 	_, err := tracePlaybookID(a, opts)
 	if err == nil {
 		t.Fatal("expected error for out-of-range select")
@@ -299,7 +299,7 @@ func TestTracePlaybookIDSelectValidReturnsID(t *testing.T) {
 		{Playbook: model.Playbook{ID: "p1"}},
 		{Playbook: model.Playbook{ID: "p2"}},
 	}}
-	opts := AnalyzeOptions{Select: 2}
+	opts := AnalyzeOptions{OutputOptions: OutputOptions{Select: 2}}
 	id, err := tracePlaybookID(a, opts)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

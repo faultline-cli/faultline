@@ -140,7 +140,7 @@ func TestLoadTopologySignalsEmptyChangedFiles(t *testing.T) {
 // --- AnalyzeRepository ---
 
 func TestAnalyzeRepositoryReturnsAnalysis(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
@@ -156,7 +156,7 @@ func TestAnalyzeRepositoryReturnsAnalysis(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryEmptyDirReturnsErrNoInput(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
 	// No files written → should return ErrNoInput or ErrNoMatch.
 	a, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})

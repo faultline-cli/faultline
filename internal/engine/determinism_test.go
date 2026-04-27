@@ -13,7 +13,7 @@ import (
 // TestDeterminismAcrossMultipleRuns verifies that the same input produces
 // identical output across multiple analysis runs.
 func TestDeterminismAcrossMultipleRuns(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	testCases := []struct {
 		name string
@@ -144,7 +144,7 @@ func TestDeterminismWithFixtures(t *testing.T) {
 
 // TestDeterminismWithEdgeCases verifies determinism with edge case inputs.
 func TestDeterminismWithEdgeCases(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	testCases := []struct {
 		name string
@@ -212,7 +212,7 @@ func TestDeterminismWithEdgeCases(t *testing.T) {
 
 // TestDeterminismWithLargeInputs verifies determinism with large log inputs.
 func TestDeterminismWithLargeInputs(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Create a large log with many lines
 	var sb strings.Builder
@@ -252,7 +252,7 @@ func TestDeterminismWithLargeInputs(t *testing.T) {
 
 // TestDeterminismWithSpecialCharacters verifies determinism with special characters.
 func TestDeterminismWithSpecialCharacters(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	testCases := []struct {
 		name string

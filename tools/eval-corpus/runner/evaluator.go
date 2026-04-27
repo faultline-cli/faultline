@@ -42,7 +42,6 @@ func Run(ctx context.Context, opts Options, in <-chan model.Fixture, out chan<- 
 		PlaybookDir:       opts.PlaybookDir,
 		GitContextEnabled: false,
 		BayesEnabled:      false,
-		NoHistory:         true,
 	}
 
 	var wg sync.WaitGroup

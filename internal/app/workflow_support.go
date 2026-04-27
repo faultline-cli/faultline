@@ -55,9 +55,6 @@ func loadWorkflowExecution(executionID string, opts AnalyzeOptions) (*model.Work
 
 func openWorkflowStore(opts AnalyzeOptions) (store.Store, store.Info, error) {
 	storePath := opts.Store
-	if opts.NoHistory {
-		storePath = string(store.ModeOff)
-	}
 	cfg, err := store.ResolveConfig(storePath)
 	if err != nil {
 		return nil, store.Info{}, err

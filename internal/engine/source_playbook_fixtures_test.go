@@ -9,7 +9,7 @@ import (
 )
 
 func TestBundledSourcePlaybookFixtures(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	tests := []struct {
 		name   string
@@ -54,7 +54,7 @@ func TestBundledSourcePlaybookFixtures(t *testing.T) {
 }
 
 func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	tests := []struct {
 		name      string
@@ -88,7 +88,7 @@ func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
 }
 
 func TestMissingErrorPropagationSafeFixtureDoesNotMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	analysis, err := e.AnalyzeRepository(
 		filepath.Join("testdata", "source", "missing-error-propagation-safe"),
@@ -106,7 +106,7 @@ func TestMissingErrorPropagationSafeFixtureDoesNotMatch(t *testing.T) {
 }
 
 func TestPanicInHTTPHandlerSafeFixtureDoesNotMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	analysis, err := e.AnalyzeRepository(
 		filepath.Join("testdata", "source", "panic-in-http-handler-safe"),
@@ -124,7 +124,7 @@ func TestPanicInHTTPHandlerSafeFixtureDoesNotMatch(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryIgnoresVirtualEnvNoise(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	analysis, err := e.AnalyzeRepository(
 		filepath.Join("testdata", "source", "missing-error-propagation-venv-noise"),
@@ -142,7 +142,7 @@ func TestAnalyzeRepositoryIgnoresVirtualEnvNoise(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryIgnoresTestOnlyPanicNoise(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	analysis, err := e.AnalyzeRepository(
 		filepath.Join("testdata", "source", "panic-in-http-handler-test-only-safe"),

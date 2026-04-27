@@ -39,11 +39,6 @@ type Options struct {
 	PlaybookDir string
 	// PlaybookPackDirs adds external pack roots on top of the bundled starter pack.
 	PlaybookPackDirs []string
-	// NoHistory is retained for caller compatibility; persistence is now owned
-	// by the app layer instead of the engine.
-	//
-	// Deprecated: set Store to "off" via the app layer instead.
-	NoHistory bool
 	// GitContextEnabled enables enrichment of analysis results with local git history.
 	GitContextEnabled bool
 	// GitSince limits git history ingestion to commits newer than this duration
@@ -75,11 +70,6 @@ type Options struct {
 	GitLabToken string
 	// GitLabAPIBaseURL overrides the GitLab API v4 base URL.
 	GitLabAPIBaseURL string
-	// MetricsHistoryFile is retained for caller compatibility; metrics are now
-	// computed by the app layer instead of the engine.
-	//
-	// Deprecated: pass MetricsHistoryFile via app.AnalyzeOptions instead.
-	MetricsHistoryFile string
 }
 
 // Engine orchestrates log analysis against loaded playbooks.

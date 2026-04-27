@@ -29,10 +29,12 @@ func repoPlaybookDir() string {
 // effects and overrides the playbook directory.
 func baseOpts() AnalyzeOptions {
 	return AnalyzeOptions{
-		Top:         1,
-		Mode:        output.ModeQuick,
-		Format:      output.FormatTerminal,
-		NoHistory:   true,
+		OutputOptions: OutputOptions{
+			Top:    1,
+			Mode:   output.ModeQuick,
+			Format: output.FormatTerminal,
+		},
+		Store:       "off",
 		PlaybookDir: repoPlaybookDir(),
 	}
 }
@@ -308,7 +310,7 @@ func TestCompareArtifacts(t *testing.T) {
 
 	var out bytes.Buffer
 	err := svc.Compare(strings.NewReader(makeArtifact(leftLog)), strings.NewReader(makeArtifact(rightLog)), AnalyzeOptions{
-		Format: output.FormatMarkdown,
+		OutputOptions: OutputOptions{Format: output.FormatMarkdown},
 	}, &out)
 	if err != nil {
 		t.Fatalf("Compare: %v", err)
@@ -365,6 +367,21 @@ func TestAnalyzeEmptyInputReturnsErrNoInput(t *testing.T) {
 	err := svc.Analyze(strings.NewReader(""), "", baseOpts(), &buf)
 	if !errors.Is(err, engine.ErrNoInput) {
 		t.Fatalf("expected ErrNoInput, got %v", err)
+	}
+}
+
+func TestAnalyzeFailOnSilentReturnsErrSilentFailure(t *testing.T) {
+	svc := NewService()
+	// This log triggers the silent-failure detector ("|| true" suppresses exit
+	// codes) and also matches the git-auth playbook so SilentFindings is populated.
+	log := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\nnpm test || true\n"
+	opts := baseOpts()
+	opts.FailOnSilent = true
+	var buf bytes.Buffer
+
+	err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf)
+	if !errors.Is(err, ErrSilentFailure) {
+		t.Fatalf("expected ErrSilentFailure, got %v", err)
 	}
 }
 
@@ -913,10 +930,10 @@ func TestSignaturesWithData(t *testing.T) {
 	// First, analyze a log to create some history
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
 	opts := AnalyzeOptions{
-		JSON:        true,
-		NoHistory:   false,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 
 	var analysisBuf bytes.Buffer
@@ -963,10 +980,10 @@ func TestHistoryDeterminismVerification(t *testing.T) {
 	// First analysis
 	log := "Error response from daemon: pull access denied\n"
 	opts := AnalyzeOptions{
-		JSON:        true,
-		NoHistory:   false,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 
 	var firstBuf bytes.Buffer
@@ -1084,7 +1101,7 @@ func TestCompareArtifactsJSONFormat(t *testing.T) {
 	err := svc.Compare(
 		strings.NewReader(makeArtifact(leftLog)),
 		strings.NewReader(makeArtifact(rightLog)),
-		AnalyzeOptions{JSON: true},
+		AnalyzeOptions{OutputOptions: OutputOptions{JSON: true}},
 		&out,
 	)
 	if err != nil {
@@ -1255,9 +1272,9 @@ func TestHistoryOverviewWithDataText(t *testing.T) {
 	// Seed the store with two runs of the same signature to create a recurring entry.
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	analyzeOpts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	for range 2 {
 		var analysisBuf bytes.Buffer
@@ -1282,9 +1299,9 @@ func TestHistoryOverviewWithDataJSON(t *testing.T) {
 
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	analyzeOpts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	for range 2 {
 		var analysisBuf bytes.Buffer
@@ -1310,9 +1327,9 @@ func TestHistorySignatureHashTextAndJSON(t *testing.T) {
 
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	analyzeOpts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 
 	var analysisBuf bytes.Buffer
@@ -1362,9 +1379,9 @@ func TestVerifyDeterminismJSONOutput(t *testing.T) {
 
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	analyzeOpts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	var analysisBuf bytes.Buffer
 	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
@@ -1413,9 +1430,9 @@ func TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence(t *testing.T) {
 
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	analyzeOpts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	var analysisBuf bytes.Buffer
 	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
@@ -1441,5 +1458,113 @@ func TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence(t *testing.T) {
 	}
 	if !strings.Contains(buf.String(), "1 recorded occurrence") {
 		t.Errorf("expected '1 recorded occurrence' in output, got %q", buf.String())
+	}
+}
+
+// TestHistorySignatureTwoOccurrencesText covers the default OccurrenceCount
+// branch in writeHistorySignature (count >= 2, same-minute runs → no time span).
+func TestHistorySignatureTwoOccurrencesText(t *testing.T) {
+	svc := NewService()
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	log := "pull access denied\nError response from daemon: authentication required\n"
+	analyzeOpts := AnalyzeOptions{
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
+	}
+	var analysisBuf bytes.Buffer
+	for i := range 2 {
+		analysisBuf.Reset()
+		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+			t.Fatalf("Analyze run %d: %v", i+1, err)
+		}
+	}
+
+	var payload struct {
+		Results []struct {
+			SignatureHash string `json:"signature_hash"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(analysisBuf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(payload.Results) == 0 || payload.Results[0].SignatureHash == "" {
+		t.Skip("no signature hash; skipping")
+	}
+	sigHash := payload.Results[0].SignatureHash
+
+	var buf bytes.Buffer
+	if err := svc.History(sigHash, storePath, 10, false, &buf); err != nil {
+		t.Fatalf("History: %v", err)
+	}
+	if !strings.Contains(buf.String(), "recorded occurrences") {
+		t.Errorf("expected 'recorded occurrences' in output, got %q", buf.String())
+	}
+}
+
+// ── Replay error paths ───────────────────────────────────────────────────────
+
+func TestReplayInvalidJSONReturnsError(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	err := svc.Replay(strings.NewReader("not valid json"), baseOpts(), &buf)
+	if err == nil {
+		t.Fatal("expected error for invalid JSON input")
+	}
+}
+
+func TestReplayViewTraceReturnsError(t *testing.T) {
+	svc := NewService()
+	artifact := `{"matched":true,"results":[{"rank":1,"failure_id":"docker-auth","title":"Docker auth","category":"auth","score":1,"confidence":1,"evidence":["authentication required"]}]}`
+	opts := baseOpts()
+	opts.View = output.ViewTrace
+	var buf bytes.Buffer
+
+	err := svc.Replay(strings.NewReader(artifact), opts, &buf)
+	if err == nil {
+		t.Fatal("expected error for ViewTrace replay")
+	}
+	if !strings.Contains(err.Error(), "replay trace is not supported") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// ── FixturesIngest ────────────────────────────────────────────────────────────
+
+func TestFixturesIngestEmptyURLsSucceeds(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	var buf bytes.Buffer
+
+	err := svc.FixturesIngest(root, fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
+	if err != nil {
+		t.Fatalf("FixturesIngest with empty URLs: %v", err)
+	}
+}
+
+// ── FixturesReview ────────────────────────────────────────────────────────────
+
+func TestFixturesReviewEmptyDirSucceeds(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	var buf bytes.Buffer
+
+	err := svc.FixturesReview(root, fixtures.EvaluateOptions{PlaybookDir: repoPlaybookDir()}, false, &buf)
+	if err != nil {
+		t.Fatalf("FixturesReview with empty dir: %v", err)
+	}
+}
+
+// ── FixturesPromote ───────────────────────────────────────────────────────────
+
+func TestFixturesPromoteEmptyIDsSucceeds(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	var buf bytes.Buffer
+
+	err := svc.FixturesPromote(root, nil, fixtures.PromoteOptions{}, &buf)
+	if err != nil {
+		t.Fatalf("FixturesPromote with nil ids: %v", err)
 	}
 }

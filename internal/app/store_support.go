@@ -30,9 +30,6 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 	}
 
 	storePath := opts.Store
-	if opts.NoHistory {
-		storePath = string(store.ModeOff)
-	}
 	cfg, err := store.ResolveConfig(storePath)
 	if err != nil {
 		return prepared, err

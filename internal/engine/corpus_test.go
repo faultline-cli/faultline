@@ -11,7 +11,7 @@ import (
 )
 
 func TestAnalyzeReaderCorpusReleaseGate(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	tests := []struct {
 		name      string
@@ -288,7 +288,7 @@ func TestAnalyzeReaderExtraPackCorpus(t *testing.T) {
 	}
 
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
-	e := New(Options{PlaybookPackDirs: []string{extraDir}, NoHistory: true})
+	e := New(Options{PlaybookPackDirs: []string{extraDir}})
 
 	data, err := os.ReadFile(filepath.Join("testdata", "corpus", "terraform-state-lock-noisy.log"))
 	if err != nil {

@@ -498,14 +498,7 @@ func TestReplayCommandMarkdown(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
-		Top:         1,
-		Mode:        "quick",
-		Format:      "json",
-		JSON:        true,
-		NoHistory:   true,
-		PlaybookDir: playbookDir,
-	}, &artifact); err != nil {
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -528,14 +521,7 @@ func TestReplayCommandJSONSelect(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
-		Top:         2,
-		Mode:        "quick",
-		Format:      "json",
-		JSON:        true,
-		NoHistory:   true,
-		PlaybookDir: playbookDir,
-	}, &artifact); err != nil {
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 2, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -563,14 +549,7 @@ func TestReplayCommandFixView(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
-		Top:         1,
-		Mode:        "quick",
-		Format:      "json",
-		JSON:        true,
-		NoHistory:   true,
-		PlaybookDir: playbookDir,
-	}, &artifact); err != nil {
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -593,14 +572,7 @@ func TestReplayCommandRejectsTraceView(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{
-		Top:         1,
-		Mode:        "quick",
-		Format:      "json",
-		JSON:        true,
-		NoHistory:   true,
-		PlaybookDir: playbookDir,
-	}, &artifact); err != nil {
+	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -625,14 +597,7 @@ func TestCompareCommandMarkdown(t *testing.T) {
 
 	makeArtifact := func(log string) string {
 		var artifact bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{
-			Top:         1,
-			Mode:        "quick",
-			Format:      "json",
-			JSON:        true,
-			NoHistory:   true,
-			PlaybookDir: playbookDir,
-		}, &artifact); err != nil {
+		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 			t.Fatalf("build analysis artifact: %v", err)
 		}
 		return writeTempAnalysisArtifact(t, artifact.String())
@@ -661,14 +626,7 @@ func TestCompareCommandJSON(t *testing.T) {
 
 	makeArtifact := func(log string) string {
 		var artifact bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{
-			Top:         1,
-			Mode:        "quick",
-			Format:      "json",
-			JSON:        true,
-			NoHistory:   true,
-			PlaybookDir: playbookDir,
-		}, &artifact); err != nil {
+		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 			t.Fatalf("build analysis artifact: %v", err)
 		}
 		return writeTempAnalysisArtifact(t, artifact.String())

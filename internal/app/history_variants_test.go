@@ -27,9 +27,9 @@ func TestAnalyzeJSONRecurrenceVariantHarness(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	variantDir := filepath.Join("..", "signature", "testdata", "variants")
 	opts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 
 	cases := []struct {
@@ -150,9 +150,9 @@ func TestVerifyDeterminismStaysStableAsHistoryAccumulates(t *testing.T) {
 	}
 
 	opts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 
 	var firstOut bytes.Buffer

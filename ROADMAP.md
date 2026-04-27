@@ -366,6 +366,141 @@ deferred to v0.5. The local forensic store is shipped and the patterns in
 `internal/app/history.go` provide the implementation template. v0.4.3 should
 not touch the Team command surface.
 
+### Technical Debt Backlog
+
+The following items were identified in a full technical debt audit of the
+codebase at the v0.4.3 planning milestone. Each item includes the affected
+location, observed risk, and the recommended fix. Priority ordering and quick
+wins are listed at the end of this section.
+
+#### TD-1: `AnalyzeOptions` mega-struct
+
+`internal/app/commands.go` defines `AnalyzeOptions` with 30+ fields spanning
+at least eight unrelated concerns: provider selection, store configuration,
+output format, trace options, replay flags, Delta settings, scoring, and
+deprecated history fields. Every command receives the full struct even when
+it uses two or three fields. Callers in `internal/cli/root.go` set the struct
+in 20+ locations, making future changes high-blast-radius.
+
+Fix: introduce focused sub-structs — `ProviderOptions`, `DeltaOptions`,
+`TraceOptions`, `OutputOptions` — and have `AnalyzeOptions` compose them.
+Commands that need only a subset get only their sub-struct. This shrinks
+call-site diffs from file-wide to function-local.
+
+Priority: High. Every future feature addition currently touches this struct.
+
+#### ~~TD-2: `cli/root.go` monolith~~ ✅ DONE
+
+`internal/cli/root.go` is 1 161 lines containing all 20 command factory
+functions (`newAnalyzeCommand` through `newVerifyDeterminismCommand`).
+Every new command and every flag addition increases merge risk for the whole
+file. There are no unit tests for individual command factories; breakage
+surfaces only at integration time.
+
+Fix: move each command factory to its own file
+(`internal/cli/cmd_analyze.go`, `internal/cli/cmd_workflow.go`, etc.).
+`root.go` becomes a thin registration file. Command-level unit tests become
+straightforward.
+
+**Resolved**: Split into 12 per-command files; `root.go` is now 54 lines.
+All tests pass.
+
+#### ~~TD-3: Dual workflow system (`legacy.go` co-exists with `workflow.go`)~~ ✅ DONE
+
+`internal/workflow/legacy.go` and `workflow/workflow.go` are two diverging
+implementations of the same concept. `legacy.BuildWithOptions` still drives
+the default output for `faultline workflow`. The richer post-v0.4 system is
+used only by subcommands. Schema fields and serialization rules are diverging
+silently; no marker distinguishes a legacy workflow record from a current one
+at query time.
+
+Fix: write an ADR capturing the migration intent; add a `[LEGACY]` label
+comment at the top of `legacy.go`; block any new feature work from landing in
+the legacy path. Gate removal on the eval corpus confirming zero regression.
+
+**Resolved**: ADR 0010 written (`docs/adr/0010-legacy-workflow-migration-path.md`);
+`[LEGACY]` header block added to `legacy.go` with removal criteria. The legacy
+path remains until `make eval` confirms zero regression.
+
+#### ~~TD-4: `renderer.go` monolith~~ ✅ DONE
+
+`internal/renderer/renderer.go` was 1 276 lines with 60+ methods. Split into:
+`renderer_analysis.go`, `renderer_coverage.go`, `renderer_fix.go`,
+`renderer_common.go`, and `renderer_workflow.go` (stub). `renderer.go` now
+contains only the package-level `leadingHeadingPattern` var, the `Renderer`
+type, and `New`. No logic changes; pure file decomposition. All tests pass.
+
+#### ~~TD-5: SQLite double-UPDATE for workflow execution ID~~ ✅ DONE
+
+`internal/store/sqlite.go` — `RecordWorkflowExecution` executes:
+INSERT → `LastInsertId` → UPDATE `execution_id` → re-marshal → UPDATE
+`record_json`. A crash between the INSERT and the second UPDATE leaves a
+permanently incomplete row. The pattern exists because the execution ID is not
+known before the INSERT.
+
+Fix: generate the execution ID on the client side (UUID or deterministic hash)
+before the INSERT so both columns are set in a single statement. Eliminates
+the partial-row failure window.
+
+**Resolved**: `newExecutionID()` helper generates a random `wf-<16 hex>` ID
+via `crypto/rand` before the INSERT. Single INSERT now sets both
+`execution_id` and `record_json`; both post-INSERT UPDATEs removed.
+
+#### TD-6: `internal/app` coverage gap (65%)
+
+`internal/app` contains the main analysis entry points — `writeAnalysis`,
+`analyzeLog`, and all store interactions — but is covered at only 65%, the
+lowest non-trivial package coverage in the codebase. Edge cases in store
+writes, history branching, and structured output are exercised only indirectly
+through end-to-end tests.
+
+Fix: add golden-output unit tests for `writeAnalysis` and `analyzeLog` using
+captured fixtures; add table-driven tests for the store interaction branches
+in `app/service.go`. Target 80%+ line coverage.
+
+Priority: High. This is the most critical coverage gap by impact surface.
+
+#### ~~TD-7: Deprecated `NoHistory` and `MetricsHistoryFile` still active~~ ✅ DONE
+
+`NoHistory` removed from `engine.Options` and `app.AnalyzeOptions`.
+`MetricsHistoryFile` removed from `engine.Options` (retained in
+`app.AnalyzeOptions` where it is still consumed by `store_support.go`). All
+11 call sites updated to use `Store: "off"`. No behaviour change. All tests
+pass.
+
+#### TD-8: `AnalyzeOptions` passed to commands that use two or three fields
+
+Several commands receive the full `AnalyzeOptions` struct but access only
+`OutputFormat`, `Verbose`, and `StoreDir` (or similar). This is a symptom of
+TD-1 and is resolved by introducing the sub-struct decomposition described
+there.
+
+Priority: Low (addressed by TD-1).
+
+---
+
+**Priority order for scheduling:**
+
+1. TD-6 — `internal/app` coverage gap (highest impact, directly improves
+   confidence in the analysis path)
+2. TD-1 — `AnalyzeOptions` decomposition (architectural force-multiplier;
+   every future feature benefits)
+3. TD-2 — `cli/root.go` split (contributor DX; one-time clean-up PR)
+4. TD-3 — Dual workflow ADR + legacy marker (prevents silent schema drift)
+5. TD-5 — SQLite execution-ID fix (correctness, low probability but
+   non-recoverable failure mode)
+6. TD-7 — Remove deprecated `NoHistory`/`MetricsHistoryFile` (clean-up sprint)
+7. TD-4 — `renderer.go` split (safe file decomposition, low urgency)
+8. TD-8 — addressed by TD-1
+
+**Quick wins (≤ 1 day each):** TD-7 (mechanical field removal), TD-4
+(file-split only, no logic changes), TD-3 (ADR writeup + comment marker).
+
+**Strategic assessment:** The single highest-leverage improvement for
+long-term velocity is TD-1 (`AnalyzeOptions` decomposition). It is the root
+cause of high blast radius on nearly every feature PR and the structural
+reason TD-8 exists. TD-1 should land before the v0.5 Team-layer work begins.
+
 ## Later, Not v0.4.3
 
 The roadmap should stay disciplined about what it is not doing in this release:

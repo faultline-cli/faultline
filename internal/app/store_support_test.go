@@ -12,11 +12,11 @@ func TestAnalyzeJSONIncludesStoreHistoryFields(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
 	opts := AnalyzeOptions{
-		JSON:         true,
-		NoHistory:    false,
-		Store:        storePath,
-		PlaybookDir:  repoPlaybookDir(),
-		BayesEnabled: false,
+		OutputOptions: OutputOptions{JSON: true},
+		
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
+		BayesEnabled:  false,
 	}
 
 	var first bytes.Buffer
@@ -68,9 +68,9 @@ func TestAnalyzeGracefullyDegradesWhenStoreIsCorrupt(t *testing.T) {
 	}
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
 	opts := AnalyzeOptions{
-		JSON:        true,
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
 	}
 	var out bytes.Buffer
 	if err := NewService().Analyze(bytes.NewBufferString(log), "stdin", opts, &out); err != nil {
@@ -79,4 +79,29 @@ func TestAnalyzeGracefullyDegradesWhenStoreIsCorrupt(t *testing.T) {
 	if out.Len() == 0 {
 		t.Fatal("expected JSON output even when the store is corrupt")
 	}
+}
+
+func TestPrepareAnalysisWithStoreNilInputReturnsNil(t *testing.T) {
+	got, err := prepareAnalysisWithStore(nil, "", "log", "test", AnalyzeOptions{Store: "off"}, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != nil {
+		t.Errorf("expected nil result for nil input, got %v", got)
+	}
+}
+
+func TestCloneAnalysisNilReturnsNil(t *testing.T) {
+	got := cloneAnalysis(nil)
+	if got != nil {
+		t.Errorf("expected nil for nil input, got %v", got)
+	}
+}
+
+func TestBuildMetricsWithExplicitHistoryPathCoversExplicitBranch(t *testing.T) {
+	// A non-existent path: LoadHistoryFile returns nil,nil for missing files,
+	// so err == nil and the WithExplicitHistory call is executed.
+	a := minimalAnalysis()
+	got := buildMetricsFromHistory(a, nil, "/nonexistent/history.jsonl", false)
+	_ = got
 }

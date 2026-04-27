@@ -13,8 +13,8 @@ import (
 	"faultline/internal/renderer"
 )
 
-// AnalyzeOptions collects all flags that influence the analyze and fix commands.
-type AnalyzeOptions struct {
+// OutputOptions controls how analysis results are formatted and presented.
+type OutputOptions struct {
 	// Top is the maximum number of ranked results to show (0 = all).
 	Top int
 	// Select chooses a single ranked result by 1-based position.
@@ -29,32 +29,34 @@ type AnalyzeOptions struct {
 	JSON bool
 	// CIAnnotations emits GitHub Actions-style ::warning:: lines.
 	CIAnnotations bool
-	// NoHistory skips reading and writing the local history store.
-	//
-	// Deprecated: set Store to "off" instead.
-	NoHistory bool
-	// PlaybookDir overrides the default playbook directory.
-	PlaybookDir string
-	// PlaybookPackDirs adds extra pack roots on top of the bundled catalog.
-	PlaybookPackDirs []string
+	// ShowEvidence includes a raw evidence appendix when supported by the selected view.
+	ShowEvidence bool
+	// ShowScoring includes scoring detail when supported by the selected view.
+	ShowScoring bool
+	// ShowRejected includes competing candidates and rejection context in trace output.
+	ShowRejected bool
+}
+
+// TraceOptions controls deterministic playbook tracing.
+type TraceOptions struct {
+	// TraceEnabled renders a deterministic playbook trace instead of the normal report.
+	TraceEnabled bool
+	// TracePlaybook renders a deterministic trace for the named playbook.
+	TracePlaybook string
+}
+
+// ProviderOptions configures git context enrichment.
+type ProviderOptions struct {
 	// GitContextEnabled enriches diagnosis results with local git history.
 	GitContextEnabled bool
 	// GitSince limits git history scanning to recent commits.
 	GitSince string
 	// RepoPath overrides the repository path used for git context scanning.
 	RepoPath string
-	// BayesEnabled enables deterministic Bayesian-inspired reranking.
-	BayesEnabled bool
-	// TraceEnabled renders a deterministic playbook trace instead of the normal report.
-	TraceEnabled bool
-	// TracePlaybook renders a deterministic trace for the named playbook.
-	TracePlaybook string
-	// ShowRejected includes competing candidates and rejection context in trace output.
-	ShowRejected bool
-	// ShowEvidence includes a raw evidence appendix when supported by the selected view.
-	ShowEvidence bool
-	// ShowScoring includes scoring detail when supported by the selected view.
-	ShowScoring bool
+}
+
+// DeltaOptions configures provider-backed failure delta resolution.
+type DeltaOptions struct {
 	// DeltaProvider enables provider-backed failure delta resolution.
 	DeltaProvider string
 	// GitHubRepository identifies the GitHub repository for provider-backed delta resolution.
@@ -77,6 +79,22 @@ type AnalyzeOptions struct {
 	GitLabToken string
 	// GitLabAPIBaseURL overrides the GitLab API v4 base URL for provider-backed delta resolution.
 	GitLabAPIBaseURL string
+}
+
+// AnalyzeOptions collects all flags that influence the analyze and fix commands.
+// It composes focused sub-structs for output presentation, tracing, git context
+// enrichment, and provider-backed delta resolution.
+type AnalyzeOptions struct {
+	OutputOptions
+	TraceOptions
+	ProviderOptions
+	DeltaOptions
+	// PlaybookDir overrides the default playbook directory.
+	PlaybookDir string
+	// PlaybookPackDirs adds extra pack roots on top of the bundled catalog.
+	PlaybookPackDirs []string
+	// BayesEnabled enables deterministic Bayesian-inspired reranking.
+	BayesEnabled bool
 	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
 	// records used to compute FPC and PHI. When empty, only TSS is computed.
 	MetricsHistoryFile string

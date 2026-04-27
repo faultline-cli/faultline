@@ -2,7 +2,9 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -606,50 +608,54 @@ WHERE input_hash = ? AND output_hash IS NOT NULL AND output_hash != ''
 	return summary, nil
 }
 
+// newExecutionID generates a random execution ID with a "wf-" prefix.
+// The ID is generated client-side before the INSERT so that execution_id
+// and record_json can both be set in a single statement, eliminating the
+// partial-row failure window that existed when the ID was derived from
+// the AUTOINCREMENT row ID via a post-INSERT UPDATE.
+func newExecutionID() (string, error) {
+	var b [8]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return "", fmt.Errorf("generate execution id: %w", err)
+	}
+	return "wf-" + hex.EncodeToString(b[:]), nil
+}
+
 func (s *sqliteStore) RecordWorkflowExecution(ctx context.Context, record *model.WorkflowExecutionRecord) (*model.WorkflowExecutionRecord, error) {
 	if record == nil {
 		return nil, nil
 	}
-	data, err := json.Marshal(record)
+	executionID, err := newExecutionID()
+	if err != nil {
+		return nil, err
+	}
+	clone := *record
+	clone.ExecutionID = executionID
+	data, err := json.Marshal(&clone)
 	if err != nil {
 		return nil, fmt.Errorf("marshal workflow execution record: %w", err)
 	}
-	result, err := s.db.ExecContext(ctx, `
+	_, err = s.db.ExecContext(ctx, `
 INSERT INTO workflow_runs (
+	execution_id,
 	workflow_id, title, mode, source_fingerprint, source_failure_id,
 	started_at, finished_at, verification_status, status, record_json
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `,
-		nullableString(record.WorkflowID),
-		nullableString(record.Title),
-		nullableString(string(record.Mode)),
-		nullableString(record.SourceFingerprint),
-		nullableString(record.SourceFailureID),
-		nullableString(record.StartedAt),
-		nullableString(record.FinishedAt),
-		nullableString(string(record.VerificationStatus)),
-		nullableString(string(record.Status)),
+		nullableString(clone.ExecutionID),
+		nullableString(clone.WorkflowID),
+		nullableString(clone.Title),
+		nullableString(string(clone.Mode)),
+		nullableString(clone.SourceFingerprint),
+		nullableString(clone.SourceFailureID),
+		nullableString(clone.StartedAt),
+		nullableString(clone.FinishedAt),
+		nullableString(string(clone.VerificationStatus)),
+		nullableString(string(clone.Status)),
 		string(data),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("insert workflow execution: %w", err)
-	}
-	rowID, err := result.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("resolve workflow execution row id: %w", err)
-	}
-	executionID := fmt.Sprintf("wf-%06d", rowID)
-	if _, err := s.db.ExecContext(ctx, `UPDATE workflow_runs SET execution_id = ? WHERE id = ?`, executionID, rowID); err != nil {
-		return nil, fmt.Errorf("update workflow execution id: %w", err)
-	}
-	clone := *record
-	clone.ExecutionID = executionID
-	data, err = json.Marshal(&clone)
-	if err != nil {
-		return nil, fmt.Errorf("marshal workflow execution record: %w", err)
-	}
-	if _, err := s.db.ExecContext(ctx, `UPDATE workflow_runs SET record_json = ? WHERE id = ?`, string(data), rowID); err != nil {
-		return nil, fmt.Errorf("update workflow execution record: %w", err)
 	}
 	return &clone, nil
 }

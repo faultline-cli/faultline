@@ -17,7 +17,6 @@ import (
 type EvaluateOptions struct {
 	PlaybookDir      string
 	PlaybookPackDirs []string
-	NoHistory        bool
 	BayesEnabled     bool
 }
 
@@ -37,24 +36,24 @@ type EvaluatedFixture struct {
 }
 
 type Report struct {
-	Class               Class
-	Fixtures            []EvaluatedFixture
-	FixtureCount        int
-	Top1Count           int
-	Top3Count           int
-	UnmatchedCount      int
-	FalsePositiveCount  int
-	WeakMatchCount      int
-	RecurringPatterns   map[string]int
-	Providers           map[string]int
-	Adapters            map[string]int
-	UnmatchedFixtureIDs       []string
-	FalsePositiveFixtureIDs   []string
-	WeakMatchFixtureIDs       []string
-	ThresholdViolations []string
-	AppliedThresholds   Thresholds
-	AppliedBaselinePath string
-	AppliedBaselineHash string
+	Class                   Class
+	Fixtures                []EvaluatedFixture
+	FixtureCount            int
+	Top1Count               int
+	Top3Count               int
+	UnmatchedCount          int
+	FalsePositiveCount      int
+	WeakMatchCount          int
+	RecurringPatterns       map[string]int
+	Providers               map[string]int
+	Adapters                map[string]int
+	UnmatchedFixtureIDs     []string
+	FalsePositiveFixtureIDs []string
+	WeakMatchFixtureIDs     []string
+	ThresholdViolations     []string
+	AppliedThresholds       Thresholds
+	AppliedBaselinePath     string
+	AppliedBaselineHash     string
 }
 
 func Evaluate(layout Layout, class Class, opts EvaluateOptions) (Report, error) {
@@ -73,7 +72,6 @@ func EvaluateFixtures(layout Layout, class Class, loaded []Fixture, opts Evaluat
 	e := engine.New(engine.Options{
 		PlaybookDir:      opts.PlaybookDir,
 		PlaybookPackDirs: opts.PlaybookPackDirs,
-		NoHistory:        opts.NoHistory,
 		BayesEnabled:     opts.BayesEnabled,
 	})
 	report := Report{

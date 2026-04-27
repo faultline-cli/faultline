@@ -30,7 +30,7 @@ func TestEvaluateFixturesRejectsDuplicateFingerprints(t *testing.T) {
 		},
 	}
 
-	_, err := EvaluateFixtures(layout, ClassReal, loaded, EvaluateOptions{NoHistory: true})
+	_, err := EvaluateFixtures(layout, ClassReal, loaded, EvaluateOptions{})
 	if err == nil || !strings.Contains(err.Error(), "duplicate fingerprint") {
 		t.Fatalf("expected duplicate fingerprint error, got %v", err)
 	}
@@ -48,7 +48,7 @@ func TestEvaluateFixturesRejectsMissingRealFixtureMetadata(t *testing.T) {
 		Review:        ReviewMetadata{Status: "candidate"},
 	}}
 
-	_, err := EvaluateFixtures(layout, ClassReal, loaded, EvaluateOptions{NoHistory: true})
+	_, err := EvaluateFixtures(layout, ClassReal, loaded, EvaluateOptions{})
 	if err == nil {
 		t.Fatal("expected metadata validation error")
 	}

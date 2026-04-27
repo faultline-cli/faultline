@@ -1,3 +1,17 @@
+// [LEGACY] This file is frozen. Do not add new fields, options, or features here.
+//
+// BuildWithOptions drives the default output for the top-level `faultline workflow`
+// command (no sub-command). It produces the Plan struct with steps as []string and
+// schema_version "workflow.v1".
+//
+// The current workflow system (workflow.go) produces PlanDocument with structured
+// PlanStep values and is used by workflow sub-commands (explain, apply, show, history).
+// Both systems emit schema_version "workflow.v1", so stored records cannot be
+// distinguished by schema version alone.
+//
+// Removal criteria: a full eval-corpus run (`make eval`) must confirm zero regression
+// against stored expected outputs for the `faultline workflow` command. Until that gate
+// passes, this file must remain. See docs/adr/0010-legacy-workflow-migration-path.md.
 package workflow
 
 import (

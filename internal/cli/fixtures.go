@@ -83,7 +83,6 @@ func newFixturesReviewCommand() *cobra.Command {
 			return app.NewService().FixturesReview(root, fixtures.EvaluateOptions{
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
-				NoHistory:        true,
 			}, jsonOut, cmd.OutOrStdout())
 		},
 	}
@@ -160,7 +159,6 @@ func newFixturesStatsCommand() *cobra.Command {
 			return app.NewService().FixturesStats(root, class, fixtures.EvaluateOptions{
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
-				NoHistory:        true,
 			}, baselinePath, jsonOut, checkBaseline, updateBaseline, cmd.OutOrStdout())
 		},
 	}
@@ -243,7 +241,6 @@ func newFixturesCompareModesCommand() *cobra.Command {
 			return app.NewService().FixturesCompareModes(root, class, fixtures.EvaluateOptions{
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
-				NoHistory:        true,
 			}, jsonOut, failOnRegression, cmd.OutOrStdout())
 		},
 	}

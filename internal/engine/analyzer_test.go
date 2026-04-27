@@ -14,7 +14,7 @@ import (
 )
 
 func TestAnalyzeReaderEmptyInput(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	_, err := e.AnalyzeReader(strings.NewReader(""))
 	if err != ErrNoInput {
 		t.Fatalf("expected ErrNoInput, got %v", err)
@@ -22,7 +22,7 @@ func TestAnalyzeReaderEmptyInput(t *testing.T) {
 }
 
 func TestAnalyzeReaderPartialMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with both matching and non-matching content
 	log := "some normal log output\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\nmore normal output\n"
@@ -39,7 +39,7 @@ func TestAnalyzeReaderPartialMatch(t *testing.T) {
 }
 
 func TestAnalyzeReaderMultipleMatchesWithDifferentScores(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with multiple potential matches
 	log := "pull access denied\nauthentication required\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
@@ -58,7 +58,7 @@ func TestAnalyzeReaderMultipleMatchesWithDifferentScores(t *testing.T) {
 }
 
 func TestAnalyzeReaderWithVeryLongLine(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Create a very long line that might cause issues
 	longLine := strings.Repeat("x", 10000) + "\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
@@ -72,7 +72,7 @@ func TestAnalyzeReaderWithVeryLongLine(t *testing.T) {
 }
 
 func TestAnalyzeReaderWithUnicodeCharacters(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with unicode characters
 	log := "normal log\nföö: authentication failed for repository 'https://github.com/repo'\nmore log\n"
@@ -87,7 +87,7 @@ func TestAnalyzeReaderWithUnicodeCharacters(t *testing.T) {
 }
 
 func TestAnalyzeReaderWithMixedLineEndings(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with mixed line endings (CRLF, LF, CR)
 	log := "line one\r\nline two\nline three\rline four\nfatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
@@ -101,7 +101,7 @@ func TestAnalyzeReaderWithMixedLineEndings(t *testing.T) {
 }
 
 func TestAnalyzeReaderWithOnlyWhitespace(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with only whitespace
 	log := "   \n\t\n  \n\n"
@@ -112,7 +112,7 @@ func TestAnalyzeReaderWithOnlyWhitespace(t *testing.T) {
 }
 
 func TestAnalyzeReaderWithBinaryData(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	// Log with some binary-like data
 	log := "normal log\n\x00\x01\x02\x03fatal: could not read Username for 'https://github.com': terminal prompts disabled\n\xff\xfe\xfd\xfc\n"
@@ -126,7 +126,7 @@ func TestAnalyzeReaderWithBinaryData(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryWithEmptyChangeSet(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
 	
 	// Create a simple Go file
@@ -143,7 +143,7 @@ func TestAnalyzeRepositoryWithEmptyChangeSet(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryWithNonExistentRoot(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	
 	_, err := e.AnalyzeRepository("/nonexistent/path", detectors.ChangeSet{})
 	if err == nil {
@@ -152,7 +152,7 @@ func TestAnalyzeRepositoryWithNonExistentRoot(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryWithCircularSymlink(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
 	
 	// Create a circular symlink
@@ -172,7 +172,7 @@ func TestAnalyzeRepositoryWithPermissionDeniedFile(t *testing.T) {
 		t.Skip("skipping permission test when running as root")
 	}
 	
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
 	
 	// Create a file with restricted permissions
@@ -326,7 +326,7 @@ func TestAnalyzePathMatchingFile(t *testing.T) {
 	if err := os.WriteFile(tmpFile, []byte(content), 0o600); err != nil {
 		t.Fatalf("write log file: %v", err)
 	}
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	a, err := e.AnalyzePath(tmpFile)
 	if err != nil {
 		t.Fatalf("AnalyzePath: %v", err)
@@ -340,7 +340,7 @@ func TestAnalyzePathMatchingFile(t *testing.T) {
 }
 
 func TestAnalyzePathMissingFileErrors(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	_, err := e.AnalyzePath(filepath.Join(t.TempDir(), "no_such_file.log"))
 	if err == nil {
 		t.Fatal("expected error for missing file")
@@ -350,7 +350,7 @@ func TestAnalyzePathMissingFileErrors(t *testing.T) {
 // ── loadRepoSnapshotFromPath / loadRepoSnapshot ───────────────────────────────
 
 func TestLoadRepoSnapshotFromPathNonGitDir(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	// A non-git temp dir: NewScanner will fail; should return a snapshot with nil state.
 	snap := e.loadRepoSnapshotFromPath(t.TempDir(), detectors.ChangeSet{})
 	if snap == nil {
@@ -359,7 +359,7 @@ func TestLoadRepoSnapshotFromPathNonGitDir(t *testing.T) {
 }
 
 func TestLoadRepoSnapshotNonGitDir(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true, RepoPath: t.TempDir()})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t), RepoPath: t.TempDir()})
 	snap := e.loadRepoSnapshot()
 	if snap == nil {
 		t.Fatal("expected non-nil snapshot from loadRepoSnapshot")
@@ -386,7 +386,7 @@ func TestLocalRepoEnricherEnrichNonGitReturnsNil(t *testing.T) {
 // ── List and Explain ──────────────────────────────────────────────────────────
 
 func TestListReturnsBundledPlaybooks(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	pbs, err := e.List()
 	if err != nil {
 		t.Fatalf("List: %v", err)
@@ -397,7 +397,7 @@ func TestListReturnsBundledPlaybooks(t *testing.T) {
 }
 
 func TestExplainReturnsPlaybook(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	pbs, err := e.List()
 	if err != nil || len(pbs) == 0 {
 		t.Fatalf("List: %v (len=%d)", err, len(pbs))
@@ -412,7 +412,7 @@ func TestExplainReturnsPlaybook(t *testing.T) {
 }
 
 func TestExplainUnknownIDReturnsError(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	_, err := e.Explain("definitely-not-a-real-playbook-id-xyz")
 	if err == nil {
 		t.Fatal("expected error for unknown playbook ID")
@@ -425,7 +425,7 @@ func TestExplainUnknownIDReturnsError(t *testing.T) {
 // pattern but no playbook match populates SilentFindings on the returned
 // Analysis.
 func TestAnalyzeReaderSilentFindingNoMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	// Use a log that triggers the cache-miss detector (medium severity) but
 	// should not match any playbook (cache-miss playbook requires both a cache
 	// signal and a fail signal; this log has the fail signal only in a form
@@ -450,7 +450,7 @@ func TestAnalyzeReaderSilentFindingNoMatch(t *testing.T) {
 // TestAnalyzeReaderSilentFindingWithMatch verifies that silent findings are
 // also attached when a normal playbook match is present.
 func TestAnalyzeReaderSilentFindingWithMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	// Log contains both a git-auth failure (playbook match) and || true (silent signal).
 	log := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\nnpm test || true\n"
 	a, err := e.AnalyzeReader(strings.NewReader(log))
@@ -468,7 +468,7 @@ func TestAnalyzeReaderSilentFindingWithMatch(t *testing.T) {
 // TestAnalyzeReaderNoSilentFindingOnCleanLog verifies that a clean log
 // produces no silent findings.
 func TestAnalyzeReaderNoSilentFindingOnCleanLog(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t), NoHistory: true})
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	log := "Run npm test\nPASS src/utils.test.ts\nTests: 5 passed, 5 total\n"
 	a, _ := e.AnalyzeReader(strings.NewReader(log))
 	if a != nil && len(a.SilentFindings) > 0 {

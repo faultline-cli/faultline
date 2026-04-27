@@ -34,7 +34,7 @@ func TestSignatureVariantMatrix(t *testing.T) {
 		{name: "dependency drift grpc", file: "dependency-drift-grpc.log", wantPlaybook: "dependency-drift", group: "dependency-drift-grpc"},
 	}
 
-	eng := engine.New(engine.Options{PlaybookDir: playbookDir, NoHistory: true})
+	eng := engine.New(engine.Options{PlaybookDir: playbookDir})
 	groupHashes := map[string]string{}
 	allGroups := map[string]string{}
 
