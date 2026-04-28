@@ -1,0 +1,21 @@
+id: maven-compile-error-canonical
+title: Maven COMPILATION ERROR — duplicate class and cannot find symbol
+fixture_class: minimal
+normalized_log: |
+  [INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ myapp ---
+  [INFO] Compiling 42 source files with javac [debug target 17]
+  [ERROR] COMPILATION ERROR :
+  [INFO] -------------------------------------------------------------
+  [ERROR] /home/runner/work/myapp/src/main/java/com/example/UserService.java:[10,8] duplicate class: com.example.UserService
+  [ERROR] /home/runner/work/myapp/src/main/java/com/example/service/UserService.java:[1,8] duplicate class: is already defined in class com.example.UserService
+  [ERROR] /home/runner/work/myapp/src/main/java/com/example/api/OrderController.java:[24,26] cannot find symbol
+    symbol:   class UserDto
+    location: class com.example.api.OrderController
+  [INFO] 3 errors
+  [INFO] -------------------------------------------------------------
+  [INFO] BUILD FAILURE
+  [INFO] ------------------------------------------------------------------------
+  [ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project myapp: Compilation failure: Compilation failure:
+  ERROR: Job failed: exit code 1
+expectation:
+  expected_playbook: maven-compile-error

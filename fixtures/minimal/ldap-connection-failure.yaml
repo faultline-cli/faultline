@@ -1,0 +1,12 @@
+id: ldap-connection-failure-canonical
+title: LDAP server unreachable — ldap_start_tls Can't contact LDAP server (-1)
+fixture_class: minimal
+normalized_log: |
+  $ ./update-teams.sh
+  Connecting to LDAP at ldap://REDACTED:389 ...
+  ldap_start_tls: Can't contact LDAP server (-1)
+  	additional info: error:140770FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protocol
+  LDAP server is unreachable. Check LDAP_HOST and network connectivity.
+  ERROR: Job failed: exit code 1
+expectation:
+  expected_playbook: ldap-connection-failure

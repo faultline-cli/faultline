@@ -114,9 +114,10 @@ why_it_matters: |-
 match:
   any:
     - "● "
-    - "Test Suites:.*failed"
+    - "re:Test Suites:.*failed"
     - "Warning: Failed prop type"
     - "Invalid prop "
+    - "Test Suites: "
   none:
     - "jest: command not found"
     - "path.*\\.bin/jest"

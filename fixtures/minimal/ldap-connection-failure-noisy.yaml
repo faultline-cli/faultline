@@ -1,0 +1,32 @@
+id: ldap-connection-failure-noisy
+title: LDAP server unreachable buried in GitLab runner CI output
+fixture_class: minimal
+normalized_log: |
+  Running with gitlab-runner 15.11.0 (436955cb)
+    on gitlab-runner-prod-01 REDACTED
+  Preparing the "docker" executor
+  Using Docker executor with image ubuntu:22.04 ...
+  Pulling docker image ubuntu:22.04 ...
+  Using docker image sha256:REDACTED for ubuntu:22.04 with digest ubuntu@sha256:REDACTED ...
+  Preparing environment
+  Running on runner-REDACTED-project-42-concurrent-0 via gitlab-runner-prod-01...
+  Getting source from Git repository
+  Fetching changes with git depth set to 20...
+  Initialized empty Git repository in /builds/myorg/infra-tools/.git/
+  Created fresh repository.
+  Checking out REDACTED as main...
+  Skipping Git submodules setup
+  Executing "step_script" stage of the job script
+  $ apt-get update -qq && apt-get install -y -qq ldap-utils
+  ...
+  Setting up ldap-utils (2.5.11+dfsg-1~exp1ubuntu3.2) ...
+  $ echo "Running LDAP team sync"
+  Running LDAP team sync
+  $ ./update-teams.sh
+  Connecting to LDAP at ldap://REDACTED:389 ...
+  ldap_start_tls: Can't contact LDAP server (-1)
+  	additional info: error:140770FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protocol
+  LDAP server is unreachable. Check LDAP_HOST and network connectivity.
+  ERROR: Job failed: exit code 1
+expectation:
+  expected_playbook: ldap-connection-failure

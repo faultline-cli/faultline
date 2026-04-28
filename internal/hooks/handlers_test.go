@@ -540,10 +540,19 @@ func TestExcerptLinesSkipsEmptyLines(t *testing.T) {
 
 // --- resolvePath ---
 
-func TestResolvePathAbsolute(t *testing.T) {
+func TestResolvePathAbsoluteOutsideWorkDir(t *testing.T) {
+	// Absolute paths that are outside the working directory are rejected.
 	got := resolvePath("/some/workdir", "/absolute/path")
-	if got != "/absolute/path" {
-		t.Fatalf("expected absolute path unchanged, got %q", got)
+	if got != "" {
+		t.Fatalf("expected empty string for out-of-workdir absolute path, got %q", got)
+	}
+}
+
+func TestResolvePathAbsoluteInsideWorkDir(t *testing.T) {
+	// Absolute paths that are inside the working directory are allowed.
+	got := resolvePath("/some/workdir", "/some/workdir/nested/file.txt")
+	if got != "/some/workdir/nested/file.txt" {
+		t.Fatalf("expected path preserved for in-workdir absolute path, got %q", got)
 	}
 }
 

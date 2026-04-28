@@ -1,0 +1,94 @@
+id: ldap-connection-failure
+title: LDAP server unreachable
+category: network
+severity: high
+base_score: 0.9
+tags: [network, ldap, directory, authentication, tls]
+stage_hints: [build, test, deploy]
+domain: network
+class: ldap-connection-failure
+mode: ldap-server-down
+summary: |-
+  The LDAP client could not reach the directory server. The server is offline,
+  the host or port is misconfigured, or a network/firewall rule is blocking the
+  connection.
+diagnosis: |-
+  ## Diagnosis
+
+  The OpenLDAP client error `ldap_start_tls: Can't contact LDAP server (-1)`
+  corresponds to the `LDAP_SERVER_DOWN` (-1/81) result code. The TCP connection
+  to the LDAP server could not be established before any protocol exchange began.
+
+  Common causes in CI:
+  - The LDAP server address (`LDAP_HOST`) is a private IP only reachable from
+    on-premise runners; cloud runners cannot connect.
+  - The LDAP service is down or its port (389/636) is firewalled.
+  - TLS (`ldap_start_tls`) failed because the server does not support STARTTLS on
+    the configured port.
+fix: |-
+  ## Fix steps
+
+  1. Verify the host and port from the runner:
+
+     ```bash
+     nc -zv "$LDAP_HOST" 389   # plain
+     nc -zv "$LDAP_HOST" 636   # TLS
+     ```
+
+  2. If the LDAP server is internal, ensure the CI runner has network access (VPN,
+     peering, runner placement in the correct subnet).
+  3. For GitLab CI, confirm the runner has access to the host specified in
+     `LDAP_HOST`. If the job uses a shared runner, it will not reach
+     on-premise servers.
+  4. If using `ldap_start_tls` (port 389 + STARTTLS), confirm the server supports
+     STARTTLS. Switch to LDAPS (port 636) if not.
+  5. Add a connectivity pre-check before the LDAP operation:
+
+     ```bash
+     wait-for-it.sh "$LDAP_HOST":389 --timeout=10 -- echo "LDAP reachable"
+     ```
+validation: |-
+  ## Validation
+
+  - `ldapsearch -H ldap://<host>:389 -x -b "" -s base` — confirms the server
+    is reachable and responds to anonymous requests.
+  - Re-run the failing job and confirm the `Can't contact LDAP server` error is gone.
+match:
+  any:
+    - "Can't contact LDAP server"
+    - "ldap_start_tls"
+    - "LDAP_SERVER_DOWN"
+    - "ldap error 81"
+    - "Can't contact LDAP"
+    - "re:ldap.*-1\\)"
+  none:
+    - "Invalid credentials"
+    - "invalidCredentials"
+    - "ldap_bind"
+    - "LDAP error code 49"
+    - "error code 49"
+    - "49: Invalid Credentials"
+workflow:
+  likely_files:
+    - .gitlab-ci.yml
+    - .github/workflows/*.yml
+  local_repro:
+    - "nc -zv $LDAP_HOST 389"
+    - "ldapsearch -H ldap://$LDAP_HOST:389 -x -b '' -s base"
+  verify:
+    - "ldapsearch -H ldap://$LDAP_HOST:389 -x -b '' -s base"
+why_it_matters: |-
+  ## Why it matters
+
+  LDAP is often used in CI pipelines for user provisioning, group sync, and
+  authentication tooling. When the LDAP server is unreachable the job exits
+  immediately with code 1 and no useful follow-up output. The error is
+  easily confused with authentication failures (error 49) but has a completely
+  different fix path — connectivity vs. credentials.
+
+  ## Prevention
+
+  - Add a readiness probe (`nc`, `ldapsearch`, or `wait-for-it`) before any LDAP
+    operation in CI.
+  - Prefer runners that are co-located with the LDAP server for jobs that require
+    directory access, or expose LDAP over a sidecar/tunnel for cloud runners.

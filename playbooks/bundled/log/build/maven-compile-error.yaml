@@ -1,0 +1,112 @@
+id: maven-compile-error
+title: Maven Java compilation failure
+category: build
+severity: high
+base_score: 0.95
+tags: [java, maven, compile, build, javac]
+stage_hints: [build, test]
+domain: compile
+class: compile-error
+mode: maven-compile-error
+summary: |-
+  The Maven compiler plugin failed during compilation. Common causes are
+  duplicate class definitions, missing symbols from a recently changed API, or
+  generated sources that are no longer in sync with the code.
+diagnosis: |-
+  ## Diagnosis
+
+  Maven surfaced a `COMPILATION ERROR` from the `maven-compiler-plugin`. The
+  javac errors underneath it identify the root cause:
+
+  - **duplicate class** — the same class is defined more than once, often because
+    generated source directories are also committed, or a class was moved without
+    removing the original.
+  - **is already defined in class** — an inner class or enum constant appears twice
+    in the same compilation unit. Usually caused by a failed merge or a code
+    generator run that appended to an existing file.
+  - **cannot find symbol** — a method, field, or type that the code references no
+    longer exists. Frequently triggered by a Lombok, MapStruct, or other
+    annotation-processor model change that happened in a different commit.
+fix: |-
+  ## Fix steps
+
+  ### Duplicate class
+
+  1. Search for all copies of the class file:
+
+     ```bash
+     find . -name "DuplicateClass.java" -not -path "*/target/*"
+     ```
+
+  2. Remove the stale copy or the generated source directory from `pom.xml`
+     `<sourceDirectory>` / `<testSourceDirectory>`.
+
+  3. Clean the build cache:
+
+     ```bash
+     mvn clean compile
+     ```
+
+  ### Cannot find symbol
+
+  1. Check whether the missing symbol was removed or renamed in a recent commit:
+
+     ```bash
+     git log --oneline -5 -- path/to/ChangedClass.java
+     ```
+
+  2. Re-run the annotation processor (Lombok, MapStruct, etc.) if the symbol is
+     generated:
+
+     ```bash
+     mvn clean generate-sources compile
+     ```
+
+  3. Verify that the IDE-generated `target/generated-sources` is not excluded from
+     the Maven source root configuration.
+validation: |-
+  ## Validation
+
+  - `mvn clean test-compile` — must exit 0 with no `COMPILATION ERROR` lines.
+  - Re-run the CI job and confirm the `[ERROR] COMPILATION ERROR` line is absent.
+match:
+  any:
+    - "COMPILATION ERROR :"
+    - "duplicate class:"
+    - "is already defined in class"
+    - "cannot find symbol"
+    - "Compilation failure: Compilation failure:"
+    - "Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin"
+  none:
+    - "could not find artifact"
+    - "failed to read artifact descriptor"
+    - "Transfer failed for"
+    - "unresolved dependency:"
+    - "BUILD SUCCESS"
+workflow:
+  likely_files:
+    - pom.xml
+    - "src/main/java/**/*.java"
+    - "src/test/java/**/*.java"
+  local_repro:
+    - mvn clean test-compile
+    - mvn clean compile
+  verify:
+    - mvn clean test-compile
+why_it_matters: |-
+  ## Why it matters
+
+  Java compilation errors block every downstream step — tests, packaging, and
+  deployment all fail immediately. The errors are deterministic: the same code
+  will fail every time until the source is corrected. Maven prints the compiler
+  output verbosely enough to diagnose the exact file and line number, but the
+  signal can be buried in pages of download progress output.
+
+  ## Prevention
+
+  - Run `mvn clean test-compile` in a pre-merge CI step to catch compile
+    errors before the full build.
+  - Use a separate `generate-sources` verification step if your project relies
+    on annotation processors so broken generated code is caught early.
+  - Avoid committing files under `target/generated-sources` — let Maven
+    regenerate them on every build.

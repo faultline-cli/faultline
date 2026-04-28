@@ -1,0 +1,20 @@
+id: msbuild-error-near-miss
+title: dotnet NuGet restore failure — looks like build failure but is a missing package, not MSBuild task error
+fixture_class: minimal
+normalized_log: |
+  Microsoft (R) Build Engine version 17.8.3+195e7f5a3 for .NET
+  Copyright (C) Microsoft Corporation. All rights reserved.
+
+  error NU1202: Package MyApp.Shared 2.3.0 is not compatible with net8.0. Package MyApp.Shared 2.3.0 supports: netstandard2.0
+  error NU1202: Package MyApp.Shared 2.3.0 is not compatible with one or more packages.
+  error NU1202: Unable to resolve 'MyApp.Shared (>= 2.3.0)' for 'net8.0'.
+
+  Package restore failed. Rolling back package changes for 'MyApp.Web'.
+
+  Build FAILED.
+      3 Error(s)
+      0 Warning(s)
+expectation:
+  expected_playbook: dotnet-restore
+  disallowed_playbooks:
+    - msbuild-error

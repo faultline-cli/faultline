@@ -31,11 +31,13 @@ match:
     - resource is busy
     - test is not parallelizable
     - race detected
-    - concurrent
     - concurrently
     - "too many connections"
     - database locked
     - "concurrent ="
+    - "re:\bconcurrent access\b"
+    - "re:running.*tests concurrently"
+    - "re:concurrent.*test"
   none:
     - port conflict
     - failed to bind to port
@@ -47,6 +49,8 @@ match:
     - "x509:"
     - certificate
     - "tls handshake"
+    - "re:concurrent-\\d+"
+    - runner-
     - "ssl connection"
     - "concurrent/futures"
     - "concurrent mark"

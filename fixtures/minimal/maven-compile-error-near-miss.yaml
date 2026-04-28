@@ -1,0 +1,18 @@
+id: maven-compile-error-near-miss
+title: Maven dependency resolution failure — looks like build failure but is missing artifact, not compile error
+fixture_class: minimal
+normalized_log: |
+  [INFO] Scanning for projects...
+  [INFO] Building myapp 1.4.2-SNAPSHOT
+  [INFO] --- maven-dependency-plugin:3.6.0:resolve (default) @ myapp ---
+  [ERROR] Failed to execute goal on project myapp: Could not resolve dependencies for project com.example:myapp:jar:1.4.2-SNAPSHOT: could not find artifact com.example:shared-lib:jar:2.3.0 in central (https://repo.maven.apache.org/maven2)
+  [ERROR] failed to read artifact descriptor for com.example:shared-lib:jar:2.3.0
+  [ERROR] Transfer failed for https://repo.maven.apache.org/maven2/com/example/shared-lib/2.3.0/shared-lib-2.3.0.pom
+  [INFO] BUILD FAILURE
+  [INFO] Total time:  8.241 s
+  [ERROR] Unresolved dependency: com.example:shared-lib:2.3.0
+  ERROR: Job failed: exit code 1
+expectation:
+  expected_playbook: maven-dependency-resolution
+  disallowed_playbooks:
+    - maven-compile-error

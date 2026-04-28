@@ -1,0 +1,18 @@
+id: msbuild-error-canonical
+title: MSBuild circular dependency error (MSB4006)
+fixture_class: minimal
+normalized_log: |
+  Microsoft (R) Build Engine version 17.8.3+195e7f5a3 for .NET
+  Copyright (C) Microsoft Corporation. All rights reserved.
+
+    Determining projects to restore...
+    All projects are up-to-date for restore.
+  error MSB4006: There is a circular dependency in the target dependency graph involving target "PrepareForRun". [C:\a\MyApp\MyApp.csproj]
+  error MSB4006: circular dependency in the target dependency graph involving target "Build". [C:\a\MyApp\MyApp.csproj]
+
+  Build FAILED.
+
+      2 Error(s)
+      0 Warning(s)
+expectation:
+  expected_playbook: msbuild-error

@@ -1,0 +1,25 @@
+id: msbuild-error-noisy
+title: MSBuild MSB3027 file-lock error in GitHub Actions (windows-latest, .NET 8)
+fixture_class: minimal
+normalized_log: |
+  ##[group]Run dotnet build MyApp.sln --configuration Release
+  dotnet build MyApp.sln --configuration Release
+  ##[endgroup]
+  Microsoft (R) Build Engine version 17.8.3+195e7f5a3 for .NET
+  Copyright (C) Microsoft Corporation. All rights reserved.
+
+    Determining projects to restore...
+    All projects are up-to-date for restore.
+    MyApp.Domain -> C:\a\MyApp\MyApp.Domain\bin\Release\net8.0\MyApp.Domain.dll
+  C:\a\MyApp\MyApp.Web\MyApp.Web.csproj : error MSB3027: Could not copy "obj\Release\net8.0\MyApp.Domain.dll" to "bin\Release\net8.0\MyApp.Domain.dll". Beginning retry 1 in 1000ms. The process cannot access the file 'bin\Release\net8.0\MyApp.Domain.dll' because it is being used by another process.
+  C:\a\MyApp\MyApp.Web\MyApp.Web.csproj : error MSB3027: Could not copy "obj\Release\net8.0\MyApp.Domain.dll" to "bin\Release\net8.0\MyApp.Domain.dll". Retried 10 times without success.
+
+  Build FAILED.
+
+  Error(s):
+    MyApp.Web.csproj : error MSB3027: Could not copy file
+    1 Error(s)
+
+  ##[error]Process completed with exit code 1.
+expectation:
+  expected_playbook: msbuild-error

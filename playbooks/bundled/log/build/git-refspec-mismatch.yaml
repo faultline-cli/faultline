@@ -81,6 +81,9 @@ match:
     - "branch.*does not exist"
     - "ref.*does not match any"
     - "failed to fetch submodule"
+    - "re:Remote branch .* not found in upstream"
+    - "fatal: Remote branch"
+    - "not found in upstream origin"
   none:
     - "network is unreachable"
     - "connection refused"

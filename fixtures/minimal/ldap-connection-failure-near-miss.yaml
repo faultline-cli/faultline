@@ -1,0 +1,14 @@
+id: ldap-connection-failure-near-miss
+title: LDAP invalid credentials (49) — looks like LDAP but is an auth failure, not a network failure
+fixture_class: minimal
+normalized_log: |
+  $ ./sync-ldap-users.sh
+  Connecting to LDAP at ldap://REDACTED:389 ...
+  ldap_bind: Invalid credentials (49)
+  	additional info: 80090308: LdapErr: DSID-0C09044E, comment: AcceptSecurityContext error, data 52e, v2580
+  LDAP error code 49: Invalid Credentials for user cn=svc-account,dc=example,dc=com
+  ERROR: Job failed: exit code 1
+expectation:
+  expected_playbook: container-crash
+  disallowed_playbooks:
+    - ldap-connection-failure
