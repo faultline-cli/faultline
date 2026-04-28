@@ -29,7 +29,19 @@ run_compare() {
 	shift 2
 	got="$TMP_DIR/$label"
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$@" >"$got"
-	cmp -s "$got" "$expected"
+	if ! cmp -s "$got" "$expected"; then
+		diff -u "$expected" "$got" >&2 || true
+		return 1
+	fi
+}
+
+compare_file() {
+	got="$1"
+	expected="$2"
+	if ! cmp -s "$got" "$expected"; then
+		diff -u "$expected" "$got" >&2 || true
+		return 1
+	fi
 }
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/docker-auth.log" --no-history >"$TMP_DIR/analyze.txt"
@@ -54,15 +66,15 @@ run_compare "missing-vs-runtime.compare.expected.md" "$ROOT_DIR/examples/missing
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history --git=false >"$TMP_DIR/missing.trace.md"
-cmp -s "$TMP_DIR/missing.trace.md" "$ROOT_DIR/examples/missing-executable.trace.expected.md"
+compare_file "$TMP_DIR/missing.trace.md" "$ROOT_DIR/examples/missing-executable.trace.expected.md"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --no-history --git=false >"$TMP_DIR/workflow.local.txt"
-cmp -s "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executable.workflow.local.txt"
+compare_file "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executable.workflow.local.txt"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false >"$TMP_DIR/workflow.agent.json"
-cmp -s "$TMP_DIR/workflow.agent.json" "$ROOT_DIR/examples/missing-executable.workflow.agent.json"
+compare_file "$TMP_DIR/workflow.agent.json" "$ROOT_DIR/examples/missing-executable.workflow.agent.json"
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" explain docker-auth >"$TMP_DIR/explain.txt"
 grep -F "docker-auth" "$TMP_DIR/explain.txt" >/dev/null

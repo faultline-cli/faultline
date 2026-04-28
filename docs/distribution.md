@@ -28,7 +28,7 @@ faultline workflow ci.log --json --mode agent
 If you need a pinned version instead of the latest release:
 
 ```bash
-VERSION=v0.3.1 curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
+VERSION=<tag> curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/install.sh | sh
 faultline analyze ci.log
 ```
 
@@ -54,7 +54,7 @@ go build -o faultline ./cmd
 Release archives are published as `faultline_<version>_<os>_<arch>.tar.gz` on the GitHub Releases page. The archive flow is:
 
 ```bash
-VERSION=v0.3.1
+VERSION=<tag>
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

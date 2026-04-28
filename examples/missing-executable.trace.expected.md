@@ -100,11 +100,63 @@
   pattern: `Retrieving the default branch name`
   evidence: none
   note: exclusion rule stayed clear
+- `CLEAR` `match.none[8]`
+  pattern: `open /`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[9]`
+  pattern: `open ./`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[10]`
+  pattern: `stat /`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[11]`
+  pattern: `stat ./`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[12]`
+  pattern: `COPY`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[13]`
+  pattern: `os.Open`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[14]`
+  pattern: `os.Stat`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[15]`
+  pattern: `ioutil.ReadFile`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[16]`
+  pattern: `os.ReadFile`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[17]`
+  pattern: `: record not found`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[18]`
+  pattern: `: user not found`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[19]`
+  pattern: `: not found in database`
+  evidence: none
+  note: exclusion rule stayed clear
+- `CLEAR` `match.none[20]`
+  pattern: `was not found`
+  evidence: none
+  note: exclusion rule stayed clear
 
 ## Why This Result
 
 - 2 trigger rule(s) matched explicit log evidence
-- 8 exclusion rule(s) stayed clear
+- 21 exclusion rule(s) stayed clear
 - matched evidence was pulled directly from the input log
 
 ## Signature
