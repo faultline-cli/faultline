@@ -46,6 +46,7 @@ func TestNewRootCommandRegistersExpectedCommands(t *testing.T) {
 
 	want := map[string]bool{
 		"analyze":  false,
+		"batch":    false,
 		"coverage": false,
 		"inspect":  false,
 		"guard":    false,

@@ -48,6 +48,7 @@ match:
     - "jwks"
     - "ACTIONS_ID_TOKEN_REQUEST_URL"
     - "invalid_grant"
+    - "invalid_token"
     - "token audience mismatch"
   none:
     - "no basic auth credentials"

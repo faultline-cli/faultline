@@ -7,7 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -38,6 +41,11 @@ var ErrGuardFindings = errors.New("guard findings emitted")
 // silent failure is detected.  The error message is not printed to stderr;
 // the analysis output already describes the finding.
 var ErrSilentFailure = errors.New("silent failure detected")
+
+// ErrBatchUnmatched is returned by Batch when one or more input logs did not
+// match any playbook. It is a sentinel: output has already been written, and
+// the exit code signals that the run produced a partial diagnosis.
+var ErrBatchUnmatched = errors.New("one or more logs did not match any playbook")
 
 // guardMinConfidence and guardMinScore are the thresholds used by the guard
 // command to filter source-detector results down to high-confidence findings
@@ -779,6 +787,160 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 	}
 	_, err = fmt.Fprint(w, formatted)
 	return err
+}
+
+// Batch analyzes multiple CI log files and groups the results by failure
+// pattern to identify recurring root causes across a build matrix.
+//
+// Exit semantics: if any input did not match a playbook, Batch returns
+// ErrBatchUnmatched after writing the full output. Real errors (file open
+// failure, engine failure) abort the run and return the wrapped error.
+func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
+	result := &model.BatchResult{
+		SchemaVersion: "batch.v1",
+		Total:         len(sources),
+		Entries:       make([]model.BatchEntry, 0, len(sources)),
+	}
+	patternMap := map[string]*model.BatchPattern{}
+
+	for _, src := range sources {
+		f, err := os.Open(src) // #nosec G304 -- src comes from CLI args, not untrusted input
+		if err != nil {
+			return fmt.Errorf("open %s: %w", src, err)
+		}
+		a, analyzeErr := analyzeLog(f, src, opts, "batch", false)
+		_ = f.Close()
+
+		if analyzeErr != nil && !errors.Is(analyzeErr, engine.ErrNoMatch) {
+			return fmt.Errorf("analyze %s: %w", src, analyzeErr)
+		}
+
+		entry := model.BatchEntry{Source: src}
+		if a != nil && len(a.Results) > 0 {
+			top := a.Results[0]
+			entry.Matched = true
+			entry.FailureID = top.Playbook.ID
+			entry.Confidence = top.Confidence
+			entry.Title = top.Playbook.Title
+			entry.Category = top.Playbook.Category
+			entry.Severity = top.Playbook.Severity
+			result.Matched++
+
+			pat, ok := patternMap[top.Playbook.ID]
+			if !ok {
+				pat = &model.BatchPattern{
+					FailureID: top.Playbook.ID,
+					Title:     top.Playbook.Title,
+					Category:  top.Playbook.Category,
+					Severity:  top.Playbook.Severity,
+					Sources:   []string{},
+				}
+				patternMap[top.Playbook.ID] = pat
+			}
+			if top.Confidence > pat.Confidence {
+				pat.Confidence = top.Confidence
+			}
+			pat.Count++
+			pat.Sources = append(pat.Sources, src)
+		} else {
+			result.Unmatched++
+			result.UnmatchedSources = append(result.UnmatchedSources, src)
+		}
+		result.Entries = append(result.Entries, entry)
+	}
+
+	// Sort patterns by count desc, then failure_id asc for determinism.
+	for _, pat := range patternMap {
+		result.Patterns = append(result.Patterns, *pat)
+	}
+	sort.Slice(result.Patterns, func(i, j int) bool {
+		if result.Patterns[i].Count != result.Patterns[j].Count {
+			return result.Patterns[i].Count > result.Patterns[j].Count
+		}
+		return result.Patterns[i].FailureID < result.Patterns[j].FailureID
+	})
+
+	if opts.JSON || opts.Format == output.FormatJSON {
+		data, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return err
+		}
+		if _, err := fmt.Fprintln(w, string(data)); err != nil {
+			return err
+		}
+	} else {
+		if _, err := fmt.Fprint(w, formatBatchText(result)); err != nil {
+			return err
+		}
+	}
+
+	if result.Unmatched > 0 {
+		return ErrBatchUnmatched
+	}
+	return nil
+}
+
+func formatBatchText(r *model.BatchResult) string {
+	var b strings.Builder
+	fileWord := "files"
+	if r.Total == 1 {
+		fileWord = "file"
+	}
+	fmt.Fprintf(&b, "FAULTLINE  batch  %d %s\n\n", r.Total, fileWord)
+
+	if r.Matched == 0 {
+		fmt.Fprintf(&b, "No playbook matched any of the %d input %s.\n", r.Total, fileWord)
+		for _, src := range r.UnmatchedSources {
+			fmt.Fprintf(&b, "  %s\n", src)
+		}
+		return b.String()
+	}
+
+	patternWord := "patterns"
+	if len(r.Patterns) == 1 {
+		patternWord = "pattern"
+	}
+	fmt.Fprintf(&b, "Patterns  (%d distinct %s)\n", len(r.Patterns), patternWord)
+	fmt.Fprintln(&b, strings.Repeat("-", 40))
+	for _, pat := range r.Patterns {
+		fileCount := "files"
+		if pat.Count == 1 {
+			fileCount = "file"
+		}
+		srcDisplay := ""
+		if len(pat.Sources) <= 3 {
+			srcDisplay = strings.Join(pat.Sources, "  ")
+		} else {
+			srcDisplay = strings.Join(pat.Sources[:3], "  ") + fmt.Sprintf("  +%d more", len(pat.Sources)-3)
+		}
+		fmt.Fprintf(&b, "  %-32s  %d %s    %s\n", pat.FailureID, pat.Count, fileCount, srcDisplay)
+	}
+
+	if r.Unmatched > 0 {
+		fmt.Fprintln(&b)
+		unmatchedWord := "files"
+		if r.Unmatched == 1 {
+			unmatchedWord = "file"
+		}
+		fmt.Fprintf(&b, "Unmatched  (%d %s)\n", r.Unmatched, unmatchedWord)
+		fmt.Fprintln(&b, strings.Repeat("-", 40))
+		for _, src := range r.UnmatchedSources {
+			fmt.Fprintf(&b, "  %s\n", src)
+		}
+	}
+
+	fmt.Fprintln(&b)
+	fmt.Fprintf(&b, "%d/%d matched", r.Matched, r.Total)
+	if len(r.Patterns) > 1 {
+		fmt.Fprintf(&b, "  ·  %d distinct patterns", len(r.Patterns))
+	} else if len(r.Patterns) == 1 {
+		fmt.Fprintf(&b, "  ·  1 pattern")
+	}
+	if r.Unmatched > 0 {
+		fmt.Fprintf(&b, "  ·  %d unmatched", r.Unmatched)
+	}
+	fmt.Fprintln(&b)
+	return b.String()
 }
 
 // FixturesScaffold generates a candidate playbook YAML scaffold from a

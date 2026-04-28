@@ -32,6 +32,7 @@ match:
     - test is not parallelizable
     - race detected
     - concurrent
+    - concurrently
     - "too many connections"
     - database locked
     - "concurrent ="

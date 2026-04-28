@@ -513,3 +513,138 @@ The roadmap should stay disciplined about what it is not doing in this release:
 - AI-generated fixes in the product's authoritative decision path
 - speculative governance layers such as signing or enterprise policy control
   before the pack and provenance model is stable
+
+## v0.4.4 Release
+
+### Theme
+
+Distribution surface and automation ergonomics.
+
+The goal of v0.4.4 is to make faultline usable without manual wiring in CI:
+a stable exit code contract that scripts can rely on, a batch command that
+surfaces recurring root causes across a build matrix, and a thin GitHub
+Action that brings the tool into the ecosystem without requiring shell glue.
+
+### Delivery Order
+
+#### 1. Stable exit code contract
+
+Faultline now defines a three-tier exit code contract:
+
+| Code | Meaning |
+|------|---------|
+| `0`  | Success — analysis completed; guard: no findings; batch: all logs matched |
+| `1`  | Operational finding — guard: findings emitted; batch: one or more logs unmatched; analyze: silent failure with `--fail-on-silent` |
+| `2`  | Error — bad arguments, unreadable input, or processing failure |
+
+**Breaking change from v0.4.3:** errors previously exited with code 1.
+Scripts that currently check `$? -eq 1` to detect any failure must be updated
+to distinguish code 1 (expected result) from code 2 (unexpected error).
+
+**Sentinels:** `app.ErrGuardFindings`, `app.ErrSilentFailure`, and
+`app.ErrBatchUnmatched` map to exit code 1. All other errors map to exit
+code 2.
+
+#### 2. `faultline batch`
+
+New command: `faultline batch <file> [file ...]`
+
+Analyzes multiple CI log files sequentially and groups matched diagnoses by
+failure pattern. Core value: "3 of your 12 nightly builds share the same root
+cause — `missing-executable`."
+
+**Output modes:**
+
+- Terminal (default): human-readable deduplication summary with pattern
+  counts and affected files
+- JSON (`--json`): `batch.v1` schema with `patterns`, `entries`,
+  `unmatched_sources`, total/matched/unmatched counts
+
+**Exit semantics:**
+
+- `0` — all sources matched a playbook
+- `1` — one or more sources unmatched (`ErrBatchUnmatched` sentinel)
+- `2` — file open failure or analysis error
+
+**Flags:** `--json`, `--format terminal|json`, `--playbooks`,
+`--playbook-pack`, `--no-history`
+
+**Not in scope for v0.4.4:** parallel execution, stdin aggregation,
+per-file verbose output, markdown format. These can follow in v0.4.5.
+
+#### 3. Official GitHub Action (`faultline-action`)
+
+Thin wrapper around stable CLI artifacts. Documented target for v0.4.4
+planning; implementation tracked in a separate repository.
+
+**Design constraints:**
+
+- The Action is a thin shell wrapper: no JS/TS runtime, no Docker image
+  build in the critical path
+- It downloads the versioned CLI binary from GitHub Releases (pinned SHA)
+- It calls `faultline analyze` or `faultline batch` and maps exit codes to
+  Action outcomes
+- It does not add opinions beyond what the CLI already expresses
+- The stable exit code contract (above) is a prerequisite
+
+**Not in scope for v0.4.4:** SARIF output, GitHub annotations as the primary
+output surface, auto-PR comments. The annotation path is already available
+via `--ci-annotations` on the analyze command; the Action just passes the
+flag through.
+
+#### 4. Corpus coverage hardening — noisy log testing
+
+The most impactful reliability work in v0.4.4 is proving that playbooks
+hold up against real, dirty CI logs — not just clean, curated fixtures.
+
+**Problem:** The fixture suite covers synthetic and well-structured logs
+well. Production CI logs are noisier in ways that break pattern matching:
+timestamps prepended to every line, interleaved output from parallel jobs,
+ANSI/VT100 escape codes, progress-bar rewrites, platform banners, and
+multi-kilobyte preambles before the first meaningful line. Several playbooks
+currently over-fit to clean log structure and produce false negatives or
+weak matches when that structure is absent.
+
+**Primary goal — noisy log test class:**
+
+Establish a dedicated `noisy` fixture class in `fixtures stats` that must
+pass before any playbook ships. A noisy fixture is a real or synthetically
+degraded log that deliberately exercises at least one noise type:
+
+| Noise type | Description |
+|------------|-------------|
+| `timestamps` | ISO-8601 or Unix epoch prefix on every line |
+| `ansi` | VT100 color/cursor escape sequences |
+| `parallel-interleave` | Output from ≥ 2 concurrent jobs mixed in the same stream |
+| `platform-banner` | GitHub Actions / GitLab CI / CircleCI job header blocks |
+| `truncation` | Log cut mid-line or mid-block due to size limits |
+| `progress-rewrite` | `\r`-based progress lines overwriting the same terminal row |
+
+Each fixture must declare its noise type(s) so failures during `fixtures stats`
+point directly to the pattern that broke under load.
+
+**Secondary goal — lift `real` accuracy:**
+
+- Collect real CI logs (GitHub Actions, GitLab CI, CircleCI) that exercised
+  known failure modes and verify each matches the correct playbook at
+  confidence ≥ 0.70
+- For every playbook that falls below that bar, tighten or broaden evidence
+  patterns, update `context_window`, or add a `noisy_log` fixture that must
+  pass before the playbook ships
+- Priority failure categories: `auth`, `dependency`, `network`, and
+  `environment` — highest false-negative rate under noise
+
+**Acceptance criteria:**
+
+- `faultline fixtures stats --class noisy` top-1 accuracy ≥ 0.70 (new baseline, must exist before release)
+- `faultline fixtures stats --class real` top-1 accuracy ≥ 0.80 (up from ~0.72)
+- Zero regressions against existing `synthetic` and `real` baselines
+- Every noisy fixture documents: origin CI platform, noise type(s), and the
+  playbook it is intended to match
+
+### Not v0.4.4
+
+- SARIF output (planned v0.5)
+- `faultline report` or any Team-layer commands
+- parallel batch execution
+- hosted or cloud-synced pack registry

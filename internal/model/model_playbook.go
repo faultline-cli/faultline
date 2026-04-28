@@ -49,12 +49,17 @@ type TopologyBoost struct {
 // MatchSpec holds declarative match patterns for a Playbook.
 // Any is matched as OR: at least one pattern must appear in the log.
 // All is matched as AND: every pattern must appear in the log.
+// WithinLines optionally restricts the compound bonus for match.all: when set
+// to a positive value N, the +2.0 compound bonus is only awarded when all
+// match.all patterns appear within N lines of each other.  Individual pattern
+// scores (+1.5 each) are unaffected.  Zero (the default) disables the check.
 type MatchSpec struct {
-	Any     []string            `yaml:"any" json:"any"`
-	All     []string            `yaml:"all" json:"all"`
-	None    []string            `yaml:"none" json:"none,omitempty"`
-	Use     []string            `yaml:"use,omitempty" json:"use,omitempty"`
-	Partial []PartialMatchGroup `yaml:"partial,omitempty" json:"partial,omitempty"`
+	Any         []string            `yaml:"any" json:"any"`
+	All         []string            `yaml:"all" json:"all"`
+	WithinLines int                 `yaml:"within_lines,omitempty" json:"within_lines,omitempty"`
+	None        []string            `yaml:"none" json:"none,omitempty"`
+	Use         []string            `yaml:"use,omitempty" json:"use,omitempty"`
+	Partial     []PartialMatchGroup `yaml:"partial,omitempty" json:"partial,omitempty"`
 }
 
 // PartialMatchGroup defines a deterministic sub-pattern cluster where a

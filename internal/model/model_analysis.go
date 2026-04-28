@@ -368,3 +368,38 @@ type Policy struct {
 	// "fpc", "phi").
 	Basis []string `json:"basis,omitempty"`
 }
+
+// BatchResult is the top-level artifact produced by `faultline batch`.
+// Schema version: "batch.v1".
+type BatchResult struct {
+	SchemaVersion    string         `json:"schema_version"`
+	Total            int            `json:"total"`
+	Matched          int            `json:"matched"`
+	Unmatched        int            `json:"unmatched"`
+	Patterns         []BatchPattern `json:"patterns"`
+	UnmatchedSources []string       `json:"unmatched_sources,omitempty"`
+	Entries          []BatchEntry   `json:"entries"`
+}
+
+// BatchPattern is a single root-cause group aggregated from BatchEntries that
+// share the same failure_id.
+type BatchPattern struct {
+	FailureID  string   `json:"failure_id"`
+	Title      string   `json:"title"`
+	Category   string   `json:"category"`
+	Severity   string   `json:"severity"`
+	Count      int      `json:"count"`
+	Confidence float64  `json:"confidence"`
+	Sources    []string `json:"sources"`
+}
+
+// BatchEntry is the per-file analysis result inside a BatchResult.
+type BatchEntry struct {
+	Source     string  `json:"source"`
+	Matched    bool    `json:"matched"`
+	FailureID  string  `json:"failure_id,omitempty"`
+	Confidence float64 `json:"confidence,omitempty"`
+	Title      string  `json:"title,omitempty"`
+	Category   string  `json:"category,omitempty"`
+	Severity   string  `json:"severity,omitempty"`
+}
