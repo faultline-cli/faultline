@@ -255,7 +255,7 @@ func TestPromoteStampsExpectationFields(t *testing.T) {
 	}
 }
 
-func TestIngestSkipsDuplicatesAndWritesUniqueFixtures(t *testing.T) {
+func TestIngestDuplicateHandling(t *testing.T) {
 	layout, _ := makeStagingLayout(t)
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
 
@@ -374,7 +374,7 @@ func TestIngestForceAllowsDuplicateFingerprints(t *testing.T) {
 	}
 }
 
-func TestReviewClassifiesDuplicateNearDuplicateAndCandidate(t *testing.T) {
+func TestReviewClassification(t *testing.T) {
 	root := t.TempDir()
 	layout := Layout{
 		Root:       root,

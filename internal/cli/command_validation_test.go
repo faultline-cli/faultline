@@ -58,8 +58,9 @@ func TestFixCommandRunsWithBundledPlaybooks(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("fix command: %v\noutput: %s", err, buf.String())
 	}
-	if strings.TrimSpace(buf.String()) == "" {
-		t.Fatal("expected non-empty fix output")
+	out := buf.String()
+	if !strings.Contains(out, "npm-ci-lockfile") {
+		t.Fatalf("expected fix output to mention npm-ci-lockfile, got:\n%s", out)
 	}
 }
 
@@ -103,7 +104,8 @@ func TestTraceCommandRunsWithBundledPlaybooks(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("trace command: %v\noutput: %s", err, buf.String())
 	}
-	if strings.TrimSpace(buf.String()) == "" {
-		t.Fatal("expected non-empty trace output")
+	out := buf.String()
+	if !strings.Contains(out, "TRACE  git-auth") {
+		t.Fatalf("expected trace output to mention git-auth, got:\n%s", out)
 	}
 }
