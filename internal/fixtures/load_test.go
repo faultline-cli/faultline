@@ -32,6 +32,9 @@ func TestLoadAllReturnsMinimalThenRealFixtures(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load(ClassAll): %v", err)
 	}
+	if len(fixtures) != 2 {
+		t.Fatalf("fixture count = %d, want 2", len(fixtures))
+	}
 
 	gotIDs := []string{fixtures[0].ID, fixtures[1].ID}
 	wantIDs := []string{"b-minimal", "a-real"}

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"faultline/internal/engine"
 )
 
 const npmCIUsageLog = "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
@@ -260,6 +262,7 @@ func TestPromoteStampsExpectationFields(t *testing.T) {
 func TestIngestDuplicateHandling(t *testing.T) {
 	layout, _ := makeStagingLayout(t)
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
+	duplicateFingerprint := FingerprintForLog(engine.CanonicalizeLog(npmCIUsageLog))
 
 	client := newHandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -271,23 +274,11 @@ func TestIngestDuplicateHandling(t *testing.T) {
 			http.NotFound(w, r)
 		}
 	}))
-	prefetched, err := GitHubIssueAdapter{}.Fetch(
-		context.Background(),
-		"https://github.com/acme/widgets/issues/12",
-		client,
-		now,
-	)
-	if err != nil {
-		t.Fatalf("prefetch fixtures: %v", err)
-	}
-	if len(prefetched) != 2 {
-		t.Fatalf("prefetched fixture count = %d, want 2", len(prefetched))
-	}
 	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
 		ID:            "existing-real",
 		RawLog:        npmCIUsageLog,
 		NormalizedLog: npmCIUsageLog,
-		Fingerprint:   prefetched[0].Fingerprint,
+		Fingerprint:   duplicateFingerprint,
 		FixtureClass:  ClassReal,
 	}); err != nil {
 		t.Fatalf("write existing real fixture: %v", err)
@@ -315,11 +306,21 @@ func TestIngestDuplicateHandling(t *testing.T) {
 	if len(result.Skipped) != 2 {
 		t.Fatalf("skipped count = %d, want 2", len(result.Skipped))
 	}
-	if !strings.HasSuffix(result.Skipped[0], ": duplicate of existing-real") {
-		t.Fatalf("duplicate skip = %q", result.Skipped[0])
+	foundDuplicate := false
+	foundUnsupported := false
+	for _, skipped := range result.Skipped {
+		if strings.HasSuffix(skipped, ": duplicate of existing-real") {
+			foundDuplicate = true
+		}
+		if skipped == "https://gitlab.com/group/widgets/-/issues/99: unsupported URL for github-issue" {
+			foundUnsupported = true
+		}
 	}
-	if result.Skipped[1] != "https://gitlab.com/group/widgets/-/issues/99: unsupported URL for github-issue" {
-		t.Fatalf("unsupported skip = %q", result.Skipped[1])
+	if !foundDuplicate {
+		t.Fatalf("missing duplicate skip entry: %v", result.Skipped)
+	}
+	if !foundUnsupported {
+		t.Fatalf("missing unsupported skip entry: %v", result.Skipped)
 	}
 	if _, err := os.Stat(filepath.Join(layout.StagingDir, result.Written[0].ID+".yaml")); err != nil {
 		t.Fatalf("expected ingested fixture file: %v", err)
@@ -329,17 +330,12 @@ func TestIngestDuplicateHandling(t *testing.T) {
 func TestIngestForceAllowsDuplicateFingerprints(t *testing.T) {
 	layout, _ := makeStagingLayout(t)
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
-
-	issue := githubIssue{
-		Title: "CI fails on npm ci",
-		User:  githubIssueUser{Login: "alice"},
-	}
-	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, npmCIUsageLog, now)
+	duplicateFingerprint := FingerprintForLog(engine.CanonicalizeLog(npmCIUsageLog))
 	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
 		ID:            "existing-real",
 		RawLog:        npmCIUsageLog,
 		NormalizedLog: npmCIUsageLog,
-		Fingerprint:   duplicateFixture.Fingerprint,
+		Fingerprint:   duplicateFingerprint,
 		FixtureClass:  ClassReal,
 	}); err != nil {
 		t.Fatalf("write existing real fixture: %v", err)
