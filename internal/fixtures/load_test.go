@@ -9,7 +9,7 @@ import (
 	"faultline/internal/engine"
 )
 
-func TestLoadAllMergesMinimalAndRealOnly(t *testing.T) {
+func TestLoadAllReturnsMinimalThenRealFixtures(t *testing.T) {
 	root := t.TempDir()
 	layout := Layout{
 		Root:       root,
