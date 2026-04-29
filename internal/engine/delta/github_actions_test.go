@@ -263,5 +263,3 @@ func TestAddEnvDiffTrimsWhitespace(t *testing.T) {
 		t.Errorf("expected no entry after trim, got %#v", out)
 	}
 }
-
-

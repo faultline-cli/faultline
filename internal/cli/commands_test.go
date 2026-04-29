@@ -12,6 +12,13 @@ import (
 	"faultline/internal/output"
 )
 
+// cliTestPlaybookDir returns the canonical bundled playbook directory relative
+// to this package. Tests in the cli package run from internal/cli, so we walk
+// up two levels.
+func cliTestPlaybookDir() string {
+	return "../../playbooks/bundled"
+}
+
 // buildAnalysisArtifact runs svc.Analyze on the given log text and returns
 // the JSON artifact as a string. It uses the bundled playbook directory
 // relative to this package (two levels up).
@@ -26,7 +33,7 @@ func buildAnalysisArtifact(t *testing.T, log string) string {
 			JSON:   true,
 		},
 		Store:       "off",
-		PlaybookDir: "../../playbooks/bundled",
+		PlaybookDir: cliTestPlaybookDir(),
 	}
 	var buf bytes.Buffer
 	if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
