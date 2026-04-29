@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,19 @@ func deriveGitLabAPIBaseURL(serverURL string) string {
 		return ""
 	}
 	return strings.TrimRight(serverURL, "/") + "/api/v4"
+}
+
+func resolveStoreSetting(history, noHistory, noStore bool, storePath string) string {
+	if noHistory || noStore {
+		return "off"
+	}
+	if explicit := firstNonEmpty(storePath, os.Getenv(storeEnv)); explicit != "" {
+		return explicit
+	}
+	if history {
+		return "auto"
+	}
+	return "off"
 }
 
 // joinLines joins strings with newlines, used for Long/Example in command descriptions.

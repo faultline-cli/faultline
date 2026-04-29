@@ -13,7 +13,10 @@ func newBatchCommand() *cobra.Command {
 		format       string
 		playbookDir  string
 		playbookPack []string
+		history      bool
 		noHistory    bool
+		noStore      bool
+		storePath    string
 	)
 
 	cmd := &cobra.Command{
@@ -50,9 +53,7 @@ func newBatchCommand() *cobra.Command {
 				},
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPack,
-			}
-			if noHistory {
-				opts.Store = "off"
+				Store:            resolveStoreSetting(history, noHistory, noStore, storePath),
 			}
 			return app.NewService().Batch(args, opts, cmd.OutOrStdout())
 		},
@@ -62,7 +63,13 @@ func newBatchCommand() *cobra.Command {
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|json|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override the default playbook directory")
 	cmd.Flags().StringArrayVar(&playbookPack, "playbook-pack", nil, "extra playbook pack directory (repeatable)")
+	cmd.Flags().BoolVar(&history, "history", false, "read local history for this run")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "disable local history store for this run")
+	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
+	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
+	_ = cmd.Flags().MarkHidden("no-history")
+	_ = cmd.Flags().MarkHidden("no-store")
+	_ = cmd.Flags().MarkHidden("store")
 
 	return cmd
 }

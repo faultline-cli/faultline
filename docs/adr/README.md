@@ -15,6 +15,7 @@ These ADRs are intentionally brief and point back to the authoritative product a
 - [0007: Silent Failures As First-Class Detection](0007-silent-failures-as-first-class-detection.md)
 - [0008: Playbook Catalog Scalability Through Composition And Inheritance](0008-playbook-catalog-scalability-through-composition-and-inheritance.md)
 - [0009: CI Failure Ontology As Catalog Taxonomy](0009-ci-failure-ontology-as-catalog-taxonomy.md)
+- [0010: Workflow Surface Consolidation](0010-workflow-surface-consolidation.md)
 
 ## Source Material
 

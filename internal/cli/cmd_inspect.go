@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	"faultline/internal/app"
@@ -17,6 +15,7 @@ func newInspectCommand() *cobra.Command {
 		format        string
 		playbookDir   string
 		playbookPacks []string
+		history       bool
 		noHistory     bool
 		noStore       bool
 		storePath     string
@@ -39,10 +38,7 @@ func newInspectCommand() *cobra.Command {
 			if len(args) == 1 {
 				root = args[0]
 			}
-			resolvedStore := firstNonEmpty(storePath, os.Getenv(storeEnv))
-			if noHistory || noStore {
-				resolvedStore = "off"
-			}
+			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
 			return app.NewService().Inspect(root, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:    top,
@@ -64,6 +60,7 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
+	cmd.Flags().BoolVar(&history, "history", false, "read and write local history for this run")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")

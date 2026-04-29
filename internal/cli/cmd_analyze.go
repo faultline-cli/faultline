@@ -21,6 +21,7 @@ func newAnalyzeCommand() *cobra.Command {
 		playbookDir      string
 		playbookPacks    []string
 		ciAnnotations    bool
+		history          bool
 		noHistory        bool
 		noStore          bool
 		storePath        string
@@ -101,10 +102,7 @@ func newAnalyzeCommand() *cobra.Command {
 			}
 			defer input.Close()
 
-			resolvedStore := firstNonEmpty(storePath, os.Getenv(storeEnv))
-			if noHistory || noStore {
-				resolvedStore = "off"
-			}
+			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:           top,
@@ -158,6 +156,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
+	cmd.Flags().BoolVar(&history, "history", false, "read and write local history for this run")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")

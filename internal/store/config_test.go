@@ -408,13 +408,4 @@ func TestNoopStoreMethodsReturnSafeDefaults(t *testing.T) {
 	if _, err := st.VerifyDeterminismForInputHash(ctx, "hash"); err != nil {
 		t.Fatalf("noop VerifyDeterminismForInputHash: %v", err)
 	}
-	if _, err := st.RecordWorkflowExecution(ctx, &model.WorkflowExecutionRecord{}); err != nil {
-		t.Fatalf("noop RecordWorkflowExecution: %v", err)
-	}
-	if _, err := st.GetWorkflowExecution(ctx, "id"); err != nil {
-		t.Fatalf("noop GetWorkflowExecution: %v", err)
-	}
-	if _, err := st.ListWorkflowExecutions(ctx, 10); err != nil {
-		t.Fatalf("noop ListWorkflowExecutions: %v", err)
-	}
 }

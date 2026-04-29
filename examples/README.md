@@ -22,8 +22,8 @@ Run the core product flow first: diagnose, then generate the deterministic workf
 ```bash
 make build
 ./bin/faultline analyze examples/missing-executable.log --format markdown --mode quick
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent
 ```
 
 ## Run all examples
@@ -45,15 +45,15 @@ For a tighter remediation view:
 For the deterministic follow-up workflow:
 
 ```bash
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent
 ```
 
 For the optional deterministic evidence-fusion layer:
 
 ```bash
 ./bin/faultline analyze examples/missing-executable.log --json --bayes
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes --no-history
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --bayes
 ```
 
 Those commands correspond to these checked-in snapshots:
@@ -67,15 +67,15 @@ Those commands correspond to these checked-in snapshots:
 To refresh the checked-in example outputs after a renderer, workflow, or playbook change:
 
 ```bash
-./bin/faultline analyze examples/docker-auth.log --format markdown --no-history > examples/docker-auth.expected.md
-./bin/faultline analyze examples/missing-executable.log --format markdown --no-history --git=false > examples/missing-executable.expected.md
-./bin/faultline analyze examples/runtime-mismatch.log --format markdown --no-history --git=false > examples/runtime-mismatch.expected.md
-cat examples/missing-executable.log | ./bin/faultline workflow --no-history --git=false > examples/missing-executable.workflow.local.txt
-cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history --git=false > examples/missing-executable.workflow.agent.json
-cat examples/missing-executable.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/missing.analysis.json
-cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/runtime.analysis.json
+./bin/faultline analyze examples/docker-auth.log --format markdown > examples/docker-auth.expected.md
+./bin/faultline analyze examples/missing-executable.log --format markdown --git=false > examples/missing-executable.expected.md
+./bin/faultline analyze examples/runtime-mismatch.log --format markdown --git=false > examples/runtime-mismatch.expected.md
+cat examples/missing-executable.log | ./bin/faultline workflow --git=false > examples/missing-executable.workflow.local.txt
+cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --git=false > examples/missing-executable.workflow.agent.json
+cat examples/missing-executable.log | ./bin/faultline analyze --json --git=false > /tmp/missing.analysis.json
+cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --git=false > /tmp/runtime.analysis.json
 ./bin/faultline replay --format markdown --mode detailed /tmp/missing.analysis.json > examples/missing-executable.replay.expected.md
-cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --no-history --git=false > examples/missing-executable.trace.expected.md
+cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --git=false > examples/missing-executable.trace.expected.md
 ./bin/faultline compare --format markdown /tmp/missing.analysis.json /tmp/runtime.analysis.json > examples/missing-vs-runtime.compare.expected.md
 ```
 

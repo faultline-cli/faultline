@@ -244,27 +244,21 @@ type RemediationPlan struct {
 	CIConfigDiffs    []CIConfigDiff       `json:"ci_config_diffs,omitempty"`
 }
 
-type ArtifactWorkflowRecommendation struct {
-	Ref    string            `json:"ref,omitempty"`
-	Inputs map[string]string `json:"inputs,omitempty"`
-}
-
 type FailureArtifact struct {
-	SchemaVersion           string                           `json:"schema_version,omitempty"`
-	Status                  ArtifactStatus                   `json:"status,omitempty"`
-	Fingerprint             string                           `json:"fingerprint,omitempty"`
-	MatchedPlaybook         *ArtifactPlaybook                `json:"matched_playbook,omitempty"`
-	Evidence                []string                         `json:"evidence,omitempty"`
-	Confidence              float64                          `json:"confidence,omitempty"`
-	Environment             ArtifactEnvironment              `json:"environment"`
-	HistoryContext          *ArtifactHistoryContext          `json:"history_context,omitempty"`
-	FixSteps                []string                         `json:"fix_steps,omitempty"`
-	CandidateClusters       []CandidateCluster               `json:"candidate_clusters,omitempty"`
-	DominantSignals         []string                         `json:"dominant_signals,omitempty"`
-	Facts                   map[string]string                `json:"facts,omitempty"`
-	SuggestedPlaybookSeed   *SuggestedPlaybookSeed           `json:"suggested_playbook_seed,omitempty"`
-	Remediation             *RemediationPlan                 `json:"remediation,omitempty"`
-	WorkflowRecommendations []ArtifactWorkflowRecommendation `json:"workflow_recommendations,omitempty"`
+	SchemaVersion         string                  `json:"schema_version,omitempty"`
+	Status                ArtifactStatus          `json:"status,omitempty"`
+	Fingerprint           string                  `json:"fingerprint,omitempty"`
+	MatchedPlaybook       *ArtifactPlaybook       `json:"matched_playbook,omitempty"`
+	Evidence              []string                `json:"evidence,omitempty"`
+	Confidence            float64                 `json:"confidence,omitempty"`
+	Environment           ArtifactEnvironment     `json:"environment"`
+	HistoryContext        *ArtifactHistoryContext `json:"history_context,omitempty"`
+	FixSteps              []string                `json:"fix_steps,omitempty"`
+	CandidateClusters     []CandidateCluster      `json:"candidate_clusters,omitempty"`
+	DominantSignals       []string                `json:"dominant_signals,omitempty"`
+	Facts                 map[string]string       `json:"facts,omitempty"`
+	SuggestedPlaybookSeed *SuggestedPlaybookSeed  `json:"suggested_playbook_seed,omitempty"`
+	Remediation           *RemediationPlan        `json:"remediation,omitempty"`
 }
 
 // SilentFinding is a single finding produced by a built-in silent-failure

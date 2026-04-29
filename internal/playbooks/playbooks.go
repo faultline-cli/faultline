@@ -157,15 +157,6 @@ type raw struct {
 		LocalRepro  []string `yaml:"local_repro"`
 		Verify      []string `yaml:"verify"`
 	} `yaml:"workflow"`
-	Remediation struct {
-		Workflows []struct {
-			Ref    string `yaml:"ref"`
-			Inputs map[string]struct {
-				From  string `yaml:"from"`
-				Value string `yaml:"value"`
-			} `yaml:"inputs"`
-		} `yaml:"workflows"`
-	} `yaml:"remediation"`
 	Hooks    model.PlaybookHooks `yaml:"hooks"`
 	Metadata struct {
 		SchemaVersion string `yaml:"schema_version"`
@@ -313,23 +304,23 @@ func loadFile(path string) (model.Playbook, error) {
 		Detector:   normalizeDetector(r.Detector),
 		BaseScore:  r.BaseScore,
 		Tags:       r.Tags,
-		StageHints: r.StageHints,			Domain:     r.Domain,
-			Class:      r.Class,
-			Mode:       r.Mode,		Match: model.MatchSpec{
+		StageHints: r.StageHints, Domain: r.Domain,
+		Class: r.Class,
+		Mode:  r.Mode, Match: model.MatchSpec{
 			Any:     r.Match.Any,
 			All:     r.Match.All,
 			None:    r.Match.None,
 			Use:     trimStrings(r.Match.Use),
 			Partial: convertPartialMatchGroups(r.Match.Partial),
 		},
-		Source:        convertSourceSpec(r),
-		Summary:       normalizeMarkdownBlock(r.Summary),
-		Diagnosis:     normalizeMarkdownBlock(r.Diagnosis),
-		Fix:           normalizeMarkdownBlock(r.Fix),
-		Validation:    normalizeMarkdownBlock(r.Validation),
-		WhyItMatters:  normalizeMarkdownBlock(r.WhyItMatters),
-		RequiresDelta: r.RequiresDelta,
-		DeltaBoost:    convertDeltaBoosts(r.DeltaBoost),
+		Source:           convertSourceSpec(r),
+		Summary:          normalizeMarkdownBlock(r.Summary),
+		Diagnosis:        normalizeMarkdownBlock(r.Diagnosis),
+		Fix:              normalizeMarkdownBlock(r.Fix),
+		Validation:       normalizeMarkdownBlock(r.Validation),
+		WhyItMatters:     normalizeMarkdownBlock(r.WhyItMatters),
+		RequiresDelta:    r.RequiresDelta,
+		DeltaBoost:       convertDeltaBoosts(r.DeltaBoost),
 		RequiresTopology: r.RequiresTopology,
 		TopologyBoost:    convertTopologyBoosts(r.TopologyBoost),
 		Workflow: model.WorkflowSpec{
@@ -337,8 +328,7 @@ func loadFile(path string) (model.Playbook, error) {
 			LocalRepro:  r.Workflow.LocalRepro,
 			Verify:      r.Workflow.Verify,
 		},
-		Remediation: convertRemediationSpec(r.Remediation.Workflows),
-		Hooks:       normalizePlaybookHooks(r.Hooks),
+		Hooks: normalizePlaybookHooks(r.Hooks),
 		Metadata: model.PlaybookMeta{
 			SchemaVersion: r.Metadata.SchemaVersion,
 			SourceFile:    path,
@@ -363,41 +353,6 @@ func loadFile(path string) (model.Playbook, error) {
 			Excludes:       convertHypothesisSignals(r.Hypothesis.Excludes),
 		},
 	}, nil
-}
-
-func convertRemediationSpec(rawRefs []struct {
-	Ref    string `yaml:"ref"`
-	Inputs map[string]struct {
-		From  string `yaml:"from"`
-		Value string `yaml:"value"`
-	} `yaml:"inputs"`
-}) model.RemediationSpec {
-	if len(rawRefs) == 0 {
-		return model.RemediationSpec{}
-	}
-	workflows := make([]model.RemediationWorkflowRef, 0, len(rawRefs))
-	for _, item := range rawRefs {
-		ref := strings.TrimSpace(item.Ref)
-		if ref == "" {
-			continue
-		}
-		inputs := make(map[string]model.RemediationInputBinding, len(item.Inputs))
-		for key, binding := range item.Inputs {
-			name := strings.TrimSpace(key)
-			if name == "" {
-				continue
-			}
-			inputs[name] = model.RemediationInputBinding{
-				From:  strings.TrimSpace(binding.From),
-				Value: strings.TrimSpace(binding.Value),
-			}
-		}
-		workflows = append(workflows, model.RemediationWorkflowRef{
-			Ref:    ref,
-			Inputs: inputs,
-		})
-	}
-	return model.RemediationSpec{Workflows: workflows}
 }
 
 func convertDeltaBoosts(rawBoosts []struct {

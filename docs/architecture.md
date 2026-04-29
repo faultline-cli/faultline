@@ -20,9 +20,8 @@ explicit deterministic layers:
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, source loading, and
   git enrichment. It does not own persistence.
-- `internal/workflow` owns typed remediation workflow schemas, binding,
-  deterministic dry-run planning, policy-gated execution, verification, and
-  workflow execution rendering.
+- `internal/workflow` owns deterministic workflow handoff generation for the
+  top-level `faultline workflow` command.
 - `internal/engine/delta` owns explicit provider-backed failure delta
   resolution and minimal cross-run extraction such as changed files and newly
   failing tests.
@@ -174,20 +173,21 @@ The store is intentionally narrow:
 
 - local only
 - SQLite-backed by default
-- optional at runtime
+- opt-in at runtime for analysis-style commands
 - additive to the existing analysis path
 
 The ownership split is deliberate:
 
-- `internal/app` resolves store config, opens the store, handles graceful
-  degradation, enriches results with history, and records completed runs
+- `internal/app` resolves store config, opens the store when explicitly enabled,
+  handles graceful degradation, enriches results with history, and records
+  completed runs
 - `internal/store` hides SQL, migrations, and schema details behind a small
   interface plus a no-op fallback
 - `internal/engine` stays deterministic and store-agnostic; it returns analysis
   results without querying or mutating on-disk state
 - detectors remain stateless in v1 and do not read from the store directly
 
-The store records durable forensic memory such as:
+When enabled, the store records durable forensic memory such as:
 
 - top-diagnosis recurrence by `signature_hash`
 - run-level `input_hash` and `output_hash`
@@ -195,9 +195,10 @@ The store records durable forensic memory such as:
 - ranked playbook matches for longitudinal review
 - hook execution results when hooks are enabled
 
-The store does not become a generic raw-log warehouse. By default it stores
+The store does not become a generic raw-log warehouse. When active, it stores
 hashes, normalized signature material, minimal evidence excerpts, and small
-structured summaries only.
+structured summaries only. When history is not explicitly enabled, the no-op
+store keeps default output stable.
 
 ## Scoring boundary
 
@@ -245,8 +246,10 @@ also include:
 - `metrics` when sufficient explicit history exists to compute TSS, FPC, or PHI
 - `policy` when a deterministic advisory recommendation can be derived from
   those metrics
-- `input_hash` and `output_hash` for repeated-run determinism checks
+- `input_hash` and `output_hash` when local history is enabled for
+  repeated-run determinism checks
 - result-level `signature_hash`, recurrence fields, and hook history summaries
+  when local history is enabled
 
 Saved analysis artifacts preserve those fields on replay and compare.
 

@@ -36,15 +36,18 @@ The store is not:
 - graceful fallback: when disabled, unavailable, or corrupt, Faultline drops to
   a no-op store and continues analysis
 
-Advanced CLI configuration is available through the hidden store controls:
+Analysis-style commands use the no-op store by default so repeated output stays
+stable. Local history enrichment is explicit opt-in through:
 
+- `--history`
 - `--store auto`
-- `--store off`
 - `--store /path/to/store.db`
-- `--no-store`
 - `FAULTLINE_STORE`
 
-`--no-history` remains a compatibility switch and also disables the store.
+`--no-history` and `--no-store` remain hidden compatibility switches and force
+the no-op store. Explicit history commands (`history`, `signatures`, and
+`verify-determinism`) still open the default store path when no `--store` is
+supplied, because reading history is their whole job.
 
 Single-repo companion surfaces can read from the same local store:
 
@@ -75,7 +78,6 @@ Stored data is intentionally minimal:
 - first-seen and last-seen times
 - small evidence excerpts
 - structured hook facts and hook evidence excerpts when hooks run
-- typed workflow execution records for `faultline workflow apply`
 
 ## What Is Not Stored By Default
 
@@ -116,10 +118,12 @@ failures distinct enough for practical local recurrence tracking.
 
 ## Determinism Guarantees
 
-The store is additive to the analysis path:
+The store is opt-in and additive to the analysis path:
 
 - the engine still analyzes input without reading SQL
-- disabling the store does not change match logic
+- default analysis-style commands use the no-op store unless `--history`,
+  `--store`, or `FAULTLINE_STORE` is set
+- disabling the store or leaving history off does not change match logic
 - store failures do not block core analysis by default
 - JSON remains stable and additive for automation
 
@@ -169,7 +173,7 @@ Interpret the fields narrowly:
 `occurrence_count` is not a hidden severity score, and it does not change the
 detector result by itself.
 
-## Transitional History Commands
+## History Commands
 
 `faultline history` shows three additive views from the local store:
 
@@ -207,13 +211,6 @@ dashboard product:
 - average hook confidence delta so maintainers can spot noisy hooks that add
   little value
 
-Workflow execution history is intentionally narrow too:
-
-- `faultline workflow history` lists recent persisted remediation runs
-- `faultline workflow show <execution-id>` loads the full execution record
-- records include resolved inputs, per-step results, verification status, and
-  final status
-
 These views are intentionally local, inspectable, and bounded. They are meant
 to guide single-repo diagnosis and catalog maintenance, not to define the
 Team-layer commercial boundary.
@@ -225,7 +222,8 @@ The store is local-first and inspectable.
 It prefers hashes and normalized excerpts over raw inputs so it can be useful
 without turning into a second copy of your CI log archive.
 
-If you need stricter handling, disable it with `--no-store` or `--no-history`.
+If you need stricter handling, leave history off or force the no-op store with
+the hidden compatibility flags `--no-store` or `--no-history`.
 
 ## Boundary Note
 

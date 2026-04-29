@@ -19,7 +19,7 @@ Core includes:
 - CLI analysis surfaces (`analyze`, `workflow`, `list`, `explain`, `fix`)
 - deterministic playbook matching and ranking
 - local playbook system and pack composition
-- optional single-repo local history and forensic recall
+- opt-in single-repo local history and forensic recall
 - baseline hooks support as local deterministic companion behavior
 - thin diff and deterministic artifact generation
 
@@ -94,17 +94,6 @@ onboarding narrative.
 
 These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis plus workflow handoff.
 
-### Transitional Groundwork (Hidden / Non-default)
-
-The repository still contains narrower store-backed plumbing that should remain
-non-default for now:
-
-- persisted workflow execution inspection
-
-Treat these as transitional groundwork or maintainer-oriented plumbing. They
-may remain available for compatibility paths, but they should not define the
-commercial boundary going forward.
-
 ### Gate Behind Flag
 
 - provider-backed GitHub Actions and GitLab CI delta via `--delta-provider github-actions|gitlab-ci`
@@ -162,8 +151,8 @@ The current roadmap for v0.4 should extend this boundary rather than replace it:
   and workflow outputs, not as new first-run command surfaces
 - preserve the no-runtime-network expectation for `analyze`, `workflow`, and
   `trace`
-- keep history value explicit in output and companion commands rather than
-  turning recurrence into hidden ranking behavior
+- keep history value opt-in and explicit in output and companion commands
+  rather than turning recurrence into hidden ranking behavior
 
 ## Team Layer Delivery Contract
 

@@ -408,22 +408,14 @@ straightforward.
 **Resolved**: Split into 12 per-command files; `root.go` is now 54 lines.
 All tests pass.
 
-#### ~~TD-3: Dual workflow system (`legacy.go` co-exists with `workflow.go`)~~ ✅ DONE
+#### ~~TD-3: Workflow surface consolidation~~ ✅ DONE
 
-`internal/workflow/legacy.go` and `workflow/workflow.go` are two diverging
-implementations of the same concept. `legacy.BuildWithOptions` still drives
-the default output for `faultline workflow`. The richer post-v0.4 system is
-used only by subcommands. Schema fields and serialization rules are diverging
-silently; no marker distinguishes a legacy workflow record from a current one
-at query time.
+The workflow surface had grown beyond the core handoff story and carried
+underdeveloped planning and execution paths.
 
-Fix: write an ADR capturing the migration intent; add a `[LEGACY]` label
-comment at the top of `legacy.go`; block any new feature work from landing in
-the legacy path. Gate removal on the eval corpus confirming zero regression.
-
-**Resolved**: ADR 0010 written (`docs/adr/0010-legacy-workflow-migration-path.md`);
-`[LEGACY]` header block added to `legacy.go` with removal criteria. The legacy
-path remains until `make eval` confirms zero regression.
+**Resolved**: `faultline workflow` is now a single deterministic handoff
+surface backed by `internal/workflow/workflow.go`. ADR 0010 records the
+consolidated boundary.
 
 #### ~~TD-4: `renderer.go` monolith~~ ✅ DONE
 
@@ -433,21 +425,13 @@ path remains until `make eval` confirms zero regression.
 contains only the package-level `leadingHeadingPattern` var, the `Renderer`
 type, and `New`. No logic changes; pure file decomposition. All tests pass.
 
-#### ~~TD-5: SQLite double-UPDATE for workflow execution ID~~ ✅ DONE
+#### ~~TD-5: SQLite workflow execution records~~ ✅ DONE
 
-`internal/store/sqlite.go` — `RecordWorkflowExecution` executes:
-INSERT → `LastInsertId` → UPDATE `execution_id` → re-marshal → UPDATE
-`record_json`. A crash between the INSERT and the second UPDATE leaves a
-permanently incomplete row. The pattern exists because the execution ID is not
-known before the INSERT.
+The store previously included workflow execution persistence outside the core
+analysis and handoff path.
 
-Fix: generate the execution ID on the client side (UUID or deterministic hash)
-before the INSERT so both columns are set in a single statement. Eliminates
-the partial-row failure window.
-
-**Resolved**: `newExecutionID()` helper generates a random `wf-<16 hex>` ID
-via `crypto/rand` before the INSERT. Single INSERT now sets both
-`execution_id` and `record_json`; both post-INSERT UPDATEs removed.
+**Resolved**: workflow execution persistence was removed. The local store now
+keeps analysis, signature, playbook, artifact, and hook history only.
 
 #### ~~TD-6: `internal/app` coverage gap~~ ✅ DONE
 

@@ -24,7 +24,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 1. Observe: read log input from a file path or stdin, then normalize the raw log into stable lines for matching.
 2. Resolve: load bundled YAML playbooks, validate playbook structure, and match deterministic patterns against the normalized log.
 3. Materialize: score and rank matches using explicit, stable rules, then build a deterministic differential diagnosis and first-class failure artifact.
-4. Enrich: attach recent local git repository context, explicit change signals, and optional single-repo local history; cross-repo correlation belongs to the Team layer rather than the default local product contract.
+4. Enrich: attach recent local git repository context, explicit change signals, and opt-in single-repo local history; cross-repo correlation belongs to the Team layer rather than the default local product contract.
 5. Act: return the result as formatted text, JSON, workflow output, or a remediation handoff.
 6. Learn: refine playbooks through deterministic fixtures, overlap review, and regression gates so future failures resolve faster.
 
@@ -57,9 +57,8 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
 - `internal/scoring` owns optional Bayesian-inspired evidence fusion, additive ranking explanations, and delta diagnosis.
 - `internal/output` owns text formatting and JSON serialization.
-- `internal/workflow` owns typed remediation workflow schemas, binding,
-  dry-run planning, policy-gated execution, verification, and persisted
-  workflow execution records.
+- `internal/workflow` owns deterministic workflow handoff rendering for the
+  top-level `faultline workflow` command.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
 - `internal/repo/topology` owns CODEOWNERS parsing, repository ownership graph construction, and topology signal derivation.
 - `internal/fixtures` owns deterministic fixture corpora, source adapters, curation workflow, and regression gates.

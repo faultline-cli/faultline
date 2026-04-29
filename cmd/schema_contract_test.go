@@ -32,29 +32,16 @@ func TestJSONSchemaContractSmoke(t *testing.T) {
 	}
 
 	workflowJSON := runRootCommand(t, repoRoot, "workflow", "--json", "--mode", "agent", "--no-history", "--git=false", "examples/missing-executable.log")
-	var legacyWorkflow struct {
+	var workflowPayload struct {
 		SchemaVersion string   `json:"schema_version"`
 		FailureID     string   `json:"failure_id"`
 		Steps         []string `json:"steps"`
 	}
-	if err := json.Unmarshal([]byte(workflowJSON), &legacyWorkflow); err != nil {
-		t.Fatalf("legacy workflow json must remain parseable: %v", err)
+	if err := json.Unmarshal([]byte(workflowJSON), &workflowPayload); err != nil {
+		t.Fatalf("workflow json must remain parseable: %v", err)
 	}
-	if legacyWorkflow.SchemaVersion != "workflow.v1" || legacyWorkflow.FailureID != "missing-executable" || len(legacyWorkflow.Steps) == 0 {
-		t.Fatalf("unexpected legacy workflow contract: %#v", legacyWorkflow)
-	}
-
-	structured := runRootCommand(t, repoRoot, "workflow", "explain", "--json", "--no-history", "--git=false", "examples/missing-executable.log")
-	var structuredWorkflow struct {
-		SchemaVersion   string `json:"schema_version"`
-		WorkflowID      string `json:"workflow_id"`
-		SourceFailureID string `json:"source_failure_id"`
-	}
-	if err := json.Unmarshal([]byte(structured), &structuredWorkflow); err != nil {
-		t.Fatalf("structured workflow json must remain parseable: %v", err)
-	}
-	if structuredWorkflow.WorkflowID == "" || structuredWorkflow.SourceFailureID != "missing-executable" {
-		t.Fatalf("unexpected structured workflow contract: %#v", structuredWorkflow)
+	if workflowPayload.SchemaVersion != "workflow.v1" || workflowPayload.FailureID != "missing-executable" || len(workflowPayload.Steps) == 0 {
+		t.Fatalf("unexpected workflow contract: %#v", workflowPayload)
 	}
 
 	batch := runRootCommand(t, repoRoot, "batch", "--json", "--no-history", "examples/missing-executable.log", "examples/runtime-mismatch.log")

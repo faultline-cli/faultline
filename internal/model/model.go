@@ -8,5 +8,4 @@
 //   - model_hypothesis.go — Hypothesis specs, signals, and assessments
 //   - model_repo.go       — RepoContext, TopologySignals, PackProvenance
 //   - model_analysis.go   — Line, Context, Evidence, Result, Analysis, Metrics, Policy
-//   - model_workflow.go   — WorkflowExecutionRecord and related execution types
 package model

@@ -77,7 +77,6 @@ func Build(a *model.Analysis) *model.FailureArtifact {
 	artifact.FixSteps = markdownListItems(top.Playbook.Fix)
 	artifact.Remediation = buildMatchedRemediation(a, top)
 	artifact.Facts = buildFacts(a, top)
-	artifact.WorkflowRecommendations = buildWorkflowRecommendations(a, artifact, top)
 	return artifact
 }
 
@@ -335,70 +334,6 @@ func buildFacts(a *model.Analysis, result model.Result) map[string]string {
 		return nil
 	}
 	return facts
-}
-
-func buildWorkflowRecommendations(a *model.Analysis, artifact *model.FailureArtifact, result model.Result) []model.ArtifactWorkflowRecommendation {
-	if len(result.Playbook.Remediation.Workflows) == 0 {
-		return nil
-	}
-	var recommendations []model.ArtifactWorkflowRecommendation
-	for _, item := range result.Playbook.Remediation.Workflows {
-		ref := strings.TrimSpace(item.Ref)
-		if ref == "" {
-			continue
-		}
-		inputs := map[string]string{}
-		for name, binding := range item.Inputs {
-			inputName := strings.TrimSpace(name)
-			if inputName == "" {
-				continue
-			}
-			if value := resolveBindingValue(a, artifact, binding); value != "" {
-				inputs[inputName] = value
-			}
-		}
-		recommendations = append(recommendations, model.ArtifactWorkflowRecommendation{
-			Ref:    ref,
-			Inputs: inputs,
-		})
-	}
-	return recommendations
-}
-
-func resolveBindingValue(a *model.Analysis, artifact *model.FailureArtifact, binding model.RemediationInputBinding) string {
-	if value := strings.TrimSpace(binding.Value); value != "" {
-		return value
-	}
-	from := strings.TrimSpace(binding.From)
-	switch {
-	case strings.HasPrefix(from, "artifact.facts."):
-		if artifact == nil {
-			return ""
-		}
-		return strings.TrimSpace(artifact.Facts[strings.TrimPrefix(from, "artifact.facts.")])
-	case from == "artifact.fingerprint":
-		if artifact == nil {
-			return ""
-		}
-		return strings.TrimSpace(artifact.Fingerprint)
-	case from == "artifact.matched_playbook.id":
-		if artifact == nil || artifact.MatchedPlaybook == nil {
-			return ""
-		}
-		return strings.TrimSpace(artifact.MatchedPlaybook.ID)
-	case from == "context.command_hint":
-		if a == nil {
-			return ""
-		}
-		return strings.TrimSpace(a.Context.CommandHint)
-	case from == "context.stage":
-		if a == nil {
-			return ""
-		}
-		return strings.TrimSpace(a.Context.Stage)
-	default:
-		return ""
-	}
 }
 
 func extractMissingExecutable(evidence []string) (string, string) {

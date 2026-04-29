@@ -61,7 +61,7 @@ Today the main log-analysis path is:
 1. `internal/engine` loads playbooks, reads input, normalizes log lines, and extracts lightweight context.
 2. The engine dispatches to a detector through the detector registry.
 3. The detector returns ranked `model.Result` values.
-4. The engine persists history for the top result and optionally enriches that top result with git context.
+4. The app layer optionally persists history for the top result when history is explicitly enabled and can enrich that result with git context.
 5. `internal/output` and `internal/workflow` consume `Analysis.Results` in the final rank order.
 
 Relevant current files:
@@ -762,8 +762,8 @@ This is enough for v0.2.0. Deeper subpackages are not necessary yet.
 ### Phase 2
 
 - add unit tests for feature extraction, scoring, rounding, and tie-breaks
-- add engine tests confirming legacy behavior is unchanged when disabled
-- compare legacy and Bayes modes across the existing corpus and fixture sets
+- add engine tests confirming default behavior is unchanged when disabled
+- compare default and Bayes modes across the existing corpus and fixture sets
 
 ### Phase 3
 
@@ -773,7 +773,7 @@ This is enough for v0.2.0. Deeper subpackages are not necessary yet.
 
 ### Phase 4
 
-- extend fixture evaluation to track both legacy and Bayes ranking quality
+- extend fixture evaluation to track both default and Bayes ranking quality
 - review top-1, top-3, unmatched, false-positive, and delta-quality metrics before promotion
 
 ### Phase 5

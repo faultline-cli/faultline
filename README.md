@@ -48,13 +48,13 @@ faultline analyze build.log
 ```bash
 faultline analyze build.log                    # human-readable: evidence, root cause, fix
 faultline analyze build.log --json             # same diagnosis as stable machine-readable JSON
-faultline workflow build.log --json --mode agent  # typed remediation artifact for automation
+faultline workflow build.log --json --mode agent  # deterministic handoff for automation
 faultline list                                 # browse the full versioned catalog
 faultline explain <failure-id>                 # deep-dive on a single failure pattern
 faultline fix build.log                        # print remediation steps, nothing else
 ```
 
-Determinism is the contract, not a feature flag. The same log and playbook set produce the same output every time — which means you can diff it, store it, replay it, and build on top of it.
+Determinism is the contract, not a feature flag. By default, the same log and playbook set produce the same output every time, which means you can diff it, store it, replay it, and build on top of it.
 
 ## 🔍 What it catches
 
@@ -96,12 +96,12 @@ Add a single step to your failure path. The CLI contract is identical in CI and 
     faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
-The JSON artifacts are stable across runs — safe to store, diff, and feed into downstream automation.
+The JSON artifacts are stable across default runs. Local history enrichment is explicit: opt in with `--history`, `--store`, or `FAULTLINE_STORE`.
 See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI contract](docs/gitlab-ci-contract.md) for full wrapper details.
 
 ## → Automation handoff
 
-`faultline workflow` turns the winning diagnosis into a typed, structured artifact — ready to hand off to a remediation agent, feed into a ticket, or attach to a post-mortem.
+`faultline workflow` turns the winning diagnosis into a deterministic handoff artifact — ready to pass to a remediation agent, feed into a ticket, or attach to a post-mortem.
 
 ```json
 {

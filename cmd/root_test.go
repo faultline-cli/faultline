@@ -29,6 +29,42 @@ func writeTempLog(t *testing.T, content string) string {
 	return path
 }
 
+type analyzeJSONResult struct {
+	FailureID       string `json:"failure_id"`
+	SignatureHash   string `json:"signature_hash"`
+	SeenBefore      bool   `json:"seen_before"`
+	OccurrenceCount int    `json:"occurrence_count"`
+}
+
+type analyzeJSONPayload struct {
+	Results []analyzeJSONResult `json:"results"`
+}
+
+func runAnalyzeJSONCommand(t *testing.T, logPath string, args ...string) (string, analyzeJSONPayload) {
+	t.Helper()
+	cmd := newRootCommand()
+	fullArgs := append([]string{"analyze", "--json", "--git=false"}, args...)
+	fullArgs = append(fullArgs, logPath)
+	cmd.SetArgs(fullArgs)
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+	t.Setenv("FAULTLINE_STORE", "")
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute analyze %v: %v", fullArgs, err)
+	}
+	raw := strings.TrimSpace(out.String())
+	var payload analyzeJSONPayload
+	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+		t.Fatalf("unmarshal analyze JSON: %v\n%s", err, raw)
+	}
+	if len(payload.Results) == 0 {
+		t.Fatalf("expected at least one result in analyze JSON: %s", raw)
+	}
+	return raw, payload
+}
+
 func writeTempAnalysisArtifact(t *testing.T, content string) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -149,6 +185,65 @@ func TestAnalyzeFileJSON(t *testing.T) {
 	}
 	if payload["matched"] != true {
 		t.Errorf("expected matched=true, got %v", payload["matched"])
+	}
+}
+
+func TestAnalyzeDefaultJSONIsHistoryFreeAndStable(t *testing.T) {
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	firstRaw, first := runAnalyzeJSONCommand(t, logPath)
+	secondRaw, second := runAnalyzeJSONCommand(t, logPath)
+
+	if firstRaw != secondRaw {
+		t.Fatalf("expected repeated default analyze JSON to be identical\nfirst:  %s\nsecond: %s", firstRaw, secondRaw)
+	}
+	if first.Results[0].OccurrenceCount != 0 || first.Results[0].SeenBefore {
+		t.Fatalf("expected first default run to omit recurrence, got %#v", first.Results[0])
+	}
+	if second.Results[0].OccurrenceCount != 0 || second.Results[0].SeenBefore {
+		t.Fatalf("expected second default run to omit recurrence, got %#v", second.Results[0])
+	}
+}
+
+func TestAnalyzeHistoryFlagRecordsAndEmitsRecurrence(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+
+	_, first := runAnalyzeJSONCommand(t, logPath, "--history")
+	_, second := runAnalyzeJSONCommand(t, logPath, "--history")
+
+	if first.Results[0].OccurrenceCount != 1 || first.Results[0].SeenBefore {
+		t.Fatalf("expected first history run to record occurrence 1 without seen_before, got %#v", first.Results[0])
+	}
+	if second.Results[0].OccurrenceCount != 2 || !second.Results[0].SeenBefore {
+		t.Fatalf("expected second history run to emit recurrence, got %#v", second.Results[0])
+	}
+}
+
+func TestAnalyzeStorePathOptsInAndNoHistoryForcesOff(t *testing.T) {
+	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+
+	_, first := runAnalyzeJSONCommand(t, logPath, "--store", storePath)
+	_, second := runAnalyzeJSONCommand(t, logPath, "--store", storePath)
+	if first.Results[0].OccurrenceCount != 1 || first.Results[0].SeenBefore {
+		t.Fatalf("expected explicit store first run to record occurrence 1, got %#v", first.Results[0])
+	}
+	if second.Results[0].OccurrenceCount != 2 || !second.Results[0].SeenBefore {
+		t.Fatalf("expected explicit store second run to emit recurrence, got %#v", second.Results[0])
+	}
+
+	offStorePath := filepath.Join(t.TempDir(), "off.db")
+	firstRaw, firstOff := runAnalyzeJSONCommand(t, logPath, "--history", "--store", offStorePath, "--no-history")
+	secondRaw, secondOff := runAnalyzeJSONCommand(t, logPath, "--history", "--store", offStorePath, "--no-history")
+	if firstRaw != secondRaw {
+		t.Fatalf("expected --no-history output to stay stable\nfirst:  %s\nsecond: %s", firstRaw, secondRaw)
+	}
+	if firstOff.Results[0].OccurrenceCount != 0 || firstOff.Results[0].SeenBefore {
+		t.Fatalf("expected --no-history first run to force recurrence off, got %#v", firstOff.Results[0])
+	}
+	if secondOff.Results[0].OccurrenceCount != 0 || secondOff.Results[0].SeenBefore {
+		t.Fatalf("expected --no-history second run to force recurrence off, got %#v", secondOff.Results[0])
 	}
 }
 
@@ -917,6 +1012,9 @@ func TestWorkflowCommandAgentJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
+	if payload["schema_version"] != "workflow.v1" {
+		t.Fatalf("expected workflow.v1 schema, got %v", payload["schema_version"])
+	}
 	if payload["failure_id"] != "snapshot-mismatch" {
 		t.Fatalf("expected snapshot-mismatch, got %v", payload["failure_id"])
 	}
@@ -947,54 +1045,6 @@ func TestWorkflowCommandBayesJSONIncludesHints(t *testing.T) {
 	}
 	if payload["ranking_hints"] == nil {
 		t.Fatalf("expected ranking_hints, got %v", payload)
-	}
-}
-
-func TestWorkflowExplainCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"workflow", "explain", "--json", "--no-history", "--git=false", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute workflow explain: %v", err)
-	}
-
-	var payload map[string]interface{}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal workflow explain json: %v", err)
-	}
-	if payload["workflow_id"] != "missing-executable.install" {
-		t.Fatalf("expected missing-executable.install, got %v", payload["workflow_id"])
-	}
-}
-
-func TestWorkflowApplyDryRunCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"workflow", "apply", "--dry-run", "--json", "--no-history", "--git=false", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute workflow apply --dry-run: %v", err)
-	}
-
-	var payload map[string]interface{}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal workflow apply dry-run json: %v", err)
-	}
-	if payload["mode"] != "dry-run" {
-		t.Fatalf("expected dry-run mode, got %v", payload["mode"])
 	}
 }
 

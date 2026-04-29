@@ -33,7 +33,6 @@ type Playbook struct {
 	RequiresTopology bool            `yaml:"requires_topology,omitempty" json:"requires_topology,omitempty"`
 	TopologyBoost    []TopologyBoost `yaml:"topology_boost,omitempty" json:"topology_boost,omitempty"`
 	Workflow         WorkflowSpec    `yaml:"workflow" json:"workflow"`
-	Remediation      RemediationSpec `yaml:"remediation,omitempty" json:"remediation,omitempty"`
 	Hooks            PlaybookHooks   `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 	Metadata         PlaybookMeta    `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 	Scoring          ScoringConfig   `yaml:"scoring,omitempty" json:"scoring,omitempty"`
@@ -190,24 +189,4 @@ type WorkflowSpec struct {
 	LikelyFiles []string `yaml:"likely_files" json:"likely_files,omitempty"`
 	LocalRepro  []string `yaml:"local_repro" json:"local_repro,omitempty"`
 	Verify      []string `yaml:"verify" json:"verify,omitempty"`
-}
-
-// RemediationSpec declares one or more typed remediation workflows that can be
-// recommended for a matched playbook.
-type RemediationSpec struct {
-	Workflows []RemediationWorkflowRef `yaml:"workflows,omitempty" json:"workflows,omitempty"`
-}
-
-// RemediationWorkflowRef points at a static workflow definition and declares
-// how workflow inputs should be resolved from the analysis artifact.
-type RemediationWorkflowRef struct {
-	Ref    string                             `yaml:"ref,omitempty" json:"ref,omitempty"`
-	Inputs map[string]RemediationInputBinding `yaml:"inputs,omitempty" json:"inputs,omitempty"`
-}
-
-// RemediationInputBinding resolves a workflow input either from a stable
-// artifact/context path or from a literal authored value.
-type RemediationInputBinding struct {
-	From  string `yaml:"from,omitempty" json:"from,omitempty"`
-	Value string `yaml:"value,omitempty" json:"value,omitempty"`
 }

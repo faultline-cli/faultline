@@ -99,31 +99,27 @@ Use inline hooks sparingly. They belong in the playbook when the extra
 verification or evidence is part of the same rule definition and should travel
 with the playbook itself.
 
-## Remediation Workflows
+## Workflow Handoff
 
-Playbooks can now recommend typed remediation workflows in addition to the
-legacy `workflow` checklist metadata:
+Playbooks describe deterministic follow-up handoff with the `workflow` block:
 
 ```yaml
-remediation:
-  workflows:
-    - ref: missing-executable.install
-      inputs:
-        missing_executable:
-          from: artifact.facts.missing_executable
+workflow:
+  likely_files:
+    - Dockerfile
+    - .github/workflows/*.yml
+  local_repro:
+    - command -v <tool>
+  verify:
+    - command -v <tool>
 ```
-
-Use this when the remediation path can be expressed as a deterministic,
-registry-backed workflow definition under `workflows/`.
 
 Guidelines:
 
-- keep workflow refs explicit and versioned
-- bind inputs only from stable artifact facts or literal values
-- avoid hiding machine-important branching logic in markdown prose
-- preserve the older `workflow.likely_files`, `workflow.local_repro`, and
-  `workflow.verify` fields until a typed workflow fully covers the same
-  operator story
+- keep likely files concrete and ordered by inspection value
+- keep local repro commands narrow and safe to run before editing
+- keep verification commands focused on proving the matched failure is gone
+- keep machine-important follow-up data in `workflow`, not only in prose
 
 Optional delta-aware ranking fields:
 
