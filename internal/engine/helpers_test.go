@@ -259,3 +259,89 @@ func requireExtraPack(t *testing.T) string {
 	t.Skip("extra pack repository is not available locally")
 	return ""
 }
+
+// ── snapshotContext ───────────────────────────────────────────────────────────
+
+func TestSnapshotContextNilReturnsNil(t *testing.T) {
+	if got := snapshotContext(nil); got != nil {
+		t.Fatalf("expected nil for nil snapshot, got %#v", got)
+	}
+}
+
+func TestSnapshotContextEmptyRootReturnsNil(t *testing.T) {
+	// A snapshot with an empty root is treated as "not available".
+	snap := &repoSnapshot{}
+	if got := snapshotContext(snap); got != nil {
+		t.Fatalf("expected nil for empty-root snapshot, got %#v", got)
+	}
+}
+
+func TestSnapshotContextWithRoot(t *testing.T) {
+	snap := &repoSnapshot{
+		root: "/some/repo",
+		commits: []repo.Commit{
+			{Hash: "abc123", Subject: "first commit", Files: []string{"main.go"}},
+			{Hash: "def456", Subject: "second commit", Files: []string{"api.go"}},
+		},
+		signals: repo.Signals{
+			HotspotDirs: []repo.DirChurn{{Dir: "pkg"}},
+		},
+		state: &scoring.RepoState{
+			Root: "/some/repo",
+		},
+	}
+	ctx := snapshotContext(snap)
+	if ctx == nil {
+		t.Fatal("expected non-nil context for snapshot with root")
+	}
+	if ctx.RepoRoot != "/some/repo" {
+		t.Errorf("RepoRoot = %q, want %q", ctx.RepoRoot, "/some/repo")
+	}
+	if len(ctx.RecentFiles) == 0 {
+		t.Error("expected RecentFiles to be populated from commits")
+	}
+	if len(ctx.RelatedCommits) == 0 {
+		t.Error("expected RelatedCommits to be populated from commits")
+	}
+}
+
+func TestSnapshotContextTopologySignals(t *testing.T) {
+	snap := &repoSnapshot{
+		root: "/repo",
+		state: &scoring.RepoState{
+			Root:            "/repo",
+			TopologySignals: []string{topology.SignalBoundaryCrossed},
+		},
+	}
+	ctx := snapshotContext(snap)
+	if ctx == nil {
+		t.Fatal("expected non-nil context")
+	}
+	if ctx.Topology == nil {
+		t.Fatal("expected non-nil topology signals")
+	}
+	if !ctx.Topology.BoundaryCrossed {
+		t.Error("expected BoundaryCrossed = true")
+	}
+}
+
+func TestSnapshotContextCommitLimit(t *testing.T) {
+	// snapshotContext caps related commits at 5.
+	commits := make([]repo.Commit, 10)
+	for i := range commits {
+		commits[i] = repo.Commit{Hash: "abc", Subject: "commit", Files: []string{"f.go"}}
+	}
+	snap := &repoSnapshot{
+		root:    "/repo",
+		commits: commits,
+		state:   &scoring.RepoState{Root: "/repo"},
+	}
+	ctx := snapshotContext(snap)
+	if ctx == nil {
+		t.Fatal("expected non-nil context")
+	}
+	if len(ctx.RelatedCommits) > 5 {
+		t.Errorf("expected at most 5 related commits, got %d", len(ctx.RelatedCommits))
+	}
+}
+

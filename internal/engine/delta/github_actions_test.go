@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+
+	"faultline/internal/model"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -193,4 +195,71 @@ func (nopCloser) Close() error { return nil }
 
 func ioNopCloser(r *bytes.Reader) nopCloser {
 	return nopCloser{Reader: r}
+}
+
+// ── workflowRef ───────────────────────────────────────────────────────────────
+
+func TestWorkflowRefPrefersPath(t *testing.T) {
+	run := githubRun{WorkflowID: 42, Name: "CI", Path: ".github/workflows/ci.yml"}
+	if got := workflowRef(run); got != ".github/workflows/ci.yml" {
+		t.Errorf("workflowRef: got %q, want path", got)
+	}
+}
+
+func TestWorkflowRefFallsBackToName(t *testing.T) {
+	run := githubRun{WorkflowID: 42, Name: "CI Pipeline", Path: ""}
+	if got := workflowRef(run); got != "CI Pipeline" {
+		t.Errorf("workflowRef: got %q, want name", got)
+	}
+}
+
+func TestWorkflowRefFallsBackToID(t *testing.T) {
+	run := githubRun{WorkflowID: 42, Name: "", Path: ""}
+	if got := workflowRef(run); got != "42" {
+		t.Errorf("workflowRef: got %q, want workflow ID string", got)
+	}
+}
+
+func TestWorkflowRefWhitespaceOnlyPathUsesName(t *testing.T) {
+	run := githubRun{WorkflowID: 99, Name: "Build", Path: "   "}
+	if got := workflowRef(run); got != "Build" {
+		t.Errorf("workflowRef with whitespace path: got %q, want name", got)
+	}
+}
+
+// ── addEnvDiff ────────────────────────────────────────────────────────────────
+
+func TestAddEnvDiffAddsEntry(t *testing.T) {
+	out := map[string]model.DeltaEnvChange{}
+	addEnvDiff(out, "branch", "main", "feature")
+	if len(out) != 1 {
+		t.Fatalf("expected 1 entry, got %d", len(out))
+	}
+	if out["branch"].Baseline != "main" || out["branch"].Current != "feature" {
+		t.Errorf("unexpected entry: %#v", out["branch"])
+	}
+}
+
+func TestAddEnvDiffSkipsWhenEqual(t *testing.T) {
+	out := map[string]model.DeltaEnvChange{}
+	addEnvDiff(out, "branch", "main", "main")
+	if len(out) != 0 {
+		t.Errorf("expected no entry when values are equal, got %#v", out)
+	}
+}
+
+func TestAddEnvDiffSkipsWhenBothEmpty(t *testing.T) {
+	out := map[string]model.DeltaEnvChange{}
+	addEnvDiff(out, "branch", "", "")
+	if len(out) != 0 {
+		t.Errorf("expected no entry when both empty, got %#v", out)
+	}
+}
+
+func TestAddEnvDiffTrimsWhitespace(t *testing.T) {
+	out := map[string]model.DeltaEnvChange{}
+	addEnvDiff(out, "branch", "  main  ", "  main  ")
+	if len(out) != 0 {
+		t.Errorf("expected no entry after trim, got %#v", out)
+	}
 }

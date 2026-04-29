@@ -153,3 +153,27 @@ func TestParseRedditPostURLMissingCommentsSegment(t *testing.T) {
 		t.Fatal("expected error when URL has no 'comments' segment, got nil")
 	}
 }
+
+// ── siteFromStackExchangeHost ─────────────────────────────────────────────────
+
+func TestSiteFromStackExchangeHostKnownHosts(t *testing.T) {
+	cases := []struct {
+		host string
+		want string
+	}{
+		{"stackoverflow.com", "stackoverflow"},
+		{"superuser.com", "superuser"},
+		{"serverfault.com", "serverfault"},
+		{"askubuntu.com", "askubuntu"},
+		{"unix.stackexchange.com", "unix.stackexchange"},
+		{"meta.stackexchange.com", "meta.stackexchange"},
+		{"unknown.example.com", ""},
+	}
+	for _, tc := range cases {
+		got := siteFromStackExchangeHost(tc.host)
+		if got != tc.want {
+			t.Errorf("siteFromStackExchangeHost(%q) = %q, want %q", tc.host, got, tc.want)
+		}
+	}
+}
+
