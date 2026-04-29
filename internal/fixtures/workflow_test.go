@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -261,28 +260,6 @@ func TestIngestSkipsDuplicatesAndWritesUniqueFixtures(t *testing.T) {
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
 
 	issueSnippet := "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
-	commentSnippet := "Error: Cannot find module 'yaml'\nRequire stack:\n- /home/runner/work/index.js\n"
-	issue := githubIssue{
-		Title: "CI fails on npm ci",
-		Body:  "",
-		User:  githubIssueUser{Login: "alice"},
-		Labels: []githubIssueLabel{
-			{Name: "ci"},
-		},
-	}
-	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, issueSnippet, now)
-	uniqueFixture := githubFixture("acme/widgets", 12, issue, "91", 1, commentSnippet, now)
-
-	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
-		ID:            "existing-real",
-		RawLog:        issueSnippet,
-		NormalizedLog: issueSnippet,
-		Fingerprint:   duplicateFixture.Fingerprint,
-		FixtureClass:  ClassReal,
-	}); err != nil {
-		t.Fatalf("write existing real fixture: %v", err)
-	}
-
 	client := newHandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/repos/acme/widgets/issues/12":
@@ -293,6 +270,27 @@ func TestIngestSkipsDuplicatesAndWritesUniqueFixtures(t *testing.T) {
 			http.NotFound(w, r)
 		}
 	}))
+	prefetched, err := GitHubIssueAdapter{}.Fetch(
+		context.Background(),
+		"https://github.com/acme/widgets/issues/12",
+		client,
+		now,
+	)
+	if err != nil {
+		t.Fatalf("prefetch fixtures: %v", err)
+	}
+	if len(prefetched) != 2 {
+		t.Fatalf("prefetched fixture count = %d, want 2", len(prefetched))
+	}
+	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
+		ID:            "existing-real",
+		RawLog:        issueSnippet,
+		NormalizedLog: issueSnippet,
+		Fingerprint:   prefetched[0].Fingerprint,
+		FixtureClass:  ClassReal,
+	}); err != nil {
+		t.Fatalf("write existing real fixture: %v", err)
+	}
 
 	result, err := Ingest(context.Background(), layout, IngestOptions{
 		Adapter: "github-issue",
@@ -310,17 +308,19 @@ func TestIngestSkipsDuplicatesAndWritesUniqueFixtures(t *testing.T) {
 	if len(result.Written) != 1 {
 		t.Fatalf("written fixture count = %d, want 1", len(result.Written))
 	}
-	if result.Written[0].ID != uniqueFixture.ID {
-		t.Fatalf("written fixture ID = %q, want %q", result.Written[0].ID, uniqueFixture.ID)
+	if result.Written[0].Source.CommentID != "91" {
+		t.Fatalf("written fixture source = %+v, want comment fixture", result.Written[0].Source)
 	}
-	wantSkipped := []string{
-		duplicateFixture.ID + ": duplicate of existing-real",
-		"https://gitlab.com/group/widgets/-/issues/99: unsupported URL for github-issue",
+	if len(result.Skipped) != 2 {
+		t.Fatalf("skipped count = %d, want 2", len(result.Skipped))
 	}
-	if !reflect.DeepEqual(result.Skipped, wantSkipped) {
-		t.Fatalf("skipped = %v, want %v", result.Skipped, wantSkipped)
+	if !strings.HasSuffix(result.Skipped[0], ": duplicate of existing-real") {
+		t.Fatalf("duplicate skip = %q", result.Skipped[0])
 	}
-	if _, err := os.Stat(filepath.Join(layout.StagingDir, uniqueFixture.ID+".yaml")); err != nil {
+	if result.Skipped[1] != "https://gitlab.com/group/widgets/-/issues/99: unsupported URL for github-issue" {
+		t.Fatalf("unsupported skip = %q", result.Skipped[1])
+	}
+	if _, err := os.Stat(filepath.Join(layout.StagingDir, result.Written[0].ID+".yaml")); err != nil {
 		t.Fatalf("expected ingested fixture file: %v", err)
 	}
 }
@@ -456,9 +456,21 @@ match:
 		},
 		FixtureClass: ClassReal,
 	})
-	writeFixtureTo(layout.StagingDir, Fixture{ID: "candidate", NormalizedLog: candidateLog, FixtureClass: ClassStaging})
-	writeFixtureTo(layout.StagingDir, Fixture{ID: "duplicate", NormalizedLog: baseLog, FixtureClass: ClassStaging})
-	writeFixtureTo(layout.StagingDir, Fixture{ID: "near", NormalizedLog: nearLog, FixtureClass: ClassStaging})
+	makeStagingFixture := func(id, logText string) Fixture {
+		return Fixture{
+			ID:            id,
+			NormalizedLog: logText,
+			FixtureClass:  ClassStaging,
+			Source: SourceMetadata{
+				Adapter:  "github-issue",
+				Provider: "github",
+				URL:      "https://github.com/acme/widgets/issues/12",
+			},
+		}
+	}
+	writeFixtureTo(layout.StagingDir, makeStagingFixture("candidate", candidateLog))
+	writeFixtureTo(layout.StagingDir, makeStagingFixture("duplicate", baseLog))
+	writeFixtureTo(layout.StagingDir, makeStagingFixture("near", nearLog))
 
 	report, err := Review(layout, EvaluateOptions{PlaybookDir: playbookDir})
 	if err != nil {

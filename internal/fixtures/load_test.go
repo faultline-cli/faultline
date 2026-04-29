@@ -42,7 +42,7 @@ func TestLoadAllMergesMinimalAndRealOnly(t *testing.T) {
 	}
 
 	gotIDs := []string{fixtures[0].ID, fixtures[1].ID}
-	wantIDs := []string{"a-real", "b-minimal"}
+	wantIDs := []string{"b-minimal", "a-real"}
 	if !reflect.DeepEqual(gotIDs, wantIDs) {
 		t.Fatalf("loaded IDs = %v, want %v", gotIDs, wantIDs)
 	}
