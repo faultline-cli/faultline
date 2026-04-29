@@ -860,7 +860,8 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 		return result.Patterns[i].FailureID < result.Patterns[j].FailureID
 	})
 
-	if opts.JSON || opts.Format == output.FormatJSON {
+	switch {
+	case opts.JSON || opts.Format == output.FormatJSON:
 		data, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
 			return err
@@ -868,7 +869,11 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 		if _, err := fmt.Fprintln(w, string(data)); err != nil {
 			return err
 		}
-	} else {
+	case opts.Format == output.FormatMarkdown:
+		if _, err := fmt.Fprint(w, formatBatchMarkdown(result)); err != nil {
+			return err
+		}
+	default:
 		if _, err := fmt.Fprint(w, formatBatchText(result)); err != nil {
 			return err
 		}
@@ -940,6 +945,65 @@ func formatBatchText(r *model.BatchResult) string {
 		fmt.Fprintf(&b, "  ·  %d unmatched", r.Unmatched)
 	}
 	fmt.Fprintln(&b)
+	return b.String()
+}
+
+func formatBatchMarkdown(r *model.BatchResult) string {
+	var b strings.Builder
+	fileWord := "files"
+	if r.Total == 1 {
+		fileWord = "file"
+	}
+	fmt.Fprintf(&b, "# Faultline Batch — %d %s\n\n", r.Total, fileWord)
+	fmt.Fprintf(&b, "- Matched: %d/%d\n", r.Matched, r.Total)
+	if r.Unmatched > 0 {
+		fmt.Fprintf(&b, "- Unmatched: %d/%d\n", r.Unmatched, r.Total)
+	}
+	if len(r.Patterns) > 0 {
+		patternWord := "patterns"
+		if len(r.Patterns) == 1 {
+			patternWord = "pattern"
+		}
+		fmt.Fprintf(&b, "- Patterns: %d distinct %s\n", len(r.Patterns), patternWord)
+	}
+
+	if len(r.Patterns) > 0 {
+		fmt.Fprintf(&b, "\n## Patterns\n\n")
+		fmt.Fprintf(&b, "| Pattern | Files | Sources |\n")
+		fmt.Fprintf(&b, "|---------|------:|---------|\n")
+		for _, pat := range r.Patterns {
+			var srcDisplay string
+			if len(pat.Sources) <= 3 {
+				parts := make([]string, len(pat.Sources))
+				for i, s := range pat.Sources {
+					parts[i] = "`" + s + "`"
+				}
+				srcDisplay = strings.Join(parts, " ")
+			} else {
+				parts := make([]string, 3)
+				for i, s := range pat.Sources[:3] {
+					parts[i] = "`" + s + "`"
+				}
+				srcDisplay = strings.Join(parts, " ") + fmt.Sprintf(" +%d more", len(pat.Sources)-3)
+			}
+			fmt.Fprintf(&b, "| `%s` | %d | %s |\n", pat.FailureID, pat.Count, srcDisplay)
+		}
+	}
+
+	if r.Unmatched > 0 {
+		unmatchedWord := "files"
+		if r.Unmatched == 1 {
+			unmatchedWord = "file"
+		}
+		fmt.Fprintf(&b, "\n## Unmatched — %d %s\n\n", r.Unmatched, unmatchedWord)
+		for _, src := range r.UnmatchedSources {
+			fmt.Fprintf(&b, "- `%s`\n", src)
+		}
+	}
+
+	if r.Matched == 0 {
+		fmt.Fprintf(&b, "\nNo playbook matched any of the %d input %s.\n", r.Total, fileWord)
+	}
 	return b.String()
 }
 

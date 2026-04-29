@@ -1,6 +1,8 @@
 id: ansible-yaml-syntax-error-noisy
 title: Ansible playbook run — YAML syntax error buried in full Travis CI log
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   travis_fold:start:git.1
   $ git clone --depth=50 --branch=main https://github.com/myorg/infra.git myorg/infra

@@ -1,6 +1,8 @@
 id: ldap-connection-failure-noisy
 title: LDAP server unreachable buried in GitLab runner CI output
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   Running with gitlab-runner 15.11.0 (436955cb)
     on gitlab-runner-prod-01 REDACTED

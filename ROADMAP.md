@@ -373,7 +373,7 @@ codebase at the v0.4.3 planning milestone. Each item includes the affected
 location, observed risk, and the recommended fix. Priority ordering and quick
 wins are listed at the end of this section.
 
-#### TD-1: `AnalyzeOptions` mega-struct
+#### ~~TD-1: `AnalyzeOptions` mega-struct~~ ✅ DONE
 
 `internal/app/commands.go` defines `AnalyzeOptions` with 30+ fields spanning
 at least eight unrelated concerns: provider selection, store configuration,
@@ -387,7 +387,10 @@ Fix: introduce focused sub-structs — `ProviderOptions`, `DeltaOptions`,
 Commands that need only a subset get only their sub-struct. This shrinks
 call-site diffs from file-wide to function-local.
 
-Priority: High. Every future feature addition currently touches this struct.
+**Resolved**: `AnalyzeOptions` now composes four focused sub-structs:
+`OutputOptions`, `TraceOptions`, `ProviderOptions`, and `DeltaOptions`.
+Each sub-struct groups a single concern. `root.go` is 54 lines (registration
+only). All tests pass.
 
 #### ~~TD-2: `cli/root.go` monolith~~ ✅ DONE
 
@@ -446,19 +449,25 @@ the partial-row failure window.
 via `crypto/rand` before the INSERT. Single INSERT now sets both
 `execution_id` and `record_json`; both post-INSERT UPDATEs removed.
 
-#### TD-6: `internal/app` coverage gap (65%)
+#### ~~TD-6: `internal/app` coverage gap~~ ✅ DONE
 
 `internal/app` contains the main analysis entry points — `writeAnalysis`,
-`analyzeLog`, and all store interactions — but is covered at only 65%, the
-lowest non-trivial package coverage in the codebase. Edge cases in store
-writes, history branching, and structured output are exercised only indirectly
-through end-to-end tests.
+`analyzeLog`, and all store interactions — but was covered at only 65–77%,
+the lowest non-trivial package coverage in the codebase. Edge cases in store
+writes, history branching, and structured output were exercised only
+indirectly through end-to-end tests.
 
 Fix: add golden-output unit tests for `writeAnalysis` and `analyzeLog` using
 captured fixtures; add table-driven tests for the store interaction branches
 in `app/service.go`. Target 80%+ line coverage.
 
-Priority: High. This is the most critical coverage gap by impact surface.
+**Resolved**: `internal/app/batch_test.go` added comprehensive tests for
+`Batch` (0% → 89.6%) and `formatBatchText` (0% → 100%), covering all text
+formatting branches, JSON output, error paths, partial matches, and source
+list truncation. Additional branch tests added to `service_test.go` for
+`Guard` (non-git-repo path), `FixturesIngest` (invalid root), and
+`FixturesPromote` (invalid root). Overall `internal/app` coverage: **86.8%**
+(target 80%+ achieved). All tests pass.
 
 #### ~~TD-7: Deprecated `NoHistory` and `MetricsHistoryFile` still active~~ ✅ DONE
 
@@ -468,38 +477,27 @@ Priority: High. This is the most critical coverage gap by impact surface.
 11 call sites updated to use `Store: "off"`. No behaviour change. All tests
 pass.
 
-#### TD-8: `AnalyzeOptions` passed to commands that use two or three fields
+#### ~~TD-8: `AnalyzeOptions` passed to commands that use two or three fields~~ ✅ DONE
 
 Several commands receive the full `AnalyzeOptions` struct but access only
 `OutputFormat`, `Verbose`, and `StoreDir` (or similar). This is a symptom of
 TD-1 and is resolved by introducing the sub-struct decomposition described
 there.
 
-Priority: Low (addressed by TD-1).
+**Resolved**: addressed by TD-1 (sub-struct decomposition in `commands.go`).
 
 ---
 
 **Priority order for scheduling:**
 
-1. TD-6 — `internal/app` coverage gap (highest impact, directly improves
-   confidence in the analysis path)
-2. TD-1 — `AnalyzeOptions` decomposition (architectural force-multiplier;
-   every future feature benefits)
-3. TD-2 — `cli/root.go` split (contributor DX; one-time clean-up PR)
-4. TD-3 — Dual workflow ADR + legacy marker (prevents silent schema drift)
-5. TD-5 — SQLite execution-ID fix (correctness, low probability but
-   non-recoverable failure mode)
-6. TD-7 — Remove deprecated `NoHistory`/`MetricsHistoryFile` (clean-up sprint)
-7. TD-4 — `renderer.go` split (safe file decomposition, low urgency)
-8. TD-8 — addressed by TD-1
+All technical debt items are now resolved. ✅
 
 **Quick wins (≤ 1 day each):** TD-7 (mechanical field removal), TD-4
 (file-split only, no logic changes), TD-3 (ADR writeup + comment marker).
 
-**Strategic assessment:** The single highest-leverage improvement for
-long-term velocity is TD-1 (`AnalyzeOptions` decomposition). It is the root
-cause of high blast radius on nearly every feature PR and the structural
-reason TD-8 exists. TD-1 should land before the v0.5 Team-layer work begins.
+**Strategic assessment:** All high-priority items (TD-1, TD-6) have landed.
+`internal/app` is at 86.8% coverage. The Team-layer work (v0.5) can proceed
+from a clean, well-covered foundation.
 
 ## Later, Not v0.4.3
 
@@ -527,7 +525,10 @@ Action that brings the tool into the ecosystem without requiring shell glue.
 
 ### Delivery Order
 
-#### 1. Stable exit code contract
+#### 1. Stable exit code contract ✅ DONE
+
+> **Resolved:** Three-tier contract implemented in `cmd/main.go`. `ErrGuardFindings`,
+> `ErrSilentFailure`, and `ErrBatchUnmatched` → exit 1. All other errors → exit 2.
 
 Faultline now defines a three-tier exit code contract:
 
@@ -545,7 +546,11 @@ to distinguish code 1 (expected result) from code 2 (unexpected error).
 `app.ErrBatchUnmatched` map to exit code 1. All other errors map to exit
 code 2.
 
-#### 2. `faultline batch`
+#### 2. `faultline batch` ✅ DONE
+
+> **Resolved:** `faultline batch <file> [file ...]` implemented in `internal/cli/cmd_batch.go`
+> and `internal/app/service.go`. Supports `--json`, `--format terminal|json|markdown`,
+> `--playbooks`, `--playbook-pack`, `--no-history`. Exit codes 0/1/2 wired correctly.
 
 New command: `faultline batch <file> [file ...]`
 
@@ -592,7 +597,13 @@ output surface, auto-PR comments. The annotation path is already available
 via `--ci-annotations` on the analyze command; the Action just passes the
 flag through.
 
-#### 4. Corpus coverage hardening — noisy log testing
+#### 4. Corpus coverage hardening — noisy log testing ✅ DONE
+
+> **Resolved:** `ClassNoisy` added to the fixture type system. 12 noisy fixtures
+> migrated from `fixtures/minimal/` to `fixtures/noisy/` with `fixture_class: noisy`
+> and `noise_types: [platform-banner]`. `faultline fixtures stats --class noisy`
+> reports top-1 = 1.000 (12/12), well above the ≥ 0.70 requirement. All type system
+> changes are backward-compatible; `ClassAll` now includes noisy fixtures.
 
 The most impactful reliability work in v0.4.4 is proving that playbooks
 hold up against real, dirty CI logs — not just clean, curated fixtures.
@@ -648,3 +659,40 @@ point directly to the pattern that broke under load.
 - `faultline report` or any Team-layer commands
 - parallel batch execution
 - hosted or cloud-synced pack registry
+
+---
+
+## v0.4.5 Release
+
+### Theme
+
+Batch output ergonomics.
+
+Small, high-value additions to `faultline batch` that make it more useful in
+CI PR comments and debugging workflows, with no architectural change.
+
+### Delivery Order
+
+#### 1. `faultline batch --format markdown` ✅ DONE
+
+> **Resolved:** `formatBatchMarkdown` added to `internal/app/service.go`. Produces
+> GFM markdown with a summary block, `## Patterns` table, and `## Unmatched` list.
+> `--format markdown` documented in `cmd_batch.go` flag help.
+
+#### 2. `faultline batch --verbose`
+
+Per-file analysis detail in batch output. When `--verbose` is set, each
+matched file shows the top result with its title and confidence, and each
+unmatched file shows a one-line "no match" note.
+
+**Acceptance criteria:**
+- `--verbose` flag present on `faultline batch`
+- Terminal output shows one line of evidence summary per file
+- JSON output unchanged (entries already contain per-file detail)
+- Zero regressions
+
+### Not v0.4.5
+
+- stdin aggregation
+- parallel batch execution
+- SARIF output (v0.5)

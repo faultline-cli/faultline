@@ -15,6 +15,7 @@ const (
 	ClassMinimal Class = "minimal"
 	ClassReal    Class = "real"
 	ClassStaging Class = "staging"
+	ClassNoisy   Class = "noisy"
 	ClassAll     Class = "all"
 )
 
@@ -28,6 +29,8 @@ func ParseClass(value string) (Class, error) {
 		return ClassReal, nil
 	case ClassStaging:
 		return ClassStaging, nil
+	case ClassNoisy:
+		return ClassNoisy, nil
 	default:
 		return "", fmt.Errorf("invalid fixture class %q", value)
 	}
@@ -39,6 +42,7 @@ type Layout struct {
 	MinimalDir string
 	RealDir    string
 	StagingDir string
+	NoisyDir   string
 }
 
 func ResolveLayout(root string) (Layout, error) {
@@ -56,6 +60,7 @@ func ResolveLayout(root string) (Layout, error) {
 		MinimalDir: filepath.Join(fixturesRoot, string(ClassMinimal)),
 		RealDir:    filepath.Join(fixturesRoot, string(ClassReal)),
 		StagingDir: filepath.Join(fixturesRoot, string(ClassStaging)),
+		NoisyDir:   filepath.Join(fixturesRoot, string(ClassNoisy)),
 	}, nil
 }
 
@@ -95,6 +100,7 @@ type Fixture struct {
 	ID            string         `yaml:"id" json:"id"`
 	Title         string         `yaml:"title,omitempty" json:"title,omitempty"`
 	FixtureClass  Class          `yaml:"fixture_class,omitempty" json:"fixture_class,omitempty"`
+	NoiseTypes    []string       `yaml:"noise_types,omitempty" json:"noise_types,omitempty"`
 	Path          string         `yaml:"path,omitempty" json:"path,omitempty"`
 	RawLog        string         `yaml:"raw_log,omitempty" json:"raw_log,omitempty"`
 	NormalizedLog string         `yaml:"normalized_log,omitempty" json:"normalized_log,omitempty"`
@@ -116,6 +122,9 @@ func (f Fixture) effectiveClass() Class {
 	}
 	if strings.Contains(filepath.ToSlash(f.FilePath), "/fixtures/staging/") {
 		return ClassStaging
+	}
+	if strings.Contains(filepath.ToSlash(f.FilePath), "/fixtures/noisy/") {
+		return ClassNoisy
 	}
 	return ClassMinimal
 }

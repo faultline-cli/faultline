@@ -1,6 +1,8 @@
 id: postgres-version-incompatible-migration-noisy
 title: PostgreSQL migration fails with version error — noisy log with context
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   $ python manage.py collectstatic --noinput
   Copying '/app/static/css/main.css'

@@ -931,9 +931,9 @@ func TestSignaturesWithData(t *testing.T) {
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
 	opts := AnalyzeOptions{
 		OutputOptions: OutputOptions{JSON: true},
-		
-		Store:         storePath,
-		PlaybookDir:   repoPlaybookDir(),
+
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
 	}
 
 	var analysisBuf bytes.Buffer
@@ -981,9 +981,9 @@ func TestHistoryDeterminismVerification(t *testing.T) {
 	log := "Error response from daemon: pull access denied\n"
 	opts := AnalyzeOptions{
 		OutputOptions: OutputOptions{JSON: true},
-		
-		Store:         storePath,
-		PlaybookDir:   repoPlaybookDir(),
+
+		Store:       storePath,
+		PlaybookDir: repoPlaybookDir(),
 	}
 
 	var firstBuf bytes.Buffer
@@ -1770,5 +1770,47 @@ func TestFixturesStatsJSONOutput(t *testing.T) {
 	}
 	if buf.Len() == 0 {
 		t.Error("expected non-empty stats output")
+	}
+}
+
+// ── Guard: non-git-repo falls back to quiet output ────────────────────────────
+
+func TestGuardNonGitRepoQuiet(t *testing.T) {
+	svc := NewService()
+	// A plain temp dir (no git init) → repo.NewScanner fails → writeGuardNoFindings
+	plainDir := t.TempDir()
+	opts := baseOpts()
+	var buf bytes.Buffer
+
+	err := svc.Guard(plainDir, opts, &buf)
+	if err != nil {
+		t.Fatalf("Guard non-git-repo: expected nil, got %v", err)
+	}
+	// writeGuardNoFindings should produce empty output (quiet mode)
+	if buf.Len() != 0 {
+		t.Fatalf("expected quiet output for non-git-repo guard, got %q", buf.String())
+	}
+}
+
+// ── FixturesPromote: invalid root returns error ───────────────────────────────
+
+func TestFixturesPromoteInvalidRootReturnsError(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	// ResolveLayout on a non-existent path should return an error.
+	err := svc.FixturesPromote("/nonexistent/promote/root", []string{"some-id"}, fixtures.PromoteOptions{}, &buf)
+	if err == nil {
+		t.Fatal("expected error for non-existent root, got nil")
+	}
+}
+
+// ── FixturesIngest: invalid root returns error ────────────────────────────────
+
+func TestFixturesIngestInvalidRootReturnsError(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	err := svc.FixturesIngest("/nonexistent/ingest/root", fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
+	if err == nil {
+		t.Fatal("expected error for non-existent ingest root, got nil")
 	}
 }

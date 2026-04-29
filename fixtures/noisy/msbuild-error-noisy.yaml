@@ -1,6 +1,8 @@
 id: msbuild-error-noisy
 title: MSBuild MSB3027 file-lock error in GitHub Actions (windows-latest, .NET 8)
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   ##[group]Run dotnet build MyApp.sln --configuration Release
   dotnet build MyApp.sln --configuration Release

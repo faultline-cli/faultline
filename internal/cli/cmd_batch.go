@@ -59,7 +59,7 @@ func newBatchCommand() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON (batch.v1 schema)")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|json")
+	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|json|markdown")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override the default playbook directory")
 	cmd.Flags().StringArrayVar(&playbookPack, "playbook-pack", nil, "extra playbook pack directory (repeatable)")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "disable local history store for this run")

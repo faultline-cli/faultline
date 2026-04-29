@@ -1,6 +1,8 @@
 id: maven-compile-error-noisy
 title: Maven COMPILATION ERROR buried in a full Spring Boot CI build
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   Running with gitlab-runner 15.11.0 (436955cb)
     on gitlab-runner-prod-01 REDACTED

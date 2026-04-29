@@ -1,6 +1,8 @@
 id: github-actions-concurrency-cancel-noisy
 title: GitHub Actions concurrency cancel — buried in long integration test run
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   ##[group]Run actions/checkout@v4
   Initialized empty Git repository

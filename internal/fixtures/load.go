@@ -23,8 +23,12 @@ func Load(layout Layout, class Class) ([]Fixture, error) {
 		if err != nil {
 			return nil, err
 		}
-		return append(minimal, realFixtures...), nil
-	case ClassMinimal, ClassReal, ClassStaging:
+		noisyFixtures, err := loadDir(layout, ClassNoisy)
+		if err != nil {
+			return nil, err
+		}
+		return append(append(minimal, realFixtures...), noisyFixtures...), nil
+	case ClassMinimal, ClassReal, ClassStaging, ClassNoisy:
 		return loadDir(layout, class)
 	default:
 		return nil, fmt.Errorf("unsupported fixture class %q", class)
@@ -141,6 +145,8 @@ func dirForClass(layout Layout, class Class) string {
 		return layout.RealDir
 	case ClassStaging:
 		return layout.StagingDir
+	case ClassNoisy:
+		return layout.NoisyDir
 	default:
 		return layout.Fixtures
 	}

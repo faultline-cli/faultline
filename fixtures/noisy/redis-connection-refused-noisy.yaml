@@ -1,6 +1,8 @@
 id: redis-connection-refused-noisy
 title: Redis ECONNREFUSED — noisy Node.js CI log with multiple steps
-fixture_class: minimal
+fixture_class: noisy
+noise_types:
+  - platform-banner
 normalized_log: |
   ##[group]Run actions/checkout@v4
   Checking out repository...

@@ -163,7 +163,7 @@ func newFixturesStatsCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
-	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassAll), "fixture class to evaluate: minimal|real|all")
+	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassAll), "fixture class to evaluate: minimal|real|noisy|all")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().StringVar(&baselinePath, "baseline", "fixtures/real/baseline.json", "baseline snapshot path")
@@ -245,7 +245,7 @@ func newFixturesCompareModesCommand() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&root, "root", ".", "repository root containing fixtures/")
-	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassReal), "fixture class to evaluate: minimal|real|all")
+	cmd.Flags().StringVar(&classValue, "class", string(fixtures.ClassReal), "fixture class to evaluate: minimal|real|noisy|all")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "custom playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
 	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit JSON output")
