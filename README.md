@@ -187,6 +187,7 @@ cd "faultline_${VERSION}_linux_amd64"
 ## 📚 Learn more
 
 - [examples/README.md](examples/README.md) — runnable sample logs and expected output snapshots
+- [docs/failures/catalog/README.md](docs/failures/catalog/README.md) — crawlable failure catalog: all 193 playbooks with diagnosis, fix, and search phrases
 - [docs/playbooks.md](docs/playbooks.md) — authoring playbooks, team extensions, and packs
 - [docs/fixture-corpus.md](docs/fixture-corpus.md) — regression corpus and accuracy methodology
 - [ROADMAP.md](ROADMAP.md) — what's coming next

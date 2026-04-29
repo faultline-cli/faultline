@@ -1,0 +1,93 @@
+# Artifact upload step ran but no files were found
+
+**Playbook ID:** `artifact-missing`
+**Category:** silent_failure
+**Severity:** high
+**Tags:** `silent-failure`, `artifact`, `upload`, `github-actions`, `ci`, `path`
+
+## What this failure means
+
+An artifact upload step was executed but reported that no files matched the
+configured path.  The CI job continued and marked itself as passing even
+though no artifact was produced.
+
+## Common log signals
+
+```text
+no files found with the provided path
+Artifact not found
+Skipping upload
+No matching files were found
+Path does not exist
+0 files uploaded
+no artifacts
+```
+
+## Diagnosis
+
+CI artifact upload steps (GitHub Actions `actions/upload-artifact`, GitLab
+CI `artifacts.paths`, CircleCI `store_artifacts`, etc.) skip the upload
+when no files match the provided path pattern.  By default these steps exit
+zero and allow the job to continue, creating a misleading green status while
+no artifact is available for downstream consumers.
+
+Common causes:
+
+- The build step that was supposed to produce the artifact failed silently
+  (possibly also due to `|| true` or `continue-on-error`).
+- The artifact path glob is incorrect: a relative vs absolute path mismatch,
+  a missing intermediate directory, or a wrong file extension.
+- The build was run in a Docker container but the upload step runs on the
+  host and the output path is not shared.
+- A conditional `if:` expression skipped the build step but the upload step
+  still ran.
+
+## Fix steps
+
+1. Confirm the build step that produces the artifact actually ran and exited
+   zero.
+2. Print the working directory and check the expected output path:
+   ```bash
+   ls -la <expected artifact path>
+   ```
+3. Adjust the artifact path glob to match the actual output location.
+4. For GitHub Actions: resolve paths from the repository root or use absolute
+   paths.  Use a `if: always()` guard only when intentionally capturing
+   artifacts from failing jobs.
+5. Add a pre-upload assertion that the artifact exists:
+   ```yaml
+   - run: test -f dist/app.tar.gz
+   ```
+
+## Validation
+
+Re-run the job and confirm the upload step reports "Uploading N files" with
+a positive file count.
+
+## Likely files to inspect
+
+- `.github/workflows/*.yml`
+- `.gitlab-ci.yml`
+- `Makefile`
+
+
+## Run Faultline
+
+```bash
+faultline analyze build.log
+faultline explain artifact-missing
+faultline workflow build.log --json --mode agent
+```
+
+## Search phrases this page answers
+
+- Artifact upload step ran but no files were found
+- Silent Failure: artifact upload step ran but no files were found
+- no files found with the provided path
+- GitHub Actions artifact upload step ran but no files were found
+- faultline explain artifact-missing
+
+
+---
+
+*Generated from [playbooks/bundled/log/silent/artifact-missing.yaml](../../playbooks/bundled/log/silent/artifact-missing.yaml). Do not edit directly — run `make docs-generate`.*

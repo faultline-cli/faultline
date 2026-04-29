@@ -1,0 +1,115 @@
+# CPU architecture or platform mismatch
+
+**Playbook ID:** `arch-mismatch`
+**Category:** runtime
+**Severity:** high
+**Tags:** `architecture`, `docker`, `arm64`, `amd64`, `platform`, `exec-format`, `multi-arch`
+
+## What this failure means
+
+A binary, container image, or build artifact targets the wrong CPU architecture for the current runner. The most common form is pulling an `linux/amd64` image on an ARM runner, or running an x86 binary on Apple Silicon.
+
+## Common log signals
+
+```text
+image's platform
+does not match the detected host platform
+requested image's platform
+no matching manifest for linux/arm
+no matching manifest for linux/amd64
+WARNING: The requested image's platform
+cannot execute binary file
+exec format error
+```
+
+## Diagnosis
+
+Architecture mismatches arise at two levels:
+
+**Container image (Docker):** The image was built for one platform (`linux/amd64`) and the runner or host is a different architecture (`linux/arm64`). Docker can emulate via QEMU but this is slow and not the default unless explicitly requested. Without emulation the container fails to start or crashes immediately.
+
+**Native binary:** A compiled binary (Go, Rust, C) or a downloaded tool was compiled for the wrong target architecture and cannot execute on the current host. The shell reports `cannot execute binary file: Exec format error`.
+
+Common causes:
+
+- Using `docker pull` or a `FROM` directive without a `--platform` flag when the image has no multi-arch manifest for the runner's architecture.
+- Downloading a prebuilt tool in a CI step without checking the runner's `$RUNNER_ARCH` or `uname -m`.
+- GitHub-hosted runners changed from `ubuntu-latest` pointing at x86 to an ARM runner (or vice versa).
+- A Docker build uses `COPY --from=<builder>` where the builder image is architecture-locked.
+- A Dockerfile hard-codes architecture in a URL: `RUN curl .../linux_amd64/...`.
+
+## Fix steps
+
+1. Identify whether the mismatch is at the image or binary level from the error message.
+
+2. For Docker image mismatches, add `--platform linux/amd64` explicitly if the image has no ARM variant, or switch to a multi-arch base image:
+
+   ```yaml
+   # GitHub Actions
+   - name: Build
+     run: docker build --platform linux/amd64 -t app .
+   ```
+
+   Or specify the platform in the Dockerfile `FROM`:
+
+   ```dockerfile
+   FROM --platform=linux/amd64 node:20-alpine
+   ```
+
+3. For tool downloads, detect the runner architecture and download the correct binary:
+
+   ```bash
+   ARCH=$(uname -m)
+   case "$ARCH" in
+     x86_64) ARCH=amd64 ;;
+     aarch64|arm64) ARCH=arm64 ;;
+   esac
+   curl -sL "https://example.com/tool_linux_${ARCH}" -o /usr/local/bin/tool
+   ```
+
+4. For multi-arch builds, use Docker Buildx with `--platform linux/amd64,linux/arm64`:
+
+   ```bash
+   docker buildx build --platform linux/amd64,linux/arm64 -t app --push .
+   ```
+
+5. Pin the runner architecture in GitHub Actions if you depend on x86-only tooling:
+
+   ```yaml
+   runs-on: ubuntu-24.04   # x86_64; ubuntu-24.04-arm is ARM
+   ```
+
+## Validation
+
+- `uname -m` on the runner matches the architecture of the binary or image.
+- `docker run --rm <image> uname -m` confirms the image runs on the current host.
+- The step that previously produced `exec format error` or a platform mismatch warning now succeeds.
+
+## Likely files to inspect
+
+- `Dockerfile`
+- `.github/workflows/*.yml`
+- `.github/workflows/*.yaml`
+- `.gitlab-ci.yml`
+
+
+## Run Faultline
+
+```bash
+faultline analyze build.log
+faultline explain arch-mismatch
+faultline workflow build.log --json --mode agent
+```
+
+## Search phrases this page answers
+
+- CPU architecture or platform mismatch
+- Runtime: cpu architecture or platform mismatch
+- does not match the detected host platform
+- faultline explain arch-mismatch
+- Docker cpu architecture or platform mismatch
+
+
+---
+
+*Generated from [playbooks/bundled/log/runtime/arch-mismatch.yaml](../../playbooks/bundled/log/runtime/arch-mismatch.yaml). Do not edit directly — run `make docs-generate`.*

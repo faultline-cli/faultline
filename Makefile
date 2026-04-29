@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval docs-generate docs-check
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -33,7 +33,9 @@ help:
 		"  docker-build    Build the Docker image tagged $(IMAGE)" \
 		"  docker-analyze  Analyze a mounted log in Docker: make docker-analyze LOG=build.log" \
 		"  docker-smoke    Build the Docker image and verify an auth fixture end to end" \
-		"  WITH_DOCKER=1   Include docker-smoke when running release-check"
+		"  WITH_DOCKER=1   Include docker-smoke when running release-check" \
+		"  docs-generate   Generate failure catalog docs from bundled playbooks" \
+		"  docs-check      Verify generated failure catalog docs are up to date"
 
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"
@@ -60,6 +62,12 @@ cli-smoke: build
 
 bench:
 	$(GO) test ./internal/engine -run '^$$' -bench 'Benchmark(LoadBundledPlaybooks|AnalyzeRepresentativeCorpus)' -benchmem
+
+docs-generate:
+	$(GO) run ./tools/gen-failure-docs --src playbooks/bundled --dst docs/failures
+
+docs-check:
+	$(GO) run ./tools/gen-failure-docs --src playbooks/bundled --dst docs/failures --check
 
 review:
 	$(GO) run ./cmd/playbook-review

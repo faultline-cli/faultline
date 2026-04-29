@@ -4,6 +4,10 @@ These pages turn recurring CI failures into searchable, problem-first docs.
 
 Each page is designed to win searches for exact CI error strings, explain the failure quickly, and show how Faultline maps the log to a deterministic diagnosis.
 
+## Full failure catalog
+
+**[docs/failures/catalog/README.md](catalog/README.md)** — all 193 bundled playbooks, generated directly from the playbook YAML. Every failure category is indexed with links to its dedicated diagnosis and fix page.
+
 ## Included pages
 
 - [pull access denied for ghcr.io image: fix Docker registry auth failures in CI](docker/pull-access-denied-ghcr-authentication-required.md)
