@@ -106,8 +106,21 @@ func matchPlaybook(pb model.Playbook, idx lineIndex, ctx model.Context, weights 
 	}
 
 	// Score any-patterns (OR semantics, IDF-weighted).
+	//
+	// For playbooks that extend a parent, anyScore is computed from the
+	// child's own native patterns only (NativeAny), not from the full
+	// merged Match.Any that includes inherited parent patterns. This
+	// prevents a child from tying with its parent on logs where only
+	// generic parent patterns fire, preserving the parent's confidence.
+	// Inherited patterns from Match.Any are still collected as evidence
+	// so context is preserved in the output even when they do not score.
+	scoringPatterns := pb.Match.Any
+	if pb.Extends != "" && pb.NativeAny != nil {
+		scoringPatterns = pb.NativeAny
+	}
+
 	anyScore := 0.0
-	for _, pat := range pb.Match.Any {
+	for _, pat := range scoringPatterns {
 		k := patternKey(pat)
 		if k == "" {
 			continue
@@ -119,6 +132,18 @@ func matchPlaybook(pb model.Playbook, idx lineIndex, ctx model.Context, weights 
 		if orig, ok := idx.firstOriginal(k); ok {
 			anyScore += w
 			addEvidence(orig)
+		}
+	}
+	// Collect evidence from inherited patterns without contributing to score.
+	if pb.Extends != "" {
+		for _, pat := range pb.Match.Any {
+			k := patternKey(pat)
+			if k == "" {
+				continue
+			}
+			if orig, ok := idx.firstOriginal(k); ok {
+				addEvidence(orig)
+			}
 		}
 	}
 
@@ -490,11 +515,23 @@ func AnyWeights(playbooks []model.Playbook) map[string]float64 {
 // weight: 1.0 / count, where count is the number of distinct playbooks that
 // list that pattern in match.any. Patterns unique to one playbook keep
 // weight 1.0; patterns shared by N playbooks each contribute 1/N.
+//
+// For playbooks that extend a parent (NativeAny is set), only the native
+// patterns are counted. Inherited patterns do not affect IDF weights since
+// they are not scored in the child (see matchPlaybook). This preserves the
+// IDF weight of established base playbooks when specialised children extend
+// them, so inheritance does not dilute detection confidence.
 func computeAnyWeights(playbooks []model.Playbook) map[string]float64 {
 	counts := make(map[string]int, len(playbooks)*8)
 	for _, pb := range playbooks {
-		seen := make(map[string]struct{}, len(pb.Match.Any))
-		for _, p := range pb.Match.Any {
+		// For child playbooks, use only their native (non-inherited) patterns
+		// for IDF counting, matching the scoring semantics in matchPlaybook.
+		pats := pb.Match.Any
+		if pb.Extends != "" && pb.NativeAny != nil {
+			pats = pb.NativeAny
+		}
+		seen := make(map[string]struct{}, len(pats))
+		for _, p := range pats {
 			k := patternKey(p)
 			if k == "" {
 				continue

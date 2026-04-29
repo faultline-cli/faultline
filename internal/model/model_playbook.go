@@ -2,19 +2,26 @@ package model
 
 // Playbook is a failure definition loaded from a YAML file.
 type Playbook struct {
-	ID               string          `yaml:"id" json:"id"`
-	Extends          string          `yaml:"extends,omitempty" json:"extends,omitempty"`
-	Title            string          `yaml:"title" json:"title"`
-	Category         string          `yaml:"category" json:"category"`
-	Severity         string          `yaml:"severity" json:"severity"`
-	Detector         string          `yaml:"detector,omitempty" json:"detector,omitempty"`
-	BaseScore        float64         `yaml:"base_score" json:"base_score"`
-	Tags             []string        `yaml:"tags" json:"tags"`
-	StageHints       []string        `yaml:"stage_hints" json:"stage_hints"`
-	Domain           string          `yaml:"domain,omitempty" json:"domain,omitempty"`
-	Class            string          `yaml:"class,omitempty" json:"class,omitempty"`
-	Mode             string          `yaml:"mode,omitempty" json:"mode,omitempty"`
-	Match            MatchSpec       `yaml:"match" json:"match"`
+	ID         string    `yaml:"id" json:"id"`
+	Extends    string    `yaml:"extends,omitempty" json:"extends,omitempty"`
+	Title      string    `yaml:"title" json:"title"`
+	Category   string    `yaml:"category" json:"category"`
+	Severity   string    `yaml:"severity" json:"severity"`
+	Detector   string    `yaml:"detector,omitempty" json:"detector,omitempty"`
+	BaseScore  float64   `yaml:"base_score" json:"base_score"`
+	Tags       []string  `yaml:"tags" json:"tags"`
+	StageHints []string  `yaml:"stage_hints" json:"stage_hints"`
+	Domain     string    `yaml:"domain,omitempty" json:"domain,omitempty"`
+	Class      string    `yaml:"class,omitempty" json:"class,omitempty"`
+	Mode       string    `yaml:"mode,omitempty" json:"mode,omitempty"`
+	Match      MatchSpec `yaml:"match" json:"match"`
+	// NativeAny holds the match.any patterns that were defined directly in
+	// this playbook (not inherited from a parent via extends). It is
+	// populated during inheritance resolution and used to limit anyScore
+	// to the child's own distinctive patterns, preserving the parent's
+	// confidence on logs where only generic parent patterns fire.
+	// This field is never serialised to YAML or JSON output.
+	NativeAny        []string        `yaml:"-" json:"-"`
 	Source           SourceSpec      `yaml:"source,omitempty" json:"source,omitempty"`
 	Summary          string          `yaml:"summary,omitempty" json:"summary,omitempty"`
 	Diagnosis        string          `yaml:"diagnosis,omitempty" json:"diagnosis,omitempty"`

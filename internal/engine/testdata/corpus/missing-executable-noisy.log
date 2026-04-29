@@ -4,8 +4,8 @@ bash: /opt/go/bin/go: No such file or directory
 $ python3 -m venv env
 bash: python3: command not found
 
-$ npx tsc
-bash: npx: command not found
+$ make build
+bash: make: command not found
 
 $ bundle exec rails server
 bash: bundle: command not found

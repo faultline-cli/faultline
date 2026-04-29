@@ -69,6 +69,11 @@ func mergePlaybooks(base, child model.Playbook) model.Playbook {
 	}
 	merged.Tags = mergeUnique(base.Tags, child.Tags)
 	merged.StageHints = mergeUnique(base.StageHints, child.StageHints)
+	// Preserve the child's own match.any patterns before the merge so the
+	// matcher can limit anyScore to distinctive child patterns (NativeAny),
+	// preventing the child from tying with the parent on generic logs where
+	// only inherited patterns fire.
+	nativeAny := append([]string(nil), child.Match.Any...)
 	merged.Match = model.MatchSpec{
 		Any:     mergeUnique(base.Match.Any, child.Match.Any),
 		All:     mergeUnique(base.Match.All, child.Match.All),
@@ -76,6 +81,7 @@ func mergePlaybooks(base, child model.Playbook) model.Playbook {
 		Use:     mergeUnique(base.Match.Use, child.Match.Use),
 		Partial: mergePartialGroups(base.Match.Partial, child.Match.Partial),
 	}
+	merged.NativeAny = nativeAny
 	merged.Source = mergeSourceSpec(base.Source, child.Source)
 	merged.Summary = firstNonEmptyInherited(child.Summary, base.Summary)
 	merged.Diagnosis = firstNonEmptyInherited(child.Diagnosis, base.Diagnosis)
