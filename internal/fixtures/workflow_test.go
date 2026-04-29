@@ -1,8 +1,12 @@
 package fixtures
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -249,5 +253,236 @@ func TestPromoteStampsExpectationFields(t *testing.T) {
 	}
 	if p.Review.PromotedAt != fixedTime.Format("2006-01-02T15:04:05Z07:00") {
 		t.Errorf("expected PromotedAt timestamp, got %q", p.Review.PromotedAt)
+	}
+}
+
+func TestIngestSkipsDuplicatesAndWritesUniqueFixtures(t *testing.T) {
+	layout, _ := makeStagingLayout(t)
+	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
+
+	issueSnippet := "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
+	commentSnippet := "Error: Cannot find module 'yaml'\nRequire stack:\n- /home/runner/work/index.js\n"
+	issue := githubIssue{
+		Title: "CI fails on npm ci",
+		Body:  "",
+		User:  githubIssueUser{Login: "alice"},
+		Labels: []githubIssueLabel{
+			{Name: "ci"},
+		},
+	}
+	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, issueSnippet, now)
+	uniqueFixture := githubFixture("acme/widgets", 12, issue, "91", 1, commentSnippet, now)
+
+	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
+		ID:            "existing-real",
+		RawLog:        issueSnippet,
+		NormalizedLog: issueSnippet,
+		Fingerprint:   duplicateFixture.Fingerprint,
+		FixtureClass:  ClassReal,
+	}); err != nil {
+		t.Fatalf("write existing real fixture: %v", err)
+	}
+
+	client := newHandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/acme/widgets/issues/12":
+			fmt.Fprint(w, "{\"title\":\"CI fails on npm ci\",\"body\":\"Observed in CI\\n\\n```text\\nnpm ERR! code EUSAGE\\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\\n```\",\"user\":{\"login\":\"alice\"},\"labels\":[{\"name\":\"ci\"}]}")
+		case "/repos/acme/widgets/issues/12/comments":
+			fmt.Fprint(w, "[{\"id\":91,\"body\":\"A second failing block\\n\\n```text\\nError: Cannot find module 'yaml'\\nRequire stack:\\n- /home/runner/work/index.js\\n```\",\"user\":{\"login\":\"bob\"}}]")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	result, err := Ingest(context.Background(), layout, IngestOptions{
+		Adapter: "github-issue",
+		URLs: []string{
+			"https://github.com/acme/widgets/issues/12",
+			"https://gitlab.com/group/widgets/-/issues/99",
+		},
+		Client: client,
+		Now:    now,
+	})
+	if err != nil {
+		t.Fatalf("Ingest: %v", err)
+	}
+
+	if len(result.Written) != 1 {
+		t.Fatalf("written fixture count = %d, want 1", len(result.Written))
+	}
+	if result.Written[0].ID != uniqueFixture.ID {
+		t.Fatalf("written fixture ID = %q, want %q", result.Written[0].ID, uniqueFixture.ID)
+	}
+	wantSkipped := []string{
+		duplicateFixture.ID + ": duplicate of existing-real",
+		"https://gitlab.com/group/widgets/-/issues/99: unsupported URL for github-issue",
+	}
+	if !reflect.DeepEqual(result.Skipped, wantSkipped) {
+		t.Fatalf("skipped = %v, want %v", result.Skipped, wantSkipped)
+	}
+	if _, err := os.Stat(filepath.Join(layout.StagingDir, uniqueFixture.ID+".yaml")); err != nil {
+		t.Fatalf("expected ingested fixture file: %v", err)
+	}
+}
+
+func TestIngestForceAllowsDuplicateFingerprints(t *testing.T) {
+	layout, _ := makeStagingLayout(t)
+	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
+
+	snippet := "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
+	issue := githubIssue{
+		Title: "CI fails on npm ci",
+		User:  githubIssueUser{Login: "alice"},
+	}
+	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, snippet, now)
+	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
+		ID:            "existing-real",
+		RawLog:        snippet,
+		NormalizedLog: snippet,
+		Fingerprint:   duplicateFixture.Fingerprint,
+		FixtureClass:  ClassReal,
+	}); err != nil {
+		t.Fatalf("write existing real fixture: %v", err)
+	}
+
+	client := newHandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/repos/acme/widgets/issues/12":
+			fmt.Fprint(w, "{\"title\":\"CI fails on npm ci\",\"body\":\"Observed in CI\\n\\n```text\\nnpm ERR! code EUSAGE\\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\\n```\",\"user\":{\"login\":\"alice\"},\"labels\":[]}")
+		case "/repos/acme/widgets/issues/12/comments":
+			fmt.Fprint(w, "[]")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+
+	result, err := Ingest(context.Background(), layout, IngestOptions{
+		Adapter: "github-issue",
+		URLs:    []string{"https://github.com/acme/widgets/issues/12"},
+		Client:  client,
+		Now:     now,
+		Force:   true,
+	})
+	if err != nil {
+		t.Fatalf("Ingest(force): %v", err)
+	}
+	if len(result.Written) != 1 {
+		t.Fatalf("written fixture count = %d, want 1", len(result.Written))
+	}
+	if len(result.Skipped) != 0 {
+		t.Fatalf("skipped = %v, want none", result.Skipped)
+	}
+}
+
+func TestReviewClassifiesDuplicateNearDuplicateAndCandidate(t *testing.T) {
+	root := t.TempDir()
+	layout := Layout{
+		Root:       root,
+		Fixtures:   filepath.Join(root, "fixtures"),
+		MinimalDir: filepath.Join(root, "fixtures", string(ClassMinimal)),
+		RealDir:    filepath.Join(root, "fixtures", string(ClassReal)),
+		StagingDir: filepath.Join(root, "fixtures", string(ClassStaging)),
+	}
+	for _, dir := range []string{layout.MinimalDir, layout.RealDir, layout.StagingDir} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatalf("mkdir %s: %v", dir, err)
+		}
+	}
+
+	playbookDir := filepath.Join(root, "playbooks")
+	if err := os.MkdirAll(playbookDir, 0o755); err != nil {
+		t.Fatalf("mkdir playbooks: %v", err)
+	}
+	playbook := `id: npm-ci
+title: npm ci lockfile mismatch
+category: node
+severity: high
+summary: |
+  npm ci failed.
+diagnosis: |
+  lockfile and package manifest diverged.
+fix: |
+  regenerate the lockfile.
+validation: |
+  rerun npm ci.
+match:
+  any:
+    - npm ERR! code EUSAGE
+`
+	if err := os.WriteFile(filepath.Join(playbookDir, "npm-ci.yaml"), []byte(playbook), 0o644); err != nil {
+		t.Fatalf("write playbook: %v", err)
+	}
+
+	baseLog := strings.Join([]string{
+		"npm ERR! code EUSAGE",
+		"line-01",
+		"line-02",
+		"line-03",
+		"line-04",
+		"line-05",
+		"line-06",
+		"line-07",
+		"line-08",
+		"line-09",
+		"line-10",
+	}, "\n")
+	nearLog := strings.Join([]string{
+		"npm ERR! code EUSAGE",
+		"line-01",
+		"line-02",
+		"line-03",
+		"line-04",
+		"line-05",
+		"line-06",
+		"line-07",
+		"line-08",
+		"line-09",
+		"line-10-adjusted",
+	}, "\n")
+	candidateLog := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
+
+	writeFixtureTo := func(dir string, fixture Fixture) {
+		t.Helper()
+		if err := writeFixture(filepath.Join(dir, fixture.ID+".yaml"), fixture); err != nil {
+			t.Fatalf("write fixture %s: %v", fixture.ID, err)
+		}
+	}
+
+	writeFixtureTo(layout.RealDir, Fixture{
+		ID:            "real-base",
+		NormalizedLog: baseLog,
+		Expectation: Expectation{
+			ExpectedPlaybook: "npm-ci",
+		},
+		FixtureClass: ClassReal,
+	})
+	writeFixtureTo(layout.StagingDir, Fixture{ID: "candidate", NormalizedLog: candidateLog, FixtureClass: ClassStaging})
+	writeFixtureTo(layout.StagingDir, Fixture{ID: "duplicate", NormalizedLog: baseLog, FixtureClass: ClassStaging})
+	writeFixtureTo(layout.StagingDir, Fixture{ID: "near", NormalizedLog: nearLog, FixtureClass: ClassStaging})
+
+	report, err := Review(layout, EvaluateOptions{PlaybookDir: playbookDir})
+	if err != nil {
+		t.Fatalf("Review: %v", err)
+	}
+	if len(report.Items) != 3 {
+		t.Fatalf("review item count = %d, want 3", len(report.Items))
+	}
+
+	itemsByID := map[string]ReviewItem{}
+	for _, item := range report.Items {
+		itemsByID[item.Fixture.ID] = item
+	}
+
+	if got := itemsByID["duplicate"]; got.Status != "duplicate" || got.DuplicateOf != "real-base" {
+		t.Fatalf("duplicate item = %+v", got)
+	}
+	if got := itemsByID["near"]; got.Status != "near-duplicate" || got.Similarity < 0.82 {
+		t.Fatalf("near item = %+v", got)
+	}
+	if got := itemsByID["candidate"]; got.Status != "candidate" {
+		t.Fatalf("candidate item = %+v", got)
+	}
+	if got := itemsByID["duplicate"].PredictedTopID; got != "npm-ci" {
+		t.Fatalf("duplicate predicted top ID = %q, want npm-ci", got)
 	}
 }
