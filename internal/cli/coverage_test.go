@@ -278,7 +278,7 @@ func TestResolveDefaultFixtureDirFindsRepoDir(t *testing.T) {
 	// (or any subdirectory) it should find the bundled fixture directory.
 	got := resolveDefaultFixtureDir()
 	if got == "" {
-		t.Skip("bundled fixture directory not found from current working directory – skipping")
+		t.Fatal("bundled fixture directory not found from current working directory")
 	}
 	if !filepath.IsAbs(got) {
 		t.Errorf("expected absolute path, got %q", got)
@@ -306,14 +306,18 @@ func TestResolveDefaultFixtureDirReturnEmptyOutsideRepo(t *testing.T) {
 }
 
 func TestLoadPlaybooksForCoverageDefaultPath(t *testing.T) {
-	// With no arguments, loadPlaybooksForCoverage loads the bundled default.
-	// This uses DefaultDir() which walks upward from cwd; skip when not in the repo.
+	// Make default playbook resolution deterministic for this test by
+	// pointing the default directory environment variable at a temp fixture.
+	pbDir := t.TempDir()
+	writeTestPlaybook(t, pbDir, "pb-default.yaml", minimalPlaybook("pb-default", "test"))
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", pbDir)
+
 	pbs, err := loadPlaybooksForCoverage("", nil)
 	if err != nil {
-		t.Skip("bundled playbook directory not found from current working directory – skipping:", err)
+		t.Fatalf("loadPlaybooksForCoverage (default path): %v", err)
 	}
-	if len(pbs) == 0 {
-		t.Fatal("expected at least one bundled playbook")
+	if len(pbs) != 1 || pbs[0].ID != "pb-default" {
+		t.Errorf("expected exactly one playbook pb-default, got %v", pbs)
 	}
 }
 

@@ -1613,7 +1613,7 @@ func TestFixturesSanitizeMissingFixtureReturnsError(t *testing.T) {
 func TestFixturesSanitizeDryRunWritesOutput(t *testing.T) {
 	svc := NewService()
 	root := t.TempDir()
-	writeStagingFixture(t, root, "sanitize-test", "Authorization: Bearer ghp_abc123defghij01234567890\nnpm install failed\n")
+	writeStagingFixture(t, root, "sanitize-test", "Authorization: Bearer TEST_GITHUB_TOKEN\nnpm install failed\n")
 
 	var buf bytes.Buffer
 	err := svc.FixturesSanitize(root, []string{"sanitize-test"}, fixtures.SanitizeOptions{DryRun: true}, false, &buf)
@@ -1623,12 +1623,22 @@ func TestFixturesSanitizeDryRunWritesOutput(t *testing.T) {
 	if buf.Len() == 0 {
 		t.Error("expected non-empty output from FixturesSanitize")
 	}
+	// The summary should report that the auth-header rule matched.
+	if !strings.Contains(buf.String(), "auth-header") {
+		t.Errorf("expected auth-header rule name in output, got %q", buf.String()[:min(200, buf.Len())])
+	}
+	if !strings.Contains(buf.String(), "replacement") {
+		t.Errorf("expected replacement count in output, got %q", buf.String()[:min(200, buf.Len())])
+	}
 }
 
 func TestFixturesSanitizeDryRunJSONOutput(t *testing.T) {
 	svc := NewService()
 	root := t.TempDir()
-	writeStagingFixture(t, root, "sanitize-json", "AKIAIOSFODNN7EXAMPLE\nnpm install failed\n")
+	// Use a non-secret placeholder with the AWS key pattern prefix to exercise
+	// the aws-key rule, and assert that the rule fires (redaction marker appears
+	// in the JSON output).
+	writeStagingFixture(t, root, "sanitize-json", "AKIAIOSFODNN7EXAMPLE_TEST_NOT_REAL\nnpm install failed\n")
 
 	var buf bytes.Buffer
 	err := svc.FixturesSanitize(root, []string{"sanitize-json"}, fixtures.SanitizeOptions{DryRun: true}, true, &buf)
@@ -1661,15 +1671,19 @@ func writeMinimalFixture(t *testing.T, root, id, playbookID, logContent string) 
 	}
 }
 
-func TestFixturesCompareModesBadRootReturnsError(t *testing.T) {
+func TestFixturesCompareModesEmptyCorpusDoesNotError(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 	// Use a temp dir with no fixtures/minimal content — Evaluate returns empty
 	// report (no fixtures) which is not an error but produces output.
 	root := t.TempDir()
 	err := svc.FixturesCompareModes(root, fixtures.ClassMinimal, fixtures.EvaluateOptions{PlaybookDir: repoPlaybookDir()}, false, false, &buf)
-	// An empty corpus is valid; we just verify no panic and the call completes.
-	_ = err
+	if err != nil {
+		t.Fatalf("FixturesCompareModes with empty corpus returned error: %v", err)
+	}
+	if buf.Len() == 0 {
+		t.Fatal("expected non-empty compare-modes output for empty corpus")
+	}
 }
 
 func TestFixturesCompareModesBothModes(t *testing.T) {
