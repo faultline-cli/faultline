@@ -8,6 +8,22 @@ Each page is designed to win searches for exact CI error strings, explain the fa
 
 **[docs/failures/catalog/README.md](catalog/README.md)** — all 193 bundled playbooks, generated directly from the playbook YAML. Every failure category is indexed with links to its dedicated diagnosis and fix page.
 
+## Generating this catalog
+
+The pages under `docs/failures/<category>/` and the files `catalog/README.md` and `llms.txt` are generated automatically from `playbooks/bundled/**/*.yaml`.
+
+```bash
+# Regenerate all pages after adding or modifying a playbook.
+make docs-generate
+
+# Verify pages are up to date (used in CI).
+make docs-check
+```
+
+The generator lives at `tools/gen-failure-docs/main.go`. It reads every YAML file under `--src` (`playbooks/bundled/` by default), renders one Markdown page per playbook, writes the catalog index, and writes an `llms.txt` entry-point — all to `--dst` (`docs/failures/` by default).
+
+Do not edit generated pages directly. Make changes in the corresponding YAML file under `playbooks/bundled/`, then run `make docs-generate` and commit both.
+
 ## Included pages
 
 - [pull access denied for ghcr.io image: fix Docker registry auth failures in CI](docker/pull-access-denied-ghcr-authentication-required.md)

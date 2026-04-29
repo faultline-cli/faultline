@@ -1,0 +1,34 @@
+# Faultline
+
+> Deterministic CI failure diagnosis CLI. Analyzes build logs against 193 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
+
+Faultline reads a CI log, scores it against bundled playbooks, and surfaces the most likely failure with diagnosis, fix steps, and validation. Primary commands: `faultline analyze`, `faultline workflow`, `faultline list`, `faultline explain`, `faultline fix`.
+
+Coding agents: read `AGENTS.md` and `SYSTEM.md` before making changes. Run `make test` after code changes, `make review` after playbook changes, and `make docs-generate` after adding or modifying playbooks.
+
+## Docs
+
+- [README.md](README.md): Quick start, installation, command reference, and usage examples
+- [SYSTEM.md](SYSTEM.md): Architecture, product shape, primary commands, internal package boundaries, and core entities
+- [AGENTS.md](AGENTS.md): Agent operating rules, scope safety, engineering constraints, and completion standard
+- [CONTRIBUTING.md](CONTRIBUTING.md): Workflow, fixture handling, sanitization, and pull request guidelines
+- [docs/architecture.md](docs/architecture.md): Internal package responsibilities and data flow
+- [docs/playbooks.md](docs/playbooks.md): Playbook schema, authoring guide, match signals, and scoring
+- [docs/workflows.md](docs/workflows.md): Workflow command output, agent workflow mode, and structured JSON response shape
+- [docs/detectors.md](docs/detectors.md): Detector types, evidence scoring, and signal extraction
+- [docs/signatures.md](docs/signatures.md): Signature-based matching and pattern authoring
+- [docs/silent-failures.md](docs/silent-failures.md): Silent failure detection — jobs that exit 0 but produce wrong or empty output
+- [docs/release-boundary.md](docs/release-boundary.md): Shipped user narrative, feature gating, and what is or is not in the default release
+
+## Failure catalog
+
+- [docs/failures/llms.txt](docs/failures/llms.txt): Machine-readable index of all 193 failure playbooks, grouped by category, with one-line descriptions and direct links to each page
+- [docs/failures/catalog/README.md](docs/failures/catalog/README.md): Human-readable catalog index — all 193 playbooks with diagnosis and fix links
+
+## Optional
+
+- [docs/fixture-corpus.md](docs/fixture-corpus.md): Fixture corpus structure, regression test workflow, and fixture promotion
+- [docs/distribution.md](docs/distribution.md): Release packaging, install paths, and binary distribution
+- [docs/github-action-contract.md](docs/github-action-contract.md): GitHub Actions integration inputs, outputs, and job summary contract
+- [docs/gitlab-ci-contract.md](docs/gitlab-ci-contract.md): GitLab CI integration contract
+- [ROADMAP.md](ROADMAP.md): Planned features and direction

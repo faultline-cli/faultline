@@ -8,7 +8,8 @@ Faultline accepts focused fixes, deterministic playbook improvements, and regres
 2. Run `make test` after code or playbook changes.
 3. Run `make cli-smoke` when user-facing output, examples, packaging, or release scripts change.
 4. Run `make review` after playbook changes.
-5. Run `make fixture-check` if fixture or ranking behavior changes.
+5. Run `make docs-generate` after adding or modifying playbooks to regenerate the failure catalog pages and `docs/failures/llms.txt`.
+6. Run `make fixture-check` if fixture or ranking behavior changes.
 
 Keep the shipped user narrative aligned with [`docs/release-boundary.md`](docs/release-boundary.md): core log diagnosis first, companion surfaces second, and experimental paths clearly flagged.
 

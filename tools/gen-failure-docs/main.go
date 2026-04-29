@@ -127,6 +127,28 @@ faultline workflow build.log --json --mode agent
 *Generated from [{{ .SourceRel }}]({{ relPlaybookLink .SourceRel .CatDir }}). Do not edit directly — run ` + "`make docs-generate`" + `.*
 `
 
+const llmsTxtTemplateText = `# Faultline Failure Catalog
+
+> {{ .Total }} bundled CI failure playbooks across {{ .CategoryCount }} categories. Each entry covers cause, log signals, diagnosis, fix steps, and the Faultline playbook ID used to detect it.
+
+Generated from ` + "`playbooks/bundled/`" + `. Run ` + "`make docs-generate`" + ` to rebuild after adding or modifying playbooks.
+
+## Index
+
+- [All {{ .Total }} playbooks by category](catalog/README.md): Full generated catalog index with one-line descriptions
+
+{{ range .Groups -}}
+## {{ catTitle .Name }} ({{ len .Playbooks }})
+
+{{ range .Playbooks -}}
+- [{{ .Title }}]({{ .CatDir }}/{{ .ID }}.md){{ if .Summary }}: {{ firstSentence .Summary }}{{ end }}
+{{ end }}
+{{ end -}}
+## Optional
+
+- [Manually authored failure pages](README.md): Deep-dive pages on common CI error strings (Docker auth, npm lockfile, TLS certificates, git auth, node compatibility, and more)
+`
+
 const catalogTemplateText = `# Faultline Failure Catalog
 
 This index links to every bundled playbook. Each page explains the failure, shows the log signals Faultline matches, and lists diagnosis and fix steps.
@@ -177,6 +199,7 @@ var tmplFuncs = template.FuncMap{
 
 var pageTmpl = template.Must(template.New("page").Funcs(tmplFuncs).Parse(pageTemplateText))
 var catalogTmpl = template.Must(template.New("catalog").Funcs(tmplFuncs).Parse(catalogTemplateText))
+var llmsTxt = template.Must(template.New("llms-txt").Funcs(tmplFuncs).Parse(llmsTxtTemplateText))
 
 // searchPhrases generates 3–6 natural search phrases from the playbook fields.
 func searchPhrases(p Playbook) []string {
@@ -435,6 +458,16 @@ func generateAll(playbooks []Playbook) ([]generatedFile, error) {
 		Content: catContent,
 	})
 
+	// llms.txt for the failure catalog subtree.
+	llmsContent, err := renderLLMsTxt(sorted)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, generatedFile{
+		RelPath: "llms.txt",
+		Content: llmsContent,
+	})
+
 	return files, nil
 }
 
@@ -478,6 +511,39 @@ func renderCatalog(sorted []Playbook) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := catalogTmpl.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("render catalog: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func renderLLMsTxt(sorted []Playbook) ([]byte, error) {
+	groupMap := make(map[string][]Playbook)
+	for _, pb := range sorted {
+		groupMap[pb.CatDir] = append(groupMap[pb.CatDir], pb)
+	}
+
+	cats := make([]string, 0, len(groupMap))
+	for cat := range groupMap {
+		cats = append(cats, cat)
+	}
+	sort.Strings(cats)
+
+	groups := make([]catalogGroup, 0, len(cats))
+	for _, cat := range cats {
+		groups = append(groups, catalogGroup{
+			Name:      cat,
+			Playbooks: groupMap[cat],
+		})
+	}
+
+	data := catalogData{
+		Total:         len(sorted),
+		CategoryCount: len(groups),
+		Groups:        groups,
+	}
+
+	var buf bytes.Buffer
+	if err := llmsTxt.Execute(&buf, data); err != nil {
+		return nil, fmt.Errorf("render llms.txt: %w", err)
 	}
 	return buf.Bytes(), nil
 }
