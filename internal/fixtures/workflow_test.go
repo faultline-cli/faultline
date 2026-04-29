@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const npmCIUsageLog = "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
+
 // Tests for writeFixture.
 
 func TestWriteFixtureCreatesFile(t *testing.T) {
@@ -259,7 +261,6 @@ func TestIngestDuplicateHandling(t *testing.T) {
 	layout, _ := makeStagingLayout(t)
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
 
-	issueSnippet := "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
 	client := newHandlerClient(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/repos/acme/widgets/issues/12":
@@ -284,8 +285,8 @@ func TestIngestDuplicateHandling(t *testing.T) {
 	}
 	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
 		ID:            "existing-real",
-		RawLog:        issueSnippet,
-		NormalizedLog: issueSnippet,
+		RawLog:        npmCIUsageLog,
+		NormalizedLog: npmCIUsageLog,
 		Fingerprint:   prefetched[0].Fingerprint,
 		FixtureClass:  ClassReal,
 	}); err != nil {
@@ -329,16 +330,15 @@ func TestIngestForceAllowsDuplicateFingerprints(t *testing.T) {
 	layout, _ := makeStagingLayout(t)
 	now := time.Date(2026, 4, 13, 12, 0, 0, 0, time.UTC)
 
-	snippet := "npm ERR! code EUSAGE\nnpm ERR! npm ci can only install packages when your package.json and package-lock.json are in sync.\n"
 	issue := githubIssue{
 		Title: "CI fails on npm ci",
 		User:  githubIssueUser{Login: "alice"},
 	}
-	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, snippet, now)
+	duplicateFixture := githubFixture("acme/widgets", 12, issue, "", 1, npmCIUsageLog, now)
 	if err := writeFixture(filepath.Join(layout.RealDir, "existing-real.yaml"), Fixture{
 		ID:            "existing-real",
-		RawLog:        snippet,
-		NormalizedLog: snippet,
+		RawLog:        npmCIUsageLog,
+		NormalizedLog: npmCIUsageLog,
 		Fingerprint:   duplicateFixture.Fingerprint,
 		FixtureClass:  ClassReal,
 	}); err != nil {
@@ -400,9 +400,9 @@ severity: high
 summary: |
   npm ci failed.
 diagnosis: |
-  lockfile and package manifest diverged.
+  lock file and package manifest diverged.
 fix: |
-  regenerate the lockfile.
+  regenerate the lock file.
 validation: |
   rerun npm ci.
 match:
@@ -441,14 +441,7 @@ match:
 	}, "\n")
 	candidateLog := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
 
-	writeFixtureTo := func(dir string, fixture Fixture) {
-		t.Helper()
-		if err := writeFixture(filepath.Join(dir, fixture.ID+".yaml"), fixture); err != nil {
-			t.Fatalf("write fixture %s: %v", fixture.ID, err)
-		}
-	}
-
-	writeFixtureTo(layout.RealDir, Fixture{
+	writeFixtureInDir(t, layout.RealDir, Fixture{
 		ID:            "real-base",
 		NormalizedLog: baseLog,
 		Expectation: Expectation{
@@ -468,9 +461,9 @@ match:
 			},
 		}
 	}
-	writeFixtureTo(layout.StagingDir, makeStagingFixture("candidate", candidateLog))
-	writeFixtureTo(layout.StagingDir, makeStagingFixture("duplicate", baseLog))
-	writeFixtureTo(layout.StagingDir, makeStagingFixture("near", nearLog))
+	writeFixtureInDir(t, layout.StagingDir, makeStagingFixture("candidate", candidateLog))
+	writeFixtureInDir(t, layout.StagingDir, makeStagingFixture("duplicate", baseLog))
+	writeFixtureInDir(t, layout.StagingDir, makeStagingFixture("near", nearLog))
 
 	report, err := Review(layout, EvaluateOptions{PlaybookDir: playbookDir})
 	if err != nil {

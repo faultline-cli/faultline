@@ -24,17 +24,9 @@ func TestLoadAllMergesMinimalAndRealOnly(t *testing.T) {
 			t.Fatalf("mkdir %s: %v", dir, err)
 		}
 	}
-
-	writeFixtureFile := func(dir string, fixture Fixture) {
-		t.Helper()
-		if err := writeFixture(filepath.Join(dir, fixture.ID+".yaml"), fixture); err != nil {
-			t.Fatalf("write fixture %s: %v", fixture.ID, err)
-		}
-	}
-
-	writeFixtureFile(layout.MinimalDir, Fixture{ID: "b-minimal", RawLog: "minimal failure"})
-	writeFixtureFile(layout.RealDir, Fixture{ID: "a-real", RawLog: "real failure"})
-	writeFixtureFile(layout.StagingDir, Fixture{ID: "z-staging", RawLog: "staging failure"})
+	writeFixtureInDir(t, layout.MinimalDir, Fixture{ID: "b-minimal", RawLog: "minimal failure"})
+	writeFixtureInDir(t, layout.RealDir, Fixture{ID: "a-real", RawLog: "real failure"})
+	writeFixtureInDir(t, layout.StagingDir, Fixture{ID: "z-staging", RawLog: "staging failure"})
 
 	fixtures, err := Load(layout, ClassAll)
 	if err != nil {
