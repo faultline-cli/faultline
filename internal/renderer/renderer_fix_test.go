@@ -134,7 +134,7 @@ func TestExtractFixSectionDeepHeading(t *testing.T) {
 // ── renderFixCommandsOnly ─────────────────────────────────────────────────────
 
 func TestRenderFixCommandsOnlyNoCommands(t *testing.T) {
-	r := New(Options{Plain: true, Width: 88})
+	r := New(Options{Plain: true, Width: 88, FixCommandsOnly: true})
 	a := &model.Analysis{Results: []model.Result{{
 		Playbook: model.Playbook{
 			ID:  "go-sum-missing",
@@ -142,13 +142,10 @@ func TestRenderFixCommandsOnlyNoCommands(t *testing.T) {
 		},
 		Confidence: 0.8,
 	}}}
-	// Build with FixCommandsOnly opt
-	r2 := New(Options{Plain: true, Width: 88, FixCommandsOnly: true})
-	out := r2.RenderFix(a)
+	out := r.RenderFix(a)
 	if !strings.Contains(out, "No runnable commands found") {
 		t.Errorf("expected no-commands message when fix has no fenced blocks, got %q", out)
 	}
-	_ = r
 }
 
 func TestRenderFixCommandsOnlyWithCommands(t *testing.T) {

@@ -168,6 +168,26 @@ func TestRenderAnalyzeQuickHistorySummaryAppearsInOutput(t *testing.T) {
 	}
 }
 
+func TestRenderAnalyzeDetailedHistorySummaryAppearsInOutput(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{{
+			Playbook:        samplePlaybook(),
+			Confidence:      0.80,
+			Score:           2.0,
+			Evidence:        []string{"build error"},
+			Breakdown:       model.ScoreBreakdown{BaseSignalScore: 2.0, FinalScore: 2.0},
+			OccurrenceCount: 2,
+			FirstSeenAt:     "2026-02-01T00:00:00Z",
+			LastSeenAt:      "2026-02-03T00:00:00Z",
+			SignatureHash:   "abcdef0123456789",
+		}},
+	}
+	out := New(Options{Plain: true, Width: 88}).RenderAnalyze(a, 1, true)
+	if !strings.Contains(out, "seen 2 times") {
+		t.Errorf("expected occurrence count in detailed render, got:\n%s", out)
+	}
+}
+
 // ── higherRankedReason ────────────────────────────────────────────────────────
 
 func TestHigherRankedReasonReturnsFirstNonMetadataDelta(t *testing.T) {
