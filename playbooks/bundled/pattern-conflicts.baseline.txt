@@ -1,0 +1,1301 @@
+--- fail:
+  + go-test-failure (match.any)
+  + topology-failure-clustered (match.any)
+  - junit-test-failure (match.none)
+
+--legacy-peer-deps
+  + npm-peer-dependency-conflict (match.any)
+  - dependency-drift (match.none)
+
+401 unauthorized
+  + expired-credentials (match.any)
+  + http-auth-failure (match.any)
+
+403 forbidden
+  + expired-credentials (match.any)
+  + http-auth-failure (match.any)
+
+: not found
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+@typescript-eslint
+  + eslint-failure (match.any)
+  - quality-gate-failure (match.none)
+
+a worker process has quit unexpectedly
+  + jest-worker-crash (match.any)
+  - jest-test-failure (match.none)
+
+aadsts
+  + azure-pipelines-service-connection (match.any)
+  - azure-pipelines-task-not-found (match.none)
+
+access denied
+  + docker-permission-denied-nonroot (match.any)
+  + permission-denied (match.any)
+  - rate-limited (match.none)
+
+activerecord::recordnotfound
+  + missing-test-fixture (match.any)
+  - database-test-isolation (match.none)
+
+address already in use
+  + orphaned-resources (match.any)
+  + port-in-use (match.any)
+  - go-data-race (match.none)
+  - port-conflict (match.none)
+
+agent.*is offline
+  + jenkins-agent-offline (match.any)
+  - azure-pipelines-service-connection (match.none)
+  - jenkins-plugin-missing (match.none)
+
+api key is empty
+  + missing-env (match.any)
+  - env-var-missing (match.none)
+
+apparmor
+  + permission-denied (match.any)
+  - docker-permission-denied-nonroot (match.none)
+
+artifact download failed
+  + gitlab-ci-artifact-expired (match.any)
+  - artifact-upload-failure (match.none)
+
+artifact not found
+  + artifact-missing (match.any)
+  + artifact-upload-failure (match.any)
+
+artifact upload failed
+  + artifact-upload-failure (match.any)
+  - gitlab-ci-artifact-expired (match.none)
+
+artifacts have expired
+  + gitlab-ci-artifact-expired (match.any)
+  - artifact-upload-failure (match.none)
+  - gitlab-job-log-limit (match.none)
+
+assertionerror.*datetime
+  + timezone-diff (match.any)
+  - junit-test-failure (match.none)
+
+async test timed out
+  + test-timeout (match.any)
+  - network-timeout (match.none)
+
+authentication failed
+  + ssh-key-auth (match.any)
+  - git-shallow-checkout (match.none)
+  - postgres-connection-refused (match.none)
+
+back-off pulling image
+  + image-pull-backoff (match.any)
+  - docker-auth (match.none)
+
+back-off restarting failed container
+  + k8s-crashloopbackoff (match.any)
+  - oom-killed (match.none)
+
+binary.*not found
+  + build-output-path-mismatch (match.any)
+  + multistage-build-missing-artifact (match.any)
+
+bind: address already in use
+  + port-in-use (match.any)
+  - port-conflict (match.none)
+
+build timed out
+  + pipeline-timeout (match.any)
+  - github-actions-concurrency-cancel (match.none)
+  - jenkins-agent-offline (match.none)
+
+buildkit-mount
+  + runner-disk-full (match.any)
+  - disk-full (match.none)
+
+cache miss
+  + cache-miss-non-fatal (match.any)
+  + remote-cache-miss (match.any)
+
+cannot assign requested address
+  + ipv6-ipv4-resolution (match.any)
+  - parallelism-conflict (match.none)
+
+cannot connect to the docker daemon
+  + docker-daemon-unavailable (match.any)
+  - docker-daemon-config-conflict (match.none)
+  - runtime-mismatch (match.none)
+
+cannot execute binary file
+  + arch-mismatch (match.any)
+  + entrypoint-misconfigured (match.any)
+
+cannot find module
+  + path-case-mismatch (match.any)
+  + topology-boundary-crossed (match.any)
+  - quality-gate-failure (match.none)
+  - typescript-compile (match.none)
+
+cannot import name
+  + python-module-missing (match.any)
+  - pip-install-failure (match.none)
+
+cannot start service
+  + orphaned-resources (match.any)
+  + port-conflict (match.any)
+  - parallelism-conflict (match.none)
+  - port-in-use (match.none)
+
+cannot stat
+  + build-input-file-missing (match.any)
+  - container-crash (match.none)
+  - missing-executable (match.none)
+  - node-missing-executable (match.none)
+  - topology-boundary-crossed (match.none)
+
+cannot use
+  + go-compile-error (match.any)
+  - go-test-failure (match.none)
+
+capitalization
+  + path-case-mismatch (match.any)
+  - typescript-compile (match.none)
+
+case-insensitive
+  + path-case-mismatch (match.any)
+  - typescript-compile (match.none)
+
+certificate has expired
+  + expired-credentials (match.any)
+  + ssl-cert-error (match.any)
+
+certificate signed by unknown authority
+  + ssl-cert-error (match.any)
+  - dotnet-restore (match.none)
+
+chdir
+  + working-directory (match.any)
+  - build-input-file-missing (match.none)
+  - missing-test-fixture (match.none)
+
+check constraints cannot be marked not valid
+  + postgres-version-incompatible-migration (match.any)
+  - postgres-enum-add-in-transaction (match.none)
+
+clock skew
+  + clock-drift (match.any)
+  + expired-credentials (match.any)
+
+command not found
+  + base-image-breaking-change (match.any)
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+  - dockerfile-copy-source-missing (match.none)
+  - topology-boundary-crossed (match.none)
+
+compilesdkversion
+  + gradle-build (match.any)
+  - maven-dependency-resolution (match.none)
+
+config compilation failed
+  + circleci-config-validation (match.any)
+  - circleci-resource-class-invalid (match.none)
+
+config not found
+  + config-file-missing (match.any)
+  + config-mismatch (match.any)
+
+configmap not found
+  + config-mismatch (match.any)
+  - env-var-missing (match.none)
+  - missing-test-fixture (match.none)
+
+configuration error
+  + circleci-config-validation (match.any)
+  - missing-env (match.none)
+
+conflicting requirements
+  + dependency-drift (match.any)
+  - maven-dependency-resolution (match.none)
+
+connect: network is unreachable
+  + firewall-egress-blocked (match.any)
+  + ipv6-ipv4-resolution (match.any)
+
+connection refused
+  + connection-refused (match.any)
+  - database-migration-timeout (match.none)
+  - env-var-missing (match.none)
+  - git-refspec-mismatch (match.none)
+  - link-checker-failure (match.none)
+  - postgres-enum-add-in-transaction (match.none)
+  - postgres-version-incompatible-migration (match.none)
+  - runner-update-permission-denied (match.none)
+
+connection was broken
+  + jenkins-agent-offline (match.any)
+  - jenkins-plugin-missing (match.none)
+
+container exited with
+  + container-crash (match.any)
+  - oom-killed (match.none)
+
+context access might be invalid: secrets
+  + secrets-not-available (match.any)
+  - github-actions-env-not-persisted (match.none)
+  - github-actions-permission (match.none)
+
+could not be resolved
+  + dotnet-restore (match.any)
+  - msbuild-error (match.none)
+
+could not build wheels for
+  + pip-install-failure (match.any)
+  - install-failure (match.none)
+  - missing-test-fixture (match.none)
+  - pip-hash-mismatch (match.none)
+
+could not connect to server
+  + connection-refused (match.any)
+  - env-var-missing (match.none)
+  - postgres-enum-add-in-transaction (match.none)
+  - postgres-version-incompatible-migration (match.none)
+
+could not find artifact
+  + maven-dependency-resolution (match.any)
+  - dependency-drift (match.none)
+  - maven-compile-error (match.none)
+
+could not read username
+  + git-auth (match.any)
+  - git-shallow-checkout (match.none)
+
+could not resolve host
+  + dns-resolution (match.any)
+  - network-timeout (match.none)
+
+could not retrieve artifact
+  + gitlab-ci-artifact-expired (match.any)
+  - artifact-upload-failure (match.none)
+
+crashloopbackoff
+  + k8s-crashloopbackoff (match.any)
+  - oom-killed (match.none)
+  - parallelism-conflict (match.none)
+  - segfault (match.none)
+
+data race
+  + go-data-race (match.any)
+  - go-test-failure (match.none)
+  - segfault (match.none)
+
+database locked
+  + parallelism-conflict (match.any)
+  - port-conflict (match.none)
+  - port-in-use (match.none)
+
+declared and not used
+  + go-compile-error (match.any)
+  - go-test-failure (match.none)
+  - gradle-build (match.none)
+
+denied: requested access to the resource is denied
+  + docker-auth (match.any)
+  - buildkit-session-lost (match.none)
+  - docker-daemon-unavailable (match.none)
+
+dial tcp: lookup
+  + dns-resolution (match.any)
+  - network-timeout (match.none)
+
+dial timeout
+  + network-timeout (match.any)
+  - connection-refused (match.none)
+  - test-timeout (match.none)
+
+disk quota exceeded
+  + runner-disk-full (match.any)
+  - circleci-resource-class-oom (match.none)
+  - disk-full (match.none)
+
+docker build -t
+  + runner-disk-full (match.any)
+  - disk-full (match.none)
+
+docker.sock
+  + permission-denied (match.any)
+  - runtime-mismatch (match.none)
+
+dockerclientproviderstrategy
+  + testcontainer-startup (match.any)
+  - clock-drift (match.none)
+
+dockerfile: no such file or directory
+  + docker-build-context (match.any)
+  - build-input-file-missing (match.none)
+  - missing-executable (match.none)
+  - node-missing-executable (match.none)
+
+does not implement
+  + go-compile-error (match.any)
+  + topology-boundary-crossed (match.any)
+
+does not match expected hash
+  + pip-hash-mismatch (match.any)
+  - pip-install-failure (match.none)
+
+eacces
+  + permission-denied (match.any)
+  - dns-enotfound (match.none)
+  - github-actions-missing-checkout (match.none)
+  - tox-invocation-error (match.none)
+
+eaddrinuse
+  + orphaned-resources (match.any)
+  + port-in-use (match.any)
+  - parallelism-conflict (match.none)
+
+econnrefused
+  + connection-refused (match.any)
+  - dns-enotfound (match.none)
+  - env-var-missing (match.none)
+
+enospc
+  + disk-full (match.any)
+  - circleci-resource-class-oom (match.none)
+
+enotfound
+  + dns-enotfound (match.any)
+  - mysql-connection-refused (match.none)
+  - postgres-connection-refused (match.none)
+  - redis-connection-refused (match.none)
+
+environment variable not set
+  + missing-env (match.any)
+  - config-mismatch (match.none)
+
+eresolve unable to resolve dependency tree
+  + npm-peer-dependency-conflict (match.any)
+  - dependency-drift (match.none)
+
+err_pnpm_frozen_lockfile
+  + pnpm-lockfile (match.any)
+  - eslint-failure (match.none)
+
+err_pnpm_outdated_lockfile
+  + pnpm-lockfile (match.any)
+  - eslint-failure (match.none)
+  - pnpm-lockfile-missing (match.none)
+
+errimagepull
+  + image-pull-backoff (match.any)
+  - docker-auth (match.none)
+  - k8s-crashloopbackoff (match.none)
+
+error 2003 (hy000)
+  + mysql-connection-refused (match.any)
+  - redis-connection-refused (match.none)
+
+error acquiring the state lock
+  + terraform-state-lock (match.any)
+  - terraform-init (match.none)
+
+error at setup of
+  + pytest-fixture-error (match.any)
+  - pytest-no-tests (match.none)
+
+error at teardown of
+  + pytest-fixture-error (match.any)
+  - pytest-no-tests (match.none)
+
+error nu
+  + dotnet-restore (match.any)
+  - msbuild-error (match.none)
+
+error ts
+  + typescript-compile (match.any)
+  - path-case-mismatch (match.none)
+  - quality-gate-failure (match.none)
+
+error: command 'gcc' failed
+  + pip-install-failure (match.any)
+  - pip-hash-mismatch (match.none)
+  - tox-invocation-error (match.none)
+
+error: could not load plugin
+  + terraform-init (match.any)
+  - jenkins-plugin-missing (match.none)
+
+eslint
+  + eslint-failure (match.any)
+  - quality-gate-failure (match.none)
+
+etimedout
+  + network-timeout (match.any)
+  - connection-refused (match.none)
+  - dns-enotfound (match.none)
+  - mysql-connection-refused (match.none)
+  - postgres-connection-refused (match.none)
+  - redis-connection-refused (match.none)
+  - test-timeout (match.none)
+
+exceeded the maximum execution time
+  + pipeline-timeout (match.any)
+  - github-actions-concurrency-cancel (match.none)
+
+exec /
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+  - build-input-file-missing (match.none)
+  - missing-test-fixture (match.none)
+  - topology-boundary-crossed (match.none)
+  - working-directory (match.none)
+
+exec format error
+  + arch-mismatch (match.any)
+  + entrypoint-misconfigured (match.any)
+
+exec: "
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+  - topology-boundary-crossed (match.none)
+
+executable file not found in $path
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+  - arch-mismatch (match.none)
+  - entrypoint-misconfigured (match.none)
+  - missing-test-fixture (match.none)
+  - topology-boundary-crossed (match.none)
+  - working-directory (match.none)
+
+execution failed for task
+  + gradle-build (match.any)
+  - maven-dependency-resolution (match.none)
+
+execution took longer than
+  + pipeline-timeout (match.any)
+  - github-actions-concurrency-cancel (match.none)
+  - gitlab-job-log-limit (match.none)
+
+exit code 137
+  + oom-killed (match.any)
+  - container-crash (match.none)
+  - segfault (match.none)
+
+exit code: 137
+  + circleci-resource-class-oom (match.any)
+  + process-killed-no-logs (match.any)
+  - circleci-config-validation (match.none)
+  - circleci-resource-class-invalid (match.none)
+
+exit status 127
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+exit status 137
+  + circleci-resource-class-oom (match.any)
+  + process-killed-no-logs (match.any)
+
+expected sha256
+  + pip-hash-mismatch (match.any)
+  - pip-install-failure (match.none)
+
+expired artifact
+  + gitlab-ci-artifact-expired (match.any)
+  - artifact-upload-failure (match.none)
+
+expiredtokenexception
+  + aws-credentials (match.any)
+  + expired-credentials (match.any)
+
+fail github.com/
+  + go-test-failure (match.any)
+  - junit-test-failure (match.none)
+
+failed to bind to port
+  + port-conflict (match.any)
+  - parallelism-conflict (match.none)
+
+failed to change directory
+  + working-directory (match.any)
+  - build-input-file-missing (match.none)
+  - missing-test-fixture (match.none)
+
+failed to connect
+  + connection-refused (match.any)
+  - test-timeout (match.none)
+
+failed to connect to the docker daemon
+  + docker-daemon-unavailable (match.any)
+  - docker-daemon-config-conflict (match.none)
+
+failed to copy files
+  + multistage-build-missing-artifact (match.any)
+  + runner-disk-full (match.any)
+  - disk-full (match.none)
+
+failed to pull image
+  + image-pull-backoff (match.any)
+  - docker-auth (match.none)
+
+failed to read artifact descriptor
+  + maven-dependency-resolution (match.any)
+  - maven-compile-error (match.none)
+
+failed to upload artifact
+  + artifact-upload-failure (match.any)
+  - gitlab-ci-artifact-expired (match.none)
+
+failure: build failed with an exception
+  + gradle-build (match.any)
+  - connection-refused (match.none)
+  - maven-dependency-resolution (match.none)
+
+failures:
+  + cargo-test-failure (match.any)
+  + topology-failure-clustered (match.any)
+
+fatal error: call_and_retry_last allocation failed
+  + circleci-resource-class-oom (match.any)
+  + node-out-of-memory (match.any)
+
+file system is full
+  + disk-full (match.any)
+  - runner-disk-full (match.none)
+
+files would be reformatted
+  + formatting-failure (match.any)
+  - container-crash (match.none)
+
+fixture not found
+  + missing-test-fixture (match.any)
+  + pytest-fixture-error (match.any)
+  - database-test-isolation (match.none)
+
+force exiting jest
+  + jest-worker-crash (match.any)
+  - jest-test-failure (match.none)
+
+format check failed
+  + formatting-failure (match.any)
+  + quality-gate-failure (match.any)
+
+getaddrinfo enotfound
+  + dns-enotfound (match.any)
+  + dns-resolution (match.any)
+  + ipv6-ipv4-resolution (match.any)
+  - network-timeout (match.none)
+
+getenv
+  + env-var-missing (match.any)
+  - config-mismatch (match.none)
+  - missing-env (match.none)
+
+git@.*permission denied
+  + ssh-permission-denied (match.any)
+  - git-auth (match.none)
+  - ssh-key-auth (match.none)
+
+go test -timeout
+  + test-timeout (match.any)
+  - circleci-resource-class-oom (match.none)
+  - network-timeout (match.none)
+  - pipeline-timeout (match.none)
+
+gradle build daemon
+  + gradle-build (match.any)
+  - maven-dependency-resolution (match.none)
+
+gradle version
+  + gradle-build (match.any)
+  - maven-dependency-resolution (match.none)
+
+gyp err!
+  + node-gyp-missing-build-tools (match.any)
+  - python-module-missing (match.none)
+
+hash mismatch
+  + cache-corruption (match.any)
+  - python-externally-managed (match.none)
+
+hash mismatch (got:
+  + pip-hash-mismatch (match.any)
+  - pip-install-failure (match.none)
+
+host key verification failed
+  + ssh-key-auth (match.any)
+  - git-auth (match.none)
+  - permission-denied (match.none)
+  - ssh-permission-denied (match.none)
+
+id_token
+  + oidc-token-failure (match.any)
+  - http-auth-failure (match.none)
+
+imagepullbackoff
+  + image-pull-backoff (match.any)
+  - docker-auth (match.none)
+  - k8s-crashloopbackoff (match.none)
+
+imported and not used
+  + go-compile-error (match.any)
+  - go-test-failure (match.none)
+  - gradle-build (match.none)
+
+importerror: no module named
+  + python-module-missing (match.any)
+  - pip-install-failure (match.none)
+  - python-virtualenv-not-activated (match.none)
+
+incompatible versions
+  + dependency-drift (match.any)
+  - maven-dependency-resolution (match.none)
+
+insufficient permissions
+  + azure-pipelines-service-connection (match.any)
+  + permission-denied (match.any)
+
+invalid configuration
+  + config-mismatch (match.any)
+  + invalid-config-schema (match.any)
+
+invalidclienttokenid
+  + aws-credentials (match.any)
+  + expired-credentials (match.any)
+
+is not recognized as an internal or external command
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+is not set
+  + env-var-missing (match.any)
+  - missing-env (match.none)
+
+is required for
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+is the docker daemon running?
+  + docker-daemon-unavailable (match.any)
+  - docker-daemon-config-conflict (match.none)
+
+javascript heap out of memory
+  + circleci-resource-class-oom (match.any)
+  + node-out-of-memory (match.any)
+  - process-killed-no-logs (match.none)
+
+jest worker exited
+  + jest-worker-crash (match.any)
+  - jest-test-failure (match.none)
+
+jest: command not found
+  + jest-command-not-found (match.any)
+  - jest-test-failure (match.none)
+
+job's timeout exceeded
+  + pipeline-timeout (match.any)
+  - azure-pipelines-service-connection (match.none)
+  - circleci-config-validation (match.none)
+  - jenkins-agent-offline (match.none)
+  - jenkins-plugin-missing (match.none)
+
+keyerror:
+  + env-var-missing (match.any)
+  - config-mismatch (match.none)
+  - missing-env (match.none)
+
+killed
+  + circleci-resource-class-oom (match.any)
+  + oom-killed (match.any)
+  + process-killed-no-logs (match.any)
+
+lint failed
+  + eslint-failure (match.any)
+  + quality-gate-failure (match.any)
+
+listen tcp
+  + port-in-use (match.any)
+  - port-conflict (match.none)
+
+manifest unknown
+  + docker-manifest-not-found (match.any)
+  - docker-auth (match.none)
+
+mapping values are not allowed here
+  + circleci-config-validation (match.any)
+  + github-actions-syntax (match.any)
+
+may require 'docker login'
+  + docker-auth (match.any)
+  - image-pull-backoff (match.none)
+  - permission-denied (match.none)
+  - runtime-mismatch (match.none)
+
+missing configuration
+  + config-file-missing (match.any)
+  + config-mismatch (match.any)
+
+missing fixture
+  + missing-test-fixture (match.any)
+  - database-test-isolation (match.none)
+
+modulenotfounderror: no module named
+  + python-module-missing (match.any)
+  - pip-install-failure (match.none)
+
+must be set
+  + env-var-missing (match.any)
+  - missing-env (match.none)
+
+name or service not known
+  + dns-enotfound (match.any)
+  + dns-resolution (match.any)
+  - network-timeout (match.none)
+
+network is unreachable
+  + firewall-egress-blocked (match.any)
+  - git-refspec-mismatch (match.none)
+
+no artifacts to download
+  + gitlab-ci-artifact-expired (match.any)
+  - artifact-upload-failure (match.none)
+
+no artifacts will be uploaded
+  + artifact-upload-failure (match.any)
+  - artifact-missing (match.none)
+  - container-crash (match.none)
+  - permission-denied (match.none)
+
+no basic auth credentials
+  + docker-auth (match.any)
+  - http-auth-failure (match.none)
+  - image-pull-backoff (match.none)
+  - npm-registry-auth (match.none)
+  - oidc-token-failure (match.none)
+  - permission-denied (match.none)
+
+no files were found with the provided path
+  + artifact-upload-failure (match.any)
+  - artifact-missing (match.none)
+  - permission-denied (match.none)
+
+no matching distribution found for
+  + pip-install-failure (match.any)
+  - install-failure (match.none)
+  - missing-test-fixture (match.none)
+
+no module named
+  + python-module-missing (match.any)
+  - path-case-mismatch (match.none)
+  - python-externally-managed (match.none)
+  - workspace-dependency-mismatch (match.none)
+
+no rakefile found
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+no secret named
+  + secrets-not-available (match.any)
+  - github-actions-env-not-persisted (match.none)
+
+no space left on device
+  + disk-full (match.any)
+  + runner-disk-full (match.any)
+  - azure-pipelines-service-connection (match.none)
+  - azure-pipelines-task-not-found (match.none)
+  - circleci-config-validation (match.none)
+  - circleci-resource-class-invalid (match.none)
+  - circleci-resource-class-oom (match.none)
+  - jenkins-plugin-missing (match.none)
+
+no space remaining
+  + disk-full (match.any)
+  - runner-disk-full (match.none)
+
+no such file or directory
+  + base-image-breaking-change (match.any)
+  + dockerfile-copy-source-missing (match.any)
+  + entrypoint-misconfigured (match.any)
+  + missing-executable (match.any)
+  + missing-test-fixture (match.any)
+  + node-missing-executable (match.any)
+  + working-directory (match.any)
+  - arch-mismatch (match.none)
+  - container-crash (match.none)
+  - git-refspec-mismatch (match.none)
+  - workspace-dependency-mismatch (match.none)
+
+no such host
+  + dns-resolution (match.any)
+  - install-failure (match.none)
+  - network-timeout (match.none)
+
+no such identity
+  + ssh-key-auth (match.any)
+  - git-auth (match.none)
+
+node: command not found
+  + node-missing-executable (match.any)
+  - python-command-not-found (match.none)
+
+nodename nor servname provided
+  + dns-enotfound (match.any)
+  + dns-resolution (match.any)
+  + ipv6-ipv4-resolution (match.any)
+  - network-timeout (match.none)
+
+not a git repository
+  + working-directory (match.any)
+  - missing-test-fixture (match.none)
+
+npm err! 404 not found
+  + install-failure (match.any)
+  - npm-registry-auth (match.none)
+
+npm err! code e401
+  + npm-registry-auth (match.any)
+  - install-failure (match.none)
+
+npm err! code e403
+  + npm-registry-auth (match.any)
+  - install-failure (match.none)
+
+npm err! code e404
+  + install-failure (match.any)
+  - npm-eresolve-conflict (match.none)
+  - npm-registry-auth (match.none)
+  - workspace-dependency-mismatch (match.none)
+
+npm err! code eacces
+  + npm-eacces-permission-denied (match.any)
+  - npm-eresolve-conflict (match.none)
+
+npm err! code eresolve
+  + npm-eresolve-conflict (match.any)
+  - dependency-drift (match.none)
+  - npm-enoent-package-json (match.none)
+
+npm error code eresolve
+  + npm-peer-dependency-conflict (match.any)
+  - dependency-drift (match.none)
+
+npx: command not found
+  + node-missing-executable (match.any)
+  - python-command-not-found (match.none)
+
+oci runtime exec failed
+  + entrypoint-misconfigured (match.any)
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+  - arch-mismatch (match.none)
+
+oom killer
+  + circleci-resource-class-oom (match.any)
+  + oom-killed (match.any)
+  - process-killed-no-logs (match.none)
+  - segfault (match.none)
+
+oomkilled
+  + oom-killed (match.any)
+  - container-crash (match.none)
+  - process-killed-no-logs (match.none)
+  - segfault (match.none)
+
+operation not permitted
+  + docker-permission-denied-nonroot (match.any)
+  + permission-denied (match.any)
+
+operation timed out
+  + network-timeout (match.any)
+  - connection-refused (match.none)
+
+os.environ
+  + env-var-missing (match.any)
+  - config-mismatch (match.none)
+  - missing-env (match.none)
+
+out of memory
+  + oom-killed (match.any)
+  - circleci-resource-class-invalid (match.none)
+  - gradle-daemon-timeout (match.none)
+  - process-killed-no-logs (match.none)
+  - segfault (match.none)
+
+package restore failed
+  + dotnet-restore (match.any)
+  - msbuild-error (match.none)
+
+package-lock.json
+  + package-manager-mismatch (match.any)
+  - build-input-file-missing (match.none)
+  - missing-executable (match.none)
+  - node-missing-executable (match.none)
+
+package.*not found
+  + base-image-breaking-change (match.any)
+  + dependency-removed-upstream (match.any)
+
+parse error
+  + syntax-error (match.any)
+  - go-compile-error (match.none)
+
+path.*\.bin/jest
+  + jest-command-not-found (match.any)
+  - jest-test-failure (match.none)
+
+permission denied
+  + docker-permission-denied-nonroot (match.any)
+  + permission-denied (match.any)
+  - database-migration-timeout (match.none)
+  - dockerfile-copy-source-missing (match.none)
+  - github-actions-missing-checkout (match.none)
+  - package-manager-mismatch (match.none)
+  - postgres-connection-refused (match.none)
+  - runner-disk-full (match.none)
+  - tox-invocation-error (match.none)
+
+permission denied (publickey)
+  + ssh-permission-denied (match.any)
+  - git-auth (match.none)
+  - git-shallow-checkout (match.none)
+  - ssh-key-auth (match.none)
+
+php fatal error:
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+pip install
+  + pip-install-failure (match.any)
+  - github-actions-matrix-axis-invalid (match.none)
+  - install-failure (match.none)
+  - python-virtualenv-not-activated (match.none)
+  - tox-invocation-error (match.none)
+
+pluginresolutionexception
+  + maven-dependency-resolution (match.any)
+  - dependency-drift (match.none)
+
+pnpm install --frozen-lockfile
+  + pnpm-lockfile (match.any)
+  + pnpm-lockfile-missing (match.any)
+
+pnpm-lock.yaml
+  + package-manager-mismatch (match.any)
+  - eslint-failure (match.none)
+
+port conflict
+  + port-conflict (match.any)
+  - parallelism-conflict (match.none)
+  - port-in-use (match.none)
+
+port is already allocated
+  + port-conflict (match.any)
+  - port-in-use (match.none)
+
+process.env.
+  + env-var-missing (match.any)
+  - config-mismatch (match.none)
+  - missing-env (match.none)
+
+psql: error: could not connect
+  + postgres-connection-refused (match.any)
+  - connection-refused (match.none)
+  - mysql-connection-refused (match.none)
+  - redis-connection-refused (match.none)
+
+pull access denied
+  + docker-auth (match.any)
+  - buildkit-session-lost (match.none)
+  - docker-daemon-config-conflict (match.none)
+  - docker-daemon-unavailable (match.none)
+  - http-auth-failure (match.none)
+  - npm-registry-auth (match.none)
+  - oidc-token-failure (match.none)
+  - runner-update-permission-denied (match.none)
+  - runtime-mismatch (match.none)
+
+pull access denied for
+  + image-pull-backoff (match.any)
+  - permission-denied (match.none)
+
+race detected
+  + go-data-race (match.any)
+  + parallelism-conflict (match.any)
+  - port-conflict (match.none)
+  - port-in-use (match.none)
+
+rake aborted!
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+read timeout
+  + network-timeout (match.any)
+  - connection-refused (match.none)
+  - test-timeout (match.none)
+
+redis::cannotconnecterror
+  + redis-connection-refused (match.any)
+  - mysql-connection-refused (match.none)
+
+remote: invalid username or password
+  + git-auth (match.any)
+  - git-shallow-checkout (match.none)
+
+repository not found
+  + git-auth (match.any)
+  + git-submodule-not-initialized (match.any)
+
+required env
+  + env-var-missing (match.any)
+  - config-mismatch (match.none)
+
+requires a different version
+  + dependency-drift (match.any)
+  - maven-dependency-resolution (match.none)
+
+resolutionimpossible
+  + pip-install-failure (match.any)
+  - install-failure (match.none)
+  - pip-hash-mismatch (match.none)
+  - tox-invocation-error (match.none)
+
+scopemismatch
+  + pytest-fixture-error (match.any)
+  - pytest-no-tests (match.none)
+
+secret is empty
+  + missing-env (match.any)
+  - env-var-missing (match.none)
+  - install-failure (match.none)
+
+secret not found
+  + config-mismatch (match.any)
+  - env-var-missing (match.none)
+  - missing-test-fixture (match.none)
+
+secret value was not supplied
+  + secrets-not-available (match.any)
+  - github-actions-permission (match.none)
+
+secrets.* is not available
+  + secrets-not-available (match.any)
+  - circleci-config-validation (match.none)
+  - github-actions-env-not-persisted (match.none)
+
+service connection.*not found
+  + azure-pipelines-service-connection (match.any)
+  - azure-pipelines-task-not-found (match.none)
+
+sigkill
+  + circleci-resource-class-oom (match.any)
+  + process-killed-no-logs (match.any)
+  - gradle-daemon-timeout (match.none)
+
+signal: killed
+  + oom-killed (match.any)
+  + process-killed-no-logs (match.any)
+
+skip command
+  + missing-executable (match.any)
+  + node-missing-executable (match.any)
+
+snapshot mismatch
+  + snapshot-mismatch (match.any)
+  - coverage-gate-failure (match.none)
+
+ssh: connect to host
+  + ssh-key-auth (match.any)
+  - git-auth (match.none)
+
+ssh: handshake failed
+  + ssh-key-auth (match.any)
+  - git-auth (match.none)
+
+step was skipped
+  + skipped-critical-step (match.any)
+  + step-skipped-unexpectedly (match.any)
+
+stored snapshot
+  + snapshot-mismatch (match.any)
+  - coverage-gate-failure (match.none)
+
+syntaxerror:
+  + syntax-error (match.any)
+  - cargo-compile-error (match.none)
+  - eslint-failure (match.none)
+  - go-compile-error (match.none)
+  - quality-gate-failure (match.none)
+
+temporary failure in name resolution
+  + dns-resolution (match.any)
+  - network-timeout (match.none)
+
+terminal prompts disabled
+  + git-auth (match.any)
+  - git-refspec-mismatch (match.none)
+
+test is not parallelizable
+  + parallelism-conflict (match.any)
+  - port-conflict (match.none)
+  - port-in-use (match.none)
+
+test result: failed
+  + cargo-test-failure (match.any)
+  - cargo-compile-error (match.none)
+
+test timed out
+  + test-timeout (match.any)
+  - circleci-resource-class-oom (match.none)
+  - github-actions-concurrency-cancel (match.none)
+  - network-timeout (match.none)
+  - pipeline-timeout (match.none)
+
+testdata
+  + missing-test-fixture (match.any)
+  - build-input-file-missing (match.none)
+  - ffmpeg-avconv-missing (match.none)
+  - missing-executable (match.none)
+  - node-missing-executable (match.none)
+  - working-directory (match.none)
+
+the security token included in the request is expired
+  + aws-credentials (match.any)
+  + expired-credentials (match.any)
+
+these packages do not match the hashes from the requirements file
+  + pip-hash-mismatch (match.any)
+  - pip-install-failure (match.none)
+
+timed out after
+  + pipeline-timeout (match.any)
+  - github-actions-concurrency-cancel (match.none)
+
+timeout was exceeded
+  + pipeline-timeout (match.any)
+  - github-actions-concurrency-cancel (match.none)
+
+token is empty
+  + missing-env (match.any)
+  - env-var-missing (match.none)
+  - install-failure (match.none)
+
+transfer failed for
+  + maven-dependency-resolution (match.any)
+  - dependency-drift (match.none)
+  - maven-compile-error (match.none)
+
+tsc:
+  + typescript-compile (match.any)
+  - path-case-mismatch (match.none)
+  - quality-gate-failure (match.none)
+
+type "json" does not exist
+  + postgres-version-incompatible-migration (match.any)
+  - postgres-enum-add-in-transaction (match.none)
+
+unable to connect to the docker daemon
+  + docker-daemon-unavailable (match.any)
+  - docker-daemon-config-conflict (match.none)
+
+unable to find package
+  + dependency-removed-upstream (match.any)
+  + dotnet-restore (match.any)
+  - msbuild-error (match.none)
+
+unable to locate package
+  + alpine-debian-incompatibility (match.any)
+  + base-image-breaking-change (match.any)
+
+unable to resolve
+  + dotnet-restore (match.any)
+  - msbuild-error (match.none)
+
+unauthorized: authentication required
+  + docker-auth (match.any)
+  - buildkit-session-lost (match.none)
+  - docker-daemon-config-conflict (match.none)
+  - docker-daemon-unavailable (match.none)
+  - image-pull-backoff (match.none)
+  - npm-registry-auth (match.none)
+  - permission-denied (match.none)
+
+undefined reference to
+  + cargo-compile-error (match.any)
+  - syntax-error (match.none)
+
+undefined variable
+  + env-var-missing (match.any)
+  - missing-env (match.none)
+
+undefined:
+  + go-compile-error (match.any)
+  + topology-boundary-crossed (match.any)
+  - cargo-compile-error (match.none)
+  - go-test-failure (match.none)
+  - gradle-build (match.none)
+
+unresolved dependency:
+  + maven-dependency-resolution (match.any)
+  - maven-compile-error (match.none)
+
+uploading artifacts to coordinator... forbidden
+  + artifact-upload-failure (match.any)
+  - gitlab-ci-artifact-expired (match.none)
+  - permission-denied (match.none)
+
+uploading artifacts...
+  + artifact-upload-failure (match.any)
+  - container-crash (match.none)
+
+version conflict
+  + dependency-drift (match.any)
+  - maven-dependency-resolution (match.none)
+
+waiting for assertion
+  + test-timeout (match.any)
+  - pipeline-timeout (match.none)
+
+warning: data race
+  + go-data-race (match.any)
+  - go-test-failure (match.none)
+
+what went wrong:
+  + gradle-build (match.any)
+  - connection-refused (match.none)
+  - maven-dependency-resolution (match.none)
+
+worker crashed
+  + jest-worker-crash (match.any)
+  - jest-test-failure (match.none)
+
+working directory not found
+  + working-directory (match.any)
+  - build-input-file-missing (match.none)
+  - missing-test-fixture (match.none)
+
+would reformat
+  + formatting-failure (match.any)
+  - container-crash (match.none)
+
+write failed: no space left
+  + disk-full (match.any)
+  + runner-disk-full (match.any)
+
+wrong case
+  + path-case-mismatch (match.any)
+  - typescript-compile (match.none)
+
+x509:
+  + ssl-cert-error (match.any)
+  - dotnet-restore (match.none)
+  - parallelism-conflict (match.none)
+
+yarn.lock
+  + package-manager-mismatch (match.any)
+  - build-input-file-missing (match.none)
+
+yt-dl.org
+  + youtube-dl-test-failure (match.any)
+  - go-test-failure (match.none)

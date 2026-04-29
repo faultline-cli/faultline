@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	artifactpkg "faultline/internal/artifact"
 	"faultline/internal/model"
@@ -25,6 +26,7 @@ type Options struct {
 	WorkflowDir string
 	WorkflowRef string
 	RepoPath    string
+	Now         func() time.Time
 }
 
 type PlanStep struct {
@@ -75,6 +77,7 @@ func Apply(ctx context.Context, analysis *model.Analysis, opts Options, policy e
 		Runtime:  runtimeContext(opts),
 		Artifact: analysis.Artifact,
 		Policy:   policy,
+		Now:      opts.Now,
 	})
 	if record != nil {
 		record.Title = definition.Title

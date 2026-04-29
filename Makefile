@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bayes-check bench review cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check clean-dist eval-build eval-run
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -22,7 +22,8 @@ help:
 		"  bayes-check     Compare baseline vs Bayes ranking across the real fixture corpus (pre-promotion gate)" \
 		"  cli-smoke       Build the CLI and validate shipped examples plus companion commands" \
 		"  bench           Run bundled playbook load and analysis benchmarks" \
-		"  review          Print bundled playbook pattern conflicts" \
+		"  review          Verify bundled playbook pattern conflicts against the baseline" \
+		"  review-verbose  Print the full bundled playbook pattern conflict report" \
 		"  eval-build      Build the faultline-eval corpus evaluation tool" \
 		"  eval-run        Ingest, run, report, and gap-analyse the Travis Torrent dataset" \
 		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
@@ -63,6 +64,12 @@ bench:
 review:
 	$(GO) run ./cmd/playbook-review
 
+review-verbose:
+	$(GO) run ./cmd/playbook-review --verbose
+
+review-update:
+	$(GO) run ./cmd/playbook-review --update-baseline
+
 extra-pack-path:
 	@EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh
 
@@ -96,6 +103,11 @@ release-check: test fixture-check review cli-smoke release-snapshot smoke-releas
 	else \
 		printf "%s\n" "skipping docker-smoke (set WITH_DOCKER=1 to include it)"; \
 	fi
+
+release-verify:
+	VERSION=$(VERSION) WITH_DOCKER=$(WITH_DOCKER) sh ./tools/release-verify.sh
+
+eval: eval-run
 
 eval-build:
 	@mkdir -p bin

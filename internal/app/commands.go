@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"faultline/internal/hooks"
 	"faultline/internal/model"
@@ -105,6 +106,8 @@ type AnalyzeOptions struct {
 	// FailOnSilent causes Analyze to return ErrSilentFailure when a silent
 	// failure finding is detected, regardless of whether a playbook also matched.
 	FailOnSilent bool
+	// Now returns the current time for deterministic tests. Nil uses time.Now.
+	Now func() time.Time
 	// FixCommandsOnly restricts fix output to runnable code blocks only.
 	FixCommandsOnly bool
 	// FixWithPreconditions includes any preconditions section present in fix output.
@@ -232,4 +235,11 @@ func hookWorkDir(opts AnalyzeOptions) string {
 		return opts.RepoPath
 	}
 	return "."
+}
+
+func optionNow(opts AnalyzeOptions) time.Time {
+	if opts.Now != nil {
+		return opts.Now().UTC()
+	}
+	return time.Now().UTC()
 }

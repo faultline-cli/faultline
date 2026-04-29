@@ -18,6 +18,7 @@ type EvaluateOptions struct {
 	PlaybookDir      string
 	PlaybookPackDirs []string
 	BayesEnabled     bool
+	Now              func() time.Time
 }
 
 type EvaluatedFixture struct {
@@ -54,6 +55,7 @@ type Report struct {
 	AppliedThresholds       Thresholds
 	AppliedBaselinePath     string
 	AppliedBaselineHash     string
+	GeneratedAt             time.Time
 }
 
 func Evaluate(layout Layout, class Class, opts EvaluateOptions) (Report, error) {
@@ -79,6 +81,7 @@ func EvaluateFixtures(layout Layout, class Class, loaded []Fixture, opts Evaluat
 		RecurringPatterns: map[string]int{},
 		Providers:         map[string]int{},
 		Adapters:          map[string]int{},
+		GeneratedAt:       evaluateNow(opts),
 	}
 	for _, fixture := range loaded {
 		incrementBucket(report.Providers, fixture.Source.Provider)
@@ -220,6 +223,10 @@ func (r Report) BaselineFingerprint() string {
 }
 
 func (r Report) Baseline(thresholds Thresholds) Baseline {
+	generatedAt := r.GeneratedAt
+	if generatedAt.IsZero() {
+		generatedAt = time.Now().UTC()
+	}
 	return Baseline{
 		Class:             r.Class,
 		FixtureCount:      r.FixtureCount,
@@ -229,9 +236,16 @@ func (r Report) Baseline(thresholds Thresholds) Baseline {
 		FalsePositiveRate: r.FalsePositiveRate(),
 		WeakMatchRate:     r.WeakMatchRate(),
 		Thresholds:        thresholds,
-		GeneratedAt:       time.Now().UTC().Format(time.RFC3339),
+		GeneratedAt:       generatedAt.UTC().Format(time.RFC3339),
 		Fingerprint:       r.BaselineFingerprint(),
 	}
+}
+
+func evaluateNow(opts EvaluateOptions) time.Time {
+	if opts.Now != nil {
+		return opts.Now().UTC()
+	}
+	return time.Now().UTC()
 }
 
 func LoadBaseline(path string) (Baseline, error) {

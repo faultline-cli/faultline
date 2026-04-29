@@ -3,7 +3,6 @@
 package engine
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -15,7 +14,6 @@ import (
 	"faultline/internal/detectors"
 	"faultline/internal/detectors/logdetector"
 	"faultline/internal/detectors/sourcedetector"
-	enginedelta "faultline/internal/engine/delta"
 	"faultline/internal/engine/hypothesis"
 	"faultline/internal/matcher"
 	"faultline/internal/model"
@@ -76,8 +74,10 @@ type Options struct {
 type Engine struct {
 	opts            Options
 	catalog         playbookCatalog
-	registry        detectors.Registry
+	registry        detectorRegistry
 	repoEnricher    repoEnricher
+	repoSnapshots   repoSnapshotLoader
+	providerDelta   providerDeltaLoader
 	sourceFileStore sourceLoader
 }
 
@@ -97,6 +97,8 @@ func New(opts Options) *Engine {
 		sourceFileStore: defaultSourceLoader{},
 	}
 	engine.repoEnricher = localRepoEnricher{opts: opts}
+	engine.repoSnapshots = localRepoSnapshotLoader{engine: engine}
+	engine.providerDelta = providerDeltaResolver{opts: opts}
 	return engine
 }
 
@@ -140,10 +142,10 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	if err != nil {
 		return nil, err
 	}
-	deltaState := e.loadProviderDelta(currentLog)
+	deltaState := e.providerDelta.Load(currentLog)
 	var snapshot *repoSnapshot
 	if e.opts.GitContextEnabled {
-		snapshot = e.loadRepoSnapshot()
+		snapshot = e.loadDefaultRepoSnapshot()
 	}
 	logPbs := detectors.FilterPlaybooks(pbs, detectors.KindLog)
 	results := logDetector.Detect(logPbs, detectors.Target{
@@ -270,7 +272,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 		delta    *model.Delta
 	)
 	if len(changeSet.ChangedFiles) > 0 || e.opts.GitContextEnabled {
-		snapshot = e.loadRepoSnapshotFromPath(root, changeSet)
+		snapshot = e.repoSnapshots.Load(root, changeSet)
 	}
 	repoState := repoStateFromSnapshot(snapshot)
 	if !e.opts.BayesEnabled {
@@ -353,12 +355,12 @@ func (e localRepoEnricher) Enrich(result model.Result) *model.RepoContext {
 	return &repoCtx
 }
 
-func (e *Engine) loadRepoSnapshot() *repoSnapshot {
+func (e *Engine) loadDefaultRepoSnapshot() *repoSnapshot {
 	repoPath := e.opts.RepoPath
 	if repoPath == "" {
 		repoPath = "."
 	}
-	return e.loadRepoSnapshotFromPath(repoPath, detectors.ChangeSet{})
+	return e.repoSnapshots.Load(repoPath, detectors.ChangeSet{})
 }
 
 func (e *Engine) loadRepoSnapshotFromPath(repoPath string, changeSet detectors.ChangeSet) *repoSnapshot {
@@ -575,37 +577,10 @@ func (e *Engine) deltaRequested() bool {
 }
 
 func (e *Engine) loadProviderDelta(currentLog string) *scoring.RepoState {
-	if !e.deltaRequested() {
-		return nil
+	if e.providerDelta == nil {
+		return providerDeltaResolver{opts: e.opts}.Load(currentLog)
 	}
-	resolver := enginedelta.NewResolver(nil)
-	snapshot, err := resolver.Resolve(context.Background(), enginedelta.Options{
-		Provider: e.opts.DeltaProvider,
-		GitHub: enginedelta.GitHubOptions{
-			Repository: e.opts.GitHubRepository,
-			Branch:     e.opts.GitHubBranch,
-			RunID:      e.opts.GitHubRunID,
-			Token:      e.opts.GitHubToken,
-		},
-		GitLab: enginedelta.GitLabOptions{
-			Project:    e.opts.GitLabProject,
-			Branch:     e.opts.GitLabBranch,
-			PipelineID: e.opts.GitLabPipelineID,
-			JobID:      e.opts.GitLabJobID,
-			Token:      e.opts.GitLabToken,
-			APIBaseURL: e.opts.GitLabAPIBaseURL,
-		},
-	}, currentLog)
-	if err != nil || snapshot == nil {
-		return nil
-	}
-	return &scoring.RepoState{
-		Provider:          snapshot.Provider,
-		ChangedFiles:      append([]string(nil), snapshot.FilesChanged...),
-		TestsNewlyFailing: append([]string(nil), snapshot.TestsNewlyFailing...),
-		ErrorsAdded:       append([]string(nil), snapshot.ErrorsAdded...),
-		EnvDiff:           cloneDeltaEnvDiff(snapshot.EnvDiff),
-	}
+	return e.providerDelta.Load(currentLog)
 }
 
 func changedFilesFromChangeSet(changeSet detectors.ChangeSet) []string {

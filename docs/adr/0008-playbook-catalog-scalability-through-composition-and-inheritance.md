@@ -31,20 +31,28 @@ The catalog scales through composition of these primitives rather than accumulat
 
 ## Current Status
 
-As of v0.4.1, the `extends` field is supported by the engine (`internal/playbooks/inheritance.go`) and present in the model schema, but no bundled playbooks use inheritance yet. The current catalog uses flat composition (constraint fields + conflict review gates) to maintain quality. Inheritance-based playbook families are the intended next step for common root causes with environment-specific variants.
+As of v0.4.4, `extends`-based inheritance is in production use in the bundled catalog. `node-missing-executable` extends `missing-executable` and is the first shipped example of a child playbook that narrows a generic root cause with environment-specific match patterns and runner exclusions.
+
+The engine also implements **NativeAny scoring**: when a child playbook is evaluated, only its own pre-inheritance `match.any` patterns (`NativeAny` in `model.Playbook`) contribute to the child's anyScore. Inherited patterns are still collected as evidence but do not increase the child's score, so the parent wins on generic logs and the child wins only when its distinctive patterns fire. IDF weights (`computeAnyWeights`) also use `NativeAny` for child playbooks to prevent inherited patterns from diluting the parent's rarity signal.
+
+Prior to v0.4.4, the engine supported the `extends` field but no bundled playbooks used it.
 
 ## Consequences
 
 - New playbooks for the same root cause should extend a shared base rather than duplicating match and guidance content
-- The conflict review gate (`make review`) remains the primary quality check until inheritance-based families are adopted
+- The conflict review gate (`make review`) remains the primary quality check for both flat and inheritance-based families
 - Inheritance cycles are a load-time error; they will not silently produce wrong results
 - The composition model gives a deterministic equivalent of "components" without introducing a second matching language
 - `match.partial` is the correct tool for combining weak signals; broadening individual match rules to compensate is an anti-pattern
+- Child playbooks must use `match.none` to exclude log lines that the parent handles generically; without exclusions the child competes with the parent on every generic log that fires the inherited patterns
 
 ## References
 
 - [docs/playbooks.md](../playbooks.md) — Scaling model and authoring guidance
 - [internal/playbooks/inheritance.go](../../internal/playbooks/inheritance.go)
+- [internal/playbooks/inheritance_test.go](../../internal/playbooks/inheritance_test.go)
 - [internal/playbooks/conflicts.go](../../internal/playbooks/conflicts.go)
+- [playbooks/bundled/log/build/node-missing-executable.yaml](../../playbooks/bundled/log/build/node-missing-executable.yaml) — First bundled example of `extends`
 - [docs/releases/v0.4.0.md](../releases/v0.4.0.md) — Catalog grew from 77 to 123 playbooks
 - [docs/releases/v0.4.1.md](../releases/v0.4.1.md) — Catalog at 170 bundled playbooks
+- [docs/releases/v0.4.4.md](../releases/v0.4.4.md) — First production inheritance use, NativeAny scoring

@@ -50,7 +50,7 @@ func TestAnalyzeReaderMultipleMatchesWithDifferentScores(t *testing.T) {
 	if len(a.Results) < 2 {
 		t.Fatalf("expected at least 2 results, got %d", len(a.Results))
 	}
-	
+
 	// Results should be sorted by score (highest first)
 	if a.Results[0].Score < a.Results[1].Score {
 		t.Errorf("results not sorted by score: %v < %v", a.Results[0].Score, a.Results[1].Score)
@@ -128,12 +128,12 @@ func TestAnalyzeReaderWithBinaryData(t *testing.T) {
 func TestAnalyzeRepositoryWithEmptyChangeSet(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
-	
+
 	// Create a simple Go file
 	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main\n"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	
+
 	a, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
 	if err != nil && err != ErrNoMatch {
 		t.Fatalf("unexpected error: %v", err)
@@ -144,7 +144,7 @@ func TestAnalyzeRepositoryWithEmptyChangeSet(t *testing.T) {
 
 func TestAnalyzeRepositoryWithNonExistentRoot(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
-	
+
 	_, err := e.AnalyzeRepository("/nonexistent/path", detectors.ChangeSet{})
 	if err == nil {
 		t.Fatal("expected error for non-existent root")
@@ -154,12 +154,12 @@ func TestAnalyzeRepositoryWithNonExistentRoot(t *testing.T) {
 func TestAnalyzeRepositoryWithCircularSymlink(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
-	
+
 	// Create a circular symlink
 	if err := os.Symlink(dir, filepath.Join(dir, "circular")); err != nil {
 		t.Fatalf("create symlink: %v", err)
 	}
-	
+
 	// This should not crash, but may return an error or empty result
 	_, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
 	if err != nil && err != ErrNoMatch && err != ErrNoInput {
@@ -171,17 +171,17 @@ func TestAnalyzeRepositoryWithPermissionDeniedFile(t *testing.T) {
 	if os.Getuid() == 0 {
 		t.Skip("skipping permission test when running as root")
 	}
-	
+
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 	dir := t.TempDir()
-	
+
 	// Create a file with restricted permissions
 	protectedFile := filepath.Join(dir, "protected.go")
 	if err := os.WriteFile(protectedFile, []byte("package main\n"), 0o000); err != nil {
 		t.Fatalf("write protected file: %v", err)
 	}
 	defer os.Chmod(protectedFile, 0o644) // cleanup
-	
+
 	// This should not crash, but may return an error due to permission denied
 	_, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
 	if err != nil && err != ErrNoMatch && err != ErrNoInput {
@@ -215,7 +215,7 @@ func TestLoadTopologySignalsWithInvalidCODEOWNERS(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "CODEOWNERS"), []byte("invalid format"), 0o644); err != nil {
 		t.Fatalf("write CODEOWNERS: %v", err)
 	}
-	
+
 	out := loadTopologySignals(dir, []string{"main.go"})
 	if out != nil {
 		t.Errorf("expected nil with invalid CODEOWNERS, got %v", out)
@@ -228,7 +228,7 @@ func TestLoadTopologySignalsWithChangedFilesOutsideRepo(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "CODEOWNERS"), []byte("* @team\n"), 0o644); err != nil {
 		t.Fatalf("write CODEOWNERS: %v", err)
 	}
-	
+
 	// Include a file path outside the repo root
 	out := loadTopologySignals(dir, []string{"../outside/main.go"})
 	if out != nil {
@@ -246,7 +246,7 @@ func TestRepoStateFromSnapshotWithNil(t *testing.T) {
 func TestMergeRepoStatesWithNil(t *testing.T) {
 	state1 := &scoring.RepoState{Root: "/repo1", ChangedFiles: []string{"file1.go"}}
 	state2 := &scoring.RepoState{Root: "/repo2", ChangedFiles: []string{"file2.go"}}
-	
+
 	merged := mergeRepoStates(state1, state2, nil)
 	if len(merged.ChangedFiles) != 2 {
 		t.Errorf("expected 2 changed files, got %d", len(merged.ChangedFiles))
@@ -347,7 +347,7 @@ func TestAnalyzePathMissingFileErrors(t *testing.T) {
 	}
 }
 
-// ── loadRepoSnapshotFromPath / loadRepoSnapshot ───────────────────────────────
+// ── loadRepoSnapshotFromPath / loadDefaultRepoSnapshot ──────────────────────
 
 func TestLoadRepoSnapshotFromPathNonGitDir(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
@@ -360,9 +360,9 @@ func TestLoadRepoSnapshotFromPathNonGitDir(t *testing.T) {
 
 func TestLoadRepoSnapshotNonGitDir(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t), RepoPath: t.TempDir()})
-	snap := e.loadRepoSnapshot()
+	snap := e.loadDefaultRepoSnapshot()
 	if snap == nil {
-		t.Fatal("expected non-nil snapshot from loadRepoSnapshot")
+		t.Fatal("expected non-nil snapshot from loadDefaultRepoSnapshot")
 	}
 }
 

@@ -21,10 +21,13 @@ type Config struct {
 
 // InputConfig selects the source type and path.
 type InputConfig struct {
-	// Type is the input format. Supported: "csv". Future: "jsonl", "ndjson".
+	// Type is the input format. Supported: "csv", "dir".
 	Type string `yaml:"type"`
-	// Path is the default input file. Can be overridden by the --input CLI flag.
+	// Path is the default input file or directory. Can be overridden by the --input CLI flag.
 	Path string `yaml:"path"`
+	// Ext filters files by extension when type is "dir" (e.g. ".txt").
+	// Leave empty to accept all regular files.
+	Ext string `yaml:"ext"`
 }
 
 // ParsingConfig tells the reader how to extract log content from each row.
@@ -87,12 +90,17 @@ func LoadConfig(path string) (*Config, error) {
 
 // Validate checks that the required config fields are present.
 func (c *Config) Validate() error {
-	if strings.TrimSpace(c.Parsing.LogField) == "" {
-		return fmt.Errorf("parsing.log_field is required")
-	}
 	t := strings.TrimSpace(strings.ToLower(c.Input.Type))
-	if t != "" && t != "csv" {
-		return fmt.Errorf("input.type %q is not supported; supported types: csv", c.Input.Type)
+	switch t {
+	case "", "csv":
+		// log_field is required for record-oriented formats.
+		if strings.TrimSpace(c.Parsing.LogField) == "" {
+			return fmt.Errorf("parsing.log_field is required")
+		}
+	case "dir":
+		// log_field is unused: the whole file content is the log.
+	default:
+		return fmt.Errorf("input.type %q is not supported; supported types: csv, dir", c.Input.Type)
 	}
 	return nil
 }

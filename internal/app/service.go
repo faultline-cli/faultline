@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"faultline/internal/artifact"
@@ -222,80 +221,22 @@ func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer)
 
 // List loads all playbooks and writes a formatted list to w.
 func (Service) List(category, playbookDir string, playbookPacks []string, w io.Writer) error {
-	pbs, err := engine.New(engine.Options{
-		PlaybookDir:      playbookDir,
-		PlaybookPackDirs: playbookPacks,
-	}).List()
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprint(w, output.FormatPlaybookList(pbs, category, renderer.DetectOptions(w)))
-	return err
+	return catalogService{}.List(category, playbookDir, playbookPacks, w)
 }
 
 // Explain fetches a single playbook by id and writes its details to w.
 func (Service) Explain(id, playbookDir string, playbookPacks []string, format output.Format, w io.Writer) error {
-	pb, err := engine.New(engine.Options{
-		PlaybookDir:      playbookDir,
-		PlaybookPackDirs: playbookPacks,
-	}).Explain(id)
-	if err != nil {
-		return err
-	}
-	if format == output.FormatMarkdown {
-		_, err = fmt.Fprint(w, output.FormatPlaybookDetailsMarkdown(pb))
-		return err
-	}
-	if format == output.FormatJSON {
-		data, err := output.FormatPlaybookDetailsJSON(pb)
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprint(w, data)
-		return err
-	}
-	_, err = fmt.Fprint(w, output.FormatPlaybookDetails(pb, renderer.DetectOptions(w)))
-	return err
+	return catalogService{}.Explain(id, playbookDir, playbookPacks, format, w)
 }
 
 // ListInstalledPacks prints the user-installed extra packs.
 func (Service) ListInstalledPacks(w io.Writer) error {
-	packs, err := playbooks.ListInstalledPacks()
-	if err != nil {
-		return err
-	}
-	if len(packs) == 0 {
-		_, err := fmt.Fprintln(w, "No installed playbook packs.")
-		return err
-	}
-	tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
-	if _, err := fmt.Fprintln(tw, "NAME\tPLAYBOOKS\tVERSION\tPINNED REF\tPATH"); err != nil {
-		return err
-	}
-	for _, pack := range packs {
-		version := pack.Version
-		if version == "" {
-			version = "-"
-		}
-		ref := pack.PinnedRef
-		if ref == "" {
-			ref = "-"
-		}
-		if _, err := fmt.Fprintf(tw, "%s\t%d\t%s\t%s\t%s\n", pack.Name, pack.PlaybookCount, version, ref, pack.Root); err != nil {
-			return err
-		}
-	}
-	return tw.Flush()
+	return catalogService{}.ListInstalledPacks(w)
 }
 
 // InstallPack installs a playbook pack into the user's persistent Faultline directory.
 func (Service) InstallPack(srcDir, name string, force bool, w io.Writer) error {
-	pack, err := playbooks.InstallPack(srcDir, name, force)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Installed pack %s with %d playbooks at %s\n", pack.Name, pack.PlaybookCount, pack.Root)
-	return err
+	return catalogService{}.InstallPack(srcDir, name, force, w)
 }
 
 // Workflow analyzes the log and emits the legacy deterministic follow-up workflow.
@@ -375,6 +316,7 @@ func (Service) WorkflowApply(r io.Reader, source string, opts AnalyzeOptions, wo
 	record, err := workflow.Apply(context.Background(), analysis, workflow.Options{
 		WorkflowRef: workflowRef,
 		RepoPath:    opts.RepoPath,
+		Now:         opts.Now,
 	}, policy)
 	if record == nil && err != nil {
 		return err
@@ -680,7 +622,7 @@ func (Service) FixturesPromote(root string, ids []string, opts fixtures.PromoteO
 		return err
 	}
 	if opts.PromotedAt.IsZero() {
-		opts.PromotedAt = time.Now().UTC()
+		opts.PromotedAt = optionNow(AnalyzeOptions{})
 	}
 	promoted, err := fixtures.Promote(layout, ids, opts)
 	if err != nil {
@@ -754,6 +696,9 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 	}
 	if baselinePath != "" && !filepath.IsAbs(baselinePath) {
 		baselinePath = filepath.Join(layout.Root, baselinePath)
+	}
+	if opts.Now == nil {
+		opts.Now = func() time.Time { return optionNow(AnalyzeOptions{}) }
 	}
 	report, err := fixtures.Evaluate(layout, class, opts)
 	if err != nil {

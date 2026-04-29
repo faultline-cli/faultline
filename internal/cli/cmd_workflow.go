@@ -231,6 +231,7 @@ func newWorkflowShowCommand() *cobra.Command {
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
+	cmd.Hidden = true
 	return cmd
 }
 
@@ -264,6 +265,7 @@ func newWorkflowHistoryCommand() *cobra.Command {
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
+	cmd.Hidden = true
 	return cmd
 }
 

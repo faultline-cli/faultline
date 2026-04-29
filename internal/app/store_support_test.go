@@ -6,17 +6,19 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestAnalyzeJSONIncludesStoreHistoryFields(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
+	fixedNow := time.Date(2026, 4, 29, 10, 30, 0, 0, time.UTC)
 	opts := AnalyzeOptions{
 		OutputOptions: OutputOptions{JSON: true},
-		
 		Store:         storePath,
 		PlaybookDir:   repoPlaybookDir(),
 		BayesEnabled:  false,
+		Now:           func() time.Time { return fixedNow },
 	}
 
 	var first bytes.Buffer
@@ -40,6 +42,11 @@ func TestAnalyzeJSONIncludesStoreHistoryFields(t *testing.T) {
 	}
 	if firstResult["occurrence_count"].(float64) != 1 {
 		t.Fatalf("expected first occurrence_count=1, got %#v", firstResult["occurrence_count"])
+	}
+	// The store serialises timestamps as time.RFC3339 (second resolution).
+	// fixedNow has zero nanoseconds so RFC3339 and RFC3339Nano are identical here.
+	if firstResult["first_seen_at"] != fixedNow.Format(time.RFC3339) {
+		t.Fatalf("expected fixed first_seen_at, got %#v", firstResult["first_seen_at"])
 	}
 
 	var second bytes.Buffer

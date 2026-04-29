@@ -12,7 +12,8 @@ import (
 
 // FormatAnalysisMarkdown formats an analysis as raw markdown.
 func FormatAnalysisMarkdown(a *model.Analysis, top int, mode Mode) string {
-	if a == nil || len(a.Results) == 0 {
+	view := NewAnalysisView(a, top)
+	if view.Empty() {
 		return strings.Join([]string{
 			"# No Match",
 			"",
@@ -23,7 +24,7 @@ func FormatAnalysisMarkdown(a *model.Analysis, top int, mode Mode) string {
 		}, "\n") + "\n"
 	}
 
-	results := topN(a.Results, top)
+	results := view.Results
 	sections := make([]string, 0, len(results)+1)
 	for i, result := range results {
 		sections = append(sections, formatAnalysisMarkdownResult(a, result, i, len(results), mode == ModeDetailed))
@@ -41,10 +42,11 @@ func FormatAnalysisMarkdown(a *model.Analysis, top int, mode Mode) string {
 
 // FormatFixMarkdown formats only the fix steps for the top result as markdown.
 func FormatFixMarkdown(a *model.Analysis) string {
-	if a == nil || len(a.Results) == 0 {
+	view := NewAnalysisView(a, 1)
+	if view.Empty() {
 		return FormatAnalysisMarkdown(nil, 1, ModeQuick)
 	}
-	result := a.Results[0]
+	result, _ := view.TopResult()
 	sections := []string{
 		"# " + result.Playbook.Title,
 		"",

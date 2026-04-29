@@ -4,7 +4,8 @@ Faultline keeps the shipped CLI surface stable, but the runtime is split into
 explicit deterministic layers:
 
 - `internal/cli` owns Cobra command definitions, flags, stdin/file handling,
-  and handing structured options into the app layer.
+  the internal command-surface manifest, and handing structured options into
+  the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
   explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
 - `internal/artifact` owns construction of the first-class `FailureArtifact`
@@ -35,7 +36,8 @@ explicit deterministic layers:
 - `internal/detectors` owns the detector registry plus the distinct `log` and
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and
-  deterministic review helpers.
+  deterministic review helpers. Bundled overlap review is gated by a checked-in
+  baseline so intentional shared patterns are explicit.
 - `internal/policy` owns the advisory recommendation layer derived from metrics.
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.

@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"fmt"
+	"strings"
 
 	"faultline/tools/eval-corpus/model"
 )
@@ -23,9 +24,11 @@ func NewReader(cfg *Config, inputPath, source string) (RecordReader, error) {
 	if inputPath == "" {
 		inputPath = cfg.Input.Path
 	}
-	switch cfg.Input.Type {
+	switch strings.ToLower(strings.TrimSpace(cfg.Input.Type)) {
 	case "", "csv":
 		return NewCSVReader(inputPath, source, cfg.Parsing)
+	case "dir":
+		return NewDirReader(inputPath, source, cfg.Input.Ext)
 	default:
 		return nil, fmt.Errorf("unsupported input type %q", cfg.Input.Type)
 	}

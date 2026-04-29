@@ -26,6 +26,13 @@ func newFixturesCommand() *cobra.Command {
 	cmd.AddCommand(newFixturesSanitizeCommand())
 	cmd.AddCommand(newFixturesCompareModesCommand())
 	cmd.AddCommand(newFixturesScaffoldCommand())
+	// Hide children explicitly so they are suppressed in tab-completion and any
+	// programmatic traversal of cmd.Commands(), not just top-level help.
+	// (The parent is already Hidden: true, but children remain visible to
+	// subcommand-aware renderers unless individually hidden.)
+	for _, child := range cmd.Commands() {
+		child.Hidden = true
+	}
 	return cmd
 }
 

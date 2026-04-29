@@ -34,6 +34,21 @@ func TestLoadConfigMissingLogField(t *testing.T) {
 	}
 }
 
+func TestLoadConfigDirTypeNoLogFieldRequired(t *testing.T) {
+	content := "input:\n  type: dir\n  path: /logs\n  ext: .txt\n"
+	tmp := writeTempConfig(t, content)
+	cfg, err := ingest.LoadConfig(tmp)
+	if err != nil {
+		t.Fatalf("LoadConfig for dir type: %v", err)
+	}
+	if cfg.Input.Type != "dir" {
+		t.Errorf("Type = %q, want %q", cfg.Input.Type, "dir")
+	}
+	if cfg.Input.Ext != ".txt" {
+		t.Errorf("Ext = %q, want %q", cfg.Input.Ext, ".txt")
+	}
+}
+
 func TestLoadConfigUnsupportedType(t *testing.T) {
 	content := "input:\n  type: parquet\nparsing:\n  log_field: msg\n"
 	tmp := writeTempConfig(t, content)

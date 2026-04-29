@@ -41,7 +41,7 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 	defer st.Close()
 
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := optionNow(opts)
 	historyEnabled := info.Mode != store.ModeOff && !info.Degraded
 	snapshots := captureHistorySnapshots(ctx, st, prepared)
 	previousFailures, _ := st.RecentTopFailures(ctx, 500)

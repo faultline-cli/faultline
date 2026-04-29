@@ -9,10 +9,11 @@ import (
 
 // FormatAnalysisEvidenceText formats only the top result plus extracted evidence.
 func FormatAnalysisEvidenceText(a *model.Analysis) string {
-	if a == nil || len(a.Results) == 0 {
+	view := NewAnalysisView(a, 1)
+	if view.Empty() {
 		return "No known playbook matched this input.\n"
 	}
-	result := a.Results[0]
+	result, _ := view.TopResult()
 	lines := []string{
 		fmt.Sprintf("EVIDENCE  %s · %s", result.Playbook.ID, result.Playbook.Title),
 	}
@@ -32,10 +33,11 @@ func FormatAnalysisEvidenceText(a *model.Analysis) string {
 
 // FormatAnalysisEvidenceMarkdown formats only the top result plus extracted evidence as markdown.
 func FormatAnalysisEvidenceMarkdown(a *model.Analysis) string {
-	if a == nil || len(a.Results) == 0 {
+	view := NewAnalysisView(a, 1)
+	if view.Empty() {
 		return "# No Match\n\nNo known playbook matched this input.\n"
 	}
-	result := a.Results[0]
+	result, _ := view.TopResult()
 	sections := []string{
 		"# Faultline Evidence",
 		"",
