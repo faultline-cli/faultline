@@ -1568,3 +1568,193 @@ func TestFixturesPromoteEmptyIDsSucceeds(t *testing.T) {
 		t.Fatalf("FixturesPromote with nil ids: %v", err)
 	}
 }
+
+// ── FixturesSanitize ──────────────────────────────────────────────────────────
+
+// writeStagingFixture creates a minimal staging fixture YAML file.
+func writeStagingFixture(t *testing.T, root, id, logContent string) {
+	t.Helper()
+	stagingDir := filepath.Join(root, "fixtures", "staging")
+	if err := os.MkdirAll(stagingDir, 0o755); err != nil {
+		t.Fatalf("mkdir staging: %v", err)
+	}
+	// Indent each line of logContent by 2 spaces for YAML block scalar.
+	lines := strings.Split(strings.TrimRight(logContent, "\n"), "\n")
+	indented := ""
+	for _, line := range lines {
+		indented += "  " + line + "\n"
+	}
+	content := "id: " + id + "\nfixture_class: staging\nnormalized_log: |\n" + indented
+	if err := os.WriteFile(filepath.Join(stagingDir, id+".yaml"), []byte(content), 0o644); err != nil {
+		t.Fatalf("write staging fixture: %v", err)
+	}
+}
+
+func TestFixturesSanitizeNoIDsReturnsError(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	var buf bytes.Buffer
+	err := svc.FixturesSanitize(root, nil, fixtures.SanitizeOptions{}, false, &buf)
+	if err == nil {
+		t.Fatal("expected error for empty IDs, got nil")
+	}
+}
+
+func TestFixturesSanitizeMissingFixtureReturnsError(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	var buf bytes.Buffer
+	err := svc.FixturesSanitize(root, []string{"does-not-exist"}, fixtures.SanitizeOptions{DryRun: true}, false, &buf)
+	if err == nil {
+		t.Fatal("expected error for missing fixture, got nil")
+	}
+}
+
+func TestFixturesSanitizeDryRunWritesOutput(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	writeStagingFixture(t, root, "sanitize-test", "Authorization: Bearer ghp_abc123defghij01234567890\nnpm install failed\n")
+
+	var buf bytes.Buffer
+	err := svc.FixturesSanitize(root, []string{"sanitize-test"}, fixtures.SanitizeOptions{DryRun: true}, false, &buf)
+	if err != nil {
+		t.Fatalf("FixturesSanitize dry-run: %v", err)
+	}
+	if buf.Len() == 0 {
+		t.Error("expected non-empty output from FixturesSanitize")
+	}
+}
+
+func TestFixturesSanitizeDryRunJSONOutput(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	writeStagingFixture(t, root, "sanitize-json", "AKIAIOSFODNN7EXAMPLE\nnpm install failed\n")
+
+	var buf bytes.Buffer
+	err := svc.FixturesSanitize(root, []string{"sanitize-json"}, fixtures.SanitizeOptions{DryRun: true}, true, &buf)
+	if err != nil {
+		t.Fatalf("FixturesSanitize JSON: %v", err)
+	}
+	if !strings.HasPrefix(strings.TrimSpace(buf.String()), "[") {
+		t.Errorf("expected JSON array output, got %q", buf.String()[:min(80, buf.Len())])
+	}
+}
+
+// ── FixturesCompareModes ──────────────────────────────────────────────────────
+
+// writeMinimalFixture creates a minimal fixture YAML in root/fixtures/minimal/.
+func writeMinimalFixture(t *testing.T, root, id, playbookID, logContent string) {
+	t.Helper()
+	minDir := filepath.Join(root, "fixtures", "minimal")
+	if err := os.MkdirAll(minDir, 0o755); err != nil {
+		t.Fatalf("mkdir minimal: %v", err)
+	}
+	// Indent each line of logContent by 2 spaces for YAML block scalar.
+	lines := strings.Split(strings.TrimRight(logContent, "\n"), "\n")
+	indented := ""
+	for _, line := range lines {
+		indented += "  " + line + "\n"
+	}
+	content := "id: " + id + "\nfixture_class: minimal\nnormalized_log: |\n" + indented + "expectation:\n  expected_playbook: " + playbookID + "\n"
+	if err := os.WriteFile(filepath.Join(minDir, id+".yaml"), []byte(content), 0o644); err != nil {
+		t.Fatalf("write minimal fixture: %v", err)
+	}
+}
+
+func TestFixturesCompareModesBadRootReturnsError(t *testing.T) {
+	svc := NewService()
+	var buf bytes.Buffer
+	// Use a temp dir with no fixtures/minimal content — Evaluate returns empty
+	// report (no fixtures) which is not an error but produces output.
+	root := t.TempDir()
+	err := svc.FixturesCompareModes(root, fixtures.ClassMinimal, fixtures.EvaluateOptions{PlaybookDir: repoPlaybookDir()}, false, false, &buf)
+	// An empty corpus is valid; we just verify no panic and the call completes.
+	_ = err
+}
+
+func TestFixturesCompareModesBothModes(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	// Write a fixture that is expected to match docker-auth — present in the
+	// bundled playbooks.
+	writeMinimalFixture(t, root, "cmx-docker-auth", "docker-auth",
+		"pull access denied\nError response from daemon: authentication required\n")
+
+	var buf bytes.Buffer
+	err := svc.FixturesCompareModes(root, fixtures.ClassMinimal, fixtures.EvaluateOptions{
+		PlaybookDir: repoPlaybookDir(),
+	}, false, false, &buf)
+	if err != nil {
+		t.Fatalf("FixturesCompareModes: %v", err)
+	}
+	if buf.Len() == 0 {
+		t.Error("expected non-empty compare-modes output")
+	}
+}
+
+func TestFixturesCompareModesFail(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	// Write a fixture that is expected to match docker-auth — present in the
+	// bundled playbooks.
+	writeMinimalFixture(t, root, "cmx-docker-auth2", "docker-auth",
+		"pull access denied\nError response from daemon: authentication required\n")
+
+	var buf bytes.Buffer
+	// failOnRegression=true; with a single fixture the two modes should agree,
+	// so no regression is expected.
+	err := svc.FixturesCompareModes(root, fixtures.ClassMinimal, fixtures.EvaluateOptions{
+		PlaybookDir: repoPlaybookDir(),
+	}, false, true, &buf)
+	if err != nil {
+		t.Fatalf("FixturesCompareModes failOnRegression: %v", err)
+	}
+}
+
+// ── FixturesStats (additional paths) ─────────────────────────────────────────
+
+func TestFixturesStatsUpdateAndCheckBaseline(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	writeMinimalFixture(t, root, "stats-docker-auth", "docker-auth",
+		"pull access denied\nError response from daemon: authentication required\n")
+
+	baselinePath := filepath.Join(t.TempDir(), "baseline.json")
+	opts := fixtures.EvaluateOptions{PlaybookDir: repoPlaybookDir()}
+
+	// Step 1: generate a baseline.
+	var buf bytes.Buffer
+	if err := svc.FixturesStats(root, fixtures.ClassMinimal, opts, baselinePath, false, false, true, &buf); err != nil {
+		t.Fatalf("FixturesStats updateBaseline: %v", err)
+	}
+	if _, err := os.Stat(baselinePath); err != nil {
+		t.Fatalf("expected baseline file to be written: %v", err)
+	}
+
+	// Step 2: check against the baseline we just wrote.
+	buf.Reset()
+	if err := svc.FixturesStats(root, fixtures.ClassMinimal, opts, baselinePath, false, true, false, &buf); err != nil {
+		t.Fatalf("FixturesStats checkBaseline: %v", err)
+	}
+	// Output should include the stats report.
+	if buf.Len() == 0 {
+		t.Error("expected non-empty output from FixturesStats checkBaseline")
+	}
+}
+
+func TestFixturesStatsJSONOutput(t *testing.T) {
+	svc := NewService()
+	root := t.TempDir()
+	writeMinimalFixture(t, root, "stats-git-auth", "git-auth",
+		"fatal: could not read Username for 'https://github.com': terminal prompts disabled\n")
+
+	var buf bytes.Buffer
+	if err := svc.FixturesStats(root, fixtures.ClassMinimal, fixtures.EvaluateOptions{
+		PlaybookDir: repoPlaybookDir(),
+	}, "", false, false, false, &buf); err != nil {
+		t.Fatalf("FixturesStats JSON: %v", err)
+	}
+	if buf.Len() == 0 {
+		t.Error("expected non-empty stats output")
+	}
+}

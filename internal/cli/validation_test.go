@@ -154,6 +154,34 @@ func TestValidateExperimentalDeltaProvider(t *testing.T) {
 	})
 }
 
+func TestValidateHookMode(t *testing.T) {
+	cases := []struct {
+		value    string
+		wantMode string
+		wantErr  bool
+	}{
+		{"", "off", false},
+		{"off", "off", false},
+		{"verify-only", "verify-only", false},
+		{"collect-only", "collect-only", false},
+		{"safe", "safe", false},
+		{"full", "full", false},
+		{"  safe  ", "safe", false},
+		{"invalid", "", true},
+		{"all", "", true},
+	}
+	for _, tc := range cases {
+		got, err := validateHookMode(tc.value)
+		if (err != nil) != tc.wantErr {
+			t.Errorf("validateHookMode(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
+			continue
+		}
+		if string(got) != tc.wantMode {
+			t.Errorf("validateHookMode(%q): got=%q want=%q", tc.value, got, tc.wantMode)
+		}
+	}
+}
+
 func TestDeriveGitLabAPIBaseURL(t *testing.T) {
 	if got := deriveGitLabAPIBaseURL("https://gitlab.example.com"); got != "https://gitlab.example.com/api/v4" {
 		t.Fatalf("unexpected derived base URL: %q", got)

@@ -271,3 +271,87 @@ func writeTestPlaybook(t *testing.T, dir, filename, content string) {
 		t.Fatalf("write playbook %s: %v", filename, err)
 	}
 }
+
+func TestResolveDefaultFixtureDirFindsRepoDir(t *testing.T) {
+	// resolveDefaultFixtureDir walks upward from cwd looking for
+	// internal/engine/testdata/fixtures. Running from the repo root
+	// (or any subdirectory) it should find the bundled fixture directory.
+	got := resolveDefaultFixtureDir()
+	if got == "" {
+		t.Skip("bundled fixture directory not found from current working directory – skipping")
+	}
+	if !filepath.IsAbs(got) {
+		t.Errorf("expected absolute path, got %q", got)
+	}
+	if info, err := os.Stat(got); err != nil || !info.IsDir() {
+		t.Errorf("resolved path does not exist or is not a directory: %q", got)
+	}
+}
+
+func TestResolveDefaultFixtureDirReturnEmptyOutsideRepo(t *testing.T) {
+	// Change the working directory to a temp dir that does NOT contain the
+	// engine testdata tree.  resolveDefaultFixtureDir should return "".
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	if got := resolveDefaultFixtureDir(); got != "" {
+		t.Errorf("expected empty string outside repo, got %q", got)
+	}
+}
+
+func TestLoadPlaybooksForCoverageDefaultPath(t *testing.T) {
+	// With no arguments, loadPlaybooksForCoverage loads the bundled default.
+	// This uses DefaultDir() which walks upward from cwd; skip when not in the repo.
+	pbs, err := loadPlaybooksForCoverage("", nil)
+	if err != nil {
+		t.Skip("bundled playbook directory not found from current working directory – skipping:", err)
+	}
+	if len(pbs) == 0 {
+		t.Fatal("expected at least one bundled playbook")
+	}
+}
+
+func TestLoadPlaybooksForCoverageExplicitDir(t *testing.T) {
+	pbDir := t.TempDir()
+	writeTestPlaybook(t, pbDir, "pb-explicit.yaml", minimalPlaybook("pb-explicit", "test"))
+
+	pbs, err := loadPlaybooksForCoverage(pbDir, nil)
+	if err != nil {
+		t.Fatalf("loadPlaybooksForCoverage (explicit dir): %v", err)
+	}
+	if len(pbs) != 1 || pbs[0].ID != "pb-explicit" {
+		t.Errorf("expected exactly one playbook pb-explicit, got %v", pbs)
+	}
+}
+
+func TestLoadPlaybooksForCoverageWithExtraPacks(t *testing.T) {
+	// Supply an explicit playbook dir AND an extra pack dir.
+	pbDir := t.TempDir()
+	packDir := t.TempDir()
+	writeTestPlaybook(t, pbDir, "pb-base.yaml", minimalPlaybook("pb-base", "test"))
+	writeTestPlaybook(t, packDir, "pb-pack.yaml", minimalPlaybook("pb-pack", "test"))
+
+	pbs, err := loadPlaybooksForCoverage(pbDir, []string{packDir})
+	if err != nil {
+		t.Fatalf("loadPlaybooksForCoverage (with pack): %v", err)
+	}
+	if len(pbs) < 2 {
+		t.Errorf("expected at least 2 playbooks (base + pack), got %d", len(pbs))
+	}
+	ids := make(map[string]bool)
+	for _, pb := range pbs {
+		ids[pb.ID] = true
+	}
+	for _, want := range []string{"pb-base", "pb-pack"} {
+		if !ids[want] {
+			t.Errorf("expected playbook %q in loaded set", want)
+		}
+	}
+}
+

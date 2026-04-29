@@ -1,6 +1,10 @@
 package cli
 
-import "testing"
+import (
+	"testing"
+
+	"faultline/internal/workflow"
+)
 
 func TestResolveOutputSelection(t *testing.T) {
 	t.Run("json flag promotes terminal format", func(t *testing.T) {
@@ -19,6 +23,22 @@ func TestResolveOutputSelection(t *testing.T) {
 			t.Fatal("expected error")
 		}
 	})
+}
+
+func TestAppWorkflowMode(t *testing.T) {
+	if got := appWorkflowMode("agent"); got != workflow.ModeAgent {
+		t.Errorf("appWorkflowMode(%q) = %v, want ModeAgent", "agent", got)
+	}
+	if got := appWorkflowMode("local"); got != workflow.ModeLocal {
+		t.Errorf("appWorkflowMode(%q) = %v, want ModeLocal", "local", got)
+	}
+	// Any value other than "agent" should map to ModeLocal.
+	if got := appWorkflowMode(""); got != workflow.ModeLocal {
+		t.Errorf("appWorkflowMode(%q) = %v, want ModeLocal", "", got)
+	}
+	if got := appWorkflowMode("other"); got != workflow.ModeLocal {
+		t.Errorf("appWorkflowMode(%q) = %v, want ModeLocal", "other", got)
+	}
 }
 
 func TestNewRootCommandRegistersExpectedCommands(t *testing.T) {
