@@ -58,7 +58,7 @@ faultline workflow build.log --json --mode agent
 
 - Permission denied
 - Runtime: permission denied
-- insufficient permissions
+- dial unix /var/run/docker.sock
 - faultline explain permission-denied
 
 

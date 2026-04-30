@@ -21,8 +21,8 @@ token has expired
 token expired
 ExpiredToken
 ExpiredTokenException
+WebIdentityErr
 InvalidClientTokenId
-The security token included in the request is expired
 ```
 
 ## Diagnosis

@@ -53,6 +53,7 @@ match:
     - "would reformat"
     - "files would be reformatted"
     - "No artifacts will be uploaded"
+    - "exit code 128"
 why_it_matters: |-
   ## Why it matters
 

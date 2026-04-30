@@ -14,7 +14,6 @@ The process was terminated by the operating system's out-of-memory (OOM) killer.
 ```text
 exit code 137
 OOMKilled
-killed
 out of memory
 oom killer
 signal: killed

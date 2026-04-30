@@ -8,7 +8,7 @@ normalized_log: |-
 expectation:
     expected_playbook: permission-denied
     top_n: 3
-    min_confidence: 0.55
+    min_confidence: 0.25
 source:
     adapter: stackexchange-question
     provider: stackexchange

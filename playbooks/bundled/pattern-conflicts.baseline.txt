@@ -463,6 +463,11 @@ execution took longer than
   - github-actions-concurrency-cancel (match.none)
   - gitlab-job-log-limit (match.none)
 
+exit code 128
+  + git-auth (match.any)
+  + git-submodule-not-initialized (match.any)
+  - container-crash (match.none)
+
 exit code 137
   + oom-killed (match.any)
   - container-crash (match.none)

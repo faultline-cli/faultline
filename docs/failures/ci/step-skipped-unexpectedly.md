@@ -20,8 +20,8 @@ job.*skipped
 step.*skipped
 condition.*evaluated to false
 when.*condition.*false
-if.*false
 needs.*skipped
+skipped because
 ```
 
 ## Diagnosis

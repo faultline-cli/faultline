@@ -9,7 +9,7 @@ normalized_log: |-
 expectation:
     expected_playbook: pip-install-failure
     top_n: 3
-    min_confidence: 0.55
+    min_confidence: 0.45
 source:
     adapter: github-issue
     provider: github

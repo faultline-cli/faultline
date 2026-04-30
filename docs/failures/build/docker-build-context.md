@@ -19,6 +19,7 @@ failed to compute cache key
 file not found in build context or excluded by .dockerignore
 forbidden path outside the build context
 unable to prepare context
+not found: not found
 ```
 
 ## Diagnosis

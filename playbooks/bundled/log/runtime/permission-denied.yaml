@@ -36,6 +36,10 @@ match:
     - insufficient permissions
     - "cannot create directory"
     - "ERROR 1045"
+    - "daemon socket at unix"
+    - "/var/run/docker.sock"
+    - "dial unix /var/run/docker.sock"
+    - "needs View permissions"
   none:
     - pull access denied for
     - may require 'docker login'

@@ -12,7 +12,7 @@ normalized_log: |-
     Node.js v24.14.1
     avr8js ATmega328P test-emu failed: failed: avr8js exited with code 1
 expectation:
-    expected_playbook: gitlab-ci-yaml-invalid
+    expected_playbook: node-missing-executable
     top_n: 3
     min_confidence: 0.55
 source:

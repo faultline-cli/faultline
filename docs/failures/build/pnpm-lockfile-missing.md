@@ -17,7 +17,6 @@ pnpm-lock.yaml.*not in sync
 lockfile.*missing
 pnpm install --frozen-lockfile
 pnpm ERR!
-ERR_PNPM
 ```
 
 ## Diagnosis

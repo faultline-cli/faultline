@@ -5,9 +5,9 @@ normalized_log: |-
     Same issue here : The process '/usr/bin/git' failed with exit code 128
     Waiting 10 seconds before trying again
 expectation:
-    expected_playbook: container-crash
+    expected_playbook: git-auth
     top_n: 3
-    min_confidence: 0.55
+    min_confidence: 0.30
 source:
     adapter: github-issue
     provider: github

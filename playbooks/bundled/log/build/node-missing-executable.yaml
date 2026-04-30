@@ -78,6 +78,8 @@ match:
     - "sh: node: not found"
     - "sh: npm: not found"
     - "sh: npx: not found"
+    - "ERR_MODULE_NOT_FOUND"
+    - "Cannot find package"
   none:
     # Exclude GitHub Actions runner-internal node path failures (/__e/node*,
     # /hostedtoolcache/node*). These are CI infrastructure issues handled by

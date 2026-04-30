@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-89.4%25-brightgreen)](docs/fixture-corpus.md#large-scale-real-world-evaluation)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-92.1%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-89.4%25-brightgreen)](docs/fixture-corpus.md#large-scale-real-world-evaluation)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
@@ -28,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.4.4** — 193 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000 · **89.4% match on 30,094 real-world GitHub Actions logs**
+**v0.4.4** — 193 bundled playbooks · 228 real fixtures · checked-in baseline top-1/top-3: 0.921 · unmatched: 0.079 · weak-match: 0.000 · false-positive: 0.000 · **89.4% match on 30,094 real-world GitHub Actions logs**
 
 ## ⚡ Install
 
@@ -87,7 +87,54 @@ Eight built-in detectors cover suppressed exit codes, zero-test runs, missing ar
 
 ## ↪ Drop it into CI
 
-Add a single step to your failure path. The CLI contract is identical in CI and locally.
+The fastest path is the official GitHub Action — one step, no install wiring:
+
+```yaml
+- name: Diagnose failure
+  if: failure()
+  uses: faultline-cli/action@v1
+  with:
+    log: build.log
+```
+
+That's it. Faultline installs itself, analyzes the log, writes the diagnosis to the job summary, and uploads JSON artifacts automatically.
+
+**Key inputs:**
+
+| Input | Default | Purpose |
+|-------|---------|--------|
+| `log` | _(required)_ | Path to the failing build log file |
+| `version` | `latest` | Pin a specific release, e.g. `v0.4.4` |
+| `format` | `markdown` | Output format: `text` or `markdown` |
+| `annotations` | `false` | Emit native GitHub CI annotations |
+| `json` | `true` | Produce a machine-readable JSON artifact |
+| `workflow` | `true` | Produce a `workflow.v1` handoff artifact |
+| `fail-on-silent` | `false` | Fail if silent failure detectors fire |
+| `upload-artifacts` | `true` | Upload JSON and markdown as workflow artifacts |
+| `job-summary` | `true` | Append the diagnosis to the job summary |
+| `delta` | `false` | Experimental delta analysis vs. last passing run |
+| `github-token` | `` | Required when `delta: true` |
+
+**Key outputs:** `failure-id`, `summary-markdown`, `analysis-json`, `workflow-json`
+
+Gate a follow-up step on the matched failure:
+
+```yaml
+- name: Diagnose failure
+  if: failure()
+  id: diagnosis
+  uses: faultline-cli/action@v1
+  with:
+    log: build.log
+
+- name: Open remediation issue
+  if: failure() && steps.diagnosis.outputs.failure-id != ''
+  run: echo "Root cause: ${{ steps.diagnosis.outputs.failure-id }}"
+```
+
+For full input/output reference and usage examples, see the [action repository](https://github.com/faultline-cli/action) and the [GitHub Actions contract](docs/github-action-contract.md).
+
+**Or install manually** if you need more control:
 
 ```yaml
 - name: Diagnose failure
@@ -128,7 +175,8 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 - **First production use of playbook inheritance** — `node-missing-executable` extends `missing-executable` with Node-specific patterns and runner exclusions
 - **NativeAny scoring** — child playbooks score only from their own distinctive `match.any` patterns; inherited patterns contribute to evidence but not to the child's score
 - **Full ontology coverage** — all 193 playbooks tagged with `domain`, `class`, `mode`, and `tags`
-- **Weak-match rate 0.013** (3 of 228 fixtures); top-1 accuracy 1.000 maintained with zero false positives
+- **Current checked-in real-fixture baseline** — top-1/top-3 0.921 (210/228), unmatched 0.079 (18/228), weak-match 0.000, false-positive 0.000
+- **Published CI Go coverage** — 84.3% from the repository `go test ./... -coverprofile` workflow
 - **13 new inheritance tests** in `internal/playbooks/inheritance_test.go`
 
 Full release notes: [docs/releases/v0.4.4.md](docs/releases/v0.4.4.md)

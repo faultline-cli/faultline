@@ -1,22 +1,22 @@
 # Fixture Corpus
 
-Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim. The current snapshot below reflects the accepted real fixtures and bundled playbooks in this repository.
+Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim. The current snapshot below reflects the checked-in real-fixture baseline and bundled playbooks in this repository.
 
 ## Current Snapshot
 
-- Bundled playbooks: 170
+- Bundled playbooks: 193
 - Accepted real fixtures: 228
-- Top-1 match rate: 100% (228/228)
-- Top-3 match rate: 100% (228/228)
-- Unmatched fixtures: 0
+- Top-1 baseline pass rate: 92.1% (210/228)
+- Top-3 baseline pass rate: 92.1% (210/228)
+- Unmatched fixtures: 18 (7.9%)
 - False positives: 0
-- Weak matches: 30 (13.2%)
+- Weak matches: 0 (0.0%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
 - Source-detector regression fixtures: 8 repository scenarios under `internal/engine/testdata/source/`
 
-These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state.
+These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state. They are baseline-gate numbers, not a claim that every accepted real fixture currently lands as a strong top-1 match.
 
 ## Why It Matters
 
@@ -25,33 +25,29 @@ These numbers describe the checked-in regression corpus only. They are useful be
 - Playbook coverage, thresholds, and baseline behavior are visible in version control.
 - Automation consumers can audit the proof artifact that backs the product's trust story.
 
-## Coverage By Failure Class
+## Corpus Mix
 
-Bundled playbook coverage by category (from `playbooks/bundled/`):
+Real-fixture provider distribution from `./bin/faultline fixtures stats --class real`:
 
-| Category | Bundled Playbooks |
+| Provider | Accepted Real Fixtures |
 | --- | --- |
-| build | 33 |
-| ci | 20 |
-| test | 13 |
-| runtime | 14 |
-| deploy | 8 |
-| auth | 7 |
-| network | 6 |
+| GitHub | 116 |
+| Stack Exchange | 70 |
+| GitLab | 24 |
+| Reddit | 12 |
+| Discourse | 6 |
 
-Accepted real fixtures mapped through expected playbooks (from `fixtures/real/`):
+Adapter distribution in the same corpus:
 
-| Category | Accepted Real Fixtures |
+| Adapter | Accepted Real Fixtures |
 | --- | --- |
-| build | 38 |
-| network | 29 |
-| ci | 32 |
-| runtime | 21 |
-| auth | 10 |
-| deploy | 9 |
-| test | 6 |
+| `github-issue` | 116 |
+| `stackexchange-question` | 70 |
+| `gitlab-issue` | 24 |
+| `reddit-post` | 12 |
+| `discourse-topic` | 6 |
 
-This table is intended as public proof coverage, not a claim that unknown failures are solved.
+These counts describe the public proof corpus, not a claim that unknown failures are solved.
 
 ## Release Snapshot Trend
 
@@ -70,13 +66,16 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-24 mixed-source ingestion + source-boundary refinement | 101 | 138 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-24 diverse-adapter ingestion pass | 101 | 153 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-26 v0.4.1 corpus expansion (228 fixtures) | 170 | 228 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-29 v0.4.4 feature release | 193 | 228 | 32 | 100% | 100% | 0 | 0 |
+| 2026-04-30 main baseline after overlap review | 193 | 228 | 32 | 91.2% | 91.2% | 8.8% | 0 |
+| 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The shipped corpus is strongest on build, network, and CI failures. Provider breakdown: 116 GitHub (51%), 70 Stack Exchange (31%), 24 GitLab (11%), 12 Reddit (5%), 6 Discourse (3%) out of 228 accepted fixtures.
-- The `test` category remains the thinnest accepted real slice relative to the 13 bundled test playbooks.
+- The corpus mix is still GitHub-heavy: 116 GitHub fixtures (51%) out of 228 accepted real fixtures.
+- The current baseline shows 18 unmatched fixtures and zero weak matches. All 18 unmatched are corpus quality issues (YAML workflow configs, positive resolution comments, or successful output with no error signals) that cannot be addressed with playbook changes alone.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
   the noisy variant corpus under `internal/signature/testdata/variants/` plus
@@ -135,7 +134,7 @@ The log-chunks dataset has been evaluated separately (87.2% coverage, 102/117 fi
 
 ### What This Number Means
 
-The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. Evaluated on: 2026-04-29.
+The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. It is separate from the checked-in 228-fixture baseline above. Evaluated on: 2026-04-29.
 
 ## Contribution Prompt
 

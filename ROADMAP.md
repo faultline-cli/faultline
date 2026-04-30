@@ -496,16 +496,21 @@ The roadmap should stay disciplined about what it is not doing in this release:
 - speculative governance layers such as signing or enterprise policy control
   before the pack and provenance model is stable
 
-## v0.4.4 Release
+## v0.4.4 Release Status
 
 ### Theme
 
-Distribution surface and automation ergonomics.
+Distribution surface and automation ergonomics, now shipped.
 
-The goal of v0.4.4 is to make faultline usable without manual wiring in CI:
-a stable exit code contract that scripts can rely on, a batch command that
-surfaces recurring root causes across a build matrix, and a thin GitHub
-Action that brings the tool into the ecosystem without requiring shell glue.
+v0.4.4 made Faultline usable without manual wiring in CI: a stable exit code
+contract that scripts can rely on, a batch command that surfaces recurring
+root causes across a build matrix, and a documented GitHub Action contract for
+the separate wrapper repository.
+
+**Current repo snapshot on `main` (2026-04-30):** 193 bundled playbooks, 228
+accepted real fixtures, checked-in top-1/top-3 baseline 0.921, unmatched 0.079,
+weak-match 0.000, false-positive 0.000, published large-corpus coverage 89.4%
+on 30,094 GitHub Actions logs, published CI Go coverage 84.3%.
 
 ### Delivery Order
 
@@ -533,7 +538,7 @@ code 2.
 #### 2. `faultline batch` ✅ DONE
 
 > **Resolved:** `faultline batch <file> [file ...]` implemented in `internal/cli/cmd_batch.go`
-> and `internal/app/service.go`. Supports `--json`, `--format terminal|json|markdown`,
+> and `internal/app/service.go`. Supports `--json`, `--format terminal|json`,
 > `--playbooks`, `--playbook-pack`, `--no-history`. Exit codes 0/1/2 wired correctly.
 
 New command: `faultline batch <file> [file ...]`
@@ -561,25 +566,15 @@ cause — `missing-executable`."
 **Not in scope for v0.4.4:** parallel execution, stdin aggregation,
 per-file verbose output, markdown format. These can follow in v0.4.5.
 
-#### 3. Official GitHub Action (`faultline-action`)
+#### 3. Official GitHub Action (`faultline-action`) ✅ DONE
 
-Thin wrapper around stable CLI artifacts. Documented target for v0.4.4
-planning; implementation tracked in a separate repository.
-
-**Design constraints:**
-
-- The Action is a thin shell wrapper: no JS/TS runtime, no Docker image
-  build in the critical path
-- It downloads the versioned CLI binary from GitHub Releases (pinned SHA)
-- It calls `faultline analyze` or `faultline batch` and maps exit codes to
-  Action outcomes
-- It does not add opinions beyond what the CLI already expresses
-- The stable exit code contract (above) is a prerequisite
-
-**Not in scope for v0.4.4:** SARIF output, GitHub annotations as the primary
-output surface, auto-PR comments. The annotation path is already available
-via `--ci-annotations` on the analyze command; the Action just passes the
-flag through.
+> **Resolved:** The official [`faultline-cli/action`](https://github.com/faultline-cli/action)
+> wrapper repository is live at `faultline-cli/action@v1`. It provides a thin
+> shell-based Action with 13 inputs (`log`, `version`, `format`, `annotations`,
+> `json`, `bayes`, `workflow`, `workflow-mode`, `fail-on-silent`, `delta`,
+> `github-token`, `upload-artifacts`, `artifact-retention-days`, `job-summary`)
+> and 4 outputs (`failure-id`, `summary-markdown`, `analysis-json`, `workflow-json`).
+> Contract documented in `docs/github-action-contract.md` and linked from README.
 
 #### 4. Corpus coverage hardening — noisy log testing ✅ DONE
 

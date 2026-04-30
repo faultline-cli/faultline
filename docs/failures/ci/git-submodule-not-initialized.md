@@ -20,6 +20,7 @@ fatal: No url found for submodule path
 'git submodule' is not a git command
 does not contain .git
 missing or broken submodule
+exit code 128
 ```
 
 ## Diagnosis

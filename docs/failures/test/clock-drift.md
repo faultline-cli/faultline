@@ -19,9 +19,9 @@ time skew
 NTP
 clock drift
 time drift
-certificate expired
 certificate is not yet valid
 the system time is off
+time_t overflow
 ```
 
 ## Diagnosis
