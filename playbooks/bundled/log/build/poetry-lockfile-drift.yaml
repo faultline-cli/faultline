@@ -12,7 +12,6 @@ match:
   any:
     - poetry.lock is not consistent with pyproject.toml
     - Run `poetry lock [--no-update]` to fix it.
-    - Installing dependencies from lock file
     - version solving failed
 hypothesis:
   supports:

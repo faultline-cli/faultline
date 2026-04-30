@@ -10,10 +10,8 @@ class: dependency-removed
 mode: dependency-unavailable
 match:
   any:
-    - "404 Not Found"
     - "Package.*not found"
     - "no matching version found for"
-    - "yanked"
     - "package has been deprecated"
     - "package has been deleted"
     - "package.*is no longer"
@@ -21,6 +19,7 @@ match:
     - "package.*does not exist"
     - "error getting.*package"
     - "module.*is not available"
+    - "does not have a Release file"
 hypothesis:
   supports:
     - signal: dependency.resolution.conflict

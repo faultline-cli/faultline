@@ -87,9 +87,6 @@ match:
     - "cannot execute binary file"
     - "exec format error"
     - "exec /usr/bin/dotnet: exec format error"
-    - "QEMU"
-    - "qemu-x86_64"
-    - "qemu-aarch64"
     - "linux/amd64) does not match"
   none:
     - "no such file or directory"

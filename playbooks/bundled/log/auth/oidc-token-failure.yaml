@@ -31,8 +31,8 @@ validation: |-
 match:
   any:
     - "OIDC token"
-    - "id_token"
     - "Unable to get OIDC token"
+    - "invalid_token"
     - "JWT validation"
     - "Invalid JWT"
     - "JWT verification failed"
@@ -40,15 +40,11 @@ match:
     - "JWT signature"
     - "Malformed JWT"
     - "token is expired"
-    - "jwt="
     - "aud claim"
     - "Request claims do not match"
     - "Error getting token from GitHub's OIDC provider"
-    - "openid-configuration"
-    - "jwks"
     - "ACTIONS_ID_TOKEN_REQUEST_URL"
     - "invalid_grant"
-    - "invalid_token"
     - "token audience mismatch"
   none:
     - "no basic auth credentials"

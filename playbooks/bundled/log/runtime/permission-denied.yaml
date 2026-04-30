@@ -34,12 +34,8 @@ match:
     - "EPERM"
     - access denied
     - insufficient permissions
-    - "docker.sock"
     - "cannot create directory"
-    - "View permissions"
-    - "apparmor"
     - "ERROR 1045"
-    - "permissions are correct"
   none:
     - pull access denied for
     - may require 'docker login'

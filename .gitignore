@@ -26,3 +26,4 @@ fixtures/datasets/*
 eval-work/**/*.jsonl
 eval-work/gaps*/*
 eval-work/failed.csv
+**/*.txt

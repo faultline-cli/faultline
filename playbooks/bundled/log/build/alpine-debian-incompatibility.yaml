@@ -10,20 +10,16 @@ class: os-incompatibility
 mode: alpine-debian-mismatch
 match:
   any:
-    - "musl"
     - "libc.musl"
-    - "glibc"
     - "error loading shared libraries"
     - "not a valid ELF file"
     - "apk add.*not found"
     - "no such package"
     - "apk: command not found"
     - "apt-get: command not found"
-    - "Unable to locate package"
     - "APKINDEX.*fetch failed"
     - "GLIBCXX_"
     - "GLIBC_"
-    - "version.*not found"
     - "cannot open shared object"
     - "wrong ELF class"
 hypothesis:

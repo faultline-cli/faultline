@@ -55,10 +55,6 @@ api key is empty
   + missing-env (match.any)
   - env-var-missing (match.none)
 
-apparmor
-  + permission-denied (match.any)
-  - docker-permission-denied-nonroot (match.none)
-
 artifact download failed
   + gitlab-ci-artifact-expired (match.any)
   - artifact-upload-failure (match.none)
@@ -246,10 +242,6 @@ context access might be invalid: secrets
   - github-actions-env-not-persisted (match.none)
   - github-actions-permission (match.none)
 
-could not be resolved
-  + dotnet-restore (match.any)
-  - msbuild-error (match.none)
-
 could not build wheels for
   + pip-install-failure (match.any)
   - install-failure (match.none)
@@ -322,10 +314,6 @@ disk quota exceeded
 docker build -t
   + runner-disk-full (match.any)
   - disk-full (match.none)
-
-docker.sock
-  + permission-denied (match.any)
-  - runtime-mismatch (match.none)
 
 dockerclientproviderstrategy
   + testcontainer-startup (match.any)
@@ -629,10 +617,6 @@ host key verification failed
   - git-auth (match.none)
   - permission-denied (match.none)
   - ssh-permission-denied (match.none)
-
-id_token
-  + oidc-token-failure (match.any)
-  - http-auth-failure (match.none)
 
 imagepullbackoff
   + image-pull-backoff (match.any)
@@ -966,13 +950,6 @@ php fatal error:
   + missing-executable (match.any)
   + node-missing-executable (match.any)
 
-pip install
-  + pip-install-failure (match.any)
-  - github-actions-matrix-axis-invalid (match.none)
-  - install-failure (match.none)
-  - python-virtualenv-not-activated (match.none)
-  - tox-invocation-error (match.none)
-
 pluginresolutionexception
   + maven-dependency-resolution (match.any)
   - dependency-drift (match.none)
@@ -1042,10 +1019,6 @@ redis::cannotconnecterror
 remote: invalid username or password
   + git-auth (match.any)
   - git-shallow-checkout (match.none)
-
-repository not found
-  + git-auth (match.any)
-  + git-submodule-not-initialized (match.any)
 
 required env
   + env-var-missing (match.any)
@@ -1204,14 +1177,6 @@ unable to find package
   + dotnet-restore (match.any)
   - msbuild-error (match.none)
 
-unable to locate package
-  + alpine-debian-incompatibility (match.any)
-  + base-image-breaking-change (match.any)
-
-unable to resolve
-  + dotnet-restore (match.any)
-  - msbuild-error (match.none)
-
 unauthorized: authentication required
   + docker-auth (match.any)
   - buildkit-session-lost (match.none)
@@ -1244,10 +1209,6 @@ uploading artifacts to coordinator... forbidden
   + artifact-upload-failure (match.any)
   - gitlab-ci-artifact-expired (match.none)
   - permission-denied (match.none)
-
-uploading artifacts...
-  + artifact-upload-failure (match.any)
-  - container-crash (match.none)
 
 version conflict
   + dependency-drift (match.any)

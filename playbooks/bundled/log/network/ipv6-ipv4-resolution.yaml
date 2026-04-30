@@ -10,10 +10,6 @@ class: dns-resolution
 mode: ipv6-ipv4
 match:
   any:
-    - "AAAA"
-    - "::1"
-    - "IPv6"
-    - "ipv6"
     - "Network unreachable"
     - "connect: Network is unreachable"
     - "ECONNREFUSED.*::1"

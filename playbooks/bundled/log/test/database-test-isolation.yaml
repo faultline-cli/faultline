@@ -73,7 +73,6 @@ validation: |-
   - Confirm each test asserts only on data it created, not on total row counts.
 match:
   any:
-    - already exists
     - duplicate key value
     - "UniqueConstraintViolation"
     - "IntegrityError"

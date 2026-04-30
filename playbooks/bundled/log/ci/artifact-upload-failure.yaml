@@ -33,13 +33,10 @@ match:
   any:
     - "artifact upload failed"
     - "failed to upload artifact"
-    - "upload artifact"
     - "Error uploading"
     - "artifact not found"
     - "No artifact found"
     - "Unable to find artifact"
-    - "download artifact"
-    - "Uploading artifacts..."
     - "No files were found with the provided path"
     - "No artifacts will be uploaded"
     - "Uploading artifacts to coordinator... forbidden"

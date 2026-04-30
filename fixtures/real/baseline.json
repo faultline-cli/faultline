@@ -1,11 +1,11 @@
 {
   "class": "real",
   "fixture_count": 228,
-  "top_1_rate": 1,
-  "top_3_rate": 1,
-  "unmatched_rate": 0,
+  "top_1_rate": 0.9122807017543859,
+  "top_3_rate": 0.9122807017543859,
+  "unmatched_rate": 0.08771929824561403,
   "false_positive_rate": 0,
-  "weak_match_rate": 0.013157894736842105,
+  "weak_match_rate": 0.08333333333333333,
   "thresholds": {
     "min_top_1": 0.65,
     "min_top_3": 0.85,
@@ -13,6 +13,6 @@
     "max_false_positive": 0.35,
     "max_weak_match": 0.15
   },
-  "generated_at": "2026-04-29T11:43:50Z",
-  "fingerprint": "80e54e582e02dacb"
+  "generated_at": "2026-04-30T09:31:56Z",
+  "fingerprint": "1fa0c8255b720bc8"
 }

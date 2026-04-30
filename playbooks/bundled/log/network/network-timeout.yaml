@@ -59,6 +59,8 @@ match:
     - "go test -timeout"
     - "Test timed out"
     - "async test timed out"
+    - "DEBUG Using request timeout"
+    - "request timeout of"
 why_it_matters: |-
   ## Why it matters
 

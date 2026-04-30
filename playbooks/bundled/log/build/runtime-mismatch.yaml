@@ -41,14 +41,18 @@ validation: |-
     gone.
 match:
   any:
-    - python version
     - requires python
     - requires ruby version
-    - go version
     - unsupported python
-    - ruby version
     - go.mod requires go
-    - go version .* required
+    - "go version .* required"
+    - "python.*requires.*version"
+    - "incompatible python version"
+    - "requires Python >="
+    - "requires Python <"
+    - go version
+    - python version
+    - ruby version
   none:
     - node version
     - engines.node
@@ -61,6 +65,10 @@ match:
     - "pull access denied"
     - "may require 'docker login'"
     - docker.sock
+    - "Setup go version spec"
+    - "python version :"
+    - "ruby version :"
+    - "Print Ruby version"
 hypothesis:
   supports:
     - signal: runtime.language.version.mismatch

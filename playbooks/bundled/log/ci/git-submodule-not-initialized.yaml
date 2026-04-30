@@ -12,16 +12,9 @@ match:
   any:
     - "No url found for submodule"
     - "fatal: No url found for submodule path"
-    - "Submodule path"
-    - repository not found
-    - "submodule update --init"
     - "'git submodule' is not a git command"
-    - "already exists and is not an empty directory"
     - "does not contain .git"
-    - registered for path
-    - "submodule foreach"
     - "missing or broken submodule"
-    - please make sure you have the correct access rights
 hypothesis:
   supports:
     - signal: log.contains:no such file or directory
