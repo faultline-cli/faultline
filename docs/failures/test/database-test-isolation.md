@@ -14,7 +14,6 @@ runs, or fail only in certain orderings.
 ## Common log signals
 
 ```text
-already exists
 duplicate key value
 UniqueConstraintViolation
 IntegrityError
@@ -22,6 +21,7 @@ duplicate entry
 expected count to be
 PG::UniqueViolation
 SQLSTATE 23505
+violates unique constraint
 ```
 
 ## Diagnosis

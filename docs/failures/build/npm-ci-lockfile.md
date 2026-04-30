@@ -18,7 +18,6 @@ package.json and package-lock.json are in sync
 missing package-lock.json
 npm ERR! cipm can only install packages
 package-lock.json does not exist
-from lock file
 run `npm install` to generate a lockfile
 ```
 

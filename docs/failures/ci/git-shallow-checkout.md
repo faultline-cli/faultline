@@ -16,10 +16,10 @@ shallow update not allowed
 fatal: shallow file has changed since we read it
 git fetch --unshallow
 unshallow
-fetch-depth: 0
 No names found, cannot describe anything
 fatal: No tags can describe
 You need to fetch more history
+does not contain any version tags
 ```
 
 ## Diagnosis

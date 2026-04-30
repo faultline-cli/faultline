@@ -15,14 +15,14 @@ the exact version or the entire package no longer exists in the registry.
 ## Common log signals
 
 ```text
-404 Not Found
 Package.*not found
 no matching version found for
-yanked
 package has been deprecated
 package has been deleted
 package.*is no longer
 unable to find package
+package.*does not exist
+error getting.*package
 ```
 
 ## Diagnosis

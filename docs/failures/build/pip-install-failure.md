@@ -14,12 +14,12 @@
 ```text
 ERROR: Could not find a version that satisfies the requirement
 No matching distribution found for
-pip install
 pip._internal
 ResolutionImpossible
 Could not build wheels for
 error: command 'gcc' failed
 Ignored the following versions that require a different python version
+requires a different python version
 ```
 
 ## Diagnosis

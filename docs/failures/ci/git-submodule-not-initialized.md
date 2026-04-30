@@ -17,12 +17,9 @@ failures.
 ```text
 No url found for submodule
 fatal: No url found for submodule path
-Submodule path
-repository not found
-submodule update --init
 'git submodule' is not a git command
-already exists and is not an empty directory
 does not contain .git
+missing or broken submodule
 ```
 
 ## Diagnosis
@@ -114,7 +111,7 @@ faultline workflow build.log --json --mode agent
 
 - Git submodule not initialized or updated
 - Ci: git submodule not initialized or updated
-- please make sure you have the correct access rights
+- fatal: No url found for submodule path
 - GitHub Actions git submodule not initialized or updated
 - faultline explain git-submodule-not-initialized
 

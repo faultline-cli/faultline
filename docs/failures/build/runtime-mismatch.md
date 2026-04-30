@@ -14,14 +14,14 @@ outside the version range expected by the repository or dependency set.
 ## Common log signals
 
 ```text
-python version
 requires python
 requires ruby version
-go version
 unsupported python
-ruby version
 go.mod requires go
 go version .* required
+python.*requires.*version
+incompatible python version
+requires Python >=
 ```
 
 ## Diagnosis
@@ -73,7 +73,7 @@ faultline workflow build.log --json --mode agent
 
 - Python, Ruby, or Go runtime version mismatch
 - Build: python, ruby, or go runtime version mismatch
-- go version .* required
+- incompatible python version
 - GitHub Actions python, ruby, or go runtime version mismatch
 - faultline explain runtime-mismatch
 - Node.js python, ruby, or go runtime version mismatch

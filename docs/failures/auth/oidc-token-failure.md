@@ -13,8 +13,8 @@ An OIDC token request failed or the issued token was rejected by the cloud provi
 
 ```text
 OIDC token
-id_token
 Unable to get OIDC token
+invalid_token
 JWT validation
 Invalid JWT
 JWT verification failed

@@ -13,13 +13,12 @@
 
 ```text
 error NU
-Unable to resolve
 Package restore failed
 NuGet restore
-could not be resolved
 unable to find package
 MSBuild error
-ProjectReference
+Could not resolve SDK
+NETStandard
 ```
 
 ## Diagnosis
@@ -58,7 +57,7 @@ faultline workflow build.log --json --mode agent
 
 - .NET NuGet package restore failure
 - Build: .net nuget package restore failure
-- The given key was not present in the dictionary
+- Package restore failed
 - GitHub Actions .net nuget package restore failure
 - faultline explain dotnet-restore
 

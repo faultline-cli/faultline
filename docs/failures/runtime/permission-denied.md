@@ -18,8 +18,8 @@ EACCES
 EPERM
 access denied
 insufficient permissions
-docker.sock
 cannot create directory
+ERROR 1045
 ```
 
 ## Diagnosis

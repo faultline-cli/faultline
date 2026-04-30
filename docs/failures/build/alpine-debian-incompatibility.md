@@ -15,14 +15,14 @@ differ between `apk` (Alpine) and `apt` (Debian/Ubuntu).
 ## Common log signals
 
 ```text
-musl
 libc.musl
-glibc
 error loading shared libraries
 not a valid ELF file
 apk add.*not found
 no such package
 apk: command not found
+apt-get: command not found
+APKINDEX.*fetch failed
 ```
 
 ## Diagnosis

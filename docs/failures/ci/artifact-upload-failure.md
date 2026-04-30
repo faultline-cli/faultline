@@ -14,12 +14,12 @@ A CI job failed to upload a build artifact, or a downstream job failed to downlo
 ```text
 artifact upload failed
 failed to upload artifact
-upload artifact
 Error uploading
 artifact not found
 No artifact found
 Unable to find artifact
-download artifact
+No files were found with the provided path
+No artifacts will be uploaded
 ```
 
 ## Diagnosis

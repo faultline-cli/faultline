@@ -15,14 +15,14 @@ when the client connects over IPv4.
 ## Common log signals
 
 ```text
-AAAA
-::1
-IPv6
-ipv6
 Network unreachable
 connect: Network is unreachable
 ECONNREFUSED.*::1
 getaddrinfo ENOTFOUND
+curl.*Could not resolve host
+prefer-ipv4
+prefer-ipv6
+ADDRESS_FAMILY_NOT_SUPPORTED
 ```
 
 ## Diagnosis

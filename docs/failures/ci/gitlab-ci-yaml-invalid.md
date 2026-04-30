@@ -16,10 +16,10 @@ ERROR: Config file is not valid
 ERROR: Job is invalid
 config validation error
 jobs:.*config contains unknown keys
-Included file
 error validating
-did you mean
 needs.*not defined
+keyword.*invalid
+script should be a list or a
 ```
 
 ## Diagnosis

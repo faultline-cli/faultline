@@ -13,13 +13,11 @@ Yarn was run with `--frozen-lockfile` (the recommended CI flag) but the `yarn.lo
 
 ```text
 your lockfile needs to be updated
-frozen-lockfile
 yarn.lock: No such file or directory
 error your lockfile needs to be updated
-yarn install --frozen-lockfile
 YN0028
---immutable
 The lockfile would have been modified by this install
+lockfile is frozen
 ```
 
 ## Diagnosis

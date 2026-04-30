@@ -18,7 +18,6 @@ authentication failed for
 repository not found
 remote: invalid username or password
 fatal: credential helper
-Fetching the repository
 ```
 
 ## Diagnosis
