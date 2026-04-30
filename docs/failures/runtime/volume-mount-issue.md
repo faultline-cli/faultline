@@ -123,4 +123,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/runtime/volume-mount-issue.yaml](../../playbooks/bundled/log/runtime/volume-mount-issue.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/runtime/volume-mount-issue.yaml](../../../playbooks/bundled/log/runtime/volume-mount-issue.yaml). Do not edit directly — run `make docs-generate`.*

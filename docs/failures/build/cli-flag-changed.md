@@ -122,4 +122,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/cli-flag-changed.yaml](../../playbooks/bundled/log/build/cli-flag-changed.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/cli-flag-changed.yaml](../../../playbooks/bundled/log/build/cli-flag-changed.yaml). Do not edit directly — run `make docs-generate`.*

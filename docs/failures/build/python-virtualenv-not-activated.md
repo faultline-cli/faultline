@@ -104,4 +104,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/python-virtualenv-not-activated.yaml](../../playbooks/bundled/log/build/python-virtualenv-not-activated.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/python-virtualenv-not-activated.yaml](../../../playbooks/bundled/log/build/python-virtualenv-not-activated.yaml). Do not edit directly — run `make docs-generate`.*

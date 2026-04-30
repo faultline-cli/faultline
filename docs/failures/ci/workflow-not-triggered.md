@@ -121,4 +121,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/ci/workflow-not-triggered.yaml](../../playbooks/bundled/log/ci/workflow-not-triggered.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/ci/workflow-not-triggered.yaml](../../../playbooks/bundled/log/ci/workflow-not-triggered.yaml). Do not edit directly — run `make docs-generate`.*

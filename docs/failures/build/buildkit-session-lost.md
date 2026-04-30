@@ -75,4 +75,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/buildkit-session-lost.yaml](../../playbooks/bundled/log/build/buildkit-session-lost.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/buildkit-session-lost.yaml](../../../playbooks/bundled/log/build/buildkit-session-lost.yaml). Do not edit directly — run `make docs-generate`.*

@@ -101,4 +101,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/jest-command-not-found.yaml](../../playbooks/bundled/log/test/jest-command-not-found.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/jest-command-not-found.yaml](../../../playbooks/bundled/log/test/jest-command-not-found.yaml). Do not edit directly — run `make docs-generate`.*

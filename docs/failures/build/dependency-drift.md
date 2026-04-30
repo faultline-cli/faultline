@@ -73,4 +73,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/dependency-drift.yaml](../../playbooks/bundled/log/build/dependency-drift.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/dependency-drift.yaml](../../../playbooks/bundled/log/build/dependency-drift.yaml). Do not edit directly — run `make docs-generate`.*

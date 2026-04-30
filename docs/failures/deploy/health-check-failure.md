@@ -88,4 +88,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/deploy/health-check-failure.yaml](../../playbooks/bundled/log/deploy/health-check-failure.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/deploy/health-check-failure.yaml](../../../playbooks/bundled/log/deploy/health-check-failure.yaml). Do not edit directly — run `make docs-generate`.*

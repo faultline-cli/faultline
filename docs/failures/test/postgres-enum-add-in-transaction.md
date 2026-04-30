@@ -117,4 +117,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/postgres-enum-add-in-transaction.yaml](../../playbooks/bundled/log/test/postgres-enum-add-in-transaction.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/postgres-enum-add-in-transaction.yaml](../../../playbooks/bundled/log/test/postgres-enum-add-in-transaction.yaml). Do not edit directly — run `make docs-generate`.*

@@ -99,4 +99,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/postgres-version-incompatible-migration.yaml](../../playbooks/bundled/log/test/postgres-version-incompatible-migration.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/postgres-version-incompatible-migration.yaml](../../../playbooks/bundled/log/test/postgres-version-incompatible-migration.yaml). Do not edit directly — run `make docs-generate`.*

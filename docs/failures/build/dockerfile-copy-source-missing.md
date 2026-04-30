@@ -101,4 +101,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/dockerfile-copy-source-missing.yaml](../../playbooks/bundled/log/build/dockerfile-copy-source-missing.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/dockerfile-copy-source-missing.yaml](../../../playbooks/bundled/log/build/dockerfile-copy-source-missing.yaml). Do not edit directly — run `make docs-generate`.*

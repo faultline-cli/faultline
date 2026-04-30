@@ -139,4 +139,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/alpine-debian-incompatibility.yaml](../../playbooks/bundled/log/build/alpine-debian-incompatibility.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/alpine-debian-incompatibility.yaml](../../../playbooks/bundled/log/build/alpine-debian-incompatibility.yaml). Do not edit directly — run `make docs-generate`.*

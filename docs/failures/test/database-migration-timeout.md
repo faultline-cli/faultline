@@ -109,4 +109,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/database-migration-timeout.yaml](../../playbooks/bundled/log/test/database-migration-timeout.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/database-migration-timeout.yaml](../../../playbooks/bundled/log/test/database-migration-timeout.yaml). Do not edit directly — run `make docs-generate`.*

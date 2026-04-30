@@ -69,7 +69,7 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-29 v0.4.4 feature release | 193 | 228 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-30 main baseline after overlap review | 193 | 228 | 32 | 91.2% | 91.2% | 8.8% | 0 |
 | 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
-| v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
+| 2026-05-01 v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
@@ -135,7 +135,7 @@ The log-chunks dataset has been evaluated separately (87.2% coverage, 102/117 fi
 
 ### What This Number Means
 
-The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. It is separate from the checked-in 228-fixture baseline above. Evaluated on: 2026-04-29.
+The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. It is separate from the checked-in 211-fixture baseline above. Evaluated on: 2026-04-29.
 
 ## Contribution Prompt
 

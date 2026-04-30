@@ -70,4 +70,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/ci/runner-disk-full.yaml](../../playbooks/bundled/log/ci/runner-disk-full.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/ci/runner-disk-full.yaml](../../../playbooks/bundled/log/ci/runner-disk-full.yaml). Do not edit directly — run `make docs-generate`.*

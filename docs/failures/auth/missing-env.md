@@ -83,4 +83,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/auth/missing-env.yaml](../../playbooks/bundled/log/auth/missing-env.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/auth/missing-env.yaml](../../../playbooks/bundled/log/auth/missing-env.yaml). Do not edit directly — run `make docs-generate`.*

@@ -94,4 +94,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/topology-boundary-crossed.yaml](../../playbooks/bundled/log/build/topology-boundary-crossed.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/topology-boundary-crossed.yaml](../../../playbooks/bundled/log/build/topology-boundary-crossed.yaml). Do not edit directly — run `make docs-generate`.*

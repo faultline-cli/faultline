@@ -66,4 +66,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/deploy/image-pull-backoff.yaml](../../playbooks/bundled/log/deploy/image-pull-backoff.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/deploy/image-pull-backoff.yaml](../../../playbooks/bundled/log/deploy/image-pull-backoff.yaml). Do not edit directly — run `make docs-generate`.*

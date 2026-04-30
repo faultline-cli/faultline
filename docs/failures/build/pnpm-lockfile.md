@@ -64,4 +64,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/pnpm-lockfile.yaml](../../playbooks/bundled/log/build/pnpm-lockfile.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/pnpm-lockfile.yaml](../../../playbooks/bundled/log/build/pnpm-lockfile.yaml). Do not edit directly — run `make docs-generate`.*

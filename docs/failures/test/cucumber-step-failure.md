@@ -104,4 +104,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/cucumber-step-failure.yaml](../../playbooks/bundled/log/test/cucumber-step-failure.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/cucumber-step-failure.yaml](../../../playbooks/bundled/log/test/cucumber-step-failure.yaml). Do not edit directly — run `make docs-generate`.*

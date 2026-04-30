@@ -66,4 +66,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/pytest-fixture-error.yaml](../../playbooks/bundled/log/test/pytest-fixture-error.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/pytest-fixture-error.yaml](../../../playbooks/bundled/log/test/pytest-fixture-error.yaml). Do not edit directly — run `make docs-generate`.*

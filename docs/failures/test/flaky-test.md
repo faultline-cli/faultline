@@ -78,4 +78,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/test/flaky-test.yaml](../../playbooks/bundled/log/test/flaky-test.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/test/flaky-test.yaml](../../../playbooks/bundled/log/test/flaky-test.yaml). Do not edit directly — run `make docs-generate`.*

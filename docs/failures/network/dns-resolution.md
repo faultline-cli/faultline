@@ -80,4 +80,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/network/dns-resolution.yaml](../../playbooks/bundled/log/network/dns-resolution.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/network/dns-resolution.yaml](../../../playbooks/bundled/log/network/dns-resolution.yaml). Do not edit directly — run `make docs-generate`.*

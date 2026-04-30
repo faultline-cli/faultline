@@ -67,4 +67,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/auth/aws-credentials.yaml](../../playbooks/bundled/log/auth/aws-credentials.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/auth/aws-credentials.yaml](../../../playbooks/bundled/log/auth/aws-credentials.yaml). Do not edit directly — run `make docs-generate`.*

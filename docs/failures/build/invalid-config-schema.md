@@ -112,4 +112,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/invalid-config-schema.yaml](../../playbooks/bundled/log/build/invalid-config-schema.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/invalid-config-schema.yaml](../../../playbooks/bundled/log/build/invalid-config-schema.yaml). Do not edit directly — run `make docs-generate`.*

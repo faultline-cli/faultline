@@ -146,4 +146,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/network/ipv6-ipv4-resolution.yaml](../../playbooks/bundled/log/network/ipv6-ipv4-resolution.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/network/ipv6-ipv4-resolution.yaml](../../../playbooks/bundled/log/network/ipv6-ipv4-resolution.yaml). Do not edit directly — run `make docs-generate`.*

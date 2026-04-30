@@ -98,4 +98,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/gradle-daemon-timeout.yaml](../../playbooks/bundled/log/build/gradle-daemon-timeout.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/gradle-daemon-timeout.yaml](../../../playbooks/bundled/log/build/gradle-daemon-timeout.yaml). Do not edit directly — run `make docs-generate`.*

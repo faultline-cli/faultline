@@ -122,4 +122,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/workspace-dependency-mismatch.yaml](../../playbooks/bundled/log/build/workspace-dependency-mismatch.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/workspace-dependency-mismatch.yaml](../../../playbooks/bundled/log/build/workspace-dependency-mismatch.yaml). Do not edit directly — run `make docs-generate`.*

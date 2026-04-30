@@ -99,4 +99,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/ci/circleci-resource-class-oom.yaml](../../playbooks/bundled/log/ci/circleci-resource-class-oom.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/ci/circleci-resource-class-oom.yaml](../../../playbooks/bundled/log/ci/circleci-resource-class-oom.yaml). Do not edit directly — run `make docs-generate`.*

@@ -68,4 +68,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/node-out-of-memory.yaml](../../playbooks/bundled/log/build/node-out-of-memory.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/node-out-of-memory.yaml](../../../playbooks/bundled/log/build/node-out-of-memory.yaml). Do not edit directly — run `make docs-generate`.*

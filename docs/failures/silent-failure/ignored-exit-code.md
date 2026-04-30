@@ -80,4 +80,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/silent/ignored-exit-code.yaml](../../playbooks/bundled/log/silent/ignored-exit-code.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/silent/ignored-exit-code.yaml](../../../playbooks/bundled/log/silent/ignored-exit-code.yaml). Do not edit directly — run `make docs-generate`.*

@@ -80,4 +80,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/ci/circleci-config-validation.yaml](../../playbooks/bundled/log/ci/circleci-config-validation.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/ci/circleci-config-validation.yaml](../../../playbooks/bundled/log/ci/circleci-config-validation.yaml). Do not edit directly — run `make docs-generate`.*

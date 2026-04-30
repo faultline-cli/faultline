@@ -75,4 +75,4 @@ cat build.log | faultline analyze
 
 ## Related failures
 
-- [Maven or Gradle dependency resolution failure](../node/npm-install-failure.md)
+- [Maven dependency resolution failure](../build/maven-dependency-resolution.md)

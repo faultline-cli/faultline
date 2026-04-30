@@ -98,4 +98,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/network/rate-limited.yaml](../../playbooks/bundled/log/network/rate-limited.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/network/rate-limited.yaml](../../../playbooks/bundled/log/network/rate-limited.yaml). Do not edit directly — run `make docs-generate`.*

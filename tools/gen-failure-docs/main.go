@@ -188,13 +188,10 @@ var tmplFuncs = template.FuncMap{
 		}
 		return ss[:n]
 	},
-	"searchPhrases": searchPhrases,
-	"firstSentence": firstSentence,
-	"catTitle":      catTitle,
-	"relPlaybookLink": func(sourceRel, catDir string) string {
-		// From docs/failures/<catDir>/<id>.md we need ../../playbooks/...
-		return "../../" + sourceRel
-	},
+	"searchPhrases":   searchPhrases,
+	"firstSentence":   firstSentence,
+	"catTitle":        catTitle,
+	"relPlaybookLink": relPlaybookLink,
 }
 
 var pageTmpl = template.Must(template.New("page").Funcs(tmplFuncs).Parse(pageTemplateText))
@@ -356,6 +353,16 @@ func catTitle(name string) string {
 		}
 	}
 	return strings.Join(words, " ")
+}
+
+func relPlaybookLink(sourceRel, catDir string) string {
+	pageRelPath := filepath.ToSlash(filepath.Join(catDir, "playbook.md"))
+	pageDir := filepath.Dir(pageRelPath)
+	if pageDir == "." {
+		return "../../" + sourceRel
+	}
+	depth := len(strings.Split(pageDir, "/"))
+	return strings.Repeat("../", depth+2) + sourceRel
 }
 
 // normCatDir converts a category string to a directory-safe slug (lowercase, hyphens).

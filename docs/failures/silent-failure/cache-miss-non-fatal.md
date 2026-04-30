@@ -82,4 +82,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/silent/cache-miss-non-fatal.yaml](../../playbooks/bundled/log/silent/cache-miss-non-fatal.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/silent/cache-miss-non-fatal.yaml](../../../playbooks/bundled/log/silent/cache-miss-non-fatal.yaml). Do not edit directly — run `make docs-generate`.*

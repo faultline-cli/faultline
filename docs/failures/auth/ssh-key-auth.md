@@ -62,4 +62,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/auth/ssh-key-auth.yaml](../../playbooks/bundled/log/auth/ssh-key-auth.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/auth/ssh-key-auth.yaml](../../../playbooks/bundled/log/auth/ssh-key-auth.yaml). Do not edit directly — run `make docs-generate`.*

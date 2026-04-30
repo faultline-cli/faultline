@@ -127,4 +127,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/multistage-build-missing-artifact.yaml](../../playbooks/bundled/log/build/multistage-build-missing-artifact.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/multistage-build-missing-artifact.yaml](../../../playbooks/bundled/log/build/multistage-build-missing-artifact.yaml). Do not edit directly — run `make docs-generate`.*

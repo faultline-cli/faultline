@@ -124,4 +124,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/base-image-breaking-change.yaml](../../playbooks/bundled/log/build/base-image-breaking-change.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/base-image-breaking-change.yaml](../../../playbooks/bundled/log/build/base-image-breaking-change.yaml). Do not edit directly — run `make docs-generate`.*

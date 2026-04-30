@@ -507,7 +507,7 @@ contract that scripts can rely on, a batch command that surfaces recurring
 root causes across a build matrix, and a documented GitHub Action contract for
 the separate wrapper repository.
 
-**Current repo snapshot on `main` (2026-04-30):** 193 bundled playbooks, 211
+**Current repo snapshot on `main` (2026-05-01):** 193 bundled playbooks, 211
 accepted real fixtures, checked-in top-1/top-3 baseline 1.000, unmatched 0.000,
 weak-match 0.000, false-positive 0.000, published large-corpus coverage 89.4%
 on 30,094 GitHub Actions logs, published CI Go coverage 84.3%.

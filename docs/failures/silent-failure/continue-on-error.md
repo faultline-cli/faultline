@@ -80,4 +80,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/silent/continue-on-error.yaml](../../playbooks/bundled/log/silent/continue-on-error.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/silent/continue-on-error.yaml](../../../playbooks/bundled/log/silent/continue-on-error.yaml). Do not edit directly — run `make docs-generate`.*

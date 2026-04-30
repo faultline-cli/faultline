@@ -114,4 +114,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/build/msbuild-error.yaml](../../playbooks/bundled/log/build/msbuild-error.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/build/msbuild-error.yaml](../../../playbooks/bundled/log/build/msbuild-error.yaml). Do not edit directly — run `make docs-generate`.*

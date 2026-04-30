@@ -56,4 +56,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/source/unawaited-promise.yaml](../../playbooks/bundled/source/unawaited-promise.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/source/unawaited-promise.yaml](../../../playbooks/bundled/source/unawaited-promise.yaml). Do not edit directly — run `make docs-generate`.*

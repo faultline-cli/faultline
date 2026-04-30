@@ -122,4 +122,4 @@ faultline workflow build.log --json --mode agent
 
 ---
 
-*Generated from [playbooks/bundled/log/ci/github-actions-env-not-persisted.yaml](../../playbooks/bundled/log/ci/github-actions-env-not-persisted.yaml). Do not edit directly — run `make docs-generate`.*
+*Generated from [playbooks/bundled/log/ci/github-actions-env-not-persisted.yaml](../../../playbooks/bundled/log/ci/github-actions-env-not-persisted.yaml). Do not edit directly — run `make docs-generate`.*
