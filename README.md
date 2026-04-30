@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-92.1%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-89.4%25-brightgreen)](docs/fixture-corpus.md#large-scale-real-world-evaluation)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![211 real fixtures](https://img.shields.io/badge/real_fixtures-211-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-89.4%25-brightgreen)](docs/fixture-corpus.md#large-scale-real-world-evaluation)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
@@ -28,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.4.4** — 193 bundled playbooks · 228 real fixtures · checked-in baseline top-1/top-3: 0.921 · unmatched: 0.079 · weak-match: 0.000 · false-positive: 0.000 · **89.4% match on 30,094 real-world GitHub Actions logs**
+**v0.4.4** — 193 bundled playbooks · 211 real fixtures · checked-in baseline top-1/top-3: 1.000 · unmatched: 0.000 · weak-match: 0.000 · false-positive: 0.000 · **89.4% match on 30,094 real-world GitHub Actions logs**
 
 ## ⚡ Install
 
@@ -175,7 +175,7 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 - **First production use of playbook inheritance** — `node-missing-executable` extends `missing-executable` with Node-specific patterns and runner exclusions
 - **NativeAny scoring** — child playbooks score only from their own distinctive `match.any` patterns; inherited patterns contribute to evidence but not to the child's score
 - **Full ontology coverage** — all 193 playbooks tagged with `domain`, `class`, `mode`, and `tags`
-- **Current checked-in real-fixture baseline** — top-1/top-3 0.921 (210/228), unmatched 0.079 (18/228), weak-match 0.000, false-positive 0.000
+- **Current checked-in real-fixture baseline** — top-1/top-3 1.000 (211/211), unmatched 0.000 (0/211), weak-match 0.000, false-positive 0.000
 - **Published CI Go coverage** — 84.3% from the repository `go test ./... -coverprofile` workflow
 - **13 new inheritance tests** in `internal/playbooks/inheritance_test.go`
 

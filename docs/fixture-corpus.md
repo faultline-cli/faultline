@@ -5,10 +5,10 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 ## Current Snapshot
 
 - Bundled playbooks: 193
-- Accepted real fixtures: 228
-- Top-1 baseline pass rate: 92.1% (210/228)
-- Top-3 baseline pass rate: 92.1% (210/228)
-- Unmatched fixtures: 18 (7.9%)
+- Accepted real fixtures: 211
+- Top-1 baseline pass rate: 100% (211/211)
+- Top-3 baseline pass rate: 100% (211/211)
+- Unmatched fixtures: 0 (0.0%)
 - False positives: 0
 - Weak matches: 0 (0.0%)
 - Fixture metadata validation: required for real and staging corpora
@@ -69,12 +69,13 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-29 v0.4.4 feature release | 193 | 228 | 32 | 100% | 100% | 0 | 0 |
 | 2026-04-30 main baseline after overlap review | 193 | 228 | 32 | 91.2% | 91.2% | 8.8% | 0 |
 | 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
+| v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The corpus mix is still GitHub-heavy: 116 GitHub fixtures (51%) out of 228 accepted real fixtures.
+- The corpus mix is still GitHub-heavy: 103 GitHub fixtures (49%) out of 211 accepted real fixtures.
 - The current baseline shows 18 unmatched fixtures and zero weak matches. All 18 unmatched are corpus quality issues (YAML workflow configs, positive resolution comments, or successful output with no error signals) that cannot be addressed with playbook changes alone.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
@@ -84,7 +85,7 @@ Append one row per release cut so corpus growth and match stability stay visible
 
 ## Large-Scale Real-World Evaluation
 
-The checked-in regression corpus (228 fixtures) is the deterministic trust gate. A separate large-scale evaluation validates that the bundled playbooks cover the failure patterns that actually appear at production volume.
+The checked-in regression corpus (211 fixtures) is the deterministic trust gate. A separate large-scale evaluation validates that the bundled playbooks cover the failure patterns that actually appear at production volume.
 
 **Dataset: github-actions-2026-04-29**
 

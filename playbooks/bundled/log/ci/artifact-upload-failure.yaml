@@ -41,6 +41,7 @@ match:
     - "No artifacts will be uploaded"
     - "Uploading artifacts to coordinator... forbidden"
     - "responseStatus=403 Forbidden"
+    - "if-no-files-found: error"
   none:
     - "artifacts have expired"
     - "expired artifact"
