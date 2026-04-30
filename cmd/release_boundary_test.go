@@ -56,6 +56,7 @@ func TestExampleMarkdownSnapshots(t *testing.T) {
 		expectedPath string
 	}{
 		{logPath: "examples/docker-auth.log", expectedPath: "examples/docker-auth.expected.md"},
+		{logPath: "examples/lockfile-drift.log", expectedPath: "examples/lockfile-drift.expected.md"},
 		{logPath: "examples/missing-executable.log", expectedPath: "examples/missing-executable.expected.md"},
 		{logPath: "examples/runtime-mismatch.log", expectedPath: "examples/runtime-mismatch.expected.md"},
 	}

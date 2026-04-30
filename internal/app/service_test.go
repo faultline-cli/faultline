@@ -1814,3 +1814,59 @@ func TestFixturesIngestInvalidRootReturnsError(t *testing.T) {
 		t.Fatal("expected error for non-existent ingest root, got nil")
 	}
 }
+
+// ── Bayesian rank-stability gate ─────────────────────────────────────────────
+
+// TestAnalyzeBayesTopResultMatchesBaseline is a rank-stability gate.
+// It verifies that enabling Bayesian reranking does not silently flip the top
+// result for canonical input relative to the deterministic baseline.
+//
+// If this test fails after a playbook or scoring change, a base-score update
+// may have caused an unintended rank inversion. Update wantID only when the
+// change is intentional and review the new top result before merging.
+func TestAnalyzeBayesTopResultMatchesBaseline(t *testing.T) {
+	// Canonical log with a well-established top match. Update wantID deliberately.
+	const (
+		canonicalLog = "pull access denied\nError response from daemon: authentication required\n"
+		wantID       = "docker-auth"
+	)
+
+	svc := NewService()
+	opts := AnalyzeOptions{
+		OutputOptions: OutputOptions{JSON: true},
+		Store:         "off",
+		PlaybookDir:   repoPlaybookDir(),
+	}
+
+	topFailureID := func(t *testing.T, label string, o AnalyzeOptions) string {
+		t.Helper()
+		var buf bytes.Buffer
+		if err := svc.Analyze(strings.NewReader(canonicalLog), "stdin", o, &buf); err != nil {
+			t.Fatalf("%s Analyze: %v", label, err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+			t.Fatalf("%s unmarshal: %v", label, err)
+		}
+		results, _ := payload["results"].([]any)
+		if len(results) == 0 {
+			t.Fatalf("%s: no results in analysis output", label)
+		}
+		return results[0].(map[string]any)["failure_id"].(string)
+	}
+
+	baseID := topFailureID(t, "base", opts)
+	bayesOpts := opts
+	bayesOpts.BayesEnabled = true
+	bayesID := topFailureID(t, "bayes", bayesOpts)
+
+	if baseID != wantID {
+		t.Errorf("base top result = %q, want %q (update wantID if this is intentional)", baseID, wantID)
+	}
+	if bayesID != wantID {
+		t.Errorf("bayes top result = %q, want %q (update wantID if this is intentional)", bayesID, wantID)
+	}
+	if baseID != bayesID {
+		t.Errorf("Bayes rank inversion detected for canonical log: base=%q bayes=%q", baseID, bayesID)
+	}
+}

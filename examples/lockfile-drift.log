@@ -1,0 +1,5 @@
+Run npm ci
+npm ERR! code EUSAGE
+npm ERR! `npm ci` can only install packages when your package.json and package-lock.json are in sync.
+npm ERR! Missing: vite@5.2.0 from lock file
+npm ERR! Run `npm install` to update your package-lock.json.

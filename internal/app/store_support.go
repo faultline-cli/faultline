@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"faultline/internal/artifact"
@@ -39,6 +41,9 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 		return prepared, err
 	}
 	defer st.Close()
+	if info.Degraded {
+		fmt.Fprintf(os.Stderr, "WARN: faultline store degraded to no-op: %s\n", info.Warning)
+	}
 
 	ctx := context.Background()
 	now := optionNow(opts)

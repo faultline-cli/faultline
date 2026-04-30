@@ -1021,3 +1021,30 @@ playbook_hooks:
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+// TestLoadPacksIsDeterministic verifies that loading the same packs twice
+// produces an identical playbook set in the same order. This is the enforcement
+// gate for the pack-load-order determinism invariant: if this test fails,
+// a random-map iteration or file-system ordering change has broken determinism.
+func TestLoadPacksIsDeterministic(t *testing.T) {
+	bundledDir := "../../playbooks/bundled"
+	packs := []Pack{{Name: BundledPackName, Root: bundledDir}}
+
+	first, err := LoadPacks(packs)
+	if err != nil {
+		t.Fatalf("first LoadPacks: %v", err)
+	}
+	second, err := LoadPacks(packs)
+	if err != nil {
+		t.Fatalf("second LoadPacks: %v", err)
+	}
+
+	if len(first) != len(second) {
+		t.Fatalf("playbook count differs between loads: first=%d second=%d", len(first), len(second))
+	}
+	for i := range first {
+		if first[i].ID != second[i].ID {
+			t.Errorf("playbook[%d] ordering differs: first=%q second=%q", i, first[i].ID, second[i].ID)
+		}
+	}
+}

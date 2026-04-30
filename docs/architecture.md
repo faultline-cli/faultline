@@ -298,3 +298,39 @@ It does not re-run analysis; it only compares the stored payloads.
 - evidence, repo context, and delta-signal fields are diffed as ordered string sets
 - output is stable and machine-readable with `--json`, or human-readable via terminal and markdown format
 - the compare report is intentionally narrow: it surfaces what changed, not why
+
+## Architectural gates (pre-Team Phase 1)
+
+Two structural decisions must be made before Team Phase 1 features land. They
+are recorded here so they remain visible and do not drift into undecided state.
+
+### `internal/app` sub-package decomposition
+
+`internal/app` owns eleven use-cases today (analyze, inspect, fix, list, explain,
+workflow, guard, compare, replay, trace, fixture-corpus). As Team features arrive,
+new use-cases must not land in `internal/app` without first establishing a
+sub-package boundary. The pattern to follow:
+
+- Extract one or two use-cases into `internal/app/<name>` sub-packages.
+- Keep shared option types (`AnalyzeOptions`, `OutputOptions`, etc.) in
+  `internal/app` for backward compatibility with `internal/cli` callers.
+- New Team use-cases belong in `internal/app/team/<name>`, not in the top-level
+  `internal/app` package.
+
+**Status (2026-05-01):** not yet decomposed. Must be resolved before Team Phase 1
+adds any new use-cases. Tracked as a blocking pre-condition for Team Phase 1.
+
+### Core/Team boundary enforcement
+
+The Core/Team commercial boundary is currently prose-documented (see
+`docs/release-boundary.md`) and not enforced by Go build tags or package structure.
+
+**Decision (2026-05-01):** accept prose documentation as sufficient for the
+current Core-only surface. Enforce via code structure when Team Phase 1 begins:
+Team use-cases must live in a distinct package path (e.g. `internal/app/team/`)
+that is absent from all Core command import chains. A CI lint step verifying that
+Core command files do not import `internal/app/team` should ship alongside the
+first Team feature, not after.
+
+Build tag enforcement is not required before Team Phase 1 begins. It is required
+to ship with the first Team feature.

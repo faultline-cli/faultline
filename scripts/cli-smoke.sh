@@ -49,6 +49,8 @@ grep -F "docker-auth" "$TMP_DIR/analyze.txt" >/dev/null
 
 run_compare "docker-auth.expected.md" "$ROOT_DIR/examples/docker-auth.expected.md" \
 	"$BINARY" analyze "$ROOT_DIR/examples/docker-auth.log" --format markdown --no-history --git=false
+run_compare "lockfile-drift.expected.md" "$ROOT_DIR/examples/lockfile-drift.expected.md" \
+	"$BINARY" analyze "$ROOT_DIR/examples/lockfile-drift.log" --format markdown --no-history --git=false
 run_compare "missing-executable.expected.md" "$ROOT_DIR/examples/missing-executable.expected.md" \
 	"$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --format markdown --no-history --git=false
 run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.expected.md" \

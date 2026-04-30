@@ -7,11 +7,11 @@
 - 1 prior top-diagnosis evidence line(s) disappeared
 ## Diagnosis
 - Previous: `missing-executable` (Required executable or runtime binary missing) 60%
-- Current: `runtime-mismatch` (Python, Ruby, or Go runtime version mismatch) 83%
+- Current: `runtime-mismatch` (Python, Ruby, or Go runtime version mismatch) 89%
 - Diagnosis changed: yes
 - Artifact status changed: no
 ## Evidence Changes
-- Added: Go Version: go1.26.0
+- Added: ERROR: Package analytics-worker requires Python >=3.12, but the active interpreter is 3.10.13
 - Removed: exec /__e/node20/bin/node: no such file or directory
 ## Fix Step Changes
 - Added: Identify the required version from the repository source of truth:
