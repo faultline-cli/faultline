@@ -2,17 +2,18 @@
 
 | Metric | Value |
 |--------|-------|
-| Fixtures | 46,348 |
-| Matched | 34,309 |
-| Coverage | 74.02% |
-| Determinism | unknown |
+| Dataset | github-actions-2026-04-29 |
+| Logs | 30,094 |
+| Matched | 26,915 |
+| Coverage | 89.4% |
+| Determinism | deterministic |
 
-_Generated: 2026-04-26T08:28:17.005389Z_
+_Generated: 2026-04-30T00:00:00Z_
 
-**Top covered**: ffmpeg-avconv-missing, youtube-dl-test-failure, go-test-failure, tox-invocation-error, cucumber-step-failure
+**Top covered**: container-crash, eslint-failure, buildkit-session-lost, ignored-exit-code, pnpm-lockfile
 
-**Top gaps**: 2f3942e9 (11 cases); 249d8ae2 (11 cases); 8b75bb23 (10 cases); 9851e304 (10 cases); df423c00 (10 cases)
+**Top gaps**: singleton clusters (3,179 unmatched logs, 10.6%). See `eval-work/github-actions-2026-04-29-gaps/` for samples.
 
 **Datasets included:**
-- log-chunks: 102/117 (87.18%)
-- travis-torrent-2017: 34207/46231 (73.99%)
+- github-actions-2026-04-29: 26915/30094 (89.4%)
+- log-chunks: 102/117 (87.2%) — pending re-evaluation against v0.4.4

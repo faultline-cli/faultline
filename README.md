@@ -1,6 +1,6 @@
 # Faultline
 
-[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-74.0%25-brightgreen)](eval-work/badge.json.md)
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![193 playbooks](https://img.shields.io/badge/playbooks-193-blue)](docs/playbooks.md) [![top-1 accuracy](https://img.shields.io/badge/top--1_accuracy-100%25-brightgreen)](docs/fixture-corpus.md) [![228 real fixtures](https://img.shields.io/badge/real_fixtures-228-informational)](docs/fixture-corpus.md) [![go coverage](https://img.shields.io/badge/go_coverage-84.3%25-blue)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml) [![corpus coverage](https://img.shields.io/badge/corpus_coverage-89.4%25-brightgreen)](docs/fixture-corpus.md#large-scale-real-world-evaluation)
 
 Stop spelunking CI logs. Point Faultline at the failure and get the diagnosis.
 
@@ -28,7 +28,7 @@ Fix:
 No digging through 2,000 lines of output. No asking an LLM to guess.
 The diagnosis is backed by matched evidence, sourced from an inspectable playbook, and stable enough to pipe into automation.
 
-**v0.4.4** — 193 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000
+**v0.4.4** — 193 bundled playbooks · 228 real fixtures · top-1: 1.000 · top-3: 1.000 · unmatched: 0.000 · false-positive: 0.000 · **89.4% match on 30,094 real-world GitHub Actions logs**
 
 ## ⚡ Install
 
@@ -58,7 +58,9 @@ Determinism is the contract, not a feature flag. By default, the same log and pl
 
 ## 🔍 What it catches
 
-193 playbooks covering the failures that actually break builds in production CI:
+193 playbooks covering the failures that actually break builds in production CI.
+
+**Validated at scale:** 89.4% match rate on 30,094 real-world GitHub Actions failure logs collected from public repositories in early 2026. The top 20 matched failure classes cover 74% of all matched cases, with `container-crash`, `eslint-failure`, `buildkit-session-lost`, `ignored-exit-code`, and `pnpm-lockfile` alone accounting for over 50%. See [docs/fixture-corpus.md](docs/fixture-corpus.md#large-scale-real-world-evaluation) for full results.
 
 | Category | Examples |
 |---|---|

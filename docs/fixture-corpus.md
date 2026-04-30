@@ -83,9 +83,61 @@ Append one row per release cut so corpus growth and match stability stay visible
   store-backed app tests. That keeps recurrence grouping and output
   determinism reviewable without inflating the release-gated real corpus.
 
-## Contribution Prompt
+## Large-Scale Real-World Evaluation
 
-If Faultline misses a failure class, contribute a sanitized public log:
+The checked-in regression corpus (228 fixtures) is the deterministic trust gate. A separate large-scale evaluation validates that the bundled playbooks cover the failure patterns that actually appear at production volume.
+
+**Dataset: github-actions-2026-04-29**
+
+30,094 real-world GitHub Actions failure logs collected from public repositories in early 2026, evaluated against the v0.4.4 playbook set.
+
+| Metric | Value |
+| --- | --- |
+| Total logs | 30,094 |
+| Matched | 26,915 |
+| Unmatched | 3,179 |
+| Coverage | **89.4%** |
+
+### Top 20 Matched Failure Classes
+
+| Rank | Failure ID | Count | % of matched |
+| --- | --- | --- | --- |
+| 1 | container-crash | 5,597 | 20.8% |
+| 2 | eslint-failure | 3,457 | 12.8% |
+| 3 | buildkit-session-lost | 1,827 | 6.8% |
+| 4 | ignored-exit-code | 1,588 | 5.9% |
+| 5 | pnpm-lockfile | 1,279 | 4.8% |
+| 6 | testcontainer-startup | 889 | 3.3% |
+| 7 | node-version-mismatch | 692 | 2.6% |
+| 8 | go-test-failure | 636 | 2.4% |
+| 9 | git-shallow-checkout | 617 | 2.3% |
+| 10 | runtime-mismatch | 592 | 2.2% |
+| 11 | artifact-upload-failure | 575 | 2.1% |
+| 12 | cache-miss-non-fatal | 555 | 2.1% |
+| 13 | python-module-missing | 547 | 2.0% |
+| 14 | gradle-build | 539 | 2.0% |
+| 15 | npm-ci-lockfile | 434 | 1.6% |
+| 16 | npm-peer-dependency-conflict | 360 | 1.3% |
+| 17 | typescript-compile | 270 | 1.0% |
+| 18 | cargo-test-failure | 253 | 0.9% |
+| 19 | cargo-compile-error | 246 | 0.9% |
+| 20 | formatting-failure | 242 | 0.9% |
+
+The top 20 classes account for 74% of all matched cases. The five highest-volume failures (`container-crash`, `eslint-failure`, `buildkit-session-lost`, `ignored-exit-code`, `pnpm-lockfile`) alone account for over 50% of matches.
+
+### Unmatched Logs (10.6%)
+
+The 3,179 unmatched logs represent genuine gaps — failure modes not yet covered by the current playbook set. All are singleton or near-singleton clusters in this dataset, indicating long-tail or highly project-specific patterns. Gap sampling is available under `eval-work/github-actions-2026-04-29-gaps/`.
+
+### Log Chunks Evaluation
+
+The log-chunks dataset has been evaluated separately (87.2% coverage, 102/117 fixtures) but predates several playbook improvements shipped in v0.4.4. A re-evaluation against the current playbook set is pending.
+
+### What This Number Means
+
+The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. Evaluated on: 2026-04-29.
+
+## Contribution Prompt
 
 1. Open an issue with an anonymized failing snippet and environment context.
 2. Include a public source URL when possible (issue, discussion, or forum thread).
