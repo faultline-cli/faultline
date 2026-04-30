@@ -80,7 +80,6 @@ match:
     - "lockfile.*missing"
     - "pnpm install --frozen-lockfile"
     - "pnpm ERR!"
-    - "ERR_PNPM"
   none:
     - "npm ERR!"
     - "yarn error"

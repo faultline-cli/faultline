@@ -39,6 +39,8 @@ match:
     - "Run `pnpm install` to update the lockfile"
     - "pnpm install --frozen-lockfile"
     - "lockfile version"
+  none:
+    - "ERR_PNPM_FROZEN_LOCKFILE_CHANGED"
 hypothesis:
   supports:
     - signal: dependency.pnpm.lockfile.sync_error

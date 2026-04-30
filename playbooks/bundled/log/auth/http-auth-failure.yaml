@@ -80,6 +80,7 @@ match:
     - "pull access denied"
     - "Permission denied (publickey"
     - "ssh: connect"
+    - "Uploading artifacts to coordinator"
 workflow:
   likely_files:
     - .github/workflows/

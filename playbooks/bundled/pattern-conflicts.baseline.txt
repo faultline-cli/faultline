@@ -7,14 +7,6 @@
   + npm-peer-dependency-conflict (match.any)
   - dependency-drift (match.none)
 
-401 unauthorized
-  + expired-credentials (match.any)
-  + http-auth-failure (match.any)
-
-403 forbidden
-  + expired-credentials (match.any)
-  + http-auth-failure (match.any)
-
 : not found
   + missing-executable (match.any)
   + node-missing-executable (match.any)
@@ -163,8 +155,8 @@ case-insensitive
   - typescript-compile (match.none)
 
 certificate has expired
-  + expired-credentials (match.any)
   + ssl-cert-error (match.any)
+  - clock-drift (match.none)
 
 certificate signed by unknown authority
   + ssl-cert-error (match.any)
@@ -181,7 +173,7 @@ check constraints cannot be marked not valid
 
 clock skew
   + clock-drift (match.any)
-  + expired-credentials (match.any)
+  - expired-credentials (match.none)
 
 command not found
   + base-image-breaking-change (match.any)
@@ -370,6 +362,10 @@ eresolve unable to resolve dependency tree
 err_pnpm_frozen_lockfile
   + pnpm-lockfile (match.any)
   - eslint-failure (match.none)
+
+err_pnpm_frozen_lockfile_changed
+  + pnpm-lockfile-missing (match.any)
+  - pnpm-lockfile (match.none)
 
 err_pnpm_outdated_lockfile
   + pnpm-lockfile (match.any)
@@ -692,7 +688,6 @@ keyerror:
 
 killed
   + circleci-resource-class-oom (match.any)
-  + oom-killed (match.any)
   + process-killed-no-logs (match.any)
 
 lint failed

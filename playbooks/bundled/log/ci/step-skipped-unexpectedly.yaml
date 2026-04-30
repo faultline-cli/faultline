@@ -16,12 +16,9 @@ match:
     - "step.*skipped"
     - "condition.*evaluated to false"
     - "when.*condition.*false"
-    - "if.*false"
     - "needs.*skipped"
     - "skipped because"
-    - "not running"
     - "step skipped due to"
-    - "was not run"
     - dependent job skipped
     - "upstream.*skipped"
 hypothesis:
