@@ -372,6 +372,97 @@ func TestSQLiteStorePlaybookStatsIncludeMatchCountsAndAverageRank(t *testing.T) 
 	}
 }
 
+func TestSQLiteStoreListsFailureReports(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "faultline.db")
+	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
+	if err != nil {
+		t.Fatalf("OpenBestEffort: %v", err)
+	}
+	defer st.Close()
+
+	ctx := context.Background()
+	base := time.Date(2026, 4, 24, 8, 0, 0, 0, time.UTC)
+
+	writeRun := func(offset time.Duration, analysis *model.Analysis) {
+		handle, err := st.BeginRun(ctx, BeginRunParams{
+			Surface:    "analyze",
+			SourceKind: "log",
+			Source:     analysis.Source,
+			InputHash:  analysis.InputHash,
+			StartedAt:  base.Add(offset),
+		})
+		if err != nil {
+			t.Fatalf("BeginRun: %v", err)
+		}
+		if err := st.CompleteRun(ctx, handle, CompleteRunParams{
+			CompletedAt: base.Add(offset),
+			Analysis:    analysis,
+		}); err != nil {
+			t.Fatalf("CompleteRun: %v", err)
+		}
+	}
+
+	writeRun(0, &model.Analysis{
+		Source:      "build-1.log",
+		InputHash:   "input-1",
+		OutputHash:  "output-1",
+		Fingerprint: "fp-1",
+		Results: []model.Result{{
+			Playbook:      model.Playbook{ID: "docker-auth", Title: "Docker auth", Category: "auth"},
+			Detector:      "log",
+			Score:         4.5,
+			Confidence:    0.91,
+			Evidence:      []string{"authentication required\nsecond line is not retained"},
+			SignatureHash: "sig-1",
+		}},
+	})
+	writeRun(time.Minute, &model.Analysis{
+		Source:      "build-2.log",
+		InputHash:   "input-2",
+		OutputHash:  "output-2",
+		Fingerprint: "fp-2",
+		Results: []model.Result{{
+			Playbook:      model.Playbook{ID: "network-timeout", Title: "Network timeout", Category: "network"},
+			Detector:      "log",
+			Score:         3.5,
+			Confidence:    0.8,
+			Evidence:      []string{"context deadline exceeded"},
+			SignatureHash: "sig-2",
+		}},
+	})
+	writeRun(2*time.Minute, &model.Analysis{
+		Source:      "build-3.log",
+		InputHash:   "input-3",
+		OutputHash:  "output-3",
+		Fingerprint: "fp-3",
+		Results: []model.Result{{
+			Playbook:      model.Playbook{ID: "docker-auth", Title: "Docker auth", Category: "auth"},
+			Detector:      "log",
+			Score:         4.6,
+			Confidence:    0.93,
+			Evidence:      []string{"pull access denied for registry.example.com"},
+			SignatureHash: "sig-3",
+		}},
+	})
+
+	reports, err := st.ListFailureReports(ctx, 0)
+	if err != nil {
+		t.Fatalf("ListFailureReports: %v", err)
+	}
+	if len(reports) != 2 {
+		t.Fatalf("expected two report rows, got %#v", reports)
+	}
+	if reports[0].FailureID != "docker-auth" || reports[0].Count != 2 {
+		t.Fatalf("expected docker-auth count first, got %#v", reports[0])
+	}
+	if reports[0].LastSeenAt != base.Add(2*time.Minute).Format(time.RFC3339) {
+		t.Fatalf("expected latest docker-auth timestamp, got %#v", reports[0])
+	}
+	if reports[0].ExampleEvidence != "pull access denied for registry.example.com" {
+		t.Fatalf("expected latest first evidence line, got %#v", reports[0])
+	}
+}
+
 func boolPtr(value bool) *bool {
 	return &value
 }

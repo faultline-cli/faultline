@@ -39,6 +39,7 @@ var CommandSurfaces = []CommandSurface{
 	{Path: "list", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "explain", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "fix", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
+	{Path: "report", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"store"}},
 	{Path: "trace", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"hooks", "no-history", "no-store", "store"}},
 	{Path: "replay", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "compare", Category: SurfaceCompanion, Maturity: MaturitySupported},

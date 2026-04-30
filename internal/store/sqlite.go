@@ -131,7 +131,7 @@ WHERE id = ?
 		if signature != "" {
 			normalizedSignature = SignatureForResult(result).Normalized
 		}
-		evidenceJSON, merr := json.Marshal(result.Evidence)
+		evidenceJSON, merr := json.Marshal(firstEvidenceLines(result.Evidence))
 		if merr != nil {
 			return fmt.Errorf("marshal finding evidence: %w", merr)
 		}
@@ -320,6 +320,56 @@ LIMIT ?
 		return nil, fmt.Errorf("iterate recent failures: %w", err)
 	}
 	return values, nil
+}
+
+func (s *sqliteStore) ListFailureReports(ctx context.Context, limit int) ([]FailureReport, error) {
+	query := `
+SELECT
+	grouped.failure_id,
+	grouped.count,
+	grouped.last_seen_at,
+	COALESCE(latest.evidence_excerpt_json, '')
+FROM (
+	SELECT failure_id, COUNT(*) AS count, MAX(seen_at) AS last_seen_at
+	FROM findings
+	WHERE rank = 1
+	GROUP BY failure_id
+) grouped
+JOIN findings latest ON latest.id = (
+	SELECT f.id
+	FROM findings f
+	WHERE f.rank = 1 AND f.failure_id = grouped.failure_id
+	ORDER BY f.seen_at DESC, f.run_id DESC, f.id DESC
+	LIMIT 1
+)
+ORDER BY grouped.count DESC, grouped.last_seen_at DESC, grouped.failure_id ASC`
+	args := []interface{}{}
+	if limit > 0 {
+		query += "\nLIMIT ?"
+		args = append(args, limit)
+	}
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("query failure report: %w", err)
+	}
+	defer rows.Close()
+
+	var out []FailureReport
+	for rows.Next() {
+		var (
+			item         FailureReport
+			evidenceJSON string
+		)
+		if err := rows.Scan(&item.FailureID, &item.Count, &item.LastSeenAt, &evidenceJSON); err != nil {
+			return nil, fmt.Errorf("scan failure report: %w", err)
+		}
+		item.ExampleEvidence = firstStoredEvidence(evidenceJSON)
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate failure report: %w", err)
+	}
+	return out, nil
 }
 
 func (s *sqliteStore) ListSignatures(ctx context.Context, limit int) ([]SignatureSummary, error) {
@@ -680,6 +730,36 @@ func nullableBool(value *bool) any {
 		return 1
 	}
 	return 0
+}
+
+func firstEvidenceLines(values []string) []string {
+	for _, value := range values {
+		normalized := strings.ReplaceAll(value, "\r\n", "\n")
+		normalized = strings.ReplaceAll(normalized, "\r", "\n")
+		for _, line := range strings.Split(normalized, "\n") {
+			line = strings.TrimSpace(line)
+			if line != "" {
+				return []string{line}
+			}
+		}
+	}
+	return []string{}
+}
+
+func firstStoredEvidence(encoded string) string {
+	encoded = strings.TrimSpace(encoded)
+	if encoded == "" {
+		return ""
+	}
+	var values []string
+	if err := json.Unmarshal([]byte(encoded), &values); err == nil {
+		for _, value := range values {
+			if line := firstEvidenceLines([]string{value}); len(line) > 0 {
+				return line[0]
+			}
+		}
+	}
+	return ""
 }
 
 func boolToInt(value bool) int {

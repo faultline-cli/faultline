@@ -102,7 +102,7 @@ func newAnalyzeCommand() *cobra.Command {
 			}
 			defer input.Close()
 
-			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
+			resolvedStore := resolveAnalyzeStoreSetting(noHistory, noStore, storePath)
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:           top,
@@ -142,6 +142,7 @@ func newAnalyzeCommand() *cobra.Command {
 				PlaybookPackDirs: playbookPacks,
 				BayesEnabled:     bayes,
 				Store:            resolvedStore,
+				History:          resolveStoreHistoryOutput(history, noHistory, noStore, storePath),
 				HookMode:         resolvedHookMode,
 				FailOnSilent:     failOnSilent,
 			}, cmd.OutOrStdout())

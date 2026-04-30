@@ -44,6 +44,10 @@ func deriveGitLabAPIBaseURL(serverURL string) string {
 	return strings.TrimRight(serverURL, "/") + "/api/v4"
 }
 
+// resolveStoreSetting is used by fix and workflow, which default the store to
+// off and require --history or an explicit --store path to opt in. analyze
+// uses resolveAnalyzeStoreSetting instead, which defaults to auto so that
+// faultline report can see data from routine analyze runs.
 func resolveStoreSetting(history, noHistory, noStore bool, storePath string) string {
 	if noHistory || noStore {
 		return "off"
@@ -55,6 +59,27 @@ func resolveStoreSetting(history, noHistory, noStore bool, storePath string) str
 		return "auto"
 	}
 	return "off"
+}
+
+func resolveAnalyzeStoreSetting(noHistory, noStore bool, storePath string) string {
+	if noHistory || noStore {
+		return "off"
+	}
+	if explicit := firstNonEmpty(storePath, os.Getenv(storeEnv)); explicit != "" {
+		return explicit
+	}
+	return "auto"
+}
+
+func resolveStoreHistoryOutput(history, noHistory, noStore bool, storePath string) bool {
+	if noHistory || noStore {
+		return false
+	}
+	explicit := firstNonEmpty(storePath, os.Getenv(storeEnv))
+	if strings.EqualFold(explicit, "off") {
+		return false
+	}
+	return history || explicit != ""
 }
 
 // joinLines joins strings with newlines, used for Long/Example in command descriptions.

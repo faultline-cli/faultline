@@ -1,6 +1,6 @@
 # Local Store Groundwork
 
-Faultline currently contains an optional local forensic store implementation.
+Faultline contains a local forensic store implementation.
 
 Important product-boundary note: local single-repo history can remain part of
 the product, but aggregation, reporting, and cross-repo recurring-failure
@@ -19,6 +19,7 @@ The local store implementation exists to support:
 - occurrence counts over time
 - deterministic `input_hash` and `output_hash` recording for repeated-run checks
 - ranked playbook match history
+- local recurring-failure reports grouped by `failure_id`
 - hook execution history when hooks are enabled
 
 The store is not:
@@ -36,8 +37,11 @@ The store is not:
 - graceful fallback: when disabled, unavailable, or corrupt, Faultline drops to
   a no-op store and continues analysis
 
-Analysis-style commands use the no-op store by default so repeated output stays
-stable. Local history enrichment is explicit opt-in through:
+`faultline analyze` writes matched failures to the local store by default. No
+configuration is required; if SQLite cannot be opened, Faultline degrades to a
+no-op store and still returns the diagnosis.
+
+Local history enrichment in `analyze` output remains explicit opt-in through:
 
 - `--history`
 - `--store auto`
@@ -45,13 +49,14 @@ stable. Local history enrichment is explicit opt-in through:
 - `FAULTLINE_STORE`
 
 `--no-history` and `--no-store` remain hidden compatibility switches and force
-the no-op store. Explicit history commands (`history`, `signatures`, and
-`verify-determinism`) still open the default store path when no `--store` is
-supplied, because reading history is their whole job.
+the no-op store. Explicit history commands (`report`, `history`, `signatures`,
+and `verify-determinism`) still open the default store path when no `--store`
+is supplied, because reading local history is their whole job.
 
 Single-repo companion surfaces can read from the same local store:
 
 - `faultline history`
+- `faultline report`
 - `faultline history --signature <hash>`
 - `faultline signatures`
 - `faultline verify-determinism <logfile>`
@@ -69,6 +74,7 @@ the main run record:
 
 Stored data is intentionally minimal:
 
+- run timestamp and input source path on `analysis_runs`
 - playbook IDs, ranks, scores, and confidence values
 - `signature_hash`
 - normalized signature material
@@ -76,7 +82,7 @@ Stored data is intentionally minimal:
 - first-class `artifact_json` snapshots for replay, compare, and deterministic
   remediation handoff
 - first-seen and last-seen times
-- small evidence excerpts
+- small evidence excerpts, retained as the first matched evidence line
 - structured hook facts and hook evidence excerpts when hooks run
 
 ## What Is Not Stored By Default
@@ -118,11 +124,11 @@ failures distinct enough for practical local recurrence tracking.
 
 ## Determinism Guarantees
 
-The store is opt-in and additive to the analysis path:
+The store is additive to the analysis path:
 
 - the engine still analyzes input without reading SQL
-- default analysis-style commands use the no-op store unless `--history`,
-  `--store`, or `FAULTLINE_STORE` is set
+- default `faultline analyze` writes to local SQLite, but normal output omits
+  recurrence counters unless `--history`, `--store`, or `FAULTLINE_STORE` is set
 - disabling the store or leaving history off does not change match logic
 - store failures do not block core analysis by default
 - JSON remains stable and additive for automation
@@ -174,6 +180,13 @@ Interpret the fields narrowly:
 detector result by itself.
 
 ## History Commands
+
+`faultline report` shows the retention-oriented view from the local store:
+
+- grouped `failure_id`
+- count of stored top-ranked occurrences
+- last seen timestamp
+- latest example evidence line
 
 `faultline history` shows three additive views from the local store:
 

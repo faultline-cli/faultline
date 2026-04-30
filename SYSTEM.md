@@ -37,6 +37,8 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline analyze <logfile> --bayes`
 - `faultline analyze <logfile> --git`
 - `faultline analyze <logfile> --git --since 30d --repo .`
+- `faultline report`
+- `faultline report --json`
 - `faultline list`
 - `faultline explain <failure-id>`
 - `faultline workflow <logfile>`

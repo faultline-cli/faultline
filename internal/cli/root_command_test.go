@@ -51,6 +51,7 @@ func TestNewRootCommandRegistersExpectedCommands(t *testing.T) {
 		"inspect":  false,
 		"guard":    false,
 		"fix":      false,
+		"report":   false,
 		"list":     false,
 		"explain":  false,
 		"workflow": false,

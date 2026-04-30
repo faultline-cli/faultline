@@ -43,6 +43,7 @@ type Store interface {
 	LookupSignatureHistory(context.Context, string) (SignatureHistory, error)
 	CountSeenFailure(context.Context, string) (int, error)
 	RecentTopFailures(context.Context, int) ([]string, error)
+	ListFailureReports(context.Context, int) ([]FailureReport, error)
 	ListSignatures(context.Context, int) ([]SignatureSummary, error)
 	GetRecentFindingsBySignature(context.Context, string, int) ([]FindingSummary, error)
 	ListPlaybookStats(context.Context, int) ([]PlaybookStats, error)
@@ -84,6 +85,13 @@ type FindingSummary struct {
 	Category      string
 	SignatureHash string
 	SeenAt        string
+}
+
+type FailureReport struct {
+	FailureID       string `json:"failure_id,omitempty"`
+	Count           int    `json:"count"`
+	LastSeenAt      string `json:"last_seen_at,omitempty"`
+	ExampleEvidence string `json:"example_evidence,omitempty"`
 }
 
 type SignatureSummary struct {

@@ -50,6 +50,8 @@ func runAnalyzeJSONCommand(t *testing.T, logPath string, args ...string) (string
 	cmd.SetOut(out)
 	cmd.SetErr(new(bytes.Buffer))
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
+	// Redirect HOME so the auto-store writes to a temp dir rather than ~/.faultline during tests.
+	t.Setenv("HOME", filepath.Dir(logPath))
 	t.Setenv("FAULTLINE_STORE", "")
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute analyze %v: %v", fullArgs, err)
@@ -1431,6 +1433,108 @@ func TestHistoryCommandJSON(t *testing.T) {
 	playbooks, ok := payload["playbooks"].([]interface{})
 	if !ok || len(playbooks) == 0 {
 		t.Fatalf("expected playbooks in history payload, got %v", payload["playbooks"])
+	}
+}
+
+func TestReportCommandAggregatesDefaultAnalyzeRuns(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	home := t.TempDir()
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	runAnalyze := func() {
+		cmd := newRootCommand()
+		cmd.SetArgs([]string{"analyze", "--json", "--git=false", logPath})
+		cmd.SetOut(new(bytes.Buffer))
+		cmd.SetErr(new(bytes.Buffer))
+		t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+		t.Setenv("HOME", home)
+		t.Setenv("FAULTLINE_STORE", "")
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("execute analyze for report setup: %v", err)
+		}
+	}
+	runAnalyze()
+	runAnalyze()
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"report"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("HOME", home)
+	t.Setenv("FAULTLINE_STORE", "")
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute report: %v", err)
+	}
+
+	got := out.String()
+	for _, want := range []string{"Faultline Report", "docker-auth", "2", "pull access denied"} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected report output to contain %q, got:\n%s", want, got)
+		}
+	}
+}
+
+func TestReportCommandEmptyStoreFriendlyMessage(t *testing.T) {
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"report"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("FAULTLINE_STORE", "")
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute empty report: %v", err)
+	}
+	if got := out.String(); !strings.Contains(got, "No stored failures yet.") || !strings.Contains(got, "faultline analyze") {
+		t.Fatalf("expected friendly empty report message, got %q", got)
+	}
+}
+
+func TestReportCommandJSON(t *testing.T) {
+	playbookDir := repoPlaybookDir(t)
+	storePath := filepath.Join(t.TempDir(), "faultline.db")
+	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
+
+	for i := 0; i < 2; i++ {
+		cmd := newRootCommand()
+		cmd.SetArgs([]string{"analyze", "--json", "--store", storePath, logPath})
+		cmd.SetOut(new(bytes.Buffer))
+		cmd.SetErr(new(bytes.Buffer))
+		t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("execute analyze for report JSON setup: %v", err)
+		}
+	}
+
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"report", "--json", "--store", storePath})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute report --json: %v", err)
+	}
+
+	var payload struct {
+		Failures []struct {
+			FailureID       string `json:"failure_id"`
+			Count           int    `json:"count"`
+			LastSeenAt      string `json:"last_seen_at"`
+			ExampleEvidence string `json:"example_evidence"`
+		} `json:"failures"`
+	}
+	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
+		t.Fatalf("unmarshal report JSON: %v", err)
+	}
+	if len(payload.Failures) != 1 {
+		t.Fatalf("expected one failure row, got %#v", payload.Failures)
+	}
+	if payload.Failures[0].FailureID != "docker-auth" || payload.Failures[0].Count != 2 {
+		t.Fatalf("unexpected report JSON row: %#v", payload.Failures[0])
+	}
+	if payload.Failures[0].LastSeenAt == "" || payload.Failures[0].ExampleEvidence == "" {
+		t.Fatalf("expected timestamp and example evidence, got %#v", payload.Failures[0])
 	}
 }
 

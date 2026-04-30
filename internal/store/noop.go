@@ -28,6 +28,10 @@ func (noopStore) RecentTopFailures(context.Context, int) ([]string, error) {
 	return nil, nil
 }
 
+func (noopStore) ListFailureReports(context.Context, int) ([]FailureReport, error) {
+	return nil, nil
+}
+
 func (noopStore) ListSignatures(context.Context, int) ([]SignatureSummary, error) {
 	return nil, nil
 }

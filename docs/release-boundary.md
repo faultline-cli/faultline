@@ -83,6 +83,7 @@ onboarding narrative.
 ### Complete Now
 
 - `fix` as a narrow remediation view over the top diagnosis
+- `report` as a local-only recurrence summary over stored `analyze` runs
 - `trace` as an advanced deterministic companion for rule-by-rule evaluation and rejection context
 - `replay` as a deterministic companion for re-rendering saved analysis artifacts
 - `compare` as a deterministic companion for diffing saved analysis artifacts
@@ -110,7 +111,6 @@ rather than becoming a generic automation surface.
 
 These commands or modes require Team auth and backend state once shipped:
 
-- `faultline report`
 - `faultline sync`
 - `faultline policy apply`
 - `faultline analyze <log> --report` (enriched mode)
@@ -151,7 +151,7 @@ The current roadmap for v0.4 should extend this boundary rather than replace it:
   and workflow outputs, not as new first-run command surfaces
 - preserve the no-runtime-network expectation for `analyze`, `workflow`, and
   `trace`
-- keep history value opt-in and explicit in output and companion commands
+- keep history value explicit in output and companion commands
   rather than turning recurrence into hidden ranking behavior
 
 ## Team Layer Delivery Contract

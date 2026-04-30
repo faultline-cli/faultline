@@ -101,6 +101,9 @@ type AnalyzeOptions struct {
 	MetricsHistoryFile string
 	// Store configures the local forensic store path or mode (auto|off|/path/to/store.db).
 	Store string
+	// History includes stored recurrence fields in analysis output. Persistence
+	// may still be enabled without surfacing recurrence in normal analyze output.
+	History bool
 	// HookMode controls whether constrained playbook hooks run for rendered results.
 	HookMode model.HookMode
 	// FailOnSilent causes Analyze to return ErrSilentFailure when a silent

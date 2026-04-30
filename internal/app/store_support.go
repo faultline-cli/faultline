@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"faultline/internal/artifact"
@@ -48,17 +49,22 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 	ctx := context.Background()
 	now := optionNow(opts)
 	historyEnabled := info.Mode != store.ModeOff && !info.Degraded
+	historyOutput := shouldIncludeHistoryOutput(opts)
 	snapshots := captureHistorySnapshots(ctx, st, prepared)
 	previousFailures, _ := st.RecentTopFailures(ctx, 500)
 
+	withoutHistory := applySignatureSnapshots(prepared, snapshots)
 	withoutCurrent := applyHistorySnapshots(prepared, snapshots, now, false)
 	withCurrent := applyHistorySnapshots(prepared, snapshots, now, persist && historyEnabled)
+	withoutHistory = artifact.Sync(withoutHistory)
 	withoutCurrent = artifact.Sync(withoutCurrent)
 	withCurrent = artifact.Sync(withCurrent)
 
-	withoutCurrent.Metrics = buildMetricsFromHistory(withoutCurrent, previousFailures, opts.MetricsHistoryFile, false)
-	if withoutCurrent.Metrics != nil && len(withoutCurrent.Results) > 0 {
-		withoutCurrent.Policy = policy.Compute(withoutCurrent.Metrics, withoutCurrent.Results[0].Playbook.Severity)
+	if historyOutput {
+		withoutCurrent.Metrics = buildMetricsFromHistory(withoutCurrent, previousFailures, opts.MetricsHistoryFile, false)
+		if withoutCurrent.Metrics != nil && len(withoutCurrent.Results) > 0 {
+			withoutCurrent.Policy = policy.Compute(withoutCurrent.Metrics, withoutCurrent.Results[0].Playbook.Severity)
+		}
 	}
 
 	if persist && historyEnabled && len(withCurrent.Results) > 0 {
@@ -81,15 +87,27 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 				CompletedAt: now,
 				Analysis:    withCurrent,
 			}); completeErr == nil {
-				return withCurrent, nil
+				if historyOutput {
+					return withCurrent, nil
+				}
+				if hash, err := output.HashAnalysisOutput(withoutHistory); err == nil {
+					withoutHistory.OutputHash = hash
+				}
+				return withoutHistory, nil
 			}
 		}
 	}
 
-	if hash, err := output.HashAnalysisOutput(withoutCurrent); err == nil {
-		withoutCurrent.OutputHash = hash
+	if historyOutput {
+		if hash, err := output.HashAnalysisOutput(withoutCurrent); err == nil {
+			withoutCurrent.OutputHash = hash
+		}
+		return withoutCurrent, nil
 	}
-	return withoutCurrent, nil
+	if hash, err := output.HashAnalysisOutput(withoutHistory); err == nil {
+		withoutHistory.OutputHash = hash
+	}
+	return withoutHistory, nil
 }
 
 func captureHistorySnapshots(ctx context.Context, st store.Store, a *model.Analysis) []historySnapshot {
@@ -129,6 +147,35 @@ func applyHistorySnapshots(base *model.Analysis, snapshots []historySnapshot, no
 		clone.Results[i] = result
 	}
 	return clone
+}
+
+func applySignatureSnapshots(base *model.Analysis, snapshots []historySnapshot) *model.Analysis {
+	clone := cloneAnalysis(base)
+	for i := range clone.Results {
+		result := clone.Results[i]
+		if i < len(snapshots) {
+			result.SignatureHash = snapshots[i].signature.Hash
+		}
+		result.SeenCount = 0
+		result.SeenBefore = false
+		result.OccurrenceCount = 0
+		result.FirstSeenAt = ""
+		result.LastSeenAt = ""
+		result.HookHistorySummary = nil
+		clone.Results[i] = result
+	}
+	return clone
+}
+
+func shouldIncludeHistoryOutput(opts AnalyzeOptions) bool {
+	if opts.History {
+		return true
+	}
+	value := strings.TrimSpace(opts.Store)
+	if value == "" || strings.EqualFold(value, string(store.ModeAuto)) || strings.EqualFold(value, string(store.ModeOff)) {
+		return false
+	}
+	return true
 }
 
 func buildMetricsFromHistory(a *model.Analysis, previousFailures []string, explicitHistoryPath string, includeCurrent bool) *model.Metrics {
