@@ -34,7 +34,6 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline inspect <path>`
 - `cat build.log | faultline analyze`
 - `faultline analyze <logfile> --json`
-- `faultline analyze <logfile> --bayes`
 - `faultline analyze <logfile> --git`
 - `faultline analyze <logfile> --git --since 30d --repo .`
 - `faultline report`
@@ -42,7 +41,6 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - `faultline list`
 - `faultline explain <failure-id>`
 - `faultline workflow <logfile>`
-- `faultline workflow <logfile> --bayes`
 - `faultline guard <path>`
 - `faultline fixtures ingest`
 - `faultline fixtures review`
@@ -108,7 +106,7 @@ type Result struct {
     Score      float64
     Confidence float64
     SeenCount  int
-    Ranking    *Ranking  // Populated when --bayes is enabled
+    Ranking    *Ranking  // Populated by Bayesian reranking (default; pass --bayes=false to disable)
     Hypothesis *HypothesisAssessment
 }
 ```
@@ -146,7 +144,7 @@ type FailureArtifact struct {
 }
 ```
 
-### Ranking (--bayes only)
+### Ranking
 
 ```go
 type Ranking struct {

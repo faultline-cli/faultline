@@ -195,7 +195,7 @@ Faultline now has an explicit three-layer ranking model:
 
 1. detectors decide which playbooks matched
 2. `internal/scoring` may rerank those already-matched candidates when
-   `--bayes` is enabled, and it only emits delta hints when repo-aware context
+   Bayesian reranking is active, and it only emits delta hints when repo-aware context
    is explicit
 3. output, workflow, and guard consume the final deterministic ordering
 
