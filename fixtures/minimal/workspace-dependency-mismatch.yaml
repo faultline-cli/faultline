@@ -1,0 +1,10 @@
+id: workspace-dependency-mismatch-canonical
+title: Workspace package version mismatch — monorepo dependency conflict
+fixture_class: minimal
+normalized_log: |
+  Unmet workspace dependencies detected
+  workspace: package @myapp/core requires version ^2.0.0 but workspace has version 1.5.0
+  workspace version mismatch for @myapp/utils: required >=3.0.0, found 2.9.0
+  Cannot find module '@myapp/shared' matching ^1.0.0 in workspace
+expectation:
+  expected_playbook: workspace-dependency-mismatch

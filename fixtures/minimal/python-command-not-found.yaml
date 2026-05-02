@@ -1,0 +1,10 @@
+id: python-command-not-found-canonical
+title: python command not found — python2/python3 alias missing in CI
+fixture_class: minimal
+normalized_log: |
+  /usr/bin/env: 'python': No such file or directory
+  python: command not found
+  The 'python' command was not found. Use 'python3' instead.
+  makefile:15: recipe for target 'build' failed
+expectation:
+  expected_playbook: python-command-not-found

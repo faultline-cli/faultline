@@ -1,0 +1,11 @@
+id: npm-enoent-package-json-canonical
+title: npm install fails — package.json not found in working directory
+fixture_class: minimal
+normalized_log: |
+  npm ERR! code ENOENT
+  npm ERR! syscall open
+  npm ERR! path /home/runner/work/myapp/myapp/package.json
+  npm ERR! errno -2
+  npm ERR! ENOENT: no such file or directory, open 'package.json'
+expectation:
+  expected_playbook: npm-enoent-package-json

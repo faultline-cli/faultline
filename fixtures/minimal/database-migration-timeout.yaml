@@ -1,0 +1,12 @@
+id: database-migration-timeout-canonical
+title: Database migration fails — exclusive lock timeout during schema change
+fixture_class: minimal
+normalized_log: |
+  Applying pending migrations...
+  Migration 20240315_add_index.sql: STARTED
+  Timeout waiting for exclusive lock on table "orders"
+  Migration failed: could not acquire exclusive lock within 30s
+  ERROR: Migration 20240315_add_index.sql timed out
+  liquibase: locked — another migration is in progress or a lock was not cleared
+expectation:
+  expected_playbook: database-migration-timeout

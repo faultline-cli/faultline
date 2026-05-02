@@ -1,0 +1,10 @@
+id: pnpm-lockfile-missing-canonical
+title: pnpm frozen lockfile changed — lockfile out of sync with package.json
+fixture_class: minimal
+normalized_log: |
+  ERR_PNPM_FROZEN_LOCKFILE_CHANGED
+  pnpm-lock.yaml is not in sync with package.json. This is not allowed with --frozen-lockfile.
+  Cannot continue with frozen-lockfile: pnpm-lock.yaml is out of date.
+  Run pnpm install to update the lockfile.
+expectation:
+  expected_playbook: pnpm-lockfile-missing

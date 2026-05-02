@@ -1,0 +1,12 @@
+id: entrypoint-misconfigured-canonical
+title: Container exits immediately — entrypoint binary missing or exec format error
+fixture_class: minimal
+normalized_log: |
+  Starting container myapp:latest...
+  OCI runtime exec failed: exec failed: unable to start container process: error during container init
+  starting container process caused: exec: "/entrypoint.sh": exec format error
+  container exit code 126
+  Error: cannot execute binary file: Exec format error
+  The container exited immediately after startup.
+expectation:
+  expected_playbook: entrypoint-misconfigured

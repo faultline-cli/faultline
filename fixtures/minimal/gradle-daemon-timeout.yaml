@@ -1,0 +1,11 @@
+id: gradle-daemon-timeout-canonical
+title: Gradle daemon connection lost during build
+fixture_class: minimal
+normalized_log: |
+  FAILURE: Build failed with an exception.
+  connection to daemon lost.
+  Gradle daemon not started within the timeout.
+  waiting for connection to Gradle daemon...
+  Timeout waiting for exclusive access to file: /home/runner/.gradle/daemon
+expectation:
+  expected_playbook: gradle-daemon-timeout

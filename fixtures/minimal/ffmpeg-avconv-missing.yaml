@@ -1,0 +1,12 @@
+id: ffmpeg-avconv-canonical
+title: Media processing step fails — ffmpeg or avconv not installed on CI runner
+fixture_class: minimal
+normalized_log: |
+  Running media conversion pipeline...
+  ffmpeg or avconv could not be found. Please install ffmpeg.
+  Unable to locate ffmpeg in PATH
+  ffmpeg is not installed on this system.
+  Error: please install ffmpeg or avconv to continue.
+  Hint: please install one of the supported video conversion tools.
+expectation:
+  expected_playbook: ffmpeg-avconv-missing

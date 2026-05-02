@@ -25,18 +25,19 @@ type Options struct {
 
 // Report describes behavioral fixture evidence for the resolved playbook set.
 type Report struct {
-	TotalPlaybooks         int        `json:"total_playbooks"`
-	WithFixtures           int        `json:"with_fixtures"`
-	FixtureRoot            string     `json:"fixture_root,omitempty"`
-	FixtureMode            string     `json:"fixture_mode,omitempty"`
-	FixtureCount           int        `json:"fixture_count"`
-	PositiveFixtureCount   int        `json:"positive_fixture_count"`
-	NegativeAssertionCount int        `json:"negative_assertion_count"`
-	StrictTop1FixtureCount int        `json:"strict_top_1_fixture_count"`
-	ByCategory             []Category `json:"by_category"`
-	ByDomain               []Domain   `json:"by_domain"`
-	MissingFixtures        []string   `json:"missing_fixtures"`
-	DuplicateIDs           []string   `json:"duplicate_ids"`
+	TotalPlaybooks           int        `json:"total_playbooks"`
+	WithFixtures             int        `json:"with_fixtures"`
+	FixtureRoot              string     `json:"fixture_root,omitempty"`
+	FixtureMode              string     `json:"fixture_mode,omitempty"`
+	FixtureCount             int        `json:"fixture_count"`
+	PositiveFixtureCount     int        `json:"positive_fixture_count"`
+	NegativeAssertionCount   int        `json:"negative_assertion_count"`
+	StrictTop1FixtureCount   int        `json:"strict_top_1_fixture_count"`
+	ByCategory               []Category `json:"by_category"`
+	ByDomain                 []Domain   `json:"by_domain"`
+	MissingFixtures          []string   `json:"missing_fixtures"`
+	SourceDetectorPlaybooks  []string   `json:"source_detector_playbooks"`
+	DuplicateIDs             []string   `json:"duplicate_ids"`
 }
 
 // Category groups playbooks and fixture evidence by playbook category.
@@ -97,8 +98,13 @@ func Build(opts Options) (Report, error) {
 	}
 
 	missing := make([]string, 0)
+	sourceDetector := make([]string, 0)
 	withFixtures := 0
 	for _, pb := range pbs {
+		if pb.Detector == "source" {
+			sourceDetector = append(sourceDetector, pb.ID)
+			continue
+		}
 		if evidence.positiveByPlaybook[pb.ID] > 0 {
 			withFixtures++
 			continue
@@ -106,20 +112,22 @@ func Build(opts Options) (Report, error) {
 		missing = append(missing, pb.ID)
 	}
 	sort.Strings(missing)
+	sort.Strings(sourceDetector)
 
 	return Report{
-		TotalPlaybooks:         len(pbs),
-		WithFixtures:           withFixtures,
-		FixtureRoot:            evidence.root,
-		FixtureMode:            evidence.mode,
-		FixtureCount:           evidence.fixtureCount,
-		PositiveFixtureCount:   evidence.positiveFixtureCount,
-		NegativeAssertionCount: evidence.negativeAssertionCount,
-		StrictTop1FixtureCount: evidence.strictTop1FixtureCount,
-		ByCategory:             buildCategoryReports(byCategory, evidence),
-		ByDomain:               buildDomainReports(domainCounts),
-		MissingFixtures:        missing,
-		DuplicateIDs:           duplicates,
+		TotalPlaybooks:          len(pbs),
+		WithFixtures:            withFixtures,
+		FixtureRoot:             evidence.root,
+		FixtureMode:             evidence.mode,
+		FixtureCount:            evidence.fixtureCount,
+		PositiveFixtureCount:    evidence.positiveFixtureCount,
+		NegativeAssertionCount:  evidence.negativeAssertionCount,
+		StrictTop1FixtureCount:  evidence.strictTop1FixtureCount,
+		ByCategory:              buildCategoryReports(byCategory, evidence),
+		ByDomain:                buildDomainReports(domainCounts),
+		MissingFixtures:         missing,
+		SourceDetectorPlaybooks: sourceDetector,
+		DuplicateIDs:            duplicates,
 	}, nil
 }
 
@@ -164,6 +172,13 @@ func WriteText(w io.Writer, report Report) error {
 		_ = dw.Flush()
 	}
 
+	if len(report.SourceDetectorPlaybooks) > 0 {
+		fmt.Fprintf(w, "\nSource-detector playbooks (%d) — covered by source-fixture accounting:\n", len(report.SourceDetectorPlaybooks))
+		for _, id := range report.SourceDetectorPlaybooks {
+			fmt.Fprintf(w, "  - %s\n", id)
+		}
+	}
+
 	if len(report.MissingFixtures) > 0 {
 		fmt.Fprintf(w, "\nPlaybooks missing positive fixtures (%d):\n", len(report.MissingFixtures))
 		for _, id := range report.MissingFixtures {
@@ -202,6 +217,9 @@ func normalizeReport(report Report) Report {
 	}
 	if report.MissingFixtures == nil {
 		report.MissingFixtures = []string{}
+	}
+	if report.SourceDetectorPlaybooks == nil {
+		report.SourceDetectorPlaybooks = []string{}
 	}
 	if report.DuplicateIDs == nil {
 		report.DuplicateIDs = []string{}

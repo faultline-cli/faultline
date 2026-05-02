@@ -1,0 +1,10 @@
+id: test-assertion-with-reason-canonical
+title: Test assertion failure with explicit reason message
+fixture_class: minimal
+normalized_log: |
+  SUITE:user_service_SUITE failed
+  init_per_group failed Reason: connection to database refused
+  failed with Reason: expecting status 200 but got 404
+  assertion failed: expected response body to contain 'success'
+expectation:
+  expected_playbook: test-assertion-with-reason

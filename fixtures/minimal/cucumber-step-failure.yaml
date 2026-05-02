@@ -1,0 +1,15 @@
+id: cucumber-step-failure-canonical
+title: Cucumber scenario step fails — feature file step not implemented
+fixture_class: minimal
+normalized_log: |
+  Running cucumber features
+  ...F
+
+  Failing Scenarios:
+    features/login.feature:12 # Scenario: User logs in with invalid credentials
+
+  1 scenario (1 failed)
+  3 steps (1 failed, 2 passed)
+  0m0.823s
+expectation:
+  expected_playbook: cucumber-step-failure

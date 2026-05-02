@@ -1,0 +1,10 @@
+id: tox-invocation-error-canonical
+title: tox environment invocation error — command inside tox env failed
+fixture_class: minimal
+normalized_log: |
+  FAILED: commands failed (exit code 1)
+  InvocationError: /home/runner/.tox/py39/bin/python setup.py test (exited with code 1)
+  ERROR: InvocationError for command /usr/bin/make test
+  commands failed for testenv: py39
+expectation:
+  expected_playbook: tox-invocation-error

@@ -1,0 +1,13 @@
+id: build-output-path-mismatch-canonical
+title: Deploy step fails because build output directory does not exist
+fixture_class: minimal
+normalized_log: |
+  Run ./scripts/deploy.sh
+  Checking for build artifacts...
+  Error: No such file or directory: dist/
+  output path does not exist: dist/app.js
+  could not find output: dist/bundle.js
+  Error: cannot find bundle at expected path dist/bundle.js
+  The artifact path does not match any files. Please verify the output directory.
+expectation:
+  expected_playbook: build-output-path-mismatch

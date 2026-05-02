@@ -1,0 +1,10 @@
+id: gitlab-ci-yaml-invalid-canonical
+title: GitLab CI YAML config file validation failure
+fixture_class: minimal
+normalized_log: |
+  ERROR: Config file is not valid
+  stage 'deploy' does not exist
+  jobs:deploy config contains unknown keys: unknwon_key
+  ERROR: Config file is not valid
+expectation:
+  expected_playbook: gitlab-ci-yaml-invalid

@@ -1,0 +1,11 @@
+id: resource-limits-canonical
+title: Process hits OS resource limits — too many open files or threads
+fixture_class: minimal
+normalized_log: |
+  java.io.IOException: Too many open files
+  resource temporarily unavailable
+  ulimit: cannot create thread: resource temporarily unavailable
+  cannot create thread: system limit for number of threads exceeded
+  ulimit -n: value too large for defined data type
+expectation:
+  expected_playbook: resource-limits

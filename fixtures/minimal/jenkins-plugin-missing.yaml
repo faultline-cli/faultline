@@ -1,0 +1,10 @@
+id: jenkins-plugin-missing-canonical
+title: Jenkins pipeline fails — required plugin not installed
+fixture_class: minimal
+normalized_log: |
+  java.lang.NoSuchMethodError: No such DSL method 'withCredentials' found
+  Required plugin credentials-binding is not installed.
+  Plugin git-parameter is not installed or disabled.
+  No such DSL method 'dockerNode' found among steps
+expectation:
+  expected_playbook: jenkins-plugin-missing

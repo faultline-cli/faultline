@@ -1,0 +1,11 @@
+id: dns-enotfound-canonical
+title: Node.js network call fails with ENOTFOUND — DNS resolution failure in CI
+fixture_class: minimal
+normalized_log: |
+  Error: getaddrinfo ENOTFOUND api.internal.example.com
+      at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:26)
+  Error: ENOTFOUND api.internal.example.com
+  DNS resolution failed for host: api.internal.example.com
+  Cannot resolve hostname api.internal.example.com
+expectation:
+  expected_playbook: dns-enotfound

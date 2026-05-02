@@ -1,0 +1,10 @@
+id: line-ending-canonical
+title: Windows CRLF line endings causing script failures
+fixture_class: minimal
+normalized_log: |
+  warning: CRLF will be replaced by LF in scripts/deploy.sh
+  /bin/bash: ./scripts/deploy.sh: /bin/bash^M: bad interpreter: No such file or directory
+  \r': command not found
+  bad line endings in entrypoint.sh: CRLF detected
+expectation:
+  expected_playbook: line-ending

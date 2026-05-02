@@ -1,0 +1,9 @@
+id: gitlab-no-runner-canonical
+title: GitLab job stuck — no runners available for project
+fixture_class: minimal
+normalized_log: |
+  This job is stuck because the project doesn't have any runners online assigned to it.
+  Go to Settings > CI/CD to set up a runner that can pick up this job.
+  no runners available to run this job.
+expectation:
+  expected_playbook: gitlab-no-runner

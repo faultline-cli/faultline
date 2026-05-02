@@ -1,0 +1,10 @@
+id: base-image-breaking-change-canonical
+title: Docker base image update breaks binary — undefined symbol or GLIBC version missing
+fixture_class: minimal
+normalized_log: |
+  Step 4/6 : RUN /app/service --version
+  /app/service: symbol lookup error: /app/service: undefined symbol: EVP_MD_CTX_new, version OPENSSL_1_1_1
+  /lib/x86_64-linux-gnu/libssl.so.1.1: version 'GLIBC_2.33' not found (required by /app/service)
+  The command '/bin/sh -c /app/service --version' returned a non-zero code: 127
+expectation:
+  expected_playbook: base-image-breaking-change

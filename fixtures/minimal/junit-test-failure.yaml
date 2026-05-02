@@ -1,0 +1,12 @@
+id: junit-test-failure-canonical
+title: JUnit test failure — assertion error in test execution
+fixture_class: minimal
+normalized_log: |
+  :test FAILED
+  com.example.UserServiceTest > testCreateUser FAILED
+      java.lang.AssertionError: expected:<200> but was:<404>
+  Tests unsuccessful
+  3 tests completed, 2 failed
+  test tasks failed: :test
+expectation:
+  expected_playbook: junit-test-failure

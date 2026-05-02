@@ -36,6 +36,8 @@ match:
     - "Mapped port can only be obtained after the container is started"
     - "testcontainers"
     - "ProviderError"
+    - "Ryuk started"
+    - "Could not start container"
   none:
     - "docker build"
     - "docker push"

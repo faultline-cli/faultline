@@ -1,0 +1,11 @@
+id: shell-sh-vs-bash-canonical
+title: sh vs bash incompatibility — bash-specific syntax fails under sh
+fixture_class: minimal
+normalized_log: |
+  /bin/sh: 1: source: not found
+  /bin/sh: [[: not found
+  syntax error: unexpected "("
+  syntax error: bad substitution
+  /bin/sh: 0: Illegal option -o pipefail
+expectation:
+  expected_playbook: shell-sh-vs-bash

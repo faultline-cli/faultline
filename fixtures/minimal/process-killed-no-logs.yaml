@@ -1,0 +1,11 @@
+id: process-killed-no-logs-canonical
+title: Process killed by OS — SIGKILL with exit status 137
+fixture_class: minimal
+normalized_log: |
+  signal: killed
+  exit status 137
+  Process finished with exit code 137
+  SIGKILL received
+  Killed
+expectation:
+  expected_playbook: process-killed-no-logs

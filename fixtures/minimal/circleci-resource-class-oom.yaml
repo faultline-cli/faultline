@@ -1,0 +1,13 @@
+id: circleci-resource-class-oom-canonical
+title: CircleCI job OOM-killed during test run — exit code 137
+fixture_class: minimal
+normalized_log: |
+  Running tests...
+  Killed
+  OOM killer invoked for process jest (pid 4521)
+  Out of memory: Kill process 4521 (node) score 842 or sacrifice child
+  exit code: 137
+  SIGKILL received
+  Process killed due to memory pressure on the runner.
+expectation:
+  expected_playbook: circleci-resource-class-oom

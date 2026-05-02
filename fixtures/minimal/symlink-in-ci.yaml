@@ -1,0 +1,10 @@
+id: symlink-in-ci-canonical
+title: Symlink resolution failure in CI — dangling or circular symlink
+fixture_class: minimal
+normalized_log: |
+  Too many levels of symbolic links while resolving path
+  stat /workspace/current: ELOOP: too many levels of symbolic links
+  dangling symlink detected: /app/config -> /etc/app/config
+  lstat /home/runner/work: ELOOP
+expectation:
+  expected_playbook: symlink-in-ci

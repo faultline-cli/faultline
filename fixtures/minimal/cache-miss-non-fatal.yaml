@@ -1,0 +1,12 @@
+id: cache-miss-non-fatal-canonical
+title: CI cache miss on restore — pipeline continues without cached dependencies
+fixture_class: minimal
+normalized_log: |
+  Run actions/cache@v4
+    key: npm-18-ubuntu-${{ hashFiles('**/package-lock.json') }}
+  Cache not found for key: npm-18-ubuntu-abc123def456
+  No cache found, continuing without cache.
+  Failed to restore cache: cache miss for key npm-18-ubuntu-abc123def456
+  Proceeding with fresh install.
+expectation:
+  expected_playbook: cache-miss-non-fatal

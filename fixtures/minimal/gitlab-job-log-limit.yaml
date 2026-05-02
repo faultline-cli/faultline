@@ -1,0 +1,10 @@
+id: gitlab-job-log-limit-canonical
+title: GitLab job log size exceeded — trace archived and truncated
+fixture_class: minimal
+normalized_log: |
+  Job's log exceeded limit of 4 MB.
+  Job execution will continue but no more output will be collected.
+  Archiving trace.
+  Job's log exceeded limit of 4 MB.
+expectation:
+  expected_playbook: gitlab-job-log-limit

@@ -1,0 +1,11 @@
+id: empty-quality-check-canonical
+title: Linter or scanner runs but finds no files to check — silent pass with 0 files
+fixture_class: minimal
+normalized_log: |
+  Running ESLint...
+  No files to lint matching pattern: src/**/*.ts
+  0 files checked
+  0 files scanned
+  ESLint found no files to analyze. Exiting with code 0.
+expectation:
+  expected_playbook: empty-quality-check

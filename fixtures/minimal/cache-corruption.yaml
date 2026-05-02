@@ -1,0 +1,13 @@
+id: cache-corruption-canonical
+title: Dependency cache is corrupted — checksum mismatch forces fallback reinstall
+fixture_class: minimal
+normalized_log: |
+  Restoring cache from key: npm-18-ubuntu-abc123
+  Cache restored.
+  Running npm ci...
+  npm warn checksum mismatch for lodash@4.17.21: expected abc123, got def456
+  npm error cache is corrupted: unexpected end of archive
+  npm error corrupted tar archive at /home/runner/.npm/_cache/lodash
+  Falling back to full npm install.
+expectation:
+  expected_playbook: cache-corruption

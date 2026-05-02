@@ -1,0 +1,10 @@
+id: jest-command-not-found-canonical
+title: Jest binary missing from PATH — command not found
+fixture_class: minimal
+normalized_log: |
+  ./node_modules/.bin/jest: command not found
+  jest: command not found
+  The 'jest' command could not be found. Did you run npm install?
+  error: jest not found in PATH
+expectation:
+  expected_playbook: jest-command-not-found

@@ -83,6 +83,16 @@ Faultline output is designed to be inspectable.
 
 Unknown output is not a failure of the CLI contract. If the log does not match a known class, Faultline should say so instead of inventing a diagnosis.
 
+## Next Release Improvements
+
+The next release tightens the bundled catalog around playbooks that are broadly useful, fixture-backed, and easy to verify from log evidence.
+
+- Removed 20 low-signal or overly narrow playbooks from the default bundle, including project-specific test-suite rules, weak inference rules, and absence-of-run workflow variants.
+- Regenerated the failure catalog from the tightened playbook set and added checks so stale generated docs are caught instead of drifting after a playbook is removed.
+- Promoted 4 additional real fixtures, bringing the checked-in real corpus to 215 accepted failures with 100% top-1 and top-3 baseline pass rates.
+- Reduced overlap noise in the bundled catalog; `make review` now passes against 260 classified conflict patterns.
+- Kept specialized, provider-specific, and maintainer-only work out of the first-run story unless it has deterministic tests and release-grade evidence.
+
 ## Core Commands
 
 ```bash
@@ -155,7 +165,7 @@ Faultline optimizes for high precision over broad coverage. The current checked-
 - Weak matches: 1
 - Large-scale GitHub Actions evaluation: 89.4% of 30,094 failed logs matched at least one bundled playbook
 
-These metrics mean the known corpus is reproducible and guarded against regression. They do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.
+The lower playbook count is intentional: this release favors a smaller, cleaner default catalog over keeping low-evidence rules in the main path. These metrics mean the known corpus is reproducible and guarded against regression. They do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.
 
 Details: [docs/fixture-corpus.md](docs/fixture-corpus.md).
 

@@ -1,0 +1,11 @@
+id: empty-deployment-target-canonical
+title: Deploy step succeeds silently with nothing to deploy — no manifests found
+fixture_class: minimal
+normalized_log: |
+  Running kubectl apply...
+  No manifests found in manifests/
+  No objects passed to apply
+  Nothing to deploy.
+  Deploy step completed with no deployable artifacts.
+expectation:
+  expected_playbook: empty-deployment-target

@@ -1,0 +1,11 @@
+id: azure-pipelines-service-connection-canonical
+title: Azure Pipelines service connection not found or unauthorized
+fixture_class: minimal
+normalized_log: |
+  ##[error]The service connection 'my-azure-subscription' could not be found or does not exist.
+  ##[error]This service connection is not authorized for use in pipeline 'deploy-production'.
+  TF400889: The service endpoint 'my-azure-subscription' is not valid.
+  ##[error]pipeline is not authorized to use this resource
+  ##[error]No service connection with name 'my-azure-subscription' found.
+expectation:
+  expected_playbook: azure-pipelines-service-connection

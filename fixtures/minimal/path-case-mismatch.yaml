@@ -1,0 +1,10 @@
+id: path-case-mismatch-canonical
+title: Module import fails due to case-sensitive path mismatch on Linux
+fixture_class: minimal
+normalized_log: |
+  Cannot find module './components/Header' from 'src/App.js'
+  Module not found: Cannot find module '../Utils/helpers'
+  wrong case used in import: './components/header' should be './components/Header'
+  Cannot find module './Services/Auth'
+expectation:
+  expected_playbook: path-case-mismatch

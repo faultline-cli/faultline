@@ -1,0 +1,11 @@
+id: github-actions-runner-capacity-canonical
+title: GitHub Actions runner capacity exhausted — no available runners
+fixture_class: minimal
+normalized_log: |
+  All runners that can run this job are busy.
+  Waiting for a runner to pick up this job.
+  All runners that can run this job are busy.
+  Waiting for a runner to pick up this job.
+  This job has been waiting for a runner for more than 10 minutes.
+expectation:
+  expected_playbook: github-actions-runner-capacity

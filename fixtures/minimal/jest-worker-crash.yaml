@@ -1,0 +1,10 @@
+id: jest-worker-crash-canonical
+title: Jest worker process crashed unexpectedly
+fixture_class: minimal
+normalized_log: |
+  A worker process has quit unexpectedly! Most likely this is an error in the code that is being tested.
+  Jest worker exited with signal SIGSEGV
+  A worker process has quit unexpectedly!
+  Force exiting Jest: Have you considered using '--forceExit'?
+expectation:
+  expected_playbook: jest-worker-crash

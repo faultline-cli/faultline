@@ -1,0 +1,10 @@
+id: ipv6-ipv4-resolution-canonical
+title: IPv6/IPv4 address family mismatch causing network unreachable
+fixture_class: minimal
+normalized_log: |
+  EAFNOSUPPORT: address family not supported
+  ADDRESS_FAMILY_NOT_SUPPORTED on connection to 2600:1f18::1:53
+  prefer-ipv4 fallback was not configured
+  listen tcp6 [::]:8080: bind: cannot assign requested address
+expectation:
+  expected_playbook: ipv6-ipv4-resolution

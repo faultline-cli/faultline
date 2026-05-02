@@ -1,0 +1,11 @@
+id: azure-pipelines-task-not-found-canonical
+title: Azure Pipelines task version not found or deprecated
+fixture_class: minimal
+normalized_log: |
+  ##[error]Could not find task 'PublishTestResults' with version '2'.
+  ##[error]Task not found: 'PublishTestResults@2'
+  ##[error]Task version is not available. The task 'AzureWebApp@1' has been deprecated.
+  ##[warning]This task has been deprecated. Please update your pipeline.
+  ##[error]The task does not exist: 'AzureRMWebAppDeployment@3'.
+expectation:
+  expected_playbook: azure-pipelines-task-not-found

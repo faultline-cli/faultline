@@ -1,0 +1,10 @@
+id: package-manager-mismatch-canonical
+title: Package manager mismatch — pnpm lockfile integrity check failed
+fixture_class: minimal
+normalized_log: |
+  lockfile integrity check failed
+  The pnpm-lock.yaml file was generated with an incompatible version of pnpm.
+  pnpm-lock.yaml is present but was created with a different pnpm version.
+  Run pnpm install to regenerate the lockfile.
+expectation:
+  expected_playbook: package-manager-mismatch

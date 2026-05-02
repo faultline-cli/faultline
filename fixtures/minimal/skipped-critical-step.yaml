@@ -1,0 +1,10 @@
+id: skipped-critical-step-canonical
+title: Critical CI step silently skipped due to condition evaluation
+fixture_class: minimal
+normalized_log: |
+  ##[warning]step skipped
+  Condition evaluated to false: steps.build.outcome == 'success'
+  step was skipped: deploy-production
+  Step "Upload artifacts" was skipped because the condition was false.
+expectation:
+  expected_playbook: skipped-critical-step

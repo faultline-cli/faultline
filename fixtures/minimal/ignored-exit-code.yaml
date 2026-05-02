@@ -1,0 +1,13 @@
+id: ignored-exit-code-canonical
+title: Non-zero exit code silently swallowed with set +e or || true
+fixture_class: minimal
+normalized_log: |
+  + set +e
+  + npm run lint
+  npm ERR! Found 12 errors.
+  + echo "lint failed but continuing"
+  lint failed but continuing
+  + ./run-tests.sh || true
+  Tests failed with exit code 1
+expectation:
+  expected_playbook: ignored-exit-code

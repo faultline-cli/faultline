@@ -1,0 +1,10 @@
+id: proxy-configuration-canonical
+title: HTTP proxy authentication required — proxy misconfigured in CI
+fixture_class: minimal
+normalized_log: |
+  407 Proxy Authentication Required
+  CONNECT tunnel failed, response 407
+  HTTP_PROXY is set but proxy authentication failed.
+  curl: (56) Received HTTP code 407 from proxy after CONNECT
+expectation:
+  expected_playbook: proxy-configuration

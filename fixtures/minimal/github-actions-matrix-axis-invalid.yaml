@@ -1,0 +1,10 @@
+id: github-actions-matrix-axis-invalid-canonical
+title: GitHub Actions matrix variable unresolved — matrix axis typo in workflow
+fixture_class: minimal
+normalized_log: |
+  Error: Unresolved variable: matrix.node-versions
+  The workflow uses 'matrix.node-versions' but the matrix only defines 'node-version'.
+  matrix is not defined for key 'node-versions'.
+  matrix variable reference is undefined in this context.
+expectation:
+  expected_playbook: github-actions-matrix-axis-invalid

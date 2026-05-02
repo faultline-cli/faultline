@@ -1,0 +1,11 @@
+id: circleci-resource-class-invalid-canonical
+title: CircleCI job rejected due to invalid resource class name
+fixture_class: minimal
+normalized_log: |
+  #!/bin/bash -eo pipefail
+  Error: Invalid resource class specified.
+  The resource class 'medium+' is not a valid resource class.
+  Job was rejected because 'medium+' is not a valid resource class.
+  Please check your .circleci/config.yml and use a supported resource class.
+expectation:
+  expected_playbook: circleci-resource-class-invalid

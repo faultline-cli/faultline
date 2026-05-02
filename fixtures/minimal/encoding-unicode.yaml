@@ -1,0 +1,11 @@
+id: encoding-unicode-canonical
+title: Python script fails with UnicodeDecodeError reading a non-UTF-8 file in CI
+fixture_class: minimal
+normalized_log: |
+  Processing data files...
+  UnicodeDecodeError: 'utf-8' codec can't decode byte 0x92 in position 4521: invalid start byte
+  UnicodeEncodeError: 'ascii' codec can't encode character '\u2019' in position 10
+  charmap codec can't decode bytes in position 0-1: character maps to <undefined>
+  Error: invalid UTF-8 sequence in file data/input.csv
+expectation:
+  expected_playbook: encoding-unicode

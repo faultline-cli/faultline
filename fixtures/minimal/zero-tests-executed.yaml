@@ -1,0 +1,11 @@
+id: zero-tests-executed-canonical
+title: Test run completes with zero tests found or executed
+fixture_class: minimal
+normalized_log: |
+  No tests found matching the pattern: **/*.test.js
+  No test suites found in /home/runner/work/myapp/src
+  0 tests ran in 0.001s
+  Ran 0 tests in 0.000s
+  WARNING: No tests were run!
+expectation:
+  expected_playbook: zero-tests-executed

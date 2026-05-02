@@ -1,0 +1,10 @@
+id: jenkins-agent-offline-canonical
+title: Jenkins agent offline — remote connection lost during build
+fixture_class: minimal
+normalized_log: |
+  Agent worker-node-1 is offline.
+  Connection was broken: java.io.EOFException
+  jenkins.remoting.Channel$CallSiteStackTrace: Remote call to worker-node-1 failed
+  Agent worker-node-1 is offline, waiting for it to come back online...
+expectation:
+  expected_playbook: jenkins-agent-offline

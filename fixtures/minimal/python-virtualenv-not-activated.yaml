@@ -1,0 +1,10 @@
+id: python-virtualenv-not-activated-canonical
+title: Python virtualenv not activated — activate script not found
+fixture_class: minimal
+normalized_log: |
+  bash: venv/bin/activate: No such file or directory
+  activate: not found
+  Run 'python -m venv venv' then 'source venv/bin/activate' to activate the virtualenv
+  venv/bin/activate: No such file or directory
+expectation:
+  expected_playbook: python-virtualenv-not-activated

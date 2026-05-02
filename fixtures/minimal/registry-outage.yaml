@@ -1,0 +1,11 @@
+id: registry-outage-canonical
+title: npm registry unavailable — network request to registry failed
+fixture_class: minimal
+normalized_log: |
+  npm ERR! network
+  npm ERR! fetch failed https://registry.npmjs.org/react/-/react-18.0.0.tgz
+  npm ERR! network registry unavailable
+  npm warn retry failed to fetch from registry, will retry in 10s
+  npm ERR! network fetch failed: 503 Service Unavailable
+expectation:
+  expected_playbook: registry-outage

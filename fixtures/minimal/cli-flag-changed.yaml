@@ -1,0 +1,12 @@
+id: cli-flag-changed-canonical
+title: CLI tool rejects unknown flag — option removed or renamed in newer version
+fixture_class: minimal
+normalized_log: |
+  Running: docker build --stream .
+  unknown flag: --stream
+  flag provided but not defined: -stream
+  See 'docker build --help'.
+  Error: unrecognized option '--stream' for 'docker build'
+  This option was removed in docker 24.0. Please update your script.
+expectation:
+  expected_playbook: cli-flag-changed

@@ -1,0 +1,12 @@
+id: config-file-missing-canonical
+title: Application fails to start — config file not found at expected path
+fixture_class: minimal
+normalized_log: |
+  Starting application server...
+  config file not found: /app/config/app.yaml
+  failed to load config: No such file or directory: config/settings.yaml
+  error loading configuration from config/application.yml
+  Could not find config at path: /app/config/app.yaml
+  Application startup failed.
+expectation:
+  expected_playbook: config-file-missing

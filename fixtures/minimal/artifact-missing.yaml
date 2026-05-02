@@ -1,0 +1,11 @@
+id: artifact-missing-canonical
+title: GitHub Actions upload-artifact finds no matching files — 0 files uploaded
+fixture_class: minimal
+normalized_log: |
+  Run actions/upload-artifact@v4
+  no files found with the provided path: dist/app.zip
+  Skipping upload
+  No matching files were found for path: dist/app.zip
+  0 files uploaded
+expectation:
+  expected_playbook: artifact-missing

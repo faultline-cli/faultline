@@ -1,0 +1,11 @@
+id: git-refspec-mismatch-canonical
+title: Git checkout fails — remote branch or ref does not exist
+fixture_class: minimal
+normalized_log: |
+  Checking out ref 'refs/heads/feature/old-branch'...
+  fatal: couldn't find remote ref refs/heads/feature/old-branch
+  fatal: Remote branch feature/old-branch not found in upstream origin
+  error: not found in upstream origin
+  Error: The ref 'feature/old-branch' does not exist in the remote repository.
+expectation:
+  expected_playbook: git-refspec-mismatch

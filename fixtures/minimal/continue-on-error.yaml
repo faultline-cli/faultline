@@ -1,0 +1,11 @@
+id: continue-on-error-canonical
+title: GitHub Actions step marked continue-on-error suppresses visible failure
+fixture_class: minimal
+normalized_log: |
+  - name: Run integration tests
+    run: ./run-tests.sh
+    continue-on-error: true
+  ##[warning]Step 'Run integration tests' failed with exit code 1, but continue-on-error: true was set.
+  ##[warning]Continuing pipeline execution despite step failure.
+expectation:
+  expected_playbook: continue-on-error

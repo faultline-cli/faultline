@@ -1,0 +1,10 @@
+id: timezone-diff-canonical
+title: Timezone mismatch causes test failures between local and CI
+fixture_class: minimal
+normalized_log: |
+  expected '2024-01-15T10:00:00Z' but got '2024-01-15T10:00:00+05:30'
+  wrong timezone: expected UTC but received Asia/Kolkata
+  timezone mismatch: local is America/New_York, CI is UTC
+  AssertionError: timestamp did not equal expected UTC value
+expectation:
+  expected_playbook: timezone-diff
