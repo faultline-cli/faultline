@@ -1,10 +1,10 @@
 # Python, Ruby, or Go runtime version mismatch
 
 - ID: `runtime-mismatch`
-- Confidence: 89%
+- Confidence: 93%
 - Category: build
 - Severity: high
-- Score: 3.75
+- Score: 7.76
 - Detector: log
 - Stage: build
 

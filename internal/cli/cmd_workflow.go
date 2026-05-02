@@ -76,7 +76,7 @@ func newWorkflowCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&gitContext, "git", true, "enrich the workflow with recent local git repository context (enabled by default; pass --git=false to disable)")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
-	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow")
+	cmd.Flags().BoolVar(&bayes, "bayes", true, "rerank deterministic matches with the Bayesian-inspired scoring layer before building the workflow (enabled by default; pass --bayes=false to disable)")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")

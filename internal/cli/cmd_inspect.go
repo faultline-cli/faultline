@@ -64,7 +64,7 @@ func newInspectCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
 	cmd.Flags().StringVar(&storePath, "store", "", "configure the local forensic store: auto|off|/path/to/store.db")
-	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic findings with the Bayesian-inspired scoring layer")
+	cmd.Flags().BoolVar(&bayes, "bayes", true, "rerank deterministic findings with the Bayesian-inspired scoring layer (enabled by default; pass --bayes=false to disable)")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")

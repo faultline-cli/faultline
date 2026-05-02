@@ -157,7 +157,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&gitContext, "git", true, "enrich results with recent local git repository context (enabled by default; pass --git=false to disable)")
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
-	cmd.Flags().BoolVar(&bayes, "bayes", false, "rerank deterministic matches with the Bayesian-inspired scoring layer")
+	cmd.Flags().BoolVar(&bayes, "bayes", true, "rerank deterministic matches with the Bayesian-inspired scoring layer (enabled by default; pass --bayes=false to disable)")
 	cmd.Flags().BoolVar(&traceEnabled, "trace", false, "render a deterministic trace for the selected playbook")
 	cmd.Flags().StringVar(&tracePlaybook, "trace-playbook", "", "render a deterministic trace for the named playbook")
 	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")

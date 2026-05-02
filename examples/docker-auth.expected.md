@@ -1,10 +1,10 @@
 # Docker registry authentication failure
 
 - ID: `docker-auth`
-- Confidence: 65%
+- Confidence: 73%
 - Category: auth
 - Severity: high
-- Score: 4.00
+- Score: 9.16
 - Detector: log
 - Stage: test
 

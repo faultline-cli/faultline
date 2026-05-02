@@ -1,10 +1,10 @@
 # npm ci lockfile mismatch
 
 - ID: `npm-ci-lockfile`
-- Confidence: 36%
+- Confidence: 44%
 - Category: build
 - Severity: medium
-- Score: 2.00
+- Score: 4.45
 - Detector: log
 
 ## Summary

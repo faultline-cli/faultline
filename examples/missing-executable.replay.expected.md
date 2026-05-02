@@ -1,10 +1,10 @@
 # Required executable or runtime binary missing
 
 - ID: `missing-executable`
-- Confidence: 60%
+- Confidence: 69%
 - Category: build
 - Severity: high
-- Score: 2.27
+- Score: 6.15
 - Detector: log
 
 ## Summary
@@ -17,8 +17,13 @@ The job tried to launch a required tool or runtime binary, but that executable w
 
 ## Confidence Breakdown
 
-- reported confidence: 60%
-- detector score: 2.27
+- reported confidence: 69%
+- detector baseline: 2.27
+- final reranked score: 6.15
+- conservative prior: +0.30
+- +0.72 detector confidence supports the candidate
+- +0.35 token overlap between evidence and playbook patterns supports the candidate
+- +0.07 broader explicit signal coverage supports the candidate
 
 ## Suggested Fix
 

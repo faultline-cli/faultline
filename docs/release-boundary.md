@@ -171,22 +171,24 @@ The repository is release-ready only when all of these stay true:
 - `make cli-smoke` passes against checked-in examples and workflow snapshots
 - `make release-check VERSION=<tag>` passes before a release cut
 
-## Bayes Promotion Gate
+## Bayes Promotion
 
-`--bayes` remains an explicit opt-in flag. Before it can graduate to a default or release-gated path, all of these must hold:
+`--bayes` was promoted to the default in v0.4.5. The Bayesian-inspired reranking layer is now active by default on all analysis commands (`analyze`, `trace`, `workflow`, `inspect`). Pass `--bayes=false` to disable it and revert to the deterministic baseline scorer.
 
-- `make bayes-check` shows zero regressions across the real fixture corpus
-- `make bayes-check` shows no Top-1 or Top-3 rate regression vs the baseline scorer
-- The comparison report is reviewed and checked in as part of the promotion commit
+Promotion criteria satisfied before v0.4.5:
+
+- `make bayes-check` showed zero regressions across the real fixture corpus (delta 0.000)
+- `make bayes-check` showed no Top-1 or Top-3 rate regression vs the baseline scorer
+- The comparison report was reviewed as part of the promotion commit
 - The release notes document the promotion explicitly
 
-Run the gate with `--fail-on-regression` to enforce it in CI:
+The gate can still be run with `--fail-on-regression` to verify the corpus state:
 
 ```bash
 ./bin/faultline fixtures compare-modes --class real --fail-on-regression
 ```
 
-The current known state is one Bayes regression (`gitlab-gitlab-org-gitlab-runner-6557-s3-64c99cfe7a2f9dfa`, rank 1 → 2). Bayes stays opt-in until that regression is resolved.
+Zero Bayes regressions across 215 accepted real fixtures. `make bayes-check` exits zero with delta 0.000, top-1 1.000, top-3 1.000 in both modes.
 
 ## Contribution Rule
 
