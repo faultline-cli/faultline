@@ -97,7 +97,6 @@ func mergePlaybooks(base, child model.Playbook) model.Playbook {
 		LocalRepro:  mergeUnique(base.Workflow.LocalRepro, child.Workflow.LocalRepro),
 		Verify:      mergeUnique(base.Workflow.Verify, child.Workflow.Verify),
 	}
-	merged.Hooks = mergePlaybookHooks(base.Hooks, child.Hooks)
 	merged.Scoring = mergeScoringConfig(base.Scoring, child.Scoring)
 	merged.Contextual = model.ContextPolicy{
 		PathIncludes: mergeUnique(base.Contextual.PathIncludes, child.Contextual.PathIncludes),
@@ -143,15 +142,6 @@ func mergeChangeSensitivity(base, child model.ChangeSensitivity) model.ChangeSen
 	}
 	merged.PreferChangedScopes = child.PreferChangedScopes || base.PreferChangedScopes
 	return merged
-}
-
-func mergePlaybookHooks(base, child model.PlaybookHooks) model.PlaybookHooks {
-	trimmedBase := disableHookIDs(base, child.Disable)
-	return model.PlaybookHooks{
-		Verify:    append(append([]model.HookDefinition(nil), trimmedBase.Verify...), child.Verify...),
-		Collect:   append(append([]model.HookDefinition(nil), trimmedBase.Collect...), child.Collect...),
-		Remediate: append(append([]model.HookDefinition(nil), trimmedBase.Remediate...), child.Remediate...),
-	}
 }
 
 func mergeScoringConfig(base, child model.ScoringConfig) model.ScoringConfig {

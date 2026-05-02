@@ -12,8 +12,6 @@ import (
 	"time"
 
 	_ "modernc.org/sqlite"
-
-	"faultline/internal/model"
 )
 
 type sqliteStore struct {
@@ -202,55 +200,10 @@ ON CONFLICT(signature_hash) DO UPDATE SET
 				return fmt.Errorf("upsert signature: %w", err)
 			}
 		}
-
-		if i != 0 || result.Hooks == nil {
-			continue
-		}
-		if err := insertHookResults(ctx, tx, handle.ID, findingID, result, completedAt); err != nil {
-			return err
-		}
 	}
 
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("commit store transaction: %w", err)
-	}
-	return nil
-}
-
-func insertHookResults(ctx context.Context, tx *sql.Tx, runID, findingID int64, result model.Result, completedAt time.Time) error {
-	for _, item := range result.Hooks.Results {
-		factsJSON, err := json.Marshal(item.Facts)
-		if err != nil {
-			return fmt.Errorf("marshal hook facts: %w", err)
-		}
-		evidenceJSON, err := json.Marshal(item.Evidence)
-		if err != nil {
-			return fmt.Errorf("marshal hook evidence: %w", err)
-		}
-		_, err = tx.ExecContext(ctx, `
-INSERT INTO hook_results (
-	run_id, finding_id, playbook_id, signature_hash, hook_id, category, kind, status,
-	passed, confidence_delta, reason, facts_json, evidence_json, executed_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`,
-			runID,
-			findingID,
-			result.Playbook.ID,
-			nullableString(result.SignatureHash),
-			item.ID,
-			string(item.Category),
-			nullableString(string(item.Kind)),
-			string(item.Status),
-			nullableBool(item.Passed),
-			item.ConfidenceDelta,
-			nullableString(item.Reason),
-			string(factsJSON),
-			string(evidenceJSON),
-			completedAt.UTC().Format(time.RFC3339),
-		)
-		if err != nil {
-			return fmt.Errorf("insert hook result: %w", err)
-		}
 	}
 	return nil
 }
@@ -521,119 +474,6 @@ LIMIT ?
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate playbook stats: %w", err)
-	}
-	return out, nil
-}
-
-func (s *sqliteStore) LookupHookHistory(ctx context.Context, signatureHash, playbookID string) (*HookHistorySummary, error) {
-	signatureHash = strings.TrimSpace(signatureHash)
-	playbookID = strings.TrimSpace(playbookID)
-	if signatureHash == "" || playbookID == "" {
-		return nil, nil
-	}
-	rows, err := s.db.QueryContext(ctx, `
-SELECT status, passed, executed_at
-FROM hook_results
-WHERE signature_hash = ? AND playbook_id = ?
-ORDER BY executed_at ASC
-`, signatureHash, playbookID)
-	if err != nil {
-		return nil, fmt.Errorf("query hook history: %w", err)
-	}
-	defer rows.Close()
-
-	summary := &HookHistorySummary{}
-	for rows.Next() {
-		var (
-			status     string
-			passed     sql.NullInt64
-			executedAt string
-		)
-		if err := rows.Scan(&status, &passed, &executedAt); err != nil {
-			return nil, fmt.Errorf("scan hook history: %w", err)
-		}
-		summary.TotalCount++
-		summary.LastSeenAt = executedAt
-		switch status {
-		case string(model.HookStatusExecuted):
-			summary.ExecutedCount++
-			if passed.Valid {
-				if passed.Int64 == 1 {
-					summary.PassedCount++
-				} else {
-					summary.FailedCount++
-				}
-			}
-		case string(model.HookStatusBlocked):
-			summary.BlockedCount++
-		case string(model.HookStatusSkipped):
-			summary.SkippedCount++
-		case string(model.HookStatusFailed):
-			summary.FailedCount++
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate hook history: %w", err)
-	}
-	if summary.TotalCount == 0 {
-		return nil, nil
-	}
-	return summary, nil
-}
-
-func (s *sqliteStore) ListHookStats(ctx context.Context, limit int) ([]HookStats, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-	rows, err := s.db.QueryContext(ctx, `
-SELECT
-	playbook_id,
-	hook_id,
-	category,
-	COUNT(*) AS total_count,
-	SUM(CASE WHEN status = 'executed' THEN 1 ELSE 0 END) AS executed_count,
-	SUM(CASE WHEN passed = 1 THEN 1 ELSE 0 END) AS passed_count,
-	SUM(CASE
-		WHEN status = 'failed' THEN 1
-		WHEN status = 'executed' AND passed = 0 THEN 1
-		ELSE 0
-	END) AS failed_count,
-	SUM(CASE WHEN status = 'blocked' THEN 1 ELSE 0 END) AS blocked_count,
-	SUM(CASE WHEN status = 'skipped' THEN 1 ELSE 0 END) AS skipped_count,
-	AVG(confidence_delta) AS avg_confidence_delta,
-	COALESCE(MAX(executed_at), '')
-FROM hook_results
-GROUP BY playbook_id, hook_id, category
-ORDER BY total_count DESC, MAX(executed_at) DESC, playbook_id ASC, hook_id ASC
-LIMIT ?
-`, limit)
-	if err != nil {
-		return nil, fmt.Errorf("query hook stats: %w", err)
-	}
-	defer rows.Close()
-
-	var out []HookStats
-	for rows.Next() {
-		var item HookStats
-		if err := rows.Scan(
-			&item.PlaybookID,
-			&item.HookID,
-			&item.Category,
-			&item.TotalCount,
-			&item.ExecutedCount,
-			&item.PassedCount,
-			&item.FailedCount,
-			&item.BlockedCount,
-			&item.SkippedCount,
-			&item.AvgConfidenceDelta,
-			&item.LastSeenAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan hook stats: %w", err)
-		}
-		out = append(out, item)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate hook stats: %w", err)
 	}
 	return out, nil
 }

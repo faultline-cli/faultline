@@ -66,13 +66,12 @@ func Build(a *model.Analysis) *model.FailureArtifact {
 	artifact.Evidence = append([]string(nil), top.Evidence...)
 	artifact.Confidence = refinedConfidence(a, top)
 	artifact.HistoryContext = &model.ArtifactHistoryContext{
-		SeenCount:          top.SeenCount,
-		SignatureHash:      top.SignatureHash,
-		SeenBefore:         top.SeenBefore,
-		OccurrenceCount:    top.OccurrenceCount,
-		FirstSeenAt:        top.FirstSeenAt,
-		LastSeenAt:         top.LastSeenAt,
-		HookHistorySummary: cloneHookHistory(top.HookHistorySummary),
+		SeenCount:       top.SeenCount,
+		SignatureHash:   top.SignatureHash,
+		SeenBefore:      top.SeenBefore,
+		OccurrenceCount: top.OccurrenceCount,
+		FirstSeenAt:     top.FirstSeenAt,
+		LastSeenAt:      top.LastSeenAt,
 	}
 	artifact.FixSteps = markdownListItems(top.Playbook.Fix)
 	artifact.Remediation = buildMatchedRemediation(a, top)
@@ -114,9 +113,6 @@ func refinedConfidence(a *model.Analysis, result model.Result) float64 {
 	}
 	if a.Delta != nil && (len(a.Delta.Causes) > 0 || len(a.Delta.Signals) > 0) {
 		confidence += 0.03
-	}
-	if result.Hooks != nil {
-		confidence = result.Hooks.FinalConfidence
 	}
 	if confidence > 1 {
 		return 1
@@ -274,14 +270,6 @@ func splitCommand(cmd string) []string {
 		return nil
 	}
 	return fields
-}
-
-func cloneHookHistory(summary *model.HookHistorySummary) *model.HookHistorySummary {
-	if summary == nil {
-		return nil
-	}
-	clone := *summary
-	return &clone
 }
 
 func displayPackName(name string) string {

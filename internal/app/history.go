@@ -23,14 +23,12 @@ type historyOverviewJSON struct {
 	Store      historyStoreJSON         `json:"store"`
 	Signatures []store.SignatureSummary `json:"signatures,omitempty"`
 	Playbooks  []store.PlaybookStats    `json:"playbooks,omitempty"`
-	Hooks      []store.HookStats        `json:"hooks,omitempty"`
 }
 
 type historyDetailJSON struct {
-	Store       historyStoreJSON          `json:"store"`
-	Signature   store.SignatureSummary    `json:"signature"`
-	Findings    []store.FindingSummary    `json:"findings,omitempty"`
-	HookHistory *store.HookHistorySummary `json:"hook_history,omitempty"`
+	Store     historyStoreJSON       `json:"store"`
+	Signature store.SignatureSummary `json:"signature"`
+	Findings  []store.FindingSummary `json:"findings,omitempty"`
 }
 
 type determinismJSON struct {
@@ -168,16 +166,11 @@ func writeHistoryOverview(ctx context.Context, st store.Store, info store.Info, 
 	if err != nil {
 		return err
 	}
-	hooks, err := st.ListHookStats(ctx, limit)
-	if err != nil {
-		return err
-	}
 	if jsonOut {
 		return writeJSON(w, historyOverviewJSON{
 			Store:      historyStorePayload(info),
 			Signatures: signatures,
 			Playbooks:  playbooks,
-			Hooks:      hooks,
 		})
 	}
 
@@ -185,7 +178,7 @@ func writeHistoryOverview(ctx context.Context, st store.Store, info store.Info, 
 	b.WriteString("History\n")
 	b.WriteString("-------\n\n")
 	writeStoreInfoText(&b, info)
-	if len(signatures) == 0 && len(playbooks) == 0 && len(hooks) == 0 {
+	if len(signatures) == 0 && len(playbooks) == 0 {
 		b.WriteString("No stored history yet.\n")
 		_, err := fmt.Fprint(w, b.String())
 		return err
@@ -229,26 +222,6 @@ func writeHistoryOverview(ctx context.Context, st store.Store, info store.Info, 
 		b.WriteString("\n")
 	}
 
-	if len(hooks) > 0 {
-		b.WriteString("Hook Quality Snapshot\n")
-		b.WriteString("~~~~~~~~~~~~~~~~~~~~~\n")
-		for _, item := range hooks {
-			fmt.Fprintf(&b, "- %s/%s  total %d, executed %d, passed %d, failed %d, blocked %d\n",
-				item.PlaybookID,
-				item.HookID,
-				item.TotalCount,
-				item.ExecutedCount,
-				item.PassedCount,
-				item.FailedCount,
-				item.BlockedCount,
-			)
-			fmt.Fprintf(&b, "  skipped: %d  avg delta: %+.2f\n", item.SkippedCount, item.AvgConfidenceDelta)
-			if item.LastSeenAt != "" {
-				fmt.Fprintf(&b, "  last seen: %s\n", item.LastSeenAt)
-			}
-		}
-	}
-
 	_, err = fmt.Fprint(w, strings.TrimRight(b.String(), "\n")+"\n")
 	return err
 }
@@ -276,20 +249,11 @@ func writeHistorySignature(ctx context.Context, st store.Store, info store.Info,
 		summary.Category = findings[0].Category
 	}
 
-	var hookHistory *store.HookHistorySummary
-	if summary.FailureID != "" {
-		hookHistory, err = st.LookupHookHistory(ctx, signatureHash, summary.FailureID)
-		if err != nil {
-			return err
-		}
-	}
-
 	if jsonOut {
 		return writeJSON(w, historyDetailJSON{
-			Store:       historyStorePayload(info),
-			Signature:   summary,
-			Findings:    findings,
-			HookHistory: hookHistory,
+			Store:     historyStorePayload(info),
+			Signature: summary,
+			Findings:  findings,
 		})
 	}
 
@@ -321,16 +285,6 @@ func writeHistorySignature(ctx context.Context, st store.Store, info store.Info,
 	}
 	if summary.LastSeenAt != "" {
 		fmt.Fprintf(&b, "Last seen: %s\n", summary.LastSeenAt)
-	}
-	if hookHistory != nil {
-		fmt.Fprintf(&b, "Hook history: total %d, executed %d, passed %d, failed %d, blocked %d, skipped %d\n",
-			hookHistory.TotalCount,
-			hookHistory.ExecutedCount,
-			hookHistory.PassedCount,
-			hookHistory.FailedCount,
-			hookHistory.BlockedCount,
-			hookHistory.SkippedCount,
-		)
 	}
 	if len(findings) > 0 {
 		b.WriteString("\nRecent Findings\n")

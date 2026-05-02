@@ -47,8 +47,6 @@ type Store interface {
 	ListSignatures(context.Context, int) ([]SignatureSummary, error)
 	GetRecentFindingsBySignature(context.Context, string, int) ([]FindingSummary, error)
 	ListPlaybookStats(context.Context, int) ([]PlaybookStats, error)
-	LookupHookHistory(context.Context, string, string) (*HookHistorySummary, error)
-	ListHookStats(context.Context, int) ([]HookStats, error)
 	VerifyDeterminismForInputHash(context.Context, string) (DeterminismSummary, error)
 	Close() error
 }
@@ -116,30 +114,6 @@ type PlaybookStats struct {
 	RecurringSignatures int     `json:"recurring_signatures,omitempty"`
 	AvgConfidence       float64 `json:"avg_confidence,omitempty"`
 	LastSeenAt          string  `json:"last_seen_at,omitempty"`
-}
-
-type HookHistorySummary struct {
-	TotalCount    int    `json:"total_count,omitempty"`
-	ExecutedCount int    `json:"executed_count,omitempty"`
-	PassedCount   int    `json:"passed_count,omitempty"`
-	FailedCount   int    `json:"failed_count,omitempty"`
-	BlockedCount  int    `json:"blocked_count,omitempty"`
-	SkippedCount  int    `json:"skipped_count,omitempty"`
-	LastSeenAt    string `json:"last_seen_at,omitempty"`
-}
-
-type HookStats struct {
-	PlaybookID         string  `json:"playbook_id,omitempty"`
-	HookID             string  `json:"hook_id,omitempty"`
-	Category           string  `json:"category,omitempty"`
-	TotalCount         int     `json:"total_count,omitempty"`
-	ExecutedCount      int     `json:"executed_count,omitempty"`
-	PassedCount        int     `json:"passed_count,omitempty"`
-	FailedCount        int     `json:"failed_count,omitempty"`
-	BlockedCount       int     `json:"blocked_count,omitempty"`
-	SkippedCount       int     `json:"skipped_count,omitempty"`
-	AvgConfidenceDelta float64 `json:"avg_confidence_delta,omitempty"`
-	LastSeenAt         string  `json:"last_seen_at,omitempty"`
 }
 
 type DeterminismSummary struct {

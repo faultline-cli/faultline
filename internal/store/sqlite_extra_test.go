@@ -300,23 +300,6 @@ func TestCompleteRunNilAnalysisIsNoop(t *testing.T) {
 	}
 }
 
-// ── ListHookStats default limit ───────────────────────────────────────────────
-
-func TestListHookStatsDefaultLimit(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "faultline.db")
-	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
-	if err != nil {
-		t.Fatalf("OpenBestEffort: %v", err)
-	}
-	defer st.Close()
-
-	// Zero limit should default to 10 – should not error.
-	_, err = st.ListHookStats(context.Background(), 0)
-	if err != nil {
-		t.Fatalf("ListHookStats with limit=0: %v", err)
-	}
-}
-
 // ── VerifyDeterminismForInputHash blank input ─────────────────────────────────
 
 func TestVerifyDeterminismForInputHashBlank(t *testing.T) {

@@ -19,14 +19,13 @@ type historySnapshot struct {
 	seenCount    int
 	signature    store.Signature
 	signatureHit store.SignatureHistory
-	hookHistory  *store.HookHistorySummary
 }
 
 func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, surface string, opts AnalyzeOptions, persist bool) (*model.Analysis, error) {
 	if a == nil {
 		return nil, nil
 	}
-	prepared := applyHooksToAnalysis(a, opts)
+	prepared := a
 	prepared.InputHash = ""
 	if sourceKind == "log" && rawInput != "" {
 		prepared.InputHash = store.InputHashForLog(rawInput)
@@ -119,8 +118,6 @@ func captureHistorySnapshots(ctx context.Context, st store.Store, a *model.Analy
 		snapshots[i].seenCount = seenCount
 		history, _ := st.LookupSignatureHistory(ctx, sig.Hash)
 		snapshots[i].signatureHit = history
-		hookHistory, _ := st.LookupHookHistory(ctx, sig.Hash, result.Playbook.ID)
-		snapshots[i].hookHistory = hookHistory
 	}
 	return snapshots
 }
@@ -133,7 +130,6 @@ func applyHistorySnapshots(base *model.Analysis, snapshots []historySnapshot, no
 		result.SeenCount = snapshot.seenCount
 		result.SignatureHash = snapshot.signature.Hash
 		result.SeenBefore = snapshot.signatureHit.OccurrenceCount > 0
-		result.HookHistorySummary = toModelHookHistory(snapshot.hookHistory)
 		result.FirstSeenAt = snapshot.signatureHit.FirstSeenAt
 		result.LastSeenAt = snapshot.signatureHit.LastSeenAt
 		result.OccurrenceCount = snapshot.signatureHit.OccurrenceCount
@@ -161,7 +157,6 @@ func applySignatureSnapshots(base *model.Analysis, snapshots []historySnapshot) 
 		result.OccurrenceCount = 0
 		result.FirstSeenAt = ""
 		result.LastSeenAt = ""
-		result.HookHistorySummary = nil
 		clone.Results[i] = result
 	}
 	return clone
@@ -207,19 +202,4 @@ func cloneAnalysis(a *model.Analysis) *model.Analysis {
 	clone := *a
 	clone.Results = append([]model.Result(nil), a.Results...)
 	return &clone
-}
-
-func toModelHookHistory(summary *store.HookHistorySummary) *model.HookHistorySummary {
-	if summary == nil {
-		return nil
-	}
-	return &model.HookHistorySummary{
-		TotalCount:    summary.TotalCount,
-		ExecutedCount: summary.ExecutedCount,
-		PassedCount:   summary.PassedCount,
-		FailedCount:   summary.FailedCount,
-		BlockedCount:  summary.BlockedCount,
-		SkippedCount:  summary.SkippedCount,
-		LastSeenAt:    summary.LastSeenAt,
-	}
 }

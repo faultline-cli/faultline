@@ -132,30 +132,6 @@ func TestFormatTraceMarkdownShowsCompetingSection(t *testing.T) {
 	}
 }
 
-func TestFormatTraceMarkdownShowsHooksSection(t *testing.T) {
-	report := makeTraceReport(true)
-	report.Hooks = &model.HookReport{
-		Mode:            model.HookModeSafe,
-		BaseConfidence:  0.84,
-		ConfidenceDelta: 0.05,
-		FinalConfidence: 0.89,
-		Results: []model.HookResult{{
-			ID:       "registry-config",
-			Category: model.HookCategoryVerify,
-			Status:   model.HookStatusExecuted,
-			Passed:   boolPtr(true),
-		}},
-	}
-
-	out := FormatTraceMarkdown(report, false, false, false)
-	if !strings.Contains(out, "## Hooks") {
-		t.Fatalf("expected hooks section in markdown, got:\n%s", out)
-	}
-	if !strings.Contains(out, "verify/registry-config: executed") {
-		t.Fatalf("expected hook summary in markdown, got:\n%s", out)
-	}
-}
-
 func TestFormatTraceMarkdownShowsSignatureSection(t *testing.T) {
 	report := makeTraceReport(true)
 	sig := signature.ForResult(model.Result{
@@ -185,20 +161,12 @@ func TestFormatTraceTextShowsHistoryWindowAndSignature(t *testing.T) {
 	report.OccurrenceCount = 3
 	report.FirstSeenAt = "2026-04-20T10:00:00Z"
 	report.LastSeenAt = "2026-04-23T12:00:00Z"
-	report.HookHistory = &model.HookHistorySummary{
-		TotalCount:    3,
-		ExecutedCount: 3,
-		PassedCount:   2,
-		FailedCount:   1,
-		LastSeenAt:    "2026-04-23T12:00:00Z",
-	}
 
 	out := FormatTraceText(report, false, false, false)
 	for _, want := range []string{
 		"History",
 		"History available for signature " + sig.Hash[:12],
 		"Seen 3 times over 3d in local history",
-		"Hook verification history: 3 run(s)",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("expected %q in trace output, got:\n%s", want, out)
@@ -299,27 +267,6 @@ func TestFormatTraceJSONIncludesCompetingWhenRequested(t *testing.T) {
 	competing, ok := m["competing"].([]interface{})
 	if !ok || len(competing) == 0 {
 		t.Error("expected competing field with entries when showRejected=true")
-	}
-}
-
-func TestFormatTraceJSONIncludesHooks(t *testing.T) {
-	report := makeTraceReport(true)
-	report.Hooks = &model.HookReport{
-		Mode:            model.HookModeSafe,
-		BaseConfidence:  0.84,
-		ConfidenceDelta: 0.05,
-		FinalConfidence: 0.89,
-	}
-	out, err := FormatTraceJSON(report, false, false, false)
-	if err != nil {
-		t.Fatalf("FormatTraceJSON: %v", err)
-	}
-	var m map[string]interface{}
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
-		t.Fatalf("invalid JSON: %v", err)
-	}
-	if m["hooks"] == nil {
-		t.Fatal("expected hooks field in trace json")
 	}
 }
 

@@ -48,24 +48,6 @@ func TestValidateOutputMode(t *testing.T) {
 	}
 }
 
-func TestValidateWorkflowMode(t *testing.T) {
-	cases := []struct {
-		value   string
-		wantErr bool
-	}{
-		{"local", false},
-		{"agent", false},
-		{"ci", true},
-		{"", true},
-	}
-	for _, tc := range cases {
-		err := validateWorkflowMode(tc.value)
-		if (err != nil) != tc.wantErr {
-			t.Errorf("validateWorkflowMode(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
-		}
-	}
-}
-
 func TestValidateView(t *testing.T) {
 	cases := []struct {
 		value   string
@@ -152,34 +134,6 @@ func TestValidateExperimentalDeltaProvider(t *testing.T) {
 			t.Fatalf("expected empty provider to pass, got %v", err)
 		}
 	})
-}
-
-func TestValidateHookMode(t *testing.T) {
-	cases := []struct {
-		value    string
-		wantMode string
-		wantErr  bool
-	}{
-		{"", "off", false},
-		{"off", "off", false},
-		{"verify-only", "verify-only", false},
-		{"collect-only", "collect-only", false},
-		{"safe", "safe", false},
-		{"full", "full", false},
-		{"  safe  ", "safe", false},
-		{"invalid", "", true},
-		{"all", "", true},
-	}
-	for _, tc := range cases {
-		got, err := validateHookMode(tc.value)
-		if (err != nil) != tc.wantErr {
-			t.Errorf("validateHookMode(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
-			continue
-		}
-		if string(got) != tc.wantMode {
-			t.Errorf("validateHookMode(%q): got=%q want=%q", tc.value, got, tc.wantMode)
-		}
-	}
 }
 
 func TestDeriveGitLabAPIBaseURL(t *testing.T) {

@@ -66,10 +66,6 @@ func LoadPacks(packs []Pack) ([]model.Playbook, error) {
 	if err != nil {
 		return nil, err
 	}
-	hookCatalogs, err := loadPackHookCatalogs(packs)
-	if err != nil {
-		return nil, err
-	}
 	for _, pack := range packs {
 		if pack.Root == "" {
 			return nil, fmt.Errorf("playbook pack %q has no root directory", pack.Name)
@@ -101,13 +97,6 @@ func LoadPacks(packs []Pack) ([]model.Playbook, error) {
 	}
 	merged, err = applyMatchCatalogs(merged, matchCatalogs)
 	if err != nil {
-		return nil, err
-	}
-	merged, err = applyHookCatalogs(merged, hookCatalogs)
-	if err != nil {
-		return nil, err
-	}
-	if err := validateHooksResolved(merged); err != nil {
 		return nil, err
 	}
 	return merged, nil

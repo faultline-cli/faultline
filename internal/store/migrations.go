@@ -94,32 +94,6 @@ CREATE INDEX IF NOT EXISTS idx_playbook_matches_run_rank
 
 CREATE INDEX IF NOT EXISTS idx_playbook_matches_playbook_id
 	ON playbook_matches(playbook_id);
-
-CREATE TABLE IF NOT EXISTS hook_results (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	run_id INTEGER NOT NULL,
-	finding_id INTEGER,
-	playbook_id TEXT NOT NULL,
-	signature_hash TEXT,
-	hook_id TEXT NOT NULL,
-	category TEXT NOT NULL,
-	kind TEXT,
-	status TEXT NOT NULL,
-	passed INTEGER,
-	confidence_delta REAL NOT NULL DEFAULT 0,
-	reason TEXT,
-	facts_json TEXT,
-	evidence_json TEXT,
-	executed_at TEXT NOT NULL,
-	FOREIGN KEY(run_id) REFERENCES analysis_runs(id) ON DELETE CASCADE,
-	FOREIGN KEY(finding_id) REFERENCES findings(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_hook_results_signature_hash
-	ON hook_results(signature_hash);
-
-CREATE INDEX IF NOT EXISTS idx_hook_results_playbook_id
-	ON hook_results(playbook_id);
 `,
 	},
 	{

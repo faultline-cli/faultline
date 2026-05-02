@@ -180,19 +180,6 @@ func TestSQLiteStoreListsHistorySummaries(t *testing.T) {
 			Confidence:    0.91,
 			Evidence:      []string{"authentication required for registry.example.com"},
 			SignatureHash: dockerSig,
-			Hooks: &model.HookReport{
-				Mode:            model.HookModeSafe,
-				BaseConfidence:  0.91,
-				ConfidenceDelta: 0.05,
-				FinalConfidence: 0.96,
-				Results: []model.HookResult{{
-					ID:              "registry-config",
-					Category:        model.HookCategoryVerify,
-					Status:          model.HookStatusExecuted,
-					Passed:          boolPtr(true),
-					ConfidenceDelta: 0.05,
-				}},
-			},
 		}},
 	}
 	writeRun(0, dockerAnalysis)
@@ -245,17 +232,6 @@ func TestSQLiteStoreListsHistorySummaries(t *testing.T) {
 	}
 	if playbooks[0].FailureID != "docker-auth" || playbooks[0].SelectedCount != 2 || playbooks[0].RecurringRunCount != 2 {
 		t.Fatalf("unexpected docker-auth playbook stats: %#v", playbooks[0])
-	}
-
-	hooks, err := st.ListHookStats(ctx, 10)
-	if err != nil {
-		t.Fatalf("ListHookStats: %v", err)
-	}
-	if len(hooks) != 1 {
-		t.Fatalf("expected one hook stats entry, got %#v", hooks)
-	}
-	if hooks[0].PlaybookID != "docker-auth" || hooks[0].HookID != "registry-config" || hooks[0].PassedCount != 2 {
-		t.Fatalf("unexpected hook stats: %#v", hooks[0])
 	}
 }
 

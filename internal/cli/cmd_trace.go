@@ -4,7 +4,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"faultline/internal/app"
-	"faultline/internal/model"
 	"faultline/internal/output"
 )
 
@@ -27,7 +26,6 @@ func newTraceCommand() *cobra.Command {
 		showRejected  bool
 		showEvidence  bool
 		showScoring   bool
-		hookMode      string
 	)
 
 	cmd := &cobra.Command{
@@ -36,10 +34,6 @@ func newTraceCommand() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateSelect(selectRank); err != nil {
-				return err
-			}
-			resolvedHookMode, err := validateHookMode(hookMode)
-			if err != nil {
 				return err
 			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
@@ -76,7 +70,6 @@ func newTraceCommand() *cobra.Command {
 				PlaybookPackDirs: playbookPacks,
 				BayesEnabled:     bayes,
 				Store:            resolvedStore,
-				HookMode:         resolvedHookMode,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -98,8 +91,6 @@ func newTraceCommand() *cobra.Command {
 	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context")
 	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix")
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail")
-	cmd.Flags().StringVar(&hookMode, "hooks", string(model.HookModeOff), "execute constrained playbook hooks: off|verify-only|collect-only|safe|full")
-	_ = cmd.Flags().MarkHidden("hooks")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")

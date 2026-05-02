@@ -49,35 +49,33 @@ type ctxJSON struct {
 }
 
 type resultJSON struct {
-	Rank               int                         `json:"rank"`
-	FailureID          string                      `json:"failure_id"`
-	Title              string                      `json:"title"`
-	Category           string                      `json:"category"`
-	Pack               string                      `json:"pack,omitempty"`
-	Severity           string                      `json:"severity,omitempty"`
-	Detector           string                      `json:"detector,omitempty"`
-	Score              float64                     `json:"score"`
-	Confidence         float64                     `json:"confidence"`
-	Summary            string                      `json:"summary,omitempty"`
-	Diagnosis          string                      `json:"diagnosis,omitempty"`
-	WhyItMatters       string                      `json:"why_it_matters,omitempty"`
-	Fix                string                      `json:"fix,omitempty"`
-	Validation         string                      `json:"validation,omitempty"`
-	Evidence           []string                    `json:"evidence"`
-	EvidenceBy         model.EvidenceBundle        `json:"evidence_by,omitempty"`
-	Explanation        model.ResultExplanation     `json:"explanation,omitempty"`
-	Breakdown          model.ScoreBreakdown        `json:"breakdown,omitempty"`
-	ChangeStatus       string                      `json:"change_status,omitempty"`
-	SeenCount          int                         `json:"seen_count"`
-	SignatureHash      string                      `json:"signature_hash,omitempty"`
-	SeenBefore         bool                        `json:"seen_before,omitempty"`
-	OccurrenceCount    int                         `json:"occurrence_count,omitempty"`
-	FirstSeenAt        string                      `json:"first_seen_at,omitempty"`
-	LastSeenAt         string                      `json:"last_seen_at,omitempty"`
-	HookHistorySummary *model.HookHistorySummary   `json:"hook_history_summary,omitempty"`
-	Ranking            *model.Ranking              `json:"ranking,omitempty"`
-	Hypothesis         *model.HypothesisAssessment `json:"hypothesis,omitempty"`
-	Hooks              *model.HookReport           `json:"hooks,omitempty"`
+	Rank            int                         `json:"rank"`
+	FailureID       string                      `json:"failure_id"`
+	Title           string                      `json:"title"`
+	Category        string                      `json:"category"`
+	Pack            string                      `json:"pack,omitempty"`
+	Severity        string                      `json:"severity,omitempty"`
+	Detector        string                      `json:"detector,omitempty"`
+	Score           float64                     `json:"score"`
+	Confidence      float64                     `json:"confidence"`
+	Summary         string                      `json:"summary,omitempty"`
+	Diagnosis       string                      `json:"diagnosis,omitempty"`
+	WhyItMatters    string                      `json:"why_it_matters,omitempty"`
+	Fix             string                      `json:"fix,omitempty"`
+	Validation      string                      `json:"validation,omitempty"`
+	Evidence        []string                    `json:"evidence"`
+	EvidenceBy      model.EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation     model.ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown       model.ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus    string                      `json:"change_status,omitempty"`
+	SeenCount       int                         `json:"seen_count"`
+	SignatureHash   string                      `json:"signature_hash,omitempty"`
+	SeenBefore      bool                        `json:"seen_before,omitempty"`
+	OccurrenceCount int                         `json:"occurrence_count,omitempty"`
+	FirstSeenAt     string                      `json:"first_seen_at,omitempty"`
+	LastSeenAt      string                      `json:"last_seen_at,omitempty"`
+	Ranking         *model.Ranking              `json:"ranking,omitempty"`
+	Hypothesis      *model.HypothesisAssessment `json:"hypothesis,omitempty"`
 }
 
 type repoCtxJSON struct {
@@ -167,24 +165,22 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 					PackName: item.Pack,
 				},
 			},
-			Detector:           item.Detector,
-			Score:              item.Score,
-			Confidence:         item.Confidence,
-			Evidence:           item.Evidence,
-			EvidenceBy:         item.EvidenceBy,
-			Explanation:        item.Explanation,
-			Breakdown:          item.Breakdown,
-			ChangeStatus:       item.ChangeStatus,
-			SeenCount:          item.SeenCount,
-			SignatureHash:      item.SignatureHash,
-			SeenBefore:         item.SeenBefore,
-			OccurrenceCount:    item.OccurrenceCount,
-			FirstSeenAt:        item.FirstSeenAt,
-			LastSeenAt:         item.LastSeenAt,
-			HookHistorySummary: item.HookHistorySummary,
-			Ranking:            item.Ranking,
-			Hypothesis:         item.Hypothesis,
-			Hooks:              item.Hooks,
+			Detector:        item.Detector,
+			Score:           item.Score,
+			Confidence:      item.Confidence,
+			Evidence:        item.Evidence,
+			EvidenceBy:      item.EvidenceBy,
+			Explanation:     item.Explanation,
+			Breakdown:       item.Breakdown,
+			ChangeStatus:    item.ChangeStatus,
+			SeenCount:       item.SeenCount,
+			SignatureHash:   item.SignatureHash,
+			SeenBefore:      item.SeenBefore,
+			OccurrenceCount: item.OccurrenceCount,
+			FirstSeenAt:     item.FirstSeenAt,
+			LastSeenAt:      item.LastSeenAt,
+			Ranking:         item.Ranking,
+			Hypothesis:      item.Hypothesis,
 		})
 	}
 
@@ -247,7 +243,6 @@ func stableHashAnalysis(a *model.Analysis) *model.Analysis {
 		result.OccurrenceCount = 0
 		result.FirstSeenAt = ""
 		result.LastSeenAt = ""
-		result.HookHistorySummary = nil
 		clone.Results[i] = result
 	}
 	if clone.Artifact != nil && clone.Artifact.HistoryContext != nil {
@@ -256,7 +251,6 @@ func stableHashAnalysis(a *model.Analysis) *model.Analysis {
 		clone.Artifact.HistoryContext.OccurrenceCount = 0
 		clone.Artifact.HistoryContext.FirstSeenAt = ""
 		clone.Artifact.HistoryContext.LastSeenAt = ""
-		clone.Artifact.HistoryContext.HookHistorySummary = nil
 	}
 	return &clone
 }
@@ -330,35 +324,33 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.Results = make([]resultJSON, len(results))
 	for i, r := range results {
 		payload.Results[i] = resultJSON{
-			Rank:               i + 1,
-			FailureID:          r.Playbook.ID,
-			Title:              r.Playbook.Title,
-			Category:           r.Playbook.Category,
-			Pack:               displayPackName(r.Playbook),
-			Severity:           r.Playbook.Severity,
-			Detector:           r.Detector,
-			Score:              r.Score,
-			Confidence:         r.Confidence,
-			Summary:            r.Playbook.Summary,
-			Diagnosis:          r.Playbook.Diagnosis,
-			WhyItMatters:       r.Playbook.WhyItMatters,
-			Fix:                r.Playbook.Fix,
-			Validation:         r.Playbook.Validation,
-			Evidence:           r.Evidence,
-			EvidenceBy:         r.EvidenceBy,
-			Explanation:        r.Explanation,
-			Breakdown:          r.Breakdown,
-			ChangeStatus:       r.ChangeStatus,
-			SeenCount:          r.SeenCount,
-			SignatureHash:      r.SignatureHash,
-			SeenBefore:         r.SeenBefore,
-			OccurrenceCount:    r.OccurrenceCount,
-			FirstSeenAt:        r.FirstSeenAt,
-			LastSeenAt:         r.LastSeenAt,
-			HookHistorySummary: r.HookHistorySummary,
-			Ranking:            r.Ranking,
-			Hypothesis:         r.Hypothesis,
-			Hooks:              r.Hooks,
+			Rank:            i + 1,
+			FailureID:       r.Playbook.ID,
+			Title:           r.Playbook.Title,
+			Category:        r.Playbook.Category,
+			Pack:            displayPackName(r.Playbook),
+			Severity:        r.Playbook.Severity,
+			Detector:        r.Detector,
+			Score:           r.Score,
+			Confidence:      r.Confidence,
+			Summary:         r.Playbook.Summary,
+			Diagnosis:       r.Playbook.Diagnosis,
+			WhyItMatters:    r.Playbook.WhyItMatters,
+			Fix:             r.Playbook.Fix,
+			Validation:      r.Playbook.Validation,
+			Evidence:        r.Evidence,
+			EvidenceBy:      r.EvidenceBy,
+			Explanation:     r.Explanation,
+			Breakdown:       r.Breakdown,
+			ChangeStatus:    r.ChangeStatus,
+			SeenCount:       r.SeenCount,
+			SignatureHash:   r.SignatureHash,
+			SeenBefore:      r.SeenBefore,
+			OccurrenceCount: r.OccurrenceCount,
+			FirstSeenAt:     r.FirstSeenAt,
+			LastSeenAt:      r.LastSeenAt,
+			Ranking:         r.Ranking,
+			Hypothesis:      r.Hypothesis,
 		}
 	}
 	return payload

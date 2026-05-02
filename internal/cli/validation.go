@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"faultline/internal/model"
 	"faultline/internal/output"
 )
 
@@ -65,24 +64,4 @@ func validateExperimentalDeltaProvider(provider string) error {
 		return nil
 	}
 	return fmt.Errorf("--delta-provider is experimental; set %s=1 (preferred) or %s=1 (legacy) to enable it explicitly", experimentalProviderDeltaEnv, experimentalGitHubDeltaEnv)
-}
-
-func validateWorkflowMode(value string) error {
-	if value != "local" && value != "agent" {
-		return fmt.Errorf("--mode must be %q or %q", "local", "agent")
-	}
-	return nil
-}
-
-func validateHookMode(value string) (model.HookMode, error) {
-	mode := model.HookMode(strings.TrimSpace(value))
-	switch mode {
-	case "", model.HookModeOff, model.HookModeVerifyOnly, model.HookModeCollectOnly, model.HookModeSafe, model.HookModeFull:
-		if mode == "" {
-			return model.HookModeOff, nil
-		}
-		return mode, nil
-	default:
-		return "", fmt.Errorf("--hooks must be %q, %q, %q, %q, or %q", model.HookModeOff, model.HookModeVerifyOnly, model.HookModeCollectOnly, model.HookModeSafe, model.HookModeFull)
-	}
 }

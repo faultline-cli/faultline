@@ -19,7 +19,6 @@ import (
 	"faultline/internal/detectors"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
-	"faultline/internal/hooks"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/playbooks"
@@ -103,12 +102,6 @@ func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Write
 	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, loaded.Playbooks, playbookID, opts.ShowRejected)
 	if err != nil {
 		return err
-	}
-	if hookReport := hooks.NewExecutor(hooks.HookPolicy{Mode: opts.HookMode}).Execute(context.Background(), report.Playbook, report.Confidence, hookWorkDir(opts)); hookReport != nil {
-		report.Hooks = hookReport
-		if report.Matched {
-			report.Confidence = hookReport.FinalConfidence
-		}
 	}
 
 	switch {
@@ -398,7 +391,6 @@ func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedA
 		return loadedAnalysisInput{}, err
 	}
 	baseOpts := opts
-	baseOpts.HookMode = model.HookModeOff
 	analysis, err := analyzeLog(bytes.NewReader(data), source, baseOpts, "trace", false)
 	return loadedAnalysisInput{
 		Analysis:  analysis,

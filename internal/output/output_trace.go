@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"faultline/internal/model"
 	"faultline/internal/signature"
 	tracereport "faultline/internal/trace"
 )
@@ -40,9 +39,6 @@ func FormatTraceText(report tracereport.Report, showEvidence, showScoring, showR
 	}
 	if history := renderTraceHistoryText(report); history != "" {
 		sections = append(sections, joinTraceSection("History", history))
-	}
-	if hooks := renderTraceHooksText(report.Hooks); hooks != "" {
-		sections = append(sections, joinTraceSection("Hooks", hooks))
 	}
 	if showScoring {
 		if scoring := renderTraceScoringText(report); scoring != "" {
@@ -98,9 +94,6 @@ func FormatTraceMarkdown(report tracereport.Report, showEvidence, showScoring, s
 	if history := renderTraceHistoryMarkdown(report); history != "" {
 		sections = append(sections, "", "## History", "", history)
 	}
-	if hooks := renderTraceHooksMarkdown(report.Hooks); hooks != "" {
-		sections = append(sections, "", "## Hooks", "", hooks)
-	}
 	if showScoring {
 		if scoring := renderTraceScoringMarkdown(report); scoring != "" {
 			sections = append(sections, "", "## Score", "", scoring)
@@ -136,7 +129,6 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		History     interface{}             `json:"history,omitempty"`
 		Rules       []tracereport.Rule      `json:"rules"`
 		Why         []string                `json:"why,omitempty"`
-		Hooks       *model.HookReport       `json:"hooks,omitempty"`
 		Scoring     interface{}             `json:"scoring,omitempty"`
 		Ranking     interface{}             `json:"ranking,omitempty"`
 		Competing   []tracereport.Candidate `json:"competing,omitempty"`
@@ -155,7 +147,6 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		History:     traceHistoryJSON(report),
 		Rules:       report.Rules,
 		Why:         report.Why,
-		Hooks:       report.Hooks,
 	}
 	if showScoring {
 		payload.Scoring = report.Scoring
@@ -266,7 +257,7 @@ func renderTraceHistoryMarkdown(report tracereport.Report) string {
 }
 
 func traceHistoryLines(report tracereport.Report) []string {
-	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" && report.HookHistory == nil {
+	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" {
 		return nil
 	}
 	var lines []string
@@ -291,33 +282,7 @@ func traceHistoryLines(report tracereport.Report) []string {
 	if report.LastSeenAt != "" {
 		lines = append(lines, "Last seen: "+report.LastSeenAt)
 	}
-	if report.HookHistory != nil && report.HookHistory.TotalCount > 0 {
-		lines = append(lines, hookHistoryTraceLine(report.HookHistory))
-	}
 	return lines
-}
-
-func hookHistoryTraceLine(summary *model.HookHistorySummary) string {
-	parts := []string{fmt.Sprintf("Hook verification history: %d run(s)", summary.TotalCount)}
-	if summary.ExecutedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d executed", summary.ExecutedCount))
-	}
-	if summary.PassedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d passed", summary.PassedCount))
-	}
-	if summary.FailedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d failed", summary.FailedCount))
-	}
-	if summary.BlockedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d blocked", summary.BlockedCount))
-	}
-	if summary.SkippedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d skipped", summary.SkippedCount))
-	}
-	if summary.LastSeenAt != "" {
-		parts = append(parts, "last "+summary.LastSeenAt)
-	}
-	return strings.Join(parts, ", ")
 }
 
 func traceHistoryWindow(firstSeenAt, lastSeenAt string) string {
@@ -424,34 +389,20 @@ func traceSignatureJSON(sig *signature.ResultSignature) interface{} {
 }
 
 func traceHistoryJSON(report tracereport.Report) interface{} {
-	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" && report.HookHistory == nil {
+	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" {
 		return nil
 	}
 	return struct {
-		SeenBefore      bool                      `json:"seen_before,omitempty"`
-		OccurrenceCount int                       `json:"occurrence_count,omitempty"`
-		FirstSeenAt     string                    `json:"first_seen_at,omitempty"`
-		LastSeenAt      string                    `json:"last_seen_at,omitempty"`
-		HookHistory     *model.HookHistorySummary `json:"hook_history,omitempty"`
+		SeenBefore      bool   `json:"seen_before,omitempty"`
+		OccurrenceCount int    `json:"occurrence_count,omitempty"`
+		FirstSeenAt     string `json:"first_seen_at,omitempty"`
+		LastSeenAt      string `json:"last_seen_at,omitempty"`
 	}{
 		SeenBefore:      report.SeenBefore,
 		OccurrenceCount: report.OccurrenceCount,
 		FirstSeenAt:     report.FirstSeenAt,
 		LastSeenAt:      report.LastSeenAt,
-		HookHistory:     report.HookHistory,
 	}
-}
-
-func renderTraceHooksText(report *model.HookReport) string {
-	lines := hookSummaryLines(report)
-	if len(lines) == 0 {
-		return ""
-	}
-	return strings.Join(lines, "\n")
-}
-
-func renderTraceHooksMarkdown(report *model.HookReport) string {
-	return bulletLines(hookSummaryLines(report))
 }
 
 func joinTraceSection(title, body string) string {

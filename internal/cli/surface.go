@@ -34,13 +34,13 @@ type CommandSurface struct {
 // CommandSurfaces lists the known CLI surfaces. Public help text should stay
 // centered on core commands even when supported companion commands are visible.
 var CommandSurfaces = []CommandSurface{
-	{Path: "analyze", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"delta-provider", "github-branch", "github-repo", "github-run-id", "gitlab-api-base-url", "gitlab-branch", "gitlab-job-id", "gitlab-pipeline-id", "gitlab-project", "hooks", "no-history", "no-store", "store"}},
+	{Path: "analyze", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"delta-provider", "github-branch", "github-repo", "github-run-id", "gitlab-api-base-url", "gitlab-branch", "gitlab-job-id", "gitlab-pipeline-id", "gitlab-project", "no-history", "no-store", "store"}},
 	{Path: "workflow", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "list", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "explain", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "fix", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "report", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"store"}},
-	{Path: "trace", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"hooks", "no-history", "no-store", "store"}},
+	{Path: "trace", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "replay", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "compare", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "inspect", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"no-history", "no-store", "store"}},

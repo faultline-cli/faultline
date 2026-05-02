@@ -53,7 +53,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 - `cmd/main.go` owns CLI startup only.
 - `internal/cli` owns Cobra command definitions, flag parsing, command visibility, and release-surface wiring. It should delegate product behavior instead of computing reports inline.
-- `internal/app` owns CLI-facing application orchestration across engine, store, renderer, fixtures, workflow, hooks, and output packages.
+- `internal/app` owns CLI-facing application orchestration across engine, store, renderer, fixtures, workflow, and output packages.
 - `internal/engine` owns log ingestion, source tree scanning, normalization, and analysis orchestration.
 - `internal/engine/hypothesis` owns deterministic differential diagnosis across competing playbooks.
 - `internal/detectors` owns detector module interfaces and target contracts.

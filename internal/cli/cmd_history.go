@@ -22,7 +22,7 @@ func newHistoryCommand() *cobra.Command {
 		Long: joinLines(
 			"Read the local forensic store without changing diagnosis logic.",
 			"",
-			"By default this prints recurring signatures plus playbook and hook quality summaries.",
+			"By default this prints recurring signatures plus playbook quality summaries.",
 			"Use --signature to inspect one stored signature in detail.",
 		),
 		Args: cobra.NoArgs,

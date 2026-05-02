@@ -8,7 +8,6 @@ import (
 
 	"faultline/internal/model"
 	"faultline/internal/output"
-	"faultline/internal/store"
 )
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -179,27 +178,6 @@ func TestWriteAnalysisShowEvidenceForcesDetailed(t *testing.T) {
 	}
 	if buf.Len() == 0 {
 		t.Error("expected non-empty output for ShowEvidence")
-	}
-}
-
-// ── toModelHookHistory ────────────────────────────────────────────────────────
-
-func TestToModelHookHistoryNonNilMapsFields(t *testing.T) {
-	input := &store.HookHistorySummary{
-		TotalCount:    5,
-		ExecutedCount: 4,
-		PassedCount:   3,
-		FailedCount:   1,
-		SkippedCount:  0,
-		LastSeenAt:    "2024-01-01T00:00:00Z",
-	}
-
-	got := toModelHookHistory(input)
-	if got == nil {
-		t.Fatal("expected non-nil result")
-	}
-	if got.TotalCount != 5 || got.PassedCount != 3 || got.FailedCount != 1 {
-		t.Errorf("mapped fields incorrect: %+v", got)
 	}
 }
 

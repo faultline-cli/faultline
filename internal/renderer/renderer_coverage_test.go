@@ -405,11 +405,11 @@ func TestRenderRankingBasic(t *testing.T) {
 
 func TestRenderRankingWithContributions(t *testing.T) {
 	ranking := &model.Ranking{
-		Mode:          "bayesian",
-		Version:       "rank.v1",
-		BaselineScore: 1.0,
-		Prior:         0.5,
-		FinalScore:    1.5,
+		Mode:              "bayesian",
+		Version:           "rank.v1",
+		BaselineScore:     1.0,
+		Prior:             0.5,
+		FinalScore:        1.5,
 		StrongestPositive: []string{"detector_score"},
 		StrongestNegative: []string{"low_recurrence"},
 	}
@@ -420,40 +420,6 @@ func TestRenderRankingWithContributions(t *testing.T) {
 	}
 	if !strings.Contains(got, "negative: low_recurrence") {
 		t.Errorf("expected negative contribution, got:\n%s", got)
-	}
-}
-
-// ── hookHistorySummaryLine ────────────────────────────────────────────────────
-
-func TestHookHistorySummaryLineNilReturnsEmpty(t *testing.T) {
-	got := hookHistorySummaryLine(nil)
-	if got != "" {
-		t.Fatalf("expected empty for nil summary, got %q", got)
-	}
-}
-
-func TestHookHistorySummaryLineZeroTotalReturnsEmpty(t *testing.T) {
-	got := hookHistorySummaryLine(&model.HookHistorySummary{TotalCount: 0})
-	if got != "" {
-		t.Fatalf("expected empty for zero total, got %q", got)
-	}
-}
-
-func TestHookHistorySummaryLineWithAllCounters(t *testing.T) {
-	summary := &model.HookHistorySummary{
-		TotalCount:    5,
-		ExecutedCount: 4,
-		PassedCount:   3,
-		FailedCount:   1,
-		BlockedCount:  0,
-		SkippedCount:  1,
-		LastSeenAt:    "2026-01-01T00:00:00Z",
-	}
-	got := hookHistorySummaryLine(summary)
-	for _, want := range []string{"5 run(s)", "4 executed", "3 passed", "1 failed", "1 skipped", "last 2026-01-01T00:00:00Z"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("expected %q in summary line, got %q", want, got)
-		}
 	}
 }
 

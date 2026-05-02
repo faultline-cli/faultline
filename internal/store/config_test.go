@@ -255,99 +255,6 @@ func TestRecentTopFailuresEmpty(t *testing.T) {
 	}
 }
 
-// --- LookupHookHistory ---
-
-func TestLookupHookHistoryEmpty(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "test.db")
-	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
-	if err != nil {
-		t.Fatalf("OpenBestEffort: %v", err)
-	}
-	defer st.Close()
-
-	summary, err := st.LookupHookHistory(context.Background(), "no-sig", "no-id")
-	if err != nil {
-		t.Fatalf("LookupHookHistory: %v", err)
-	}
-	if summary != nil {
-		t.Fatalf("expected nil summary for unknown hook, got %#v", summary)
-	}
-}
-
-func TestLookupHookHistoryFound(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "test.db")
-	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
-	if err != nil {
-		t.Fatalf("OpenBestEffort: %v", err)
-	}
-	defer st.Close()
-
-	ctx := context.Background()
-	now := time.Date(2026, 4, 22, 10, 0, 0, 0, time.UTC)
-
-	sig := SignatureForResult(model.Result{
-		Playbook: model.Playbook{ID: "docker-auth"},
-		Detector: "log",
-		Evidence: []string{"pull access denied for hook-history"},
-	}).Hash
-
-	analysis := &model.Analysis{
-		Source:      "stdin",
-		InputHash:   "hash-hook-hist",
-		OutputHash:  "out-hook-hist",
-		Fingerprint: "fp-hook-hist",
-		Results: []model.Result{{
-			Playbook:      model.Playbook{ID: "docker-auth", Title: "Docker auth", Category: "auth"},
-			Detector:      "log",
-			Score:         4.5,
-			Confidence:    0.90,
-			Evidence:      []string{"pull access denied for hook-history"},
-			SignatureHash: sig,
-			Hooks: &model.HookReport{
-				Mode:            model.HookModeSafe,
-				BaseConfidence:  0.90,
-				ConfidenceDelta: 0.05,
-				FinalConfidence: 0.95,
-				Results: []model.HookResult{{
-					ID:              "registry-probe",
-					Category:        model.HookCategoryVerify,
-					Status:          model.HookStatusExecuted,
-					Passed:          boolPtr(true),
-					ConfidenceDelta: 0.05,
-				}},
-			},
-		}},
-	}
-
-	handle, err := st.BeginRun(ctx, BeginRunParams{
-		Surface:    "analyze",
-		SourceKind: "log",
-		Source:     "stdin",
-		InputHash:  "hash-hook-hist",
-		StartedAt:  now,
-	})
-	if err != nil {
-		t.Fatalf("BeginRun: %v", err)
-	}
-	if err := st.CompleteRun(ctx, handle, CompleteRunParams{
-		CompletedAt: now,
-		Analysis:    analysis,
-	}); err != nil {
-		t.Fatalf("CompleteRun: %v", err)
-	}
-
-	summary, err := st.LookupHookHistory(ctx, sig, "docker-auth")
-	if err != nil {
-		t.Fatalf("LookupHookHistory: %v", err)
-	}
-	if summary == nil {
-		t.Fatal("expected non-nil hook history summary")
-	}
-	if summary.ExecutedCount != 1 || summary.PassedCount != 1 {
-		t.Fatalf("unexpected hook history: %#v", summary)
-	}
-}
-
 // --- Noop store methods ---
 
 func TestNoopStoreMethodsReturnSafeDefaults(t *testing.T) {
@@ -398,12 +305,6 @@ func TestNoopStoreMethodsReturnSafeDefaults(t *testing.T) {
 	}
 	if _, err := st.ListPlaybookStats(ctx, 10); err != nil {
 		t.Fatalf("noop ListPlaybookStats: %v", err)
-	}
-	if _, err := st.LookupHookHistory(ctx, "sig", "id"); err != nil {
-		t.Fatalf("noop LookupHookHistory: %v", err)
-	}
-	if _, err := st.ListHookStats(ctx, 10); err != nil {
-		t.Fatalf("noop ListHookStats: %v", err)
 	}
 	if _, err := st.VerifyDeterminismForInputHash(ctx, "hash"); err != nil {
 		t.Fatalf("noop VerifyDeterminismForInputHash: %v", err)

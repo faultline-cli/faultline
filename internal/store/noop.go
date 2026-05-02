@@ -44,14 +44,6 @@ func (noopStore) ListPlaybookStats(context.Context, int) ([]PlaybookStats, error
 	return nil, nil
 }
 
-func (noopStore) LookupHookHistory(context.Context, string, string) (*HookHistorySummary, error) {
-	return nil, nil
-}
-
-func (noopStore) ListHookStats(context.Context, int) ([]HookStats, error) {
-	return nil, nil
-}
-
 func (noopStore) VerifyDeterminismForInputHash(context.Context, string) (DeterminismSummary, error) {
 	return DeterminismSummary{}, nil
 }

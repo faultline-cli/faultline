@@ -74,16 +74,6 @@ func TestTraceCommandRejectsNegativeSelect(t *testing.T) {
 	}
 }
 
-func TestTraceCommandRejectsInvalidHookMode(t *testing.T) {
-	cmd := newTraceCommand()
-	cmd.SetArgs([]string{"--hooks", "invalid"})
-
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected invalid hook mode error")
-	}
-}
-
 func TestTraceCommandRunsWithBundledPlaybooks(t *testing.T) {
 	logPath := filepath.Join(t.TempDir(), "build.log")
 	logText := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"

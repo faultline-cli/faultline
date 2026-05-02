@@ -198,30 +198,11 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 		Reason:         "trace stability is degrading",
 		Basis:          []string{"tss", "phi"},
 	}
-	a.Results[0].Hooks = &model.HookReport{
-		Mode:            model.HookModeSafe,
-		BaseConfidence:  0.67,
-		ConfidenceDelta: 0.05,
-		FinalConfidence: 0.72,
-		Results: []model.HookResult{{
-			ID:       "go-mod-present",
-			Category: model.HookCategoryVerify,
-			Kind:     model.HookKindFileExists,
-			Status:   model.HookStatusExecuted,
-		}},
-	}
 	a.Results[0].SignatureHash = "sig123"
 	a.Results[0].SeenBefore = true
 	a.Results[0].OccurrenceCount = 3
 	a.Results[0].FirstSeenAt = "2026-04-20T10:00:00Z"
 	a.Results[0].LastSeenAt = "2026-04-22T12:00:00Z"
-	a.Results[0].HookHistorySummary = &model.HookHistorySummary{
-		TotalCount:    2,
-		ExecutedCount: 2,
-		PassedCount:   1,
-		FailedCount:   1,
-		LastSeenAt:    "2026-04-22T12:00:00Z",
-	}
 	a.Artifact = &model.FailureArtifact{
 		SchemaVersion: "failure_artifact.v1",
 		Status:        model.ArtifactStatusMatched,
@@ -280,10 +261,7 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	if parsed.Policy == nil || parsed.Policy.Recommendation != "quarantine" {
 		t.Fatalf("expected policy to survive round trip, got %#v", parsed.Policy)
 	}
-	if parsed.Results[0].Hooks == nil || parsed.Results[0].Hooks.FinalConfidence != 0.72 {
-		t.Fatalf("expected hooks to survive round trip, got %#v", parsed.Results[0].Hooks)
-	}
-	if parsed.Results[0].SignatureHash != "sig123" || parsed.Results[0].OccurrenceCount != 3 || parsed.Results[0].HookHistorySummary == nil {
+	if parsed.Results[0].SignatureHash != "sig123" || parsed.Results[0].OccurrenceCount != 3 {
 		t.Fatalf("expected history fields to survive round trip, got %#v", parsed.Results[0])
 	}
 	if parsed.Artifact == nil || parsed.Artifact.Fingerprint != "artifact123" {
@@ -291,30 +269,6 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	}
 	if parsed.Artifact.Remediation == nil || len(parsed.Artifact.Remediation.Commands) != 1 {
 		t.Fatalf("expected remediation to survive round trip, got %#v", parsed.Artifact)
-	}
-}
-
-func TestFormatHookSummariesText(t *testing.T) {
-	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.84, []string{"authentication required"})
-	a.Results[0].Hooks = &model.HookReport{
-		Mode:            model.HookModeSafe,
-		BaseConfidence:  0.84,
-		ConfidenceDelta: 0.05,
-		FinalConfidence: 0.89,
-		Results: []model.HookResult{{
-			ID:       "registry-config",
-			Category: model.HookCategoryVerify,
-			Status:   model.HookStatusExecuted,
-			Passed:   boolPtr(true),
-		}},
-	}
-
-	text := FormatHookSummariesText(a)
-	if !strings.Contains(text, "docker-auth: mode: safe") {
-		t.Fatalf("expected hook mode in text summary, got %q", text)
-	}
-	if !strings.Contains(text, "verify/registry-config: executed (passed)") {
-		t.Fatalf("expected hook result in text summary, got %q", text)
 	}
 }
 
@@ -347,16 +301,9 @@ func TestFormatAnalysisTextQuickIncludesHistorySummary(t *testing.T) {
 	a.Results[0].OccurrenceCount = 3
 	a.Results[0].FirstSeenAt = "2026-04-20T10:00:00Z"
 	a.Results[0].LastSeenAt = "2026-04-23T12:00:00Z"
-	a.Results[0].HookHistorySummary = &model.HookHistorySummary{
-		TotalCount:    3,
-		ExecutedCount: 3,
-		PassedCount:   2,
-		FailedCount:   1,
-		LastSeenAt:    "2026-04-23T12:00:00Z",
-	}
 
 	text := FormatAnalysisText(a, 1, ModeQuick, renderer.Options{Plain: true, Width: 88})
-	for _, want := range []string{"History", "history available for signature 0123456789ab", "seen 3 times over 3d in local history", "hook verification history: 3 run(s)"} {
+	for _, want := range []string{"History", "history available for signature 0123456789ab", "seen 3 times over 3d in local history"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in quick output, got %q", want, text)
 		}
@@ -1213,117 +1160,6 @@ func TestHashAnalysisOutputExcludesOutputHash(t *testing.T) {
 	// Hash should be stable regardless of OutputHash field value
 	if h1 != h2 {
 		t.Fatalf("expected same hash regardless of OutputHash field: %q != %q", h1, h2)
-	}
-}
-
-// ── FormatHookSummariesMarkdown ───────────────────────────────────────────────
-
-func TestFormatHookSummariesMarkdownNilAnalysis(t *testing.T) {
-	got := FormatHookSummariesMarkdown(nil)
-	if got != "" {
-		t.Fatalf("expected empty for nil analysis, got %q", got)
-	}
-}
-
-func TestFormatHookSummariesMarkdownNoHooks(t *testing.T) {
-	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
-	got := FormatHookSummariesMarkdown(a)
-	if got != "" {
-		t.Fatalf("expected empty when no hooks, got %q", got)
-	}
-}
-
-func TestFormatHookSummariesMarkdownWithHooks(t *testing.T) {
-	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
-	passed := true
-	a.Results[0].Hooks = &model.HookReport{
-		Mode:            "observe",
-		BaseConfidence:  0.5,
-		FinalConfidence: 0.8,
-		ConfidenceDelta: 0.3,
-		Results: []model.HookResult{{
-			Category: "remediation",
-			ID:       "auto-fix",
-			Status:   "passed",
-			Passed:   &passed,
-		}},
-	}
-	got := FormatHookSummariesMarkdown(a)
-	if got == "" {
-		t.Fatal("expected non-empty markdown for analysis with hooks")
-	}
-	if !strings.Contains(got, "## Hooks") {
-		t.Fatalf("expected '## Hooks' header, got %q", got)
-	}
-	if !strings.Contains(got, "docker-auth:") {
-		t.Fatalf("expected failure_id prefix, got %q", got)
-	}
-}
-
-func TestFormatHookSummariesMarkdownEndsWithNewline(t *testing.T) {
-	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
-	passed := true
-	a.Results[0].Hooks = &model.HookReport{
-		Mode:            "observe",
-		BaseConfidence:  0.5,
-		FinalConfidence: 0.8,
-		ConfidenceDelta: 0.3,
-		Results: []model.HookResult{{
-			Category: "remediation",
-			ID:       "auto-fix",
-			Status:   "passed",
-			Passed:   &passed,
-		}},
-	}
-	got := FormatHookSummariesMarkdown(a)
-	if !strings.HasSuffix(got, "\n") {
-		t.Fatalf("expected trailing newline, got %q", got)
-	}
-}
-
-// ── hookHistoryMarkdownLine ───────────────────────────────────────────────────
-
-func TestHookHistoryMarkdownLineMinimal(t *testing.T) {
-	summary := &model.HookHistorySummary{TotalCount: 3}
-	got := hookHistoryMarkdownLine(summary)
-	if !strings.Contains(got, "hook history: 3 run(s)") {
-		t.Fatalf("expected total count in line, got %q", got)
-	}
-}
-
-func TestHookHistoryMarkdownLineAllCounters(t *testing.T) {
-	summary := &model.HookHistorySummary{
-		TotalCount:    10,
-		ExecutedCount: 8,
-		PassedCount:   6,
-		FailedCount:   1,
-		BlockedCount:  1,
-		SkippedCount:  2,
-		LastSeenAt:    "2026-01-01T00:00:00Z",
-	}
-	got := hookHistoryMarkdownLine(summary)
-	for _, want := range []string{
-		"hook history: 10 run(s)",
-		"8 executed",
-		"6 passed",
-		"1 failed",
-		"1 blocked",
-		"2 skipped",
-		"last 2026-01-01T00:00:00Z",
-	} {
-		if !strings.Contains(got, want) {
-			t.Errorf("expected %q in line, got %q", want, got)
-		}
-	}
-}
-
-func TestHookHistoryMarkdownLineZeroCountsOmitted(t *testing.T) {
-	summary := &model.HookHistorySummary{TotalCount: 5}
-	got := hookHistoryMarkdownLine(summary)
-	for _, absent := range []string{"executed", "passed", "failed", "blocked", "skipped", "last"} {
-		if strings.Contains(got, absent) {
-			t.Errorf("expected %q to be omitted for zero count, got %q", absent, got)
-		}
 	}
 }
 

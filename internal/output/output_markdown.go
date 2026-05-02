@@ -272,33 +272,7 @@ func historySummaryMarkdownLines(result model.Result) []string {
 	if result.LastSeenAt != "" {
 		lines = append(lines, "last seen: "+result.LastSeenAt)
 	}
-	if result.HookHistorySummary != nil && result.HookHistorySummary.TotalCount > 0 {
-		lines = append(lines, hookHistoryMarkdownLine(result.HookHistorySummary))
-	}
 	return lines
-}
-
-func hookHistoryMarkdownLine(summary *model.HookHistorySummary) string {
-	parts := []string{fmt.Sprintf("hook history: %d run(s)", summary.TotalCount)}
-	if summary.ExecutedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d executed", summary.ExecutedCount))
-	}
-	if summary.PassedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d passed", summary.PassedCount))
-	}
-	if summary.FailedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d failed", summary.FailedCount))
-	}
-	if summary.BlockedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d blocked", summary.BlockedCount))
-	}
-	if summary.SkippedCount > 0 {
-		parts = append(parts, fmt.Sprintf("%d skipped", summary.SkippedCount))
-	}
-	if summary.LastSeenAt != "" {
-		parts = append(parts, "last "+summary.LastSeenAt)
-	}
-	return strings.Join(parts, ", ")
 }
 
 func differentialLines(a *model.Analysis) []string {

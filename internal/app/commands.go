@@ -2,13 +2,10 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
-	"faultline/internal/hooks"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/renderer"
@@ -104,8 +101,6 @@ type AnalyzeOptions struct {
 	// History includes stored recurrence fields in analysis output. Persistence
 	// may still be enabled without surfacing recurrence in normal analyze output.
 	History bool
-	// HookMode controls whether constrained playbook hooks run for rendered results.
-	HookMode model.HookMode
 	// FailOnSilent causes Analyze to return ErrSilentFailure when a silent
 	// failure finding is detected, regardless of whether a playbook also matched.
 	FailOnSilent bool
@@ -169,18 +164,10 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 		mode = output.ModeDetailed
 	}
 	if opts.Format == output.FormatMarkdown {
-		rendered := output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode)
-		if hooks := output.FormatHookSummariesMarkdown(selected); hooks != "" {
-			rendered = strings.TrimRight(rendered, "\n") + "\n\n" + strings.TrimRight(hooks, "\n") + "\n"
-		}
-		_, err := fmt.Fprint(w, rendered)
+		_, err := fmt.Fprint(w, output.FormatAnalysisMarkdown(selected, selectedTop(opts), mode))
 		return err
 	}
-	rendered := output.FormatAnalysisText(selected, selectedTop(opts), mode, renderOpts)
-	if hooks := output.FormatHookSummariesText(selected); hooks != "" {
-		rendered = strings.TrimRight(rendered, "\n") + "\n\n" + strings.TrimRight(hooks, "\n") + "\n"
-	}
-	_, err = fmt.Fprint(w, rendered)
+	_, err = fmt.Fprint(w, output.FormatAnalysisText(selected, selectedTop(opts), mode, renderOpts))
 	return err
 }
 
@@ -211,33 +198,6 @@ func selectAnalysisResults(a *model.Analysis, opts AnalyzeOptions) (*model.Analy
 		clone.Differential = nil
 	}
 	return &clone, nil
-}
-
-func applyHooksToAnalysis(a *model.Analysis, opts AnalyzeOptions) *model.Analysis {
-	if a == nil || len(a.Results) == 0 {
-		return a
-	}
-	executor := hooks.NewExecutor(hooks.HookPolicy{Mode: opts.HookMode})
-	clone := *a
-	clone.Results = append([]model.Result(nil), a.Results...)
-	for i := range clone.Results {
-		result := clone.Results[i]
-		report := executor.Execute(context.Background(), result.Playbook, result.Confidence, hookWorkDir(opts))
-		if report == nil {
-			continue
-		}
-		result.Hooks = report
-		result.Confidence = report.FinalConfidence
-		clone.Results[i] = result
-	}
-	return &clone
-}
-
-func hookWorkDir(opts AnalyzeOptions) string {
-	if strings.TrimSpace(opts.RepoPath) != "" {
-		return opts.RepoPath
-	}
-	return "."
 }
 
 func optionNow(opts AnalyzeOptions) time.Time {

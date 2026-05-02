@@ -143,25 +143,23 @@ type DifferentialDiagnosis struct {
 
 // Result is a single ranked playbook match with its scoring detail.
 type Result struct {
-	Playbook           Playbook              `json:"playbook"`
-	Detector           string                `json:"detector,omitempty"`
-	Score              float64               `json:"score"`
-	Confidence         float64               `json:"confidence"`
-	Evidence           []string              `json:"evidence"`
-	EvidenceBy         EvidenceBundle        `json:"evidence_by,omitempty"`
-	Explanation        ResultExplanation     `json:"explanation,omitempty"`
-	Breakdown          ScoreBreakdown        `json:"breakdown,omitempty"`
-	ChangeStatus       string                `json:"change_status,omitempty"`
-	SeenCount          int                   `json:"seen_count"`
-	SignatureHash      string                `json:"signature_hash,omitempty"`
-	SeenBefore         bool                  `json:"seen_before,omitempty"`
-	OccurrenceCount    int                   `json:"occurrence_count,omitempty"`
-	FirstSeenAt        string                `json:"first_seen_at,omitempty"`
-	LastSeenAt         string                `json:"last_seen_at,omitempty"`
-	HookHistorySummary *HookHistorySummary   `json:"hook_history_summary,omitempty"`
-	Ranking            *Ranking              `json:"ranking,omitempty"`
-	Hypothesis         *HypothesisAssessment `json:"hypothesis,omitempty"`
-	Hooks              *HookReport           `json:"hooks,omitempty"`
+	Playbook        Playbook              `json:"playbook"`
+	Detector        string                `json:"detector,omitempty"`
+	Score           float64               `json:"score"`
+	Confidence      float64               `json:"confidence"`
+	Evidence        []string              `json:"evidence"`
+	EvidenceBy      EvidenceBundle        `json:"evidence_by,omitempty"`
+	Explanation     ResultExplanation     `json:"explanation,omitempty"`
+	Breakdown       ScoreBreakdown        `json:"breakdown,omitempty"`
+	ChangeStatus    string                `json:"change_status,omitempty"`
+	SeenCount       int                   `json:"seen_count"`
+	SignatureHash   string                `json:"signature_hash,omitempty"`
+	SeenBefore      bool                  `json:"seen_before,omitempty"`
+	OccurrenceCount int                   `json:"occurrence_count,omitempty"`
+	FirstSeenAt     string                `json:"first_seen_at,omitempty"`
+	LastSeenAt      string                `json:"last_seen_at,omitempty"`
+	Ranking         *Ranking              `json:"ranking,omitempty"`
+	Hypothesis      *HypothesisAssessment `json:"hypothesis,omitempty"`
 }
 
 type ArtifactStatus string
@@ -191,13 +189,12 @@ type ArtifactEnvironment struct {
 }
 
 type ArtifactHistoryContext struct {
-	SeenCount          int                 `json:"seen_count,omitempty"`
-	SignatureHash      string              `json:"signature_hash,omitempty"`
-	SeenBefore         bool                `json:"seen_before,omitempty"`
-	OccurrenceCount    int                 `json:"occurrence_count,omitempty"`
-	FirstSeenAt        string              `json:"first_seen_at,omitempty"`
-	LastSeenAt         string              `json:"last_seen_at,omitempty"`
-	HookHistorySummary *HookHistorySummary `json:"hook_history_summary,omitempty"`
+	SeenCount       int    `json:"seen_count,omitempty"`
+	SignatureHash   string `json:"signature_hash,omitempty"`
+	SeenBefore      bool   `json:"seen_before,omitempty"`
+	OccurrenceCount int    `json:"occurrence_count,omitempty"`
+	FirstSeenAt     string `json:"first_seen_at,omitempty"`
+	LastSeenAt      string `json:"last_seen_at,omitempty"`
 }
 
 type CandidateCluster struct {

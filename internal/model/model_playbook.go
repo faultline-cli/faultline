@@ -33,7 +33,6 @@ type Playbook struct {
 	RequiresTopology bool            `yaml:"requires_topology,omitempty" json:"requires_topology,omitempty"`
 	TopologyBoost    []TopologyBoost `yaml:"topology_boost,omitempty" json:"topology_boost,omitempty"`
 	Workflow         WorkflowSpec    `yaml:"workflow" json:"workflow"`
-	Hooks            PlaybookHooks   `yaml:"hooks,omitempty" json:"hooks,omitempty"`
 	Metadata         PlaybookMeta    `yaml:"metadata,omitempty" json:"metadata,omitempty"`
 	Scoring          ScoringConfig   `yaml:"scoring,omitempty" json:"scoring,omitempty"`
 	Contextual       ContextPolicy   `yaml:"context_filters,omitempty" json:"context_filters,omitempty"`
