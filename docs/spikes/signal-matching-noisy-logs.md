@@ -54,7 +54,8 @@ Confidence is post-hoc calibrated from score coverage + separation from second-b
 
 ### Known gaps from eval corpus
 
-- 10,881 unmatched clusters in `gaps3/cluster-summary.md`; top clusters are:
+- Prior eval runs produced 10,881 unmatched clusters in generated gap-summary
+  output; top clusters were:
   - Test-function-name list lines (pytest, unittest output with no error prefix)
   - Multilingual error messages (non-ASCII)
   - Numeric-only or address-only variants of known error strings
@@ -515,8 +516,8 @@ func TestRankRegexPattern(t *testing.T) {
 - [Aho-Corasick multi-pattern matching](https://en.wikipedia.org/wiki/Aho%E2%80%93Corasick_algorithm) —
   O(n+m) multi-pattern scan; relevant if pattern count grows past ~1,000 and CPU becomes
   a bottleneck
-- [Eval corpus gap analysis](../eval-work/gaps3/cluster-summary.md) — empirical source
-  of unmatched cluster patterns in this repo
+- Eval corpus gap analysis — generated under `eval-work/` by `make eval-run`;
+  empirical source of unmatched cluster patterns when recreated locally
 
 ---
 

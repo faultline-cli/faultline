@@ -43,8 +43,7 @@ CLI workflows.
 3. Org-level policy enforcement
 4. Shared playbook layering (org + repo)
 5. Basic failure insights (`faultline report`)
-6. Team-level hooks automation
-7. Versioned integration and schema contract
+6. Versioned integration and schema contract
 
 ### MVP Build Order
 
@@ -57,7 +56,6 @@ Phase 1 (sellable baseline):
 
 Phase 2:
 
-- hooks execution for Team automation paths
 - recurring detection thresholds
 - simple sync path (push-only first)
 
@@ -431,7 +429,7 @@ The store previously included workflow execution persistence outside the core
 analysis and handoff path.
 
 **Resolved**: workflow execution persistence was removed. The local store now
-keeps analysis, signature, playbook, artifact, and hook history only.
+keeps analysis, signature, playbook, and artifact history only.
 
 #### ~~TD-6: `internal/app` coverage gap~~ ✅ DONE
 

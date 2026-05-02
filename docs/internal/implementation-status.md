@@ -57,4 +57,4 @@ The repository is in the expected current state when these remain true:
 - The repository includes local single-repo history/store support, but the
   locked product boundary treats cross-repo correlation, aggregation,
   reporting, and recurring-failure coordination as Team-layer value.
-- Experimental or hidden paths such as provider-backed delta, hooks, and authoring helpers remain outside the default onboarding story even though their implementation exists in the repository.
+- Experimental or hidden paths such as provider-backed delta and authoring helpers remain outside the default onboarding story even though their implementation exists in the repository.

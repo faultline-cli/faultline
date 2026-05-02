@@ -20,7 +20,6 @@ The local store implementation exists to support:
 - deterministic `input_hash` and `output_hash` recording for repeated-run checks
 - ranked playbook match history
 - local recurring-failure reports grouped by `failure_id`
-- hook execution history when hooks are enabled
 
 The store is not:
 
@@ -44,9 +43,8 @@ no-op store and still returns the diagnosis.
 Local history enrichment in `analyze` output remains explicit opt-in through:
 
 - `--history`
-- `--store auto`
 - `--store /path/to/store.db`
-- `FAULTLINE_STORE`
+- `FAULTLINE_STORE` set to a concrete store path
 
 `--no-history` and `--no-store` remain hidden compatibility switches and force
 the no-op store. Explicit history commands (`report`, `history`, `signatures`,
@@ -70,7 +68,6 @@ the main run record:
 - `findings`
 - `signatures`
 - `playbook_matches`
-- `hook_results`
 
 Stored data is intentionally minimal:
 
@@ -83,7 +80,6 @@ Stored data is intentionally minimal:
   remediation handoff
 - first-seen and last-seen times
 - small evidence excerpts, retained as the first matched evidence line
-- structured hook facts and hook evidence excerpts when hooks run
 
 ## What Is Not Stored By Default
 
@@ -152,7 +148,6 @@ That history summary is intentionally concise:
 - a short `signature_hash` prefix so users can pivot into `faultline history --signature <hash>`
 - a recurrence line such as `seen 3 times over 7d in local history`
 - explicit `first seen` and `last seen` timestamps
-- hook verification history only when hooks have actually run for that signature
 
 To keep repeated-run verification useful, `output_hash` is computed from the
 stable diagnosis payload before local-history counters and policy summaries are
@@ -166,7 +161,6 @@ History is intended to answer explicit questions:
 
 - have we seen this exact normalized failure signature before?
 - how often has this failure class won recently?
-- which hooks are consistently helping or failing?
 - did the same input produce stable structured output over time?
 
 Interpret the fields narrowly:
@@ -192,13 +186,11 @@ detector result by itself.
 
 - recurring signatures
 - playbook selection frequency, total match frequency, and recurring-run counts
-- hook execution and pass/fail/blocked summaries
 
 `faultline history --signature <hash>` focuses on one signature and shows:
 
 - recurrence metadata
 - recent stored findings for that signature
-- aggregated hook history for the matching playbook/signature pair
 
 `faultline signatures` is the narrowest surface: it just lists stored
 signatures with counts and timestamps so users can pivot into
@@ -220,9 +212,6 @@ dashboard product:
   need better exclusions or narrower wording
 - recurring-run counts to show which rules are repeatedly winning on real inputs
 - average selected confidence by playbook
-- hook total/executed/passed/failed/blocked counts
-- average hook confidence delta so maintainers can spot noisy hooks that add
-  little value
 
 These views are intentionally local, inspectable, and bounded. They are meant
 to guide single-repo diagnosis and catalog maintenance, not to define the

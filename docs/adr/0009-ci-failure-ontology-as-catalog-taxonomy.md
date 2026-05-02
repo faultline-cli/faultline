@@ -14,7 +14,7 @@ As the playbook catalog expands, the catalog needs a shared classification vocab
 
 Without a shared taxonomy, coverage gaps are opaque, playbooks accumulate in ad hoc category directories, and cross-cutting analysis (e.g. "how complete is auth coverage?") requires manual inspection.
 
-The ontology design is documented across [docs/ontology.md](../ontology.md), [docs/ontology-quick-reference.md](../ontology-quick-reference.md), [docs/ontology-examples.md](../ontology-examples.md), and [docs/ontology-implementation.md](../ontology-implementation.md). Commit `039f7d0` applied the taxonomy to the existing catalog.
+The ontology design is documented across [docs/ontology.md](../ontology.md), [docs/ontology-quick-reference.md](../ontology-quick-reference.md), and [docs/ontology-examples.md](../ontology-examples.md). Commit `039f7d0` applied the taxonomy to the existing catalog.
 
 ## Decision
 
@@ -45,7 +45,7 @@ As of v0.4.1, 170 of 181 bundled playbooks carry ontology metadata.
 
 - [docs/ontology.md](../ontology.md) — Full design, five-level hierarchy, schema
 - [docs/ontology-quick-reference.md](../ontology-quick-reference.md) — Condensed reference
-- [docs/ontology-implementation.md](../ontology-implementation.md) — Migration phases and contributor guidance
+- [docs/ontology-quick-reference.md](../ontology-quick-reference.md) — Current shipped metadata and coverage-command reference
 - [docs/ontology-examples.md](../ontology-examples.md) — Six complete annotated examples
 - [ADR 0008](0008-playbook-catalog-scalability-through-composition-and-inheritance.md) — Composition model that the taxonomy informs
 - Git history: `039f7d0` apply ontology metadata to existing catalog

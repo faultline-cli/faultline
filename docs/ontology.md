@@ -1,5 +1,11 @@
 # CI Failure Ontology for Faultline
 
+> **Status:** Historical design reference. Faultline currently ships lightweight
+> `domain`, `class`, and `mode` metadata plus a fixture-evidence based
+> `faultline coverage` command. This document describes the broader taxonomy
+> design and contains examples of planned reporting features that are not all
+> implemented in the current CLI.
+
 ## Executive Summary
 
 This document defines the **CI Failure Ontology**, a canonical taxonomy that maps CI log evidence into deterministic failure classes, diagnoses, remediation guidance, and coverage metrics.
@@ -507,15 +513,21 @@ LOW CONFIDENCE:
 
 ### Reporting Implementation
 
-Create a new `faultline coverage` command:
+The shipped `faultline coverage` command reports fixture evidence for the
+resolved playbook catalog:
 
 ```bash
-faultline coverage --format=text       # Human-readable summary
-faultline coverage --format=json       # Machine-readable metrics
-faultline coverage --domain=dependency # Filter by domain
-faultline coverage --depth=shallow     # Show only shallow coverage areas
-faultline coverage --gaps              # Show priority gaps
+faultline coverage
+faultline coverage --json
+faultline coverage --fixture-dir fixtures
+faultline coverage --playbooks playbooks/bundled
+faultline coverage --playbook-pack examples/packs/minimal
 ```
+
+The current command does not filter by domain/depth, emit CSV, or perform
+ontology validation. It measures accepted fixture evidence, negative
+assertions, strict top-1 expectations, category/domain grouping, missing
+positive fixtures, and duplicate playbook IDs.
 
 ---
 
@@ -589,7 +601,8 @@ done
 - Playbooks **without** ontology metadata remain fully functional
 - Old playbooks continue to match and rank exactly as before
 - No breaking changes to YAML schema
-- `faultline analyze` output unchanged unless `--coverage` flag used
+- `faultline analyze` output unchanged; ontology metadata is read by reporting
+  surfaces such as `faultline coverage`
 - Older packs and external playbooks don't need to adopt ontology
 
 ---
@@ -781,11 +794,8 @@ make review  # Check for overlaps with other playbooks
 Ontology consistency checks:
 
 ```bash
-# Validate ontology assignments (future)
-faultline playbooks validate --ontology
-
-# Check coverage impact
-faultline coverage --mode=pnpm-frozen-lockfile-outdated
+# Check fixture evidence for the resolved catalog
+faultline coverage
 ```
 
 ---
@@ -811,7 +821,7 @@ When evaluating a playbook for ontology consistency:
 
 ### Q: If I add ontology metadata to an existing playbook, will the behavior change?
 
-**A:** No. Ontology fields are purely additive metadata. They don't affect matching, ranking, or output unless explicitly enabled with `--coverage` or `--stats` flags.
+**A:** No. Ontology fields are additive metadata. They do not affect matching, ranking, or normal analysis output. The current `faultline coverage` command reads `domain` for grouping and reads fixture expectations for evidence.
 
 ### Q: What if my playbook matches multiple modes?
 

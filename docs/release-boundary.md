@@ -20,7 +20,6 @@ Core includes:
 - deterministic playbook matching and ranking
 - local playbook system and pack composition
 - opt-in single-repo local history and forensic recall
-- baseline hooks support as local deterministic companion behavior
 - thin diff and deterministic artifact generation
 
 Core may include persistence when it remains local and scoped to a single
@@ -40,7 +39,7 @@ Team includes:
 - cross-repo correlation and ownership-aware recurrence
 - org-level policy enforcement
 - shared playbook layering (org base + repo override)
-- team automation hooks and managed execution context
+- managed execution context
 - aggregated reporting and trend insights
 - stable integration contracts, schema versioning, and sync surfaces
 
@@ -98,14 +97,8 @@ These are supported, but they are not the first-run story. Docs and help text sh
 ### Gate Behind Flag
 
 - provider-backed GitHub Actions and GitLab CI delta via `--delta-provider github-actions|gitlab-ci`
-- constrained playbook hooks via hidden `--hooks <mode>`
 
 This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1` (preferred; legacy `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1` is still accepted). It is intentionally excluded from the default help surface and release narrative until it has release-grade coverage equivalent to the core CLI flow.
-
-Hooks are also intentionally hidden in the current release. They extend
-playbooks through typed, policy-gated local checks, but they are not part of
-the default onboarding path and should stay additive to `analyze` and `trace`
-rather than becoming a generic automation surface.
 
 ### Team-Gated Commands (Planned)
 

@@ -1,5 +1,10 @@
 # CI Failure Ontology: Example Entries
 
+> **Status:** Historical examples for richer ontology records. The current
+> shipped playbook schema uses lightweight `domain`, `class`, and `mode`
+> metadata; fields such as `confidence_baseline`, `evidence.required`, and
+> `remediation.strategy` are design examples, not required by the current CLI.
+
 This document provides detailed, ready-to-use ontology examples. Each example shows the complete structure for a specific failure mode, including evidence patterns, remediation strategies, and fixture guidance.
 
 ---

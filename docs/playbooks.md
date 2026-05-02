@@ -79,26 +79,6 @@ validation: |
   - Confirm the original failure signature is gone.
 ```
 
-Optional constrained hook fields:
-
-```yaml
-hooks:
-  verify:
-    - id: package-lock-present
-      kind: file_exists
-      path: package-lock.json
-      confidence_delta: 0.05
-  collect:
-    - id: npmrc-excerpt
-      kind: read_file_excerpt
-      path: .npmrc
-      max_bytes: 200
-```
-
-Use inline hooks sparingly. They belong in the playbook when the extra
-verification or evidence is part of the same rule definition and should travel
-with the playbook itself.
-
 ## Workflow Handoff
 
 Playbooks describe deterministic follow-up handoff with the `workflow` block:
@@ -174,13 +154,6 @@ aliases plus a small generic set:
 - Put deterministic commands in `workflow.local_repro` and `workflow.verify` as well as the markdown if they matter operationally.
 - Do not hide branching logic or detector assumptions inside markdown prose.
 - `summary`, `diagnosis`, `fix`, and `validation` are required for shipped playbooks.
-- Keep hooks typed, explicit, and inspectable. Hooks are an additive evidence
-  layer, not a second matcher.
-- Prefer `verify` and `collect` hooks over `remediate`. Remediation hooks are
-  schema-supported today but remain execution-blocked in the shipped CLI.
-- Use `confidence_delta` only on `verify` hooks, and keep it small. Hook
-  verification refines displayed confidence after matching; it does not create
-  a match or rerank the catalog in the current implementation.
 
 ## Improvement pipeline
 
@@ -271,7 +244,7 @@ guidance without copying the full base rule.
 
 Deterministic merge rules:
 
-- inheritance resolves after pack loading and before match or hook overlays are applied
+- inheritance resolves after pack loading and before match fragment overlays are applied
 - parents must already exist in the composed pack graph
 - inheritance cycles are rejected
 - scalar metadata such as `title`, `severity`, `category`, `summary`, `fix`,
@@ -280,9 +253,6 @@ Deterministic merge rules:
   `match.use`, `match.partial`, tags, stage hints, workflow command lists, and
   hypothesis signals compose by appending the child entries after the inherited
   entries
-- hook inheritance is additive, with child `disable` entries removing inherited
-  hook IDs before any child hooks are appended
-
 Practical layering model:
 
 - bundled playbook: shared root-cause boundary and default operator guidance
@@ -358,7 +328,7 @@ Partial match groups are the deterministic sub-pattern primitive:
 Deterministic composition rules:
 
 - pack order applies here too: later packs override earlier named fragment IDs
-- composition resolves after playbook inheritance and before hook overlays
+- composition resolves after playbook inheritance and before matching
 - cycles across named fragments or `playbook:` references are rejected
 - expanded patterns become part of the final playbook match set used by
   `analyze`, `trace`, `workflow`, and `make review`
@@ -366,119 +336,6 @@ Deterministic composition rules:
 Use named fragments when you want reusable sub-patterns shared across multiple
 rules. Use playbook inheritance when you want to extend a whole diagnosis and
 its operator guidance.
-
-## Hook Catalog Overlays
-
-Team-specific hooks should usually live in a pack-level overlay file instead of
-forking the shipped playbook YAML.
-
-Create `faultline-hooks.yaml` at the root of the pack:
-
-```yaml
-schema_version: hooks.v1
-
-named_hooks:
-  repo.node-version:
-    kind: command_output_matches
-    command:
-      - node
-      - --version
-    pattern: ^v20\.
-    confidence_delta: 0.05
-
-  repo.node-version-capture:
-    extends: repo.node-version
-    kind: command_output_capture
-
-playbook_hooks:
-  runtime-mismatch:
-    verify:
-      - use: repo.node-version
-    collect:
-      - id: nvmrc-excerpt
-        kind: read_file_excerpt
-        path: .nvmrc
-        max_bytes: 80
-
-  docker-auth:
-    disable:
-      - old-inline-hook
-    verify:
-      - id: docker-config
-        kind: file_exists
-        path: ~/.docker/config.json
-        confidence_delta: 0.04
-```
-
-Deterministic merge rules:
-
-- Pack order is the existing catalog order: bundled first, then extra packs.
-- Named hooks are merged by ID. A later pack with the same name overrides the
-  earlier definition.
-- `playbook_hooks.<id>` attaches hooks to an existing playbook without
-  redefining that playbook.
-- `disable` removes previously attached hooks by ID for that playbook.
-- Final hook references are resolved after pack composition, so teams can
-  override a named hook in a later pack without editing every `use:` site.
-
-This keeps hook customization inside the existing pack boundary, which means
-teams can extend shipped playbooks without copying the original playbook files.
-
-### Customization Proof Pattern
-
-The smallest realistic customization stack is:
-
-1. one org-level shared pack that defines named hooks such as
-   `repo.node-version` or `repo.registry-config`
-2. one repo-specific pack layered after it with a narrow override
-3. one targeted `disable:` entry to remove a noisy inherited hook
-4. one `use:` site that reattaches the replacement hook to the shipped
-   playbook
-
-That gives teams a concrete inheritance story without turning Faultline into a
-runtime extension marketplace:
-
-- the bundled catalog stays the default baseline
-- the org pack carries shared policy and hook definitions
-- the repo pack only overrides the local edge cases it can justify
-- the final behavior remains inspectable through pack order, hook metadata, and
-  trace output
-
-If a team needs a repo-specific override, prefer adding a later pack with
-`playbook_hooks.<id>.disable` plus a replacement `verify:` hook rather than
-copying the full playbook YAML into a forked catalog.
-
-## Hook Execution Modes
-
-Hooks never run unless the user enables them explicitly with the hidden
-`--hooks` flag on `faultline analyze` or `faultline trace`.
-
-Current modes:
-
-- `off`: do not execute hooks
-- `verify-only`: execute only non-command verify hooks
-- `collect-only`: execute only non-command collect hooks
-- `safe`: execute verify and collect hooks, but block command hooks
-- `full`: execute verify and collect hooks including command hooks
-
-Current safety rules:
-
-- read-only typed hooks are the only supported primitive
-- command hooks are blocked unless `--hooks full` is selected
-- remediation hooks are reported as blocked in all modes in this release
-- raw script hooks are not supported
-- every hook outcome is surfaced in trace output and in additive JSON fields as
-  `executed`, `blocked`, `skipped`, or `failed`
-
-The supported typed hooks in the current implementation are:
-
-- `file_exists`
-- `dir_exists`
-- `env_var_present`
-- `command_exit_zero`
-- `command_output_matches`
-- `command_output_capture`
-- `read_file_excerpt`
 
 ## Minimal Example Pack
 

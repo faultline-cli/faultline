@@ -220,7 +220,6 @@ Faultline Team is the paid coordination layer for:
 - recurring failure detection
 - org-level policy enforcement
 - shared playbook layering
-- team automation hooks
 - reporting, sync, and versioned integration contracts
 
-Provider-backed delta, hooks, and maintainer authoring helpers exist behind explicit or hidden paths, but they do not define the default product story.
+Provider-backed delta and maintainer authoring helpers exist behind explicit or hidden paths, but they do not define the default product story.

@@ -32,8 +32,6 @@ explicit deterministic layers:
   It derives fixture evidence from corpus expectations, including positive
   matches, near-miss or disallowed-playbook assertions, and strict top-1
   requirements. The CLI should not infer coverage from fixture filenames alone.
-- `internal/hooks` owns constrained playbook hook execution, policy gating,
-  typed hook handlers, and additive confidence refinement.
 - `internal/metrics` owns deterministic reliability metric calculation from
   explicit local history and optional supplied history artifacts.
 - `internal/detectors` owns the detector registry plus the distinct `log` and
@@ -133,18 +131,6 @@ This is the intended scaling path for playbooks:
 That keeps the catalog composable without losing the deterministic one-rule,
 one-root-cause discipline.
 
-The same pack boundary now carries optional hook overlays through
-`faultline-hooks.yaml` at the pack root. Those overlays:
-
-- define reusable named typed hooks
-- attach verify, collect, or remediate hooks to existing playbooks by ID
-- allow later packs to disable or override earlier hook definitions
-- remain additive to the playbook catalog instead of redefining matching logic
-
-Hook execution itself stays explicit and local. The analysis engine still owns
-matching and ranking; hooks are an evidence refinement layer that runs only
-when the user opts in through the hidden hooks flag.
-
 This same `~/.faultline/packs/` convention is used by the Docker image at
 `/home/faultline/.faultline/packs`, so a mounted user directory can enable the
 same installed pack set in both local and containerized runs.
@@ -197,7 +183,6 @@ When enabled, the store records durable forensic memory such as:
 - run-level `input_hash` and `output_hash`
 - first-class `artifact_json` snapshots for replayable failure artifacts
 - ranked playbook matches for longitudinal review
-- hook execution results when hooks are enabled
 
 The store does not become a generic raw-log warehouse. When active, it stores
 hashes, normalized signature material, minimal evidence excerpts, and small
@@ -252,7 +237,7 @@ also include:
   those metrics
 - `input_hash` and `output_hash` when local history is enabled for
   repeated-run determinism checks
-- result-level `signature_hash`, recurrence fields, and hook history summaries
+- result-level `signature_hash` and recurrence fields
   when local history is enabled
 
 Saved analysis artifacts preserve those fields on replay and compare.
@@ -268,16 +253,6 @@ unit of computation. The artifact records:
 - fix steps
 - structured unknown clusters and playbook seed hints when unmatched
 - remediation commands, patch suggestions, and CI config diff hints
-
-When hook execution is enabled, result JSON may also include additive `hooks`
-reports. These reports record:
-
-- execution mode
-- base confidence, total confidence delta, and final confidence
-- per-hook status (`executed`, `blocked`, `skipped`, or `failed`)
-- structured hook facts and captured evidence excerpts
-
-Absent hook execution remains absent from output.
 
 Workflow artifacts are derived from the same deterministic analysis object.
 When present, JSON and text workflow output may also carry:
