@@ -28,6 +28,10 @@ explicit deterministic layers:
 - `internal/fixtures` owns deterministic fixture corpora, public-source
   ingestion adapters, normalization, review metadata, promotion flow, and
   regression statistics.
+- `internal/coverage` owns coverage reports over the resolved playbook catalog.
+  It derives fixture evidence from corpus expectations, including positive
+  matches, near-miss or disallowed-playbook assertions, and strict top-1
+  requirements. The CLI should not infer coverage from fixture filenames alone.
 - `internal/hooks` owns constrained playbook hook execution, policy gating,
   typed hook handlers, and additive confidence refinement.
 - `internal/metrics` owns deterministic reliability metric calculation from

@@ -51,20 +51,23 @@ Given a build log from a local run or CI job, Faultline should identify the most
 
 ## Architectural Boundaries
 
-- `cmd/main.go` owns CLI startup and command wiring.
-- `internal/engine` owns log ingestion, source tree scanning, normalization, and orchestration.
+- `cmd/main.go` owns CLI startup only.
+- `internal/cli` owns Cobra command definitions, flag parsing, command visibility, and release-surface wiring. It should delegate product behavior instead of computing reports inline.
+- `internal/app` owns CLI-facing application orchestration across engine, store, renderer, fixtures, workflow, hooks, and output packages.
+- `internal/engine` owns log ingestion, source tree scanning, normalization, and analysis orchestration.
 - `internal/engine/hypothesis` owns deterministic differential diagnosis across competing playbooks.
 - `internal/detectors` owns detector module interfaces and target contracts.
-- `internal/playbooks` owns pack resolution, YAML loading, validation, and deterministic playbook ordering.
-- `internal/matcher` owns log-pattern matching, evidence extraction, and scoring.
+- `internal/playbooks` owns pack resolution, YAML loading, validation, deterministic playbook ordering, and playbook overlap reporting for deterministic review of shared patterns and exclusions.
+- `internal/matcher` owns log-pattern matching, evidence extraction, and baseline ranking.
 - `internal/scoring` owns optional Bayesian-inspired evidence fusion, additive ranking explanations, and delta diagnosis.
-- `internal/output` owns text formatting and JSON serialization.
-- `internal/workflow` owns deterministic workflow handoff rendering for the
-  top-level `faultline workflow` command.
+- `internal/artifact` owns first-class failure artifact synchronization.
+- `internal/output` owns stable serialization and output adapters.
+- `internal/renderer` owns human terminal rendering.
+- `internal/workflow` owns deterministic workflow handoff construction and rendering for the top-level `faultline workflow` command.
 - `internal/repo` owns local git scanning, history parsing, derived signals, and diagnosis correlation.
 - `internal/repo/topology` owns CODEOWNERS parsing, repository ownership graph construction, and topology signal derivation.
 - `internal/fixtures` owns deterministic fixture corpora, source adapters, curation workflow, and regression gates.
-- `internal/playbooks` also owns playbook overlap reporting for deterministic review of shared patterns and exclusions.
+- `internal/coverage` owns playbook coverage reporting from catalog metadata and fixture expectations. Coverage must measure positive fixtures, near-miss or disallowed-playbook assertions, and fixture strictness rather than only counting files.
 - `playbooks/` owns bundled and external-pack boundaries and should contain only deterministic rule data or pack metadata.
 
 ## Core Entities

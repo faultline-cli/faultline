@@ -201,5 +201,6 @@ New user-facing surfaces should start hidden, flagged, or non-default unless the
 
 - deterministic command coverage
 - fixture-backed regression proof when matching or ranking changes
+- behavioral fixture coverage that distinguishes positive matches, near-miss or disallowed-playbook assertions, and strict top-1 expectations rather than relying on raw coverage percentages or fixture filename counts
 - checked-in example or snapshot validation when the output is user-facing
 - release-check integration when the feature is part of the shipped path
