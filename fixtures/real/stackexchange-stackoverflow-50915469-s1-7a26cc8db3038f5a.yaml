@@ -1,0 +1,55 @@
+id: stackexchange-stackoverflow-50915469-s1-7a26cc8db3038f5a
+title: Simple CircleCI 2.0 configuration fails for global NPM package installation
+fixture_class: real
+normalized_log: |-
+    As said the Dockerfile from the top is not fully identical with the one in the CircleCI-config. In the Dockerfile the base image is node which by default runs under the root user.
+    The circleci/node image on the on the other hand drops to the unprivileged circleci user. So a 100% identical Dockerfile based on the node image would look like this:
+    FROM node:10
+    RUN useradd -m circleci
+    USER circleci
+    RUN npm set unsafe-perm true
+    RUN npm install -g '@oresoftware/r2g@0.0.132'
+    And with this Dockerfile the same error appears as in CircleCI.
+    One solution would be to use sudo , the problem with this is that you would have to use sudo on every command which makes use of the node package you installed (since with sudo it would actually be installed in the /root directory which is not accessible with the circleci user).
+    I think the better option would be to install the package in the circleci home directory.
+    {
+    "version": 2,
+    "jobs": {
+    "build": {
+    "docker": [
+    {
+    "image": "circleci/node:10"
+    }
+    ],
+    "steps": [
+    {
+    "run": "npm set prefix=/home/circleci/npm && echo 'export PATH=$HOME/circleci/npm/bin:$PATH' >> /home/circleci/.bashrc"
+    },
+    {
+    "run": "npm install -g --loglevel=warn '@oresoftware/r2g@0.0.132'"
+    }
+    ]
+    }
+    }
+    }
+    This way you don't have to sudo everytime you want to use the package.
+expectation:
+    expected_playbook: volume-mount-issue
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/50915469
+    repository: stackoverflow
+    issue_number: 50915469
+    comment_id: "50934418"
+    title: Simple CircleCI 2.0 configuration fails for global NPM package installation
+    author: vstm
+    snippet: 1
+    fetched_at: "2026-04-25T22:46:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-05-02T04:03:20Z"
+fingerprint: 7a26cc8db3038f5a

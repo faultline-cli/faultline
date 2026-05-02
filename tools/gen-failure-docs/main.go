@@ -144,9 +144,6 @@ Generated from ` + "`playbooks/bundled/`" + `. Run ` + "`make docs-generate`" + 
 - [{{ .Title }}]({{ .CatDir }}/{{ .ID }}.md){{ if .Summary }}: {{ firstSentence .Summary }}{{ end }}
 {{ end }}
 {{ end -}}
-## Optional
-
-- [Manually authored failure pages](README.md): Deep-dive pages on common CI error strings (Docker auth, npm lockfile, TLS certificates, git auth, node compatibility, and more)
 `
 
 const catalogTemplateText = `# Faultline Failure Catalog
@@ -569,6 +566,9 @@ func writeFiles(dstDir string, files []generatedFile) error {
 			return fmt.Errorf("write %s: %w", fullPath, writeErr)
 		}
 	}
+	if pruneErr := pruneOrphanedDocs(dstDir, files); pruneErr != nil {
+		return pruneErr
+	}
 	return nil
 }
 
@@ -587,7 +587,109 @@ func checkFiles(dstDir string, files []generatedFile) (stale []string, err error
 			stale = append(stale, f.RelPath+" (out of date)")
 		}
 	}
+	orphans, orphanErr := findOrphanedDocs(dstDir, files)
+	if orphanErr != nil {
+		return nil, orphanErr
+	}
+	for _, rel := range orphans {
+		stale = append(stale, rel+" (stale generated doc)")
+	}
 	return stale, nil
+}
+
+func pruneOrphanedDocs(dstDir string, files []generatedFile) error {
+	orphans, err := findOrphanedDocs(dstDir, files)
+	if err != nil {
+		return err
+	}
+	for _, rel := range orphans {
+		fullPath := filepath.Join(dstDir, filepath.FromSlash(rel))
+		if removeErr := os.Remove(fullPath); removeErr != nil {
+			return fmt.Errorf("remove stale doc %s: %w", fullPath, removeErr)
+		}
+	}
+	return removeEmptyDirs(dstDir)
+}
+
+func findOrphanedDocs(dstDir string, files []generatedFile) ([]string, error) {
+	if _, err := os.Stat(dstDir); errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("stat docs dir %s: %w", dstDir, err)
+	}
+
+	generated := generatedFileSet(files)
+	var orphans []string
+
+	err := filepath.WalkDir(dstDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".md") {
+			return nil
+		}
+		rel, relErr := filepath.Rel(dstDir, path)
+		if relErr != nil {
+			return fmt.Errorf("rel %s: %w", path, relErr)
+		}
+		rel = filepath.ToSlash(rel)
+		if _, ok := generated[rel]; ok || isManualDoc(rel) {
+			return nil
+		}
+		orphans = append(orphans, rel)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("walk generated docs: %w", err)
+	}
+	sort.Strings(orphans)
+	return orphans, nil
+}
+
+func generatedFileSet(files []generatedFile) map[string]struct{} {
+	generated := make(map[string]struct{}, len(files))
+	for _, f := range files {
+		rel := filepath.ToSlash(filepath.Clean(filepath.FromSlash(f.RelPath)))
+		generated[rel] = struct{}{}
+	}
+	return generated
+}
+
+func isManualDoc(rel string) bool {
+	switch rel {
+	case "README.md", "_template.md", "PLAYBOOK_AUTHORING_GUIDE.md":
+		return true
+	default:
+		return false
+	}
+}
+
+func removeEmptyDirs(dstDir string) error {
+	var dirs []string
+	err := filepath.WalkDir(dstDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() && path != dstDir {
+			dirs = append(dirs, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("walk docs dirs: %w", err)
+	}
+	sort.Slice(dirs, func(i, j int) bool {
+		return len(dirs[i]) > len(dirs[j])
+	})
+	for _, dir := range dirs {
+		if removeErr := os.Remove(dir); removeErr != nil && !errors.Is(removeErr, fs.ErrNotExist) {
+			if entries, readErr := os.ReadDir(dir); readErr != nil || len(entries) > 0 {
+				continue
+			}
+			return fmt.Errorf("remove empty dir %s: %w", dir, removeErr)
+		}
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------

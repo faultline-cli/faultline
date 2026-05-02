@@ -104,7 +104,7 @@ Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`, and
 
 ## What It Catches
 
-Faultline ships with 193 bundled playbooks for common CI failure classes.
+Faultline ships with 173 bundled playbooks for common CI failure classes.
 
 | Category | Examples |
 | --- | --- |
@@ -148,10 +148,11 @@ See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI
 
 Faultline optimizes for high precision over broad coverage. The current checked-in fixture baseline is scoped to the repository corpus, not every possible CI failure.
 
-- Bundled playbooks: 193
-- Accepted real fixtures: 211
-- Fixture top-1 baseline pass rate: 100% (211/211)
+- Bundled playbooks: 173
+- Accepted real fixtures: 215
+- Fixture top-1 baseline pass rate: 100% (215/215)
 - Fixture false positives: 0
+- Weak matches: 1
 - Large-scale GitHub Actions evaluation: 89.4% of 30,094 failed logs matched at least one bundled playbook
 
 These metrics mean the known corpus is reproducible and guarded against regression. They do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.

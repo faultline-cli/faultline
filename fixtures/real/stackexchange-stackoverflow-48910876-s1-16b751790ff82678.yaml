@@ -1,0 +1,37 @@
+id: stackexchange-stackoverflow-48910876-s1-16b751790ff82678
+title: 'Error: EACCES: permission denied, access &#39;/usr/local/lib/node_modules&#39;'
+fixture_class: real
+normalized_log: |-
+    Change your file permissions... Like this
+    First check who owns the directory
+    ls -la /usr/local/lib/node_modules
+    it is denying access because the node_module folder is owned by root
+    drwxr-xr-x 3 root wheel 102 Jun 24 23:24 node_modules
+    so this needs to be changed by changing root to your user but first run command below to check your current user How do I get the name of the active user via the command line in OS X?
+    id -un OR whoami
+    Then change owner
+    sudo chown -R [owner]:[owner] /usr/local/lib/node_modules
+    OR
+    sudo chown -R ownerName: /usr/local/lib/node_modules
+    OR
+    sudo chown -R $USER /usr/local/lib/node_modules
+expectation:
+    expected_playbook: docker-permission-denied-nonroot
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/48910876
+    repository: stackoverflow
+    issue_number: 48910876
+    comment_id: "51024493"
+    title: 'Error: EACCES: permission denied, access &#39;/usr/local/lib/node_modules&#39;'
+    author: okandas
+    snippet: 1
+    fetched_at: "2026-04-25T22:46:51Z"
+review:
+    status: promoted
+    promoted_at: "2026-05-02T04:03:08Z"
+fingerprint: 16b751790ff82678

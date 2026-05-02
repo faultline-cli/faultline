@@ -4,13 +4,13 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 193
-- Accepted real fixtures: 211
-- Top-1 baseline pass rate: 100% (211/211)
-- Top-3 baseline pass rate: 100% (211/211)
+- Bundled playbooks: 173
+- Accepted real fixtures: 215
+- Top-1 baseline pass rate: 100% (215/215)
+- Top-3 baseline pass rate: 100% (215/215)
 - Unmatched fixtures: 0 (0.0%)
 - False positives: 0
-- Weak matches: 0 (0.0%)
+- Weak matches: 1 (0.5%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
@@ -31,20 +31,20 @@ Real-fixture provider distribution from `./bin/faultline fixtures stats --class 
 
 | Provider | Accepted Real Fixtures |
 | --- | --- |
-| GitHub | 116 |
+| GitHub | 104 |
 | Stack Exchange | 70 |
 | GitLab | 24 |
-| Reddit | 12 |
+| Reddit | 11 |
 | Discourse | 6 |
 
 Adapter distribution in the same corpus:
 
 | Adapter | Accepted Real Fixtures |
 | --- | --- |
-| `github-issue` | 116 |
+| `github-issue` | 104 |
 | `stackexchange-question` | 70 |
 | `gitlab-issue` | 24 |
-| `reddit-post` | 12 |
+| `reddit-post` | 11 |
 | `discourse-topic` | 6 |
 
 These counts describe the public proof corpus, not a claim that unknown failures are solved.
@@ -70,13 +70,15 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-30 main baseline after overlap review | 193 | 228 | 32 | 91.2% | 91.2% | 8.8% | 0 |
 | 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
 | 2026-05-01 v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
+| 2026-05-02 playbook triage pass (removed 20 low-signal bundled playbooks) | 173 | 211 | 32 | 100% | 100% | 0% | 0 |
+| 2026-05-02 fixture promotion pass (promoted 4 staging candidates) | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
 
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
-- The corpus mix is still GitHub-heavy: 103 GitHub fixtures (49%) out of 211 accepted real fixtures.
-- The current baseline shows 18 unmatched fixtures and zero weak matches. All 18 unmatched are corpus quality issues (YAML workflow configs, positive resolution comments, or successful output with no error signals) that cannot be addressed with playbook changes alone.
+- The corpus mix is still GitHub-heavy: 104 GitHub fixtures (48%) out of 215 accepted real fixtures.
+- The current baseline shows 0 unmatched fixtures and 1 weak match (`stackexchange-stackoverflow-66973433-s4-52f19765e92d43ae`). All recent promotions are clean top-1 matches.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
   the noisy variant corpus under `internal/signature/testdata/variants/` plus
@@ -85,7 +87,7 @@ Append one row per release cut so corpus growth and match stability stay visible
 
 ## Large-Scale Real-World Evaluation
 
-The checked-in regression corpus (211 fixtures) is the deterministic trust gate. A separate large-scale evaluation validates that the bundled playbooks cover the failure patterns that actually appear at production volume.
+The checked-in regression corpus (215 fixtures) is the deterministic trust gate. A separate large-scale evaluation validates that the bundled playbooks cover the failure patterns that actually appear at production volume.
 
 **Dataset: github-actions-2026-04-29**
 
@@ -135,7 +137,7 @@ The log-chunks dataset has been evaluated separately (87.2% coverage, 102/117 fi
 
 ### What This Number Means
 
-The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. It is separate from the checked-in 211-fixture baseline above. Evaluated on: 2026-04-29.
+The 89.4% figure describes how often a real failing GitHub Actions log matches at least one bundled playbook. It is a coverage claim, not an accuracy claim — a matched log means the relevant playbook fired, not that the ranked output was reviewed by a human. It is separate from the checked-in 215-fixture baseline above. Evaluated on: 2026-04-29.
 
 ## Contribution Prompt
 

@@ -99,6 +99,7 @@ match:
     - "test result: ok"
     - "running 0 tests"
     - "BUILD FAILED"
+    - "build failure"
     - "linker"
     - "undefined reference"
 workflow:

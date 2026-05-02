@@ -1,0 +1,26 @@
+id: github-actions-runner-1490-s1-6d5d61018f786aa2
+title: Environment Secrets are not available on Reusable Workflow / Workflow Templates
+fixture_class: real
+normalized_log: As for the first part - the Caller Workflow does not seem to support these Environment Secrets; providing the 'environment' keyword inside a Reusable Workflow job reference next to 'uses' {file-reference} keyword will result in a validation error in my case.
+expectation:
+    expected_playbook: invalid-config-schema
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: github-issue
+    provider: github
+    url: https://github.com/actions/runner/issues/1490
+    repository: actions/runner
+    issue_number: 1490
+    comment_id: "3066966373"
+    title: Environment Secrets are not available on Reusable Workflow / Workflow Templates
+    labels:
+        - bug
+    author: AllanOricil
+    snippet: 1
+    fetched_at: "2026-04-22T09:57:32Z"
+review:
+    status: promoted
+    promoted_at: "2026-05-02T04:03:14Z"
+fingerprint: 6d5d61018f786aa2

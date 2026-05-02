@@ -1,6 +1,5 @@
 --- fail:
   + go-test-failure (match.any)
-  + topology-failure-clustered (match.any)
   - junit-test-failure (match.none)
 
 --legacy-peer-deps
@@ -102,10 +101,6 @@ buildkit-mount
   + runner-disk-full (match.any)
   - disk-full (match.none)
 
-cache miss
-  + cache-miss-non-fatal (match.any)
-  + remote-cache-miss (match.any)
-
 cannot assign requested address
   + ipv6-ipv4-resolution (match.any)
   - parallelism-conflict (match.none)
@@ -154,10 +149,6 @@ case-insensitive
   + path-case-mismatch (match.any)
   - typescript-compile (match.none)
 
-certificate has expired
-  + ssl-cert-error (match.any)
-  - clock-drift (match.none)
-
 certificate signed by unknown authority
   + ssl-cert-error (match.any)
   - dotnet-restore (match.none)
@@ -170,10 +161,6 @@ chdir
 check constraints cannot be marked not valid
   + postgres-version-incompatible-migration (match.any)
   - postgres-enum-add-in-transaction (match.none)
-
-clock skew
-  + clock-drift (match.any)
-  - expired-credentials (match.none)
 
 command not found
   + base-image-breaking-change (match.any)
@@ -216,7 +203,6 @@ connection refused
   - database-migration-timeout (match.none)
   - env-var-missing (match.none)
   - git-refspec-mismatch (match.none)
-  - link-checker-failure (match.none)
   - postgres-enum-add-in-transaction (match.none)
   - postgres-version-incompatible-migration (match.none)
   - runner-update-permission-denied (match.none)
@@ -306,10 +292,6 @@ disk quota exceeded
 docker build -t
   + runner-disk-full (match.any)
   - disk-full (match.none)
-
-dockerclientproviderstrategy
-  + testcontainer-startup (match.any)
-  - clock-drift (match.none)
 
 dockerfile: no such file or directory
   + docker-build-context (match.any)
@@ -541,10 +523,6 @@ failure: build failed with an exception
   + gradle-build (match.any)
   - connection-refused (match.none)
   - maven-dependency-resolution (match.none)
-
-failures:
-  + cargo-test-failure (match.any)
-  + topology-failure-clustered (match.any)
 
 fatal error: call_and_retry_last allocation failed
   + circleci-resource-class-oom (match.any)
@@ -1086,10 +1064,6 @@ ssh: handshake failed
   + ssh-key-auth (match.any)
   - git-auth (match.none)
 
-step was skipped
-  + skipped-critical-step (match.any)
-  + step-skipped-unexpectedly (match.any)
-
 stored snapshot
   + snapshot-mismatch (match.any)
   - coverage-gate-failure (match.none)
@@ -1256,7 +1230,3 @@ x509:
 yarn.lock
   + package-manager-mismatch (match.any)
   - build-input-file-missing (match.none)
-
-yt-dl.org
-  + youtube-dl-test-failure (match.any)
-  - go-test-failure (match.none)

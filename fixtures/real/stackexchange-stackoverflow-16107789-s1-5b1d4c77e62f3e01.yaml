@@ -1,0 +1,50 @@
+id: stackexchange-stackoverflow-16107789-s1-5b1d4c77e62f3e01
+title: 'Failed to deploy artifacts: Could not find artifact'
+fixture_class: real
+normalized_log: |-
+    Maven knows the URL of the repository to deploy to from the repository (or snapshotRepository ) sub elements of the distributionManagement element in the POM:
+    <distributionManagement>
+    <repository>
+    <id>{some ID}</id>
+    <name>{some helpful name}</name>
+    <url>http://example.com:8081/repository/maven-releases/</url>
+    </repository>
+    <snapshotRepository>
+    ...
+    </snapshotRepository>
+    </distributionManagement>
+    But Maven will also need to know the user-name and password to use. That can't be in the (public, published) POM, but is instead in a server element in your Maven settings file ( ~/.m2/settings.xml ):
+    <servers>
+    <server>
+    <id>{some ID}</id>
+    <username>{username}</username>
+    <password>{password}</password>
+    <filePermissions>664</filePermissions>
+    <directoryPermissions>775</directoryPermissions>
+    <configuration></configuration>
+    </server>
+    ...
+    </servers>
+    Because the settings file can contain credentials for multiple servers, it needs a means of associating your POM repository with the appropriate settings server . It uses the content of the id sub element to identify which server credentials to use with which repository .
+    Obviously, if you use the wrong id (completely wrong or having a typo) then Maven will not know which credentials to use. However, Maven does not output a warning or error message in this case . It tries (using no credentials?) to do the upload, which of course fails with 401 Unauthorized .
+    Therefore, if deployment fails with a mysterious 401 Unauthorized , one thing to check is that your repository and server id values are the same.
+expectation:
+    expected_playbook: http-auth-failure
+    top_n: 3
+    strict_top1: true
+    min_confidence: 0.55
+source:
+    adapter: stackexchange-question
+    provider: stackexchange
+    url: https://stackoverflow.com/questions/16107789
+    repository: stackoverflow
+    issue_number: 16107789
+    comment_id: "73754645"
+    title: 'Failed to deploy artifacts: Could not find artifact'
+    author: Raedwald
+    snippet: 1
+    fetched_at: "2026-04-28T09:33:12Z"
+review:
+    status: promoted
+    promoted_at: "2026-05-02T04:03:02Z"
+fingerprint: 5b1d4c77e62f3e01

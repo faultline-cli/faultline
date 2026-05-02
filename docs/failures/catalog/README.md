@@ -2,7 +2,7 @@
 
 This index links to every bundled playbook. Each page explains the failure, shows the log signals Faultline matches, and lists diagnosis and fix steps.
 
-**193 playbooks** across 8 categories.
+**173 playbooks** across 8 categories.
 
 Run `faultline list` to browse the catalog inside the terminal.
 
@@ -21,7 +21,7 @@ outside of CI.
 - [SSH key authentication failure](../auth/ssh-key-auth.md) — An SSH operation (git clone, deploy, rsync) failed because the SSH key was not found, not loaded into the agent, or the remote host does not accept it.
 - [SSH permission denied (publickey) authentication failed](../auth/ssh-permission-denied.md) — SSH authentication to a Git host or remote server failed with explicit "Permission denied (publickey)" message.
 
-## Build (67)
+## Build (65)
 
 - [Alpine vs Debian/Ubuntu package or binary incompatibility](../build/alpine-debian-incompatibility.md) — A CI build or container fails because it mixes Alpine Linux (musl libc) and
 Debian/Ubuntu (glibc) artifacts.
@@ -90,8 +90,6 @@ Unix LF endings are expected.
 - [Python module not found](../build/python-module-missing.md) — Python could not import a required module because it is missing from the environment used by the failing CI step
 - [Python virtualenv not activated or interpreter mismatch](../build/python-virtualenv-not-activated.md) — Python code is using a system interpreter or wrong virtualenv instead of the activated one, causing module import failures or version mismatches.
 - [Lint, format, or static-analysis gate failure](../build/quality-gate-failure.md) — A non-compiler quality gate failed during CI.
-- [Remote build cache miss or misconfiguration](../build/remote-cache-miss.md) — A remote build cache (Bazel remote cache, Gradle build cache, Turborepo
-remote cache, Nx Cloud, etc.
 - [Python, Ruby, or Go runtime version mismatch](../build/runtime-mismatch.md) — The installed Python, Ruby, or Go runtime does not satisfy the version
 constraint declared by the project.
 - [Shell compatibility issue (sh vs bash)](../build/shell-sh-vs-bash.md) — A shell script uses bash-specific syntax but is executed by `/bin/sh`, which
@@ -101,14 +99,13 @@ resolved in the CI environment.
 - [Syntax error in source code](../build/syntax-error.md) — The compiler or interpreter hit invalid source syntax and stopped before the
 build could continue.
 - [Cross-ownership boundary failure](../build/topology-boundary-crossed.md) — A change in one ownership zone has broken code in a separate ownership zone, suggesting the failure originates at a
-- [Change outside component ownership caused failure](../build/topology-ownership-mismatch.md) — The files that were recently changed are owned by a different team than the files where the failure originated, indicating
 - [tox environment command failed (InvocationError)](../build/tox-invocation-error.md) — tox ran a command inside a virtual environment and the command exited with a non-zero status.
 - [TypeScript compile or type-check failure](../build/typescript-compile.md) — The TypeScript compiler rejected the code because a type, symbol, or module import does not match the project's declared types.
 - [Wrong working directory](../build/working-directory.md) — A command ran in an unexpected working directory.
 - [Monorepo workspace dependency version mismatch](../build/workspace-dependency-mismatch.md) — A package in the monorepo workspace depends on a version of another workspace package that doesn't match the version published
 - [Yarn lockfile out of date](../build/yarn-lockfile.md) — Yarn was run with `--frozen-lockfile` (the recommended CI flag) but the `yarn.
 
-## Ci (28)
+## Ci (26)
 
 - [CI artifact upload or download failed](../ci/artifact-upload-failure.md) — A CI job failed to upload a build artifact, or a downstream job failed to download an artifact produced by an earlier job.
 - [Azure Pipelines service connection failure](../ci/azure-pipelines-service-connection.md) — An Azure Pipelines job failed because the service connection required by a task does not exist, is not authorized, or has expired credentials.
@@ -140,10 +137,6 @@ volume, or bound port that was not cleaned up.
 - [CI runner disk full](../ci/runner-disk-full.md) — The CI runner has run out of available disk space.
 - [Self-hosted runner update permission failure](../ci/runner-update-permission-denied.md) — A self-hosted runner tried to update itself or adjust worker process settings, but the environment denied access to the runner
 - [CI secret or environment variable not available](../ci/secrets-not-available.md) — A required secret or environment variable is not available in this CI job.
-- [CI step or job skipped unexpectedly](../ci/step-skipped-unexpectedly.md) — A CI step, job, or stage was silently skipped due to an `if`/`when`/`only`
-condition evaluating to false.
-- [CI workflow not triggered due to path or branch filter](../ci/workflow-not-triggered.md) — A CI workflow was expected to run after a push or pull request but did not
-trigger.
 
 ## Deploy (11)
 
@@ -159,7 +152,7 @@ trigger.
 - [Terraform initialization failure](../deploy/terraform-init.md) — `terraform init` failed before any plan or apply could begin.
 - [Terraform state lock conflict](../deploy/terraform-state-lock.md) — Terraform could not acquire the state lock because another Terraform process is currently holding it.
 
-## Network (12)
+## Network (11)
 
 - [Service or dependency connection refused](../network/connection-refused.md) — A TCP connection attempt was actively refused by the target host.
 - [DNS resolution failed ENOTFOUND](../network/dns-enotfound.md) — DNS resolution failed for a hostname.
@@ -167,7 +160,6 @@ trigger.
 - [Outbound network traffic blocked by firewall or security group](../network/firewall-egress-blocked.md) — An outbound network connection was blocked before reaching its destination.
 - [IPv6 vs IPv4 DNS resolution failure in CI container](../network/ipv6-ipv4-resolution.md) — CI container or test environment fails to connect because the system resolves a hostname to an IPv6 address (AAAA record)
 - [LDAP server unreachable](../network/ldap-connection-failure.md) — The LDAP client could not reach the directory server.
-- [Link checker found broken or redirecting URLs](../network/link-checker-failure.md) — A link-checking tool (html-proofer, htmltest, or similar) found broken, missing, or permanently redirecting URLs in the project's documentation or web
 - [Network request timeout](../network/network-timeout.md) — A network request exceeded its timeout limit.
 - [Corporate or CI proxy misconfiguration blocking outbound traffic](../network/proxy-configuration.md) — Outbound HTTP(S) traffic from CI fails because the runner is behind a corporate proxy that is not configured in the
 - [Request rate-limited by external service](../network/rate-limited.md) — A request to an external service was rejected with HTTP 429 Too Many Requests
@@ -176,7 +168,7 @@ or an equivalent rate-limit error.
 (npm, PyPI, Maven Central, RubyGems, etc.
 - [SSL/TLS certificate error](../network/ssl-cert-error.md) — A TLS/SSL certificate error prevented a secure connection.
 
-## Runtime (18)
+## Runtime (17)
 
 - [CPU architecture or platform mismatch](../runtime/arch-mismatch.md) — A binary, container image, or build artifact targets the wrong CPU architecture for the current runner.
 - [Disk space exhausted](../runtime/disk-full.md) — The host or container filesystem ran out of disk space.
@@ -194,7 +186,6 @@ or `CMD` is misconfigured.
 - [Process killed without diagnostic output](../runtime/process-killed-no-logs.md) — A CI process was killed externally, producing little or no diagnostic output.
 - [Resource limit exceeded](../runtime/resource-limits.md) — The process exceeded an OS-enforced resource limit such as the maximum number of threads or processes.
 - [Process terminated by segmentation fault or fatal signal](../runtime/segfault.md) — The process received a fatal signal — most commonly SIGSEGV (segmentation fault), SIGABRT (assertion failure), or SIGBUS (bus error) —
-- [Failures clustered within a single component boundary](../runtime/topology-failure-clustered.md) — Multiple failures are concentrated within a single directory or package boundary, suggesting the root cause is localised to one component
 - [Unawaited promise in async JavaScript or TypeScript code](../runtime/unawaited-promise.md) — An async JavaScript or TypeScript function starts a promise-returning operation but never awaits or catches it.
 - [Docker volume mount failure or inaccessible mount](../runtime/volume-mount-issue.md) — A Docker container failed to start or operate correctly because a volume
 or bind mount is inaccessible.
@@ -216,53 +207,36 @@ zero files or produced no meaningful report.
 - [Critical CI step skipped due to condition](../silent-failure/skipped-critical-step.md) — A CI step was skipped because its `if:` condition evaluated to false.
 - [Test command ran but zero tests were executed](../silent-failure/zero-tests-executed.md) — A test runner command was invoked but discovered or executed zero tests.
 
-## Test (38)
+## Test (24)
 
-- [Asciidoctor JBehave integration test failure](../test/asciidoctor-jbehave-test-failure.md) — An Asciidoctor Java integration test written in JBehave (BDD scenario style) failed.
 - [Cargo test suite reported one or more test failures](../test/cargo-test-failure.md) — One or more Rust tests failed.
-- [CI clock drift or time synchronization failure](../test/clock-drift.md) — CI container or runner has a clock sufficiently out of sync to cause TLS handshake failures, token expiry validation errors,
 - [Generic coverage gate failure](../test/coverage-gate-failure.md) — The test step completed, but the job failed because measured coverage fell below an enforced minimum.
 - [Cucumber/Gherkin scenario step failed](../test/cucumber-step-failure.md) — One or more Cucumber scenarios failed.
 - [Database migration timeout or lock contention](../test/database-migration-timeout.md) — Database migration failed to complete within the timeout window, usually due to lock contention or expensive DDL operations during test
 - [Test database state pollution between tests](../test/database-test-isolation.md) — Tests are polluting a shared database with committed data that later tests
 did not expect to find.
 - [Flaky test failure](../test/flaky-test.md) — A test failed but the failure is not consistently reproducible.
-- [FlexGet test suite failure](../test/flexget-test-failure.md) — One or more test cases in the FlexGet plugin/media-manager test suite failed.
 - [Go race detector found a data race](../test/go-data-race.md) — The Go race detector identified a data race: two goroutines accessed the same memory location concurrently, with at least one
 - [Go test suite reported one or more test failures](../test/go-test-failure.md) — One or more Go test functions failed or panicked.
 - [jest command not found or not installed](../test/jest-command-not-found.md) — The `jest` command could not be found.
 - [Jest test suite reported one or more test failures](../test/jest-test-failure.md) — One or more Jest tests failed.
 - [Jest worker process crashed unexpectedly](../test/jest-worker-crash.md) — A Jest worker process crashed mid-test run.
 - [JUnit / SBT test suite reported one or more test failures](../test/junit-test-failure.md) — One or more JVM test cases failed.
-- [MDAnalysis molecular dynamics library test failure](../test/mdanalysis-test-failure.md) — A test failure in the MDAnalysis Python library for molecular dynamics trajectory
-analysis.
 - [Missing test fixture or seed data](../test/missing-test-fixture.md) — A test failed because it could not load a required fixture file, seed record, or test helper resource that was expected to exist before the test ran.
-- [Nikola static site generator integration test failure](../test/nikola-build-test-failure.md) — An integration test in the Nikola static site generator test suite failed.
-- [NuPIC region or encoder test failure](../test/nupic-test-failure.md) — A test failure in the Numenta NuPIC (Numenta Platform for Intelligent Computing)
-project.
-- [OpenAI Gym environment test failure](../test/openai-gym-test-failure.md) — A test failure in the OpenAI Gym reinforcement learning library.
 - [Test order dependency](../test/order-dependency.md) — A test failed because it depends on side effects or state created by a different test that ran earlier.
 - [Test parallelism conflict](../test/parallelism-conflict.md) — Parallel test execution caused a resource conflict: two tests tried to bind the same port, access the same fixture, or
-- [pip installation functional test failure](../test/pip-install-test-failure.md) — One or more pip functional tests for package installation failed.
 - [PostgreSQL ALTER TYPE ADD VALUE cannot run inside a transaction block](../test/postgres-enum-add-in-transaction.md) — A database migration that adds a value to a PostgreSQL ENUM type fails because
 PostgreSQL does not permit ALTER TYPE .
 - [PostgreSQL migration failed due to unsupported type or constraint syntax](../test/postgres-version-incompatible-migration.md) — A database migration failed because the PostgreSQL version in CI does not
 support a type or constraint syntax used in the migration (e.
 - [pytest fixture setup or teardown failure](../test/pytest-fixture-error.md) — A pytest fixture failed during setup or teardown, causing the associated test to be marked as `ERROR` rather than `FAILED`.
 - [pytest collected zero tests](../test/pytest-no-tests.md) — pytest exited with code 5 because it collected zero tests.
-- [Python parser or code-completion library test failure](../test/python-parser-test-failure.md) — A unit test failure in a Python parser library (such as jedi or a custom parser).
-- [Non-deterministic failure due to unfixed random seed](../test/random-seed-not-fixed.md) — Tests pass locally but fail intermittently in CI because they depend on random ordering or random data without a fixed
-- [Read the Docs site-build integration test failure](../test/readthedocs-build-test-failure.md) — A Read the Docs (readthedocs.
-- [Sentry Elasticsearch integration test failure](../test/sentry-elasticsearch-test-failure.md) — An Elasticsearch integration test in the Sentry error-tracking project failed.
 - [Snapshot or golden-file mismatch](../test/snapshot-mismatch.md) — A test compared current output against a committed snapshot or golden file and found a difference.
 - [Test assertion failure with explicit reason message](../test/test-assertion-with-reason.md) — A test case assertion failed with an explicit reason message.
 - [Test suite or individual test timed out](../test/test-timeout.md) — A test (or the entire test suite) did not complete within the configured timeout period.
 - [Testcontainers container failed to start](../test/testcontainer-startup.md) — A test using Testcontainers could not start the required Docker container.
 - [Timezone differences causing test failures](../test/timezone-diff.md) — A test that compares date or time values fails because the CI runner operates
 in a different timezone than the development machine.
-- [Translate Toolkit conversion test failure](../test/translate-toolkit-test-failure.md) — One or more test cases in the Translate Toolkit localisation library failed.
-- [youtube-dl / yt-dlp test failure due to unavailable video](../test/youtube-dl-test-failure.md) — A youtube-dl or yt-dlp test case failed because the target video or page was
-unavailable at the time the test ran.
 
 
 
