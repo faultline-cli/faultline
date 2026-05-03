@@ -162,3 +162,142 @@ func writeFixture(t *testing.T, path, content string) {
 		t.Fatalf("write fixture %s: %v", path, err)
 	}
 }
+
+// ── WriteText ─────────────────────────────────────────────────────────────────
+
+func TestWriteTextHeader(t *testing.T) {
+	var buf bytes.Buffer
+	if err := WriteText(&buf, Report{}); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "Playbook coverage report") {
+		t.Errorf("output missing header; got:\n%s", got)
+	}
+}
+
+func TestWriteTextNoDuplicates(t *testing.T) {
+	var buf bytes.Buffer
+	if err := WriteText(&buf, Report{}); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "No duplicate IDs detected.") {
+		t.Errorf("expected 'No duplicate IDs detected.' in output; got:\n%s", got)
+	}
+}
+
+func TestWriteTextWithDuplicateIDs(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{DuplicateIDs: []string{"dup-a", "dup-b"}}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "Duplicate IDs (2)") {
+		t.Errorf("expected 'Duplicate IDs (2)' in output; got:\n%s", got)
+	}
+	if !strings.Contains(got, "dup-a") {
+		t.Errorf("expected 'dup-a' in output; got:\n%s", got)
+	}
+	if strings.Contains(got, "No duplicate IDs detected.") {
+		t.Errorf("should not contain 'No duplicate IDs detected.' when duplicates exist; got:\n%s", got)
+	}
+}
+
+func TestWriteTextWithMissingFixtures(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{MissingFixtures: []string{"playbook-x", "playbook-y"}}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "Playbooks missing positive fixtures (2)") {
+		t.Errorf("expected missing fixtures section; got:\n%s", got)
+	}
+	if !strings.Contains(got, "playbook-x") {
+		t.Errorf("expected 'playbook-x' in output; got:\n%s", got)
+	}
+}
+
+func TestWriteTextWithByCategory(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{
+		TotalPlaybooks: 5,
+		WithFixtures:   3,
+		ByCategory: []Category{
+			{Category: "auth", Count: 3, WithFixtures: 2, PositiveFixtures: 4, NegativeAssertions: 1},
+		},
+	}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "auth") {
+		t.Errorf("expected category 'auth' in output; got:\n%s", got)
+	}
+	if !strings.Contains(got, "By category:") {
+		t.Errorf("expected 'By category:' header; got:\n%s", got)
+	}
+}
+
+func TestWriteTextWithByDomain(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{
+		ByDomain: []Domain{{Domain: "ci", Count: 4}},
+	}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "By domain:") {
+		t.Errorf("expected 'By domain:' header; got:\n%s", got)
+	}
+	if !strings.Contains(got, "ci") {
+		t.Errorf("expected domain 'ci' in output; got:\n%s", got)
+	}
+}
+
+func TestWriteTextWithSourceDetectorPlaybooks(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{
+		SourceDetectorPlaybooks: []string{"source-pb-1", "source-pb-2"},
+	}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "Source-detector playbooks (2)") {
+		t.Errorf("expected source-detector section; got:\n%s", got)
+	}
+	if !strings.Contains(got, "source-pb-1") {
+		t.Errorf("expected 'source-pb-1' in output; got:\n%s", got)
+	}
+}
+
+func TestWriteTextStrictTop1FixtureCount(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{StrictTop1FixtureCount: 7}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "Strict top-1 fixtures") {
+		t.Errorf("expected strict top-1 line in output; got:\n%s", got)
+	}
+}
+
+func TestWriteTextFixtureRootAndMode(t *testing.T) {
+	var buf bytes.Buffer
+	r := Report{FixtureRoot: "/path/to/fixtures", FixtureMode: "strict"}
+	if err := WriteText(&buf, r); err != nil {
+		t.Fatalf("WriteText error: %v", err)
+	}
+	got := buf.String()
+	if !strings.Contains(got, "/path/to/fixtures") {
+		t.Errorf("expected fixture root in output; got:\n%s", got)
+	}
+	if !strings.Contains(got, "strict") {
+		t.Errorf("expected fixture mode in output; got:\n%s", got)
+	}
+}

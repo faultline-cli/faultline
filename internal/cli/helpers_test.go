@@ -111,4 +111,3 @@ func TestResolveStoreHistoryOutput(t *testing.T) {
 		})
 	}
 }
-

@@ -467,4 +467,3 @@ func TestNullableBoolFalse(t *testing.T) {
 		t.Errorf("expected 0 for false, got %v", got)
 	}
 }
-

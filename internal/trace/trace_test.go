@@ -1,6 +1,7 @@
 package trace
 
 import (
+	"strings"
 	"testing"
 
 	"faultline/internal/model"
@@ -329,5 +330,243 @@ func TestBuildEmptyIDWithNilAnalysisReturnsError(t *testing.T) {
 	_, err := Build(nil, nil, nil, "", false)
 	if err == nil {
 		t.Fatal("expected error for empty ID with nil analysis, got nil")
+	}
+}
+
+// ── buildCompeting ────────────────────────────────────────────────────────────
+
+func TestBuildCompetingNilAnalysis(t *testing.T) {
+	got := buildCompeting(nil, "some-id")
+	if got != nil {
+		t.Errorf("expected nil for nil analysis, got %v", got)
+	}
+}
+
+func TestBuildCompetingNoDifferential(t *testing.T) {
+	got := buildCompeting(&model.Analysis{}, "some-id")
+	if got != nil {
+		t.Errorf("expected nil when no Differential, got %v", got)
+	}
+}
+
+func TestBuildCompetingLikelyDifferentID(t *testing.T) {
+	a := &model.Analysis{
+		Differential: &model.DifferentialDiagnosis{
+			Likely: &model.DifferentialCandidate{
+				FailureID:      "other-failure",
+				Title:          "Other Failure",
+				Confidence:     0.9,
+				ConfidenceText: "high",
+				Why:            []string{"strong signal"},
+			},
+		},
+	}
+	got := buildCompeting(a, "current-id")
+	if len(got) != 1 {
+		t.Fatalf("expected 1 candidate, got %d", len(got))
+	}
+	c := got[0]
+	if c.Status != "higher_ranked" {
+		t.Errorf("Status = %q, want %q", c.Status, "higher_ranked")
+	}
+	if c.FailureID != "other-failure" {
+		t.Errorf("FailureID = %q, want %q", c.FailureID, "other-failure")
+	}
+	if len(c.Reasons) != 1 || c.Reasons[0] != "strong signal" {
+		t.Errorf("Reasons = %v, want [strong signal]", c.Reasons)
+	}
+}
+
+func TestBuildCompetingLikelySameIDSkipped(t *testing.T) {
+	a := &model.Analysis{
+		Differential: &model.DifferentialDiagnosis{
+			Likely: &model.DifferentialCandidate{
+				FailureID: "current-id",
+				Title:     "Current",
+			},
+		},
+	}
+	got := buildCompeting(a, "current-id")
+	if len(got) != 0 {
+		t.Errorf("expected 0 candidates when Likely is current ID, got %d", len(got))
+	}
+}
+
+func TestBuildCompetingAlternativesSomeSkipped(t *testing.T) {
+	a := &model.Analysis{
+		Differential: &model.DifferentialDiagnosis{
+			Alternatives: []model.DifferentialCandidate{
+				{FailureID: "current-id", Title: "skip me"},
+				{FailureID: "alt-1", Title: "Alt 1", WhyLessLikely: []string{"weaker signal"}},
+			},
+		},
+	}
+	got := buildCompeting(a, "current-id")
+	if len(got) != 1 {
+		t.Fatalf("expected 1 alternative, got %d", len(got))
+	}
+	if got[0].Status != "alternative" {
+		t.Errorf("Status = %q, want %q", got[0].Status, "alternative")
+	}
+	if got[0].FailureID != "alt-1" {
+		t.Errorf("FailureID = %q, want %q", got[0].FailureID, "alt-1")
+	}
+	if len(got[0].Reasons) != 1 || got[0].Reasons[0] != "weaker signal" {
+		t.Errorf("Reasons = %v, want [weaker signal]", got[0].Reasons)
+	}
+}
+
+func TestBuildCompetingRuledOut(t *testing.T) {
+	a := &model.Analysis{
+		Differential: &model.DifferentialDiagnosis{
+			RuledOut: []model.DifferentialCandidate{
+				{FailureID: "ruled-out-1", Title: "Ruled Out", RuledOutBy: []string{"evidence X"}},
+			},
+		},
+	}
+	got := buildCompeting(a, "current-id")
+	if len(got) != 1 {
+		t.Fatalf("expected 1 ruled-out candidate, got %d", len(got))
+	}
+	if got[0].Status != "ruled_out" {
+		t.Errorf("Status = %q, want %q", got[0].Status, "ruled_out")
+	}
+	if len(got[0].Reasons) != 1 || got[0].Reasons[0] != "evidence X" {
+		t.Errorf("Reasons = %v, want [evidence X]", got[0].Reasons)
+	}
+}
+
+// ── matchLinesForPatterns ─────────────────────────────────────────────────────
+
+func TestMatchLinesForPatternsEmpty(t *testing.T) {
+	lines := makeLines("exec node: no such file or directory")
+	got, hits := matchLinesForPatterns(nil, lines)
+	if len(got) != 0 {
+		t.Errorf("expected no matches for empty patterns, got %v", got)
+	}
+	if hits != 0 {
+		t.Errorf("expected 0 hits for empty patterns, got %d", hits)
+	}
+}
+
+func TestMatchLinesForPatternsSingleMatch(t *testing.T) {
+	lines := makeLines("npm install failed", "some other line")
+	got, hits := matchLinesForPatterns([]string{"npm install failed"}, lines)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 match, got %d", len(got))
+	}
+	if hits != 1 {
+		t.Errorf("expected 1 hit, got %d", hits)
+	}
+	if got[0].Number != 1 {
+		t.Errorf("expected line number 1, got %d", got[0].Number)
+	}
+}
+
+func TestMatchLinesForPatternsDedupedByLineNumber(t *testing.T) {
+	// Two patterns both match line 1 — output deduped, hits counted twice.
+	lines := makeLines("authentication required: docker pull")
+	patterns := []string{"authentication required", "docker pull"}
+	got, hits := matchLinesForPatterns(patterns, lines)
+	if len(got) != 1 {
+		t.Errorf("expected 1 deduped match, got %d", len(got))
+	}
+	if hits != 2 {
+		t.Errorf("expected 2 hits (one per pattern), got %d", hits)
+	}
+}
+
+func TestMatchLinesForPatternsTwoPatternsDistinctLines(t *testing.T) {
+	lines := makeLines("error: connection refused", "warning: timeout exceeded")
+	patterns := []string{"connection refused", "timeout exceeded"}
+	got, hits := matchLinesForPatterns(patterns, lines)
+	if len(got) != 2 {
+		t.Errorf("expected 2 matches, got %d", len(got))
+	}
+	if hits != 2 {
+		t.Errorf("expected 2 hits, got %d", hits)
+	}
+}
+
+// ── partialRulePattern ────────────────────────────────────────────────────────
+
+func TestPartialRulePattern(t *testing.T) {
+	cases := []struct {
+		name  string
+		group model.PartialMatchGroup
+		want  string
+	}{
+		{
+			name: "with label",
+			group: model.PartialMatchGroup{
+				Label:    "auth-signals",
+				Minimum:  2,
+				Patterns: []string{"login failed", "unauthorized", "401"},
+			},
+			want: "auth-signals (2-of-3): login failed | unauthorized | 401",
+		},
+		{
+			name: "with ID but no label",
+			group: model.PartialMatchGroup{
+				ID:       "group-id",
+				Minimum:  1,
+				Patterns: []string{"pat1", "pat2"},
+			},
+			want: "group-id (1-of-2): pat1 | pat2",
+		},
+		{
+			name: "no label no ID",
+			group: model.PartialMatchGroup{
+				Minimum:  2,
+				Patterns: []string{"a", "b", "c"},
+			},
+			want: "2-of-3: a | b | c",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := partialRulePattern(tc.group)
+			if got != tc.want {
+				t.Errorf("partialRulePattern() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// ── partialRuleNote ───────────────────────────────────────────────────────────
+
+func TestPartialRuleNote(t *testing.T) {
+	cases := []struct {
+		name    string
+		group   model.PartialMatchGroup
+		hits    int
+		wantSub string
+	}{
+		{
+			name:    "threshold reached",
+			group:   model.PartialMatchGroup{Minimum: 2, Patterns: []string{"a", "b", "c"}},
+			hits:    2,
+			wantSub: "reached threshold with 2/3 matched patterns",
+		},
+		{
+			name:    "threshold exceeded",
+			group:   model.PartialMatchGroup{Minimum: 2, Patterns: []string{"a", "b", "c"}},
+			hits:    3,
+			wantSub: "reached threshold with 3/3 matched patterns",
+		},
+		{
+			name:    "below threshold",
+			group:   model.PartialMatchGroup{Minimum: 3, Patterns: []string{"a", "b", "c", "d"}},
+			hits:    1,
+			wantSub: "matched 1/4 patterns and stayed below the 3-pattern threshold",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := partialRuleNote(tc.group, tc.hits)
+			if !strings.Contains(got, tc.wantSub) {
+				t.Errorf("partialRuleNote() = %q, want substring %q", got, tc.wantSub)
+			}
+		})
 	}
 }
