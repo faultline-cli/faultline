@@ -442,3 +442,29 @@ func TestSQLiteStoreListsFailureReports(t *testing.T) {
 func boolPtr(value bool) *bool {
 	return &value
 }
+
+// ── nullableBool ──────────────────────────────────────────────────────────────
+
+func TestNullableBoolNilPointer(t *testing.T) {
+	got := nullableBool(nil)
+	if got != nil {
+		t.Errorf("expected nil for nil pointer, got %v", got)
+	}
+}
+
+func TestNullableBoolTrue(t *testing.T) {
+	v := true
+	got := nullableBool(&v)
+	if got != 1 {
+		t.Errorf("expected 1 for true, got %v", got)
+	}
+}
+
+func TestNullableBoolFalse(t *testing.T) {
+	v := false
+	got := nullableBool(&v)
+	if got != 0 {
+		t.Errorf("expected 0 for false, got %v", got)
+	}
+}
+

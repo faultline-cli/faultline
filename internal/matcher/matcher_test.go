@@ -508,3 +508,77 @@ func TestRankWithinLinesZeroDisablesProximityCheck(t *testing.T) {
 		t.Fatalf("expected score 5.0 (compound bonus, no proximity gate), got %v", results[0].Score)
 	}
 }
+
+// ── AnyWeights ────────────────────────────────────────────────────────────────
+
+func TestAnyWeightsEmptySlice(t *testing.T) {
+	weights := AnyWeights(nil)
+	if len(weights) != 0 {
+		t.Errorf("expected empty map for nil playbooks, got %v", weights)
+	}
+}
+
+func TestAnyWeightsUniquePatterns(t *testing.T) {
+	playbooks := []model.Playbook{
+		{ID: "alpha", Match: model.MatchSpec{Any: []string{"unique-pattern-a"}}},
+		{ID: "beta", Match: model.MatchSpec{Any: []string{"unique-pattern-b"}}},
+	}
+	weights := AnyWeights(playbooks)
+	// Each unique pattern should have weight 1.0 (appears in only 1 playbook).
+	for _, pattern := range []string{"unique-pattern-a", "unique-pattern-b"} {
+		key := patternKey(pattern)
+		w, ok := weights[key]
+		if !ok {
+			t.Errorf("missing weight for pattern %q (key %q)", pattern, key)
+			continue
+		}
+		if w != 1.0 {
+			t.Errorf("expected weight 1.0 for unique pattern %q, got %f", pattern, w)
+		}
+	}
+}
+
+func TestAnyWeightsSharedPatternReducesWeight(t *testing.T) {
+	sharedPattern := "exec: no such file"
+	playbooks := []model.Playbook{
+		{ID: "alpha", Match: model.MatchSpec{Any: []string{sharedPattern}}},
+		{ID: "beta", Match: model.MatchSpec{Any: []string{sharedPattern}}},
+	}
+	weights := AnyWeights(playbooks)
+	key := patternKey(sharedPattern)
+	w, ok := weights[key]
+	if !ok {
+		t.Fatalf("missing weight for shared pattern (key %q)", key)
+	}
+	// Shared by 2 playbooks: weight should be 1/2 = 0.5.
+	const want = 0.5
+	if w != want {
+		t.Errorf("expected weight %f for pattern shared by 2 playbooks, got %f", want, w)
+	}
+}
+
+func TestAnyWeightsChildExtendsDontInfluenceParentWeight(t *testing.T) {
+	sharedPattern := "pull access denied"
+	parent := model.Playbook{
+		ID:    "docker-auth",
+		Match: model.MatchSpec{Any: []string{sharedPattern}},
+	}
+	// Child extends parent; NativeAny is set to its own distinctive patterns only.
+	child := model.Playbook{
+		ID:        "docker-auth-ecr",
+		Extends:   "docker-auth",
+		NativeAny: []string{"ecr-specific-pattern"},
+		Match:     model.MatchSpec{Any: []string{sharedPattern, "ecr-specific-pattern"}},
+	}
+	weights := AnyWeights([]model.Playbook{parent, child})
+
+	// sharedPattern only appears in parent's IDF count (child uses NativeAny).
+	parentKey := patternKey(sharedPattern)
+	w, ok := weights[parentKey]
+	if !ok {
+		t.Fatalf("missing weight for parent pattern")
+	}
+	if w != 1.0 {
+		t.Errorf("expected parent pattern weight 1.0 (child excluded from IDF), got %f", w)
+	}
+}

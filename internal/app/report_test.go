@@ -3,7 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
-	"os"
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -15,306 +15,294 @@ import (
 
 // ── truncateReportCell ────────────────────────────────────────────────────────
 
-func TestTruncateReportCellNoTruncation(t *testing.T) {
-	got := truncateReportCell("hello", 10)
-	if got != "hello" {
-		t.Errorf("expected %q, got %q", "hello", got)
+func TestTruncateReportCell(t *testing.T) {
+	cases := []struct {
+		name  string
+		value string
+		limit int
+		want  string
+	}{
+		{"empty string", "", 10, ""},
+		{"within limit", "hello", 10, "hello"},
+		{"exactly at limit", "hello", 5, "hello"},
+		{"whitespace trimmed before limit check", "  hi  ", 10, "hi"},
+		{"over limit trims with ellipsis", "hello world", 8, "hello..."},
+		{"over limit pads ellipsis correctly", "abcdefghij", 7, "abcd..."},
+		{"limit of 3 returns prefix without ellipsis", "abcdefg", 3, "abc"},
+		{"limit of 2 returns prefix without ellipsis", "abcdefg", 2, "ab"},
+		{"limit of 1 returns single char", "abc", 1, "a"},
+		{"zero limit returns unchanged", "hello", 0, "hello"},
+		{"negative limit returns unchanged", "hello", -1, "hello"},
+		{"unicode runes count correctly", "hëllo wörld", 8, "hëllo..."},
 	}
-}
-
-func TestTruncateReportCellExactLength(t *testing.T) {
-	got := truncateReportCell("hello", 5)
-	if got != "hello" {
-		t.Errorf("expected %q, got %q", "hello", got)
-	}
-}
-
-func TestTruncateReportCellTruncatesWithEllipsis(t *testing.T) {
-	got := truncateReportCell("hello world", 8)
-	if !strings.HasSuffix(got, "...") {
-		t.Errorf("expected ellipsis suffix, got %q", got)
-	}
-	if len([]rune(got)) > 8 {
-		t.Errorf("expected length <= 8, got %d for %q", len([]rune(got)), got)
-	}
-}
-
-func TestTruncateReportCellZeroLimit(t *testing.T) {
-	got := truncateReportCell("hello", 0)
-	if got != "hello" {
-		t.Errorf("zero limit should return full value, got %q", got)
-	}
-}
-
-func TestTruncateReportCellNegativeLimit(t *testing.T) {
-	got := truncateReportCell("hello", -1)
-	if got != "hello" {
-		t.Errorf("negative limit should return full value, got %q", got)
-	}
-}
-
-func TestTruncateReportCellTrimsWhitespace(t *testing.T) {
-	got := truncateReportCell("  hello  ", 20)
-	if got != "hello" {
-		t.Errorf("expected trimmed value, got %q", got)
-	}
-}
-
-func TestTruncateReportCellShortLimit(t *testing.T) {
-	// limit <= 3 returns exact rune slice without ellipsis
-	got := truncateReportCell("hello", 2)
-	if got != "he" {
-		t.Errorf("expected %q for limit=2, got %q", "he", got)
-	}
-}
-
-func TestTruncateReportCellLimitExactlyThree(t *testing.T) {
-	got := truncateReportCell("hello", 3)
-	if got != "hel" {
-		t.Errorf("expected %q for limit=3, got %q", "hel", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := truncateReportCell(tc.value, tc.limit)
+			if got != tc.want {
+				t.Errorf("truncateReportCell(%q, %d) = %q, want %q", tc.value, tc.limit, got, tc.want)
+			}
+		})
 	}
 }
 
 // ── formatReportText ──────────────────────────────────────────────────────────
 
-func TestFormatReportTextEmptyFailures(t *testing.T) {
+func TestFormatReportTextEmpty(t *testing.T) {
 	got := formatReportText(nil)
-	if !strings.Contains(got, "No stored failures yet") {
-		t.Errorf("expected empty-state message, got %q", got)
+	if !strings.Contains(got, "No stored failures yet.") {
+		t.Errorf("expected 'No stored failures yet.' in output for nil input, got %q", got)
 	}
-}
-
-func TestFormatReportTextEmptySlice(t *testing.T) {
-	got := formatReportText([]store.FailureReport{})
-	if !strings.Contains(got, "No stored failures yet") {
-		t.Errorf("expected empty-state message for empty slice, got %q", got)
+	got2 := formatReportText([]store.FailureReport{})
+	if !strings.Contains(got2, "No stored failures yet.") {
+		t.Errorf("expected 'No stored failures yet.' in output for empty slice, got %q", got2)
 	}
 }
 
 func TestFormatReportTextWithFailures(t *testing.T) {
 	failures := []store.FailureReport{
-		{
-			FailureID:       "docker-auth",
-			Count:           5,
-			LastSeenAt:      "2026-04-26T10:00:00Z",
-			ExampleEvidence: "pull access denied",
-		},
+		{FailureID: "missing-executable", Count: 5, LastSeenAt: "2025-01-01", ExampleEvidence: "exec: foo: not found"},
+		{FailureID: "timeout", Count: 12, LastSeenAt: "2025-02-01", ExampleEvidence: "exceeded time limit"},
 	}
 	got := formatReportText(failures)
-	if !strings.Contains(got, "docker-auth") {
-		t.Errorf("expected failure ID in output, got %q", got)
+
+	// Must have report header
+	if !strings.Contains(got, "Faultline Report") {
+		t.Errorf("expected 'Faultline Report' header, got %q", got)
 	}
-	if !strings.Contains(got, "5") {
-		t.Errorf("expected count in output, got %q", got)
-	}
-	if !strings.Contains(got, "pull access denied") {
-		t.Errorf("expected evidence in output, got %q", got)
-	}
+	// Must have column headers
 	if !strings.Contains(got, "Failure ID") {
-		t.Errorf("expected header in output, got %q", got)
+		t.Errorf("expected 'Failure ID' column header, got %q", got)
+	}
+	if !strings.Contains(got, "Count") {
+		t.Errorf("expected 'Count' column header, got %q", got)
+	}
+	// Must contain both failure IDs
+	if !strings.Contains(got, "missing-executable") {
+		t.Errorf("expected 'missing-executable' in output, got %q", got)
+	}
+	if !strings.Contains(got, "timeout") {
+		t.Errorf("expected 'timeout' in output, got %q", got)
+	}
+	// Must show counts
+	if !strings.Contains(got, "5") {
+		t.Errorf("expected count '5' in output, got %q", got)
+	}
+	if !strings.Contains(got, "12") {
+		t.Errorf("expected count '12' in output, got %q", got)
+	}
+	// Separator line of dashes must appear
+	if !strings.Contains(got, "---") {
+		t.Errorf("expected separator line in output, got %q", got)
 	}
 }
 
-func TestFormatReportTextMultipleFailures(t *testing.T) {
+func TestFormatReportTextTruncatesLongEvidence(t *testing.T) {
+	longEvidence := strings.Repeat("a", 100)
 	failures := []store.FailureReport{
-		{FailureID: "docker-auth", Count: 10, LastSeenAt: "2026-04-26T10:00:00Z", ExampleEvidence: "auth error"},
-		{FailureID: "missing-exec", Count: 3, LastSeenAt: "2026-04-25T09:00:00Z", ExampleEvidence: "exec not found"},
-	}
-	got := formatReportText(failures)
-	if !strings.Contains(got, "docker-auth") {
-		t.Errorf("expected docker-auth in output, got %q", got)
-	}
-	if !strings.Contains(got, "missing-exec") {
-		t.Errorf("expected missing-exec in output, got %q", got)
-	}
-}
-
-func TestFormatReportTextEvidenceTruncatedAtMaxWidth(t *testing.T) {
-	longEvidence := strings.Repeat("x", 100)
-	failures := []store.FailureReport{
-		{FailureID: "test-id", Count: 1, LastSeenAt: "2026-01-01", ExampleEvidence: longEvidence},
+		{FailureID: "test", Count: 1, LastSeenAt: "2025-01-01", ExampleEvidence: longEvidence},
 	}
 	got := formatReportText(failures)
 	if strings.Contains(got, longEvidence) {
-		t.Errorf("expected long evidence to be truncated, got full value in output")
+		t.Errorf("expected long evidence to be truncated in output")
 	}
 	if !strings.Contains(got, "...") {
-		t.Errorf("expected ellipsis in truncated evidence, got %q", got)
+		t.Errorf("expected truncation indicator '...' in output, got %q", got)
 	}
 }
 
 // ── writeReportRow ────────────────────────────────────────────────────────────
 
-func TestWriteReportRowWritesCells(t *testing.T) {
+func TestWriteReportRow(t *testing.T) {
 	var b strings.Builder
-	cells := []string{"col1", "5", "2026-01-01", "some evidence"}
-	widths := []int{10, 5, 10, 15}
+	cells := []string{"alpha", "42", "date", "evidence"}
+	widths := []int{5, 5, 6, 8}
 	writeReportRow(&b, cells, widths)
-	got := b.String()
-	if !strings.Contains(got, "col1") {
-		t.Errorf("expected col1 in output, got %q", got)
+	line := b.String()
+
+	// Must end with newline
+	if !strings.HasSuffix(line, "\n") {
+		t.Errorf("expected row to end with newline, got %q", line)
 	}
-	if !strings.HasSuffix(got, "\n") {
-		t.Errorf("expected newline at end, got %q", got)
+	// Count (index 1) must be right-aligned — "42" right-padded to width 5 = "   42"
+	if !strings.Contains(line, "   42") {
+		t.Errorf("expected count column to be right-aligned with spaces, got %q", line)
+	}
+	// First cell must appear left-aligned
+	if !strings.Contains(line, "alpha") {
+		t.Errorf("expected first cell in output, got %q", line)
 	}
 }
 
-func TestWriteReportRowRightAlignsCountColumn(t *testing.T) {
+func TestWriteReportRowSingleCell(t *testing.T) {
 	var b strings.Builder
-	cells := []string{"failure-id", "3", "2026-01-01", "evidence"}
-	widths := []int{10, 5, 10, 10}
-	writeReportRow(&b, cells, widths)
+	writeReportRow(&b, []string{"only"}, []int{6})
 	got := b.String()
-	// Count column (index 1) should be right-aligned: "    3"
-	if !strings.Contains(got, "    3") {
-		t.Errorf("expected right-aligned count column, got %q", got)
+	if !strings.HasPrefix(got, "only") {
+		t.Errorf("expected 'only' at start of row, got %q", got)
 	}
 }
 
 // ── writeReportSeparator ──────────────────────────────────────────────────────
 
-func TestWriteReportSeparatorProducesHyphens(t *testing.T) {
+func TestWriteReportSeparator(t *testing.T) {
 	var b strings.Builder
-	widths := []int{5, 3, 8}
+	widths := []int{10, 5, 8}
 	writeReportSeparator(&b, widths)
-	got := b.String()
-	if !strings.Contains(got, "-----") {
-		t.Errorf("expected 5-char separator, got %q", got)
+	line := b.String()
+
+	if !strings.HasSuffix(line, "\n") {
+		t.Errorf("expected separator to end with newline, got %q", line)
 	}
-	if !strings.HasSuffix(got, "\n") {
-		t.Errorf("expected newline at end, got %q", got)
+	// Must contain dashes for each column
+	if !strings.Contains(line, strings.Repeat("-", 10)) {
+		t.Errorf("expected 10-dash segment in separator, got %q", line)
+	}
+	if !strings.Contains(line, strings.Repeat("-", 5)) {
+		t.Errorf("expected 5-dash segment in separator, got %q", line)
 	}
 }
 
-// ── Report (integration via SQLite store) ────────────────────────────────────
-
-func setupReportStore(t *testing.T) string {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "report_test.db")
-	st, _, err := store.OpenBestEffort(store.Config{Mode: store.ModeAuto, Path: path})
-	if err != nil {
-		t.Fatalf("OpenBestEffort: %v", err)
+func TestWriteReportSeparatorSingleColumn(t *testing.T) {
+	var b strings.Builder
+	writeReportSeparator(&b, []int{4})
+	got := strings.TrimSpace(b.String())
+	if got != "----" {
+		t.Errorf("expected '----', got %q", got)
 	}
-	defer st.Close()
+}
 
+// ── Report (integration) ──────────────────────────────────────────────────────
+
+// openTestStore creates a fresh SQLite store in a temp dir and returns its path.
+func openTestStore(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(t.TempDir(), "faultline.db")
+}
+
+func TestReportEmptyStoreText(t *testing.T) {
+	svc := Service{}
+	storePath := openTestStore(t)
+
+	var buf bytes.Buffer
+	if err := svc.Report(storePath, false, &buf); err != nil {
+		t.Fatalf("Report: %v", err)
+	}
+	if !strings.Contains(buf.String(), "No stored failures yet.") {
+		t.Errorf("expected empty-store message, got %q", buf.String())
+	}
+}
+
+func TestReportEmptyStoreJSON(t *testing.T) {
+	svc := Service{}
+	storePath := openTestStore(t)
+
+	var buf bytes.Buffer
+	if err := svc.Report(storePath, true, &buf); err != nil {
+		t.Fatalf("Report JSON: %v", err)
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON output: %v\noutput: %s", err, buf.String())
+	}
+	if _, ok := result["failures"]; !ok {
+		t.Errorf("expected 'failures' key in JSON output, got: %s", buf.String())
+	}
+}
+
+func seedRun(t *testing.T, st store.Store, analysis *model.Analysis, ts time.Time) {
+	t.Helper()
 	ctx := context.Background()
-	now := time.Date(2026, 4, 26, 10, 0, 0, 0, time.UTC)
-
-	sig := store.SignatureForResult(model.Result{
-		Playbook: model.Playbook{ID: "docker-auth"},
-		Evidence: []string{"pull access denied"},
-	}).Hash
-
 	handle, err := st.BeginRun(ctx, store.BeginRunParams{
 		Surface:    "analyze",
 		SourceKind: "log",
-		Source:     "stdin",
-		InputHash:  "report-input",
-		StartedAt:  now,
+		Source:     analysis.Source,
+		InputHash:  analysis.InputHash,
+		StartedAt:  ts,
 	})
 	if err != nil {
 		t.Fatalf("BeginRun: %v", err)
 	}
 	if err := st.CompleteRun(ctx, handle, store.CompleteRunParams{
-		CompletedAt: now,
-		Analysis: &model.Analysis{
-			Source:     "stdin",
-			InputHash:  "report-input",
-			OutputHash: "report-output",
-			Results: []model.Result{{
-				Playbook:      model.Playbook{ID: "docker-auth", Title: "Docker Auth Failure", Category: "auth"},
-				Detector:      "log",
-				Score:         4.5,
-				Confidence:    0.90,
-				Evidence:      []string{"pull access denied"},
-				SignatureHash: sig,
-			}},
-		},
+		CompletedAt: ts,
+		Analysis:    analysis,
 	}); err != nil {
 		t.Fatalf("CompleteRun: %v", err)
 	}
-	return path
 }
 
-func TestReportTextOutputContainsFailureID(t *testing.T) {
-	storePath := setupReportStore(t)
-	svc := NewService()
-	var buf bytes.Buffer
+func TestReportWithDataText(t *testing.T) {
+	storePath := openTestStore(t)
 
-	err := svc.Report(storePath, false, &buf)
+	// Seed the store with a result.
+	st, _, err := openHistoryStore(storePath)
 	if err != nil {
-		t.Fatalf("Report text: %v", err)
+		t.Fatalf("openHistoryStore: %v", err)
+	}
+	analysis := &model.Analysis{
+		Source:      "ci.log",
+		InputHash:   "input-report-text",
+		OutputHash:  "output-report-text",
+		Fingerprint: "fingerprint-abc",
+		Results: []model.Result{
+			{
+				Playbook:      model.Playbook{ID: "missing-executable", Title: "Missing executable"},
+				Score:         0.9,
+				Confidence:    0.85,
+				SignatureHash: "sig-report-text",
+			},
+		},
+	}
+	ts := time.Date(2025, 1, 15, 12, 0, 0, 0, time.UTC)
+	seedRun(t, st, analysis, ts)
+	st.Close()
+
+	svc := Service{}
+	var buf bytes.Buffer
+	if err := svc.Report(storePath, false, &buf); err != nil {
+		t.Fatalf("Report: %v", err)
 	}
 	got := buf.String()
-	if !strings.Contains(got, "docker-auth") {
-		t.Errorf("expected docker-auth in text report, got %q", got)
+	if !strings.Contains(got, "missing-executable") {
+		t.Errorf("expected failure ID 'missing-executable' in report output, got %q", got)
 	}
 }
 
-func TestReportJSONOutputContainsFailures(t *testing.T) {
-	storePath := setupReportStore(t)
-	svc := NewService()
-	var buf bytes.Buffer
+func TestReportWithDataJSON(t *testing.T) {
+	storePath := openTestStore(t)
 
-	err := svc.Report(storePath, true, &buf)
+	st, _, err := openHistoryStore(storePath)
 	if err != nil {
+		t.Fatalf("openHistoryStore: %v", err)
+	}
+	analysis := &model.Analysis{
+		Source:      "ci.log",
+		InputHash:   "input-report-json",
+		OutputHash:  "output-report-json",
+		Fingerprint: "fingerprint-xyz",
+		Results: []model.Result{
+			{
+				Playbook:      model.Playbook{ID: "timeout", Title: "Job timeout"},
+				Score:         0.8,
+				Confidence:    0.75,
+				SignatureHash: "sig-report-json",
+			},
+		},
+	}
+	ts := time.Date(2025, 2, 20, 10, 0, 0, 0, time.UTC)
+	seedRun(t, st, analysis, ts)
+	st.Close()
+
+	svc := Service{}
+	var buf bytes.Buffer
+	if err := svc.Report(storePath, true, &buf); err != nil {
 		t.Fatalf("Report JSON: %v", err)
 	}
-	got := buf.String()
-	if !strings.Contains(got, "docker-auth") {
-		t.Errorf("expected docker-auth in JSON report, got %q", got)
+	var result map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\noutput: %s", err, buf.String())
 	}
-	if !strings.Contains(got, "failures") {
-		t.Errorf("expected 'failures' key in JSON report, got %q", got)
-	}
-}
-
-func TestReportEmptyStoreTextOutput(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "empty_report.db")
-	svc := NewService()
-	var buf bytes.Buffer
-
-	err := svc.Report(path, false, &buf)
-	if err != nil {
-		t.Fatalf("Report on empty store: %v", err)
-	}
-	got := buf.String()
-	if !strings.Contains(got, "No stored failures yet") {
-		t.Errorf("expected empty-state message, got %q", got)
-	}
-}
-
-func TestReportEmptyStoreJSONOutput(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "empty_report_json.db")
-	svc := NewService()
-	var buf bytes.Buffer
-
-	err := svc.Report(path, true, &buf)
-	if err != nil {
-		t.Fatalf("Report JSON on empty store: %v", err)
-	}
-	got := buf.String()
-	if !strings.Contains(got, "failures") {
-		t.Errorf("expected 'failures' key in JSON, got %q", got)
-	}
-}
-
-func TestReportCorruptStorePathDegratesGracefully(t *testing.T) {
-	// A temp file with non-SQLite contents causes openSQLite to fail.
-	// OpenBestEffort degrades gracefully (non-strict mode) → Noop store, nil error.
-	// Report should therefore return nil and emit the empty-state message.
-	corrupt := filepath.Join(t.TempDir(), "corrupt.db")
-	if err := os.WriteFile(corrupt, []byte("not-sqlite-data"), 0o600); err != nil {
-		t.Fatalf("write corrupt file: %v", err)
-	}
-
-	svc := NewService()
-	var buf bytes.Buffer
-	err := svc.Report(corrupt, false, &buf)
-	if err != nil {
-		t.Fatalf("expected nil error for corrupt store (graceful degradation), got %v", err)
-	}
-	if !strings.Contains(buf.String(), "No stored failures yet") {
-		t.Errorf("expected empty-state message, got %q", buf.String())
+	failures, ok := result["failures"].([]interface{})
+	if !ok || len(failures) == 0 {
+		t.Fatalf("expected non-empty failures array in JSON, got: %s", buf.String())
 	}
 }

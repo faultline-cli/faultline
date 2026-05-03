@@ -51,3 +51,64 @@ func TestFirstInt64(t *testing.T) {
 		})
 	}
 }
+
+// ── resolveAnalyzeStoreSetting ────────────────────────────────────────────────
+
+func TestResolveAnalyzeStoreSetting(t *testing.T) {
+	cases := []struct {
+		name      string
+		noHistory bool
+		noStore   bool
+		storePath string
+		want      string
+	}{
+		{"noHistory returns off", true, false, "", "off"},
+		{"noStore returns off", false, true, "", "off"},
+		{"both flags returns off", true, true, "", "off"},
+		{"explicit path returned as-is", false, false, "/tmp/fl.db", "/tmp/fl.db"},
+		{"no flags and no path returns auto", false, false, "", "auto"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Ensure FAULTLINE_STORE is not set so it doesn't pollute explicit-path tests.
+			t.Setenv(storeEnv, "")
+			got := resolveAnalyzeStoreSetting(tc.noHistory, tc.noStore, tc.storePath)
+			if got != tc.want {
+				t.Errorf("resolveAnalyzeStoreSetting(noHistory=%v, noStore=%v, storePath=%q) = %q, want %q",
+					tc.noHistory, tc.noStore, tc.storePath, got, tc.want)
+			}
+		})
+	}
+}
+
+// ── resolveStoreHistoryOutput ─────────────────────────────────────────────────
+
+func TestResolveStoreHistoryOutput(t *testing.T) {
+	cases := []struct {
+		name      string
+		history   bool
+		noHistory bool
+		noStore   bool
+		storePath string
+		want      bool
+	}{
+		{"noHistory returns false", false, true, false, "", false},
+		{"noStore returns false", false, false, true, "", false},
+		{"both disable flags returns false", false, true, true, "", false},
+		{"history flag returns true", true, false, false, "", true},
+		{"explicit path returns true", false, false, false, "/tmp/fl.db", true},
+		{"off path returns false", false, false, false, "off", false},
+		{"no flags no path returns false", false, false, false, "", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv(storeEnv, "")
+			got := resolveStoreHistoryOutput(tc.history, tc.noHistory, tc.noStore, tc.storePath)
+			if got != tc.want {
+				t.Errorf("resolveStoreHistoryOutput(history=%v, noHistory=%v, noStore=%v, storePath=%q) = %v, want %v",
+					tc.history, tc.noHistory, tc.noStore, tc.storePath, got, tc.want)
+			}
+		})
+	}
+}
+
