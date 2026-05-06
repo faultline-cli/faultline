@@ -45,7 +45,7 @@ func Run(ctx context.Context, opts Options, in <-chan model.Fixture, out chan<- 
 	}
 
 	var wg sync.WaitGroup
-	for range workers {
+	for i := 0; i < workers; i++ {
 		wg.Add(1)
 		eng := faultlineengine.New(engineOpts)
 		go func(e *faultlineengine.Engine) {

@@ -40,6 +40,22 @@ func TestParseGitHubIssueURLNonNumericIssueNumber(t *testing.T) {
 	}
 }
 
+func TestParseGitHubIssueURLWithQueryAndFragment(t *testing.T) {
+	owner, repo, number, err := parseGitHubIssueURL("https://github.com/acme/widgets/issues/42?utm_source=test#issuecomment-1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if owner != "acme" {
+		t.Errorf("owner = %q, want %q", owner, "acme")
+	}
+	if repo != "widgets" {
+		t.Errorf("repo = %q, want %q", repo, "widgets")
+	}
+	if number != 42 {
+		t.Errorf("number = %d, want 42", number)
+	}
+}
+
 // ── parseGitLabIssueURL ───────────────────────────────────────────────────────
 
 func TestParseGitLabIssueURLValid(t *testing.T) {
@@ -117,7 +133,7 @@ func TestParseDiscourseTopicURLNonNumericID(t *testing.T) {
 // ── parseRedditPostURL ────────────────────────────────────────────────────────
 
 func TestParseRedditPostURLValid(t *testing.T) {
-	subreddit, postID, _, err := parseRedditPostURL("https://www.reddit.com/r/golang/comments/abc123/my_post/")
+	subreddit, postID, postURL, err := parseRedditPostURL("https://www.reddit.com/r/golang/comments/abc123/my_post/")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -127,10 +143,13 @@ func TestParseRedditPostURLValid(t *testing.T) {
 	if postID != "abc123" {
 		t.Errorf("postID = %q, want %q", postID, "abc123")
 	}
+	if postURL == "" {
+		t.Error("expected non-empty postURL")
+	}
 }
 
 func TestParseRedditPostURLOldReddit(t *testing.T) {
-	subreddit, postID, _, err := parseRedditPostURL("https://old.reddit.com/r/docker/comments/xyz789/title/")
+	subreddit, postID, postURL, err := parseRedditPostURL("https://old.reddit.com/r/docker/comments/xyz789/title/")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -139,6 +158,9 @@ func TestParseRedditPostURLOldReddit(t *testing.T) {
 	}
 	if postID != "xyz789" {
 		t.Errorf("postID = %q, want %q", postID, "xyz789")
+	}
+	if postURL == "" {
+		t.Error("expected non-empty postURL")
 	}
 }
 
