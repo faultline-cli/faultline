@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -298,12 +299,22 @@ func TestReportEmptyStoreJSONOutput(t *testing.T) {
 	}
 }
 
-func TestReportInvalidStorePath(t *testing.T) {
+func TestReportCorruptStorePathDegratesGracefully(t *testing.T) {
+	// A temp file with non-SQLite contents causes openSQLite to fail.
+	// OpenBestEffort degrades gracefully (non-strict mode) → Noop store, nil error.
+	// Report should therefore return nil and emit the empty-state message.
+	corrupt := filepath.Join(t.TempDir(), "corrupt.db")
+	if err := os.WriteFile(corrupt, []byte("not-sqlite-data"), 0o600); err != nil {
+		t.Fatalf("write corrupt file: %v", err)
+	}
+
 	svc := NewService()
 	var buf bytes.Buffer
-	// Pass a path that is not a valid SQLite DB to trigger an error.
-	err := svc.Report("/dev/null", false, &buf)
-	// This may or may not error depending on whether /dev/null is readable.
-	// Just make sure we don't panic.
-	_ = err
+	err := svc.Report(corrupt, false, &buf)
+	if err != nil {
+		t.Fatalf("expected nil error for corrupt store (graceful degradation), got %v", err)
+	}
+	if !strings.Contains(buf.String(), "No stored failures yet") {
+		t.Errorf("expected empty-state message, got %q", buf.String())
+	}
 }
