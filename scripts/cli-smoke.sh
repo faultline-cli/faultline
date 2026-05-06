@@ -100,7 +100,7 @@ package api
 func UserHandler() string { return "ok" }
 EOF
 	git add .
-	GIT_AUTHOR_DATE=2026-04-10T10:00:00Z GIT_COMMITTER_DATE=2026-04-10T10:00:00Z git commit --quiet -m "baseline: add handler"
+	GIT_AUTHOR_DATE='2026-04-10 10:00:00 +0000' GIT_COMMITTER_DATE='2026-04-10 10:00:00 +0000' git commit --quiet -m "baseline: add handler"
 	cat >"api/handler.go" <<'EOF'
 package api
 

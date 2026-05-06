@@ -110,8 +110,6 @@ func writeStagingFixture(t *testing.T, stagingDir, id string) {
 	if err := writeFixture(path, fixture); err != nil {
 		t.Fatalf("writeStagingFixture %s: %v", id, err)
 	}
-	// Set the file path so Load finds it
-	_ = path
 }
 
 func TestPromoteMovesFixtureToRealDir(t *testing.T) {
