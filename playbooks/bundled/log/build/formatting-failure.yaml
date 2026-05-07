@@ -29,6 +29,12 @@ match:
     - "Line longer than 120 characters"
     - "blanks-around-fences"
     - "MD013"
+  none:
+    - quality gate failed
+    - code quality checks failed
+    - static analysis failed
+    - style violations found
+    - checks did not pass
     - "MD031"
     - "Run.*--fix to"
     - "--write to fix"

@@ -1,0 +1,23 @@
+$ go test -race ./internal/session/...
+==================
+WARNING: DATA RACE
+Write at 0x00c0001b4040 by goroutine 7:
+  github.com/myorg/app/internal/session.(*Store).Set()
+      /home/runner/work/app/internal/session/store.go:42 +0x5c
+
+Previous read at 0x00c0001b4040 by goroutine 6:
+  github.com/myorg/app/internal/session.(*Store).Get()
+      /home/runner/work/app/internal/session/store.go:28 +0x3c
+
+Goroutine 7 (running) created at:
+  github.com/myorg/app/internal/session.TestConcurrentAccess()
+      /home/runner/work/app/internal/session/store_test.go:71 +0x104
+
+Goroutine 6 (running) created at:
+  github.com/myorg/app/internal/session.TestConcurrentAccess()
+      /home/runner/work/app/internal/session/store_test.go:68 +0xd4
+==================
+race detected
+Found 1 data race(s)
+FAIL    github.com/myorg/app/internal/session [build failed]
+exit status 1

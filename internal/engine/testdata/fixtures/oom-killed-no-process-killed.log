@@ -1,0 +1,5 @@
+container terminated unexpectedly
+Exit code 137
+OOMKilled
+memory limit exceeded: 512Mi
+out of memory

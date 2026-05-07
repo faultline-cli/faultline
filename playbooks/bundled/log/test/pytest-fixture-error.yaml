@@ -46,6 +46,10 @@ match:
     - "doctest failed"
   none:
     - "AssertionError"
+    - "FactoryBot"
+    - "factory_bot"
+    - "ActiveRecord::RecordNotFound"
+    - "before(:each)"
 workflow:
   likely_files:
     - conftest.py

@@ -67,6 +67,11 @@ match:
     - getenv
     - environment variable not set
     - required env
+    - "config file not found"
+    - "configuration file.*not found"
+    - ".env.*not found"
+    - ".env file is missing"
+    - "settings file not found"
 why_it_matters: |-
   ## Why it matters
 

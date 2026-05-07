@@ -1,0 +1,4 @@
+Error: connect ENOTFOUND registry.npmjs.org
+getaddrinfo ENOTFOUND registry.npmjs.org
+EAFNOSUPPORT address family not supported
+prefer-ipv4 fallback is disabled

@@ -26,6 +26,8 @@ match:
     - "invalid ELF header"
   none:
     - "executable file not found in $PATH"
+    - "does not match the detected host platform"
+    - "image's platform"
 hypothesis:
   supports:
     - signal: log.contains:OCI runtime exec failed

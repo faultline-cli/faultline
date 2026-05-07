@@ -49,6 +49,8 @@ match:
     - "file system is full"
     - "no space remaining"
     - "permission denied"
+    - "COPY --from"
+    - "path does not exist in build context"
 workflow:
   likely_files:
     - .dockerignore

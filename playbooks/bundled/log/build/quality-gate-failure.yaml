@@ -82,6 +82,14 @@ match:
     - cannot find module
     - "ERR_PNPM_"
     - no matching distribution found
+    - "run gofmt"
+    - "run goimports"
+    - "would reformat"
+    - "files would be reformatted"
+    - "prettier.*check"
+    - "black.*would reformat"
+    - "rustfmt.*diff"
+    - "clang-format.*error"
 workflow:
   likely_files:
     - package.json

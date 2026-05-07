@@ -1,0 +1,8 @@
+Step 1/8 : FROM golang:1.22 AS builder
+ ---> a1b2c3d4e5f6
+Step 6/8 : RUN go build -o /app/bin/server ./cmd/server
+ ---> Running in b3c4d5e6f7a8
+./cmd/server/main.go:14:2: undefined: config.DefaultTimeout
+build failed
+Step 8/8 : COPY --from=builder /app/bin/server /usr/local/bin/server
+failed to copy files: failed to copy file: file /app/bin/server not found in build context or excluded by .dockerignore

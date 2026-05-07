@@ -6,6 +6,14 @@
   + npm-peer-dependency-conflict (match.any)
   - dependency-drift (match.none)
 
+.env file is missing
+  + config-file-missing (match.any)
+  - config-mismatch (match.none)
+
+.env.*not found
+  + config-file-missing (match.any)
+  - config-mismatch (match.none)
+
 : not found
   + missing-executable (match.any)
   + node-missing-executable (match.any)
@@ -30,12 +38,19 @@ access denied
 activerecord::recordnotfound
   + missing-test-fixture (match.any)
   - database-test-isolation (match.none)
+  - pytest-fixture-error (match.none)
 
 address already in use
   + orphaned-resources (match.any)
   + port-in-use (match.any)
   - go-data-race (match.none)
   - port-conflict (match.none)
+
+address_family_not_supported
+  + ipv6-ipv4-resolution (match.any)
+  - dns-enotfound (match.none)
+  - dns-resolution (match.none)
+  - firewall-egress-blocked (match.none)
 
 agent.*is offline
   + jenkins-agent-offline (match.any)
@@ -76,6 +91,10 @@ authentication failed
   - git-shallow-checkout (match.none)
   - postgres-connection-refused (match.none)
 
+authentication failed for
+  + git-auth (match.any)
+  - git-submodule-not-initialized (match.none)
+
 back-off pulling image
   + image-pull-backoff (match.any)
   - docker-auth (match.none)
@@ -91,6 +110,10 @@ binary.*not found
 bind: address already in use
   + port-in-use (match.any)
   - port-conflict (match.none)
+
+black.*would reformat
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
 
 build timed out
   + pipeline-timeout (match.any)
@@ -162,6 +185,19 @@ check constraints cannot be marked not valid
   + postgres-version-incompatible-migration (match.any)
   - postgres-enum-add-in-transaction (match.none)
 
+checks did not pass
+  + quality-gate-failure (match.any)
+  - formatting-failure (match.none)
+
+clang-format.*error
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
+
+code quality checks failed
+  + quality-gate-failure (match.any)
+  - eslint-failure (match.none)
+  - formatting-failure (match.none)
+
 command not found
   + base-image-breaking-change (match.any)
   + missing-executable (match.any)
@@ -177,6 +213,10 @@ config compilation failed
   + circleci-config-validation (match.any)
   - circleci-resource-class-invalid (match.none)
 
+config file not found
+  + config-file-missing (match.any)
+  - config-mismatch (match.none)
+
 config not found
   + config-file-missing (match.any)
   + config-mismatch (match.any)
@@ -190,9 +230,17 @@ configuration error
   + circleci-config-validation (match.any)
   - missing-env (match.none)
 
+configuration file.*not found
+  + config-file-missing (match.any)
+  - config-mismatch (match.none)
+
 conflicting requirements
   + dependency-drift (match.any)
   - maven-dependency-resolution (match.none)
+
+conftest.py
+  + pytest-fixture-error (match.any)
+  - missing-test-fixture (match.none)
 
 connect: network is unreachable
   + firewall-egress-blocked (match.any)
@@ -220,6 +268,10 @@ context access might be invalid: secrets
   - github-actions-env-not-persisted (match.none)
   - github-actions-permission (match.none)
 
+copy --from
+  + multistage-build-missing-artifact (match.any)
+  - runner-disk-full (match.none)
+
 could not build wheels for
   + pip-install-failure (match.any)
   - install-failure (match.none)
@@ -240,6 +292,7 @@ could not find artifact
 could not read username
   + git-auth (match.any)
   - git-shallow-checkout (match.none)
+  - git-submodule-not-initialized (match.none)
 
 could not resolve host
   + dns-resolution (match.any)
@@ -269,6 +322,7 @@ declared and not used
   + go-compile-error (match.any)
   - go-test-failure (match.none)
   - gradle-build (match.none)
+  - topology-boundary-crossed (match.none)
 
 denied: requested access to the resource is denied
   + docker-auth (match.any)
@@ -307,6 +361,10 @@ does not match expected hash
   + pip-hash-mismatch (match.any)
   - pip-install-failure (match.none)
 
+does not match the detected host platform
+  + arch-mismatch (match.any)
+  - entrypoint-misconfigured (match.none)
+
 eacces
   + permission-denied (match.any)
   - dns-enotfound (match.none)
@@ -317,6 +375,12 @@ eaddrinuse
   + orphaned-resources (match.any)
   + port-in-use (match.any)
   - parallelism-conflict (match.none)
+
+eafnosupport
+  + ipv6-ipv4-resolution (match.any)
+  - dns-enotfound (match.none)
+  - dns-resolution (match.none)
+  - firewall-egress-blocked (match.none)
 
 econnrefused
   + connection-refused (match.any)
@@ -369,6 +433,7 @@ error acquiring the state lock
 
 error at setup of
   + pytest-fixture-error (match.any)
+  - missing-test-fixture (match.none)
   - pytest-no-tests (match.none)
 
 error at teardown of
@@ -481,6 +546,14 @@ expiredtokenexception
   + aws-credentials (match.any)
   + expired-credentials (match.any)
 
+factory_bot
+  + missing-test-fixture (match.any)
+  - pytest-fixture-error (match.none)
+
+factorybot
+  + missing-test-fixture (match.any)
+  - pytest-fixture-error (match.none)
+
 fail github.com/
   + go-test-failure (match.any)
   - junit-test-failure (match.none)
@@ -528,6 +601,10 @@ fatal error: call_and_retry_last allocation failed
   + circleci-resource-class-oom (match.any)
   + node-out-of-memory (match.any)
 
+fatal: credential helper
+  + git-auth (match.any)
+  - git-submodule-not-initialized (match.none)
+
 file system is full
   + disk-full (match.any)
   - runner-disk-full (match.none)
@@ -535,6 +612,7 @@ file system is full
 files would be reformatted
   + formatting-failure (match.any)
   - container-crash (match.none)
+  - quality-gate-failure (match.none)
 
 fixture not found
   + missing-test-fixture (match.any)
@@ -597,6 +675,10 @@ host key verification failed
   - permission-denied (match.none)
   - ssh-permission-denied (match.none)
 
+image's platform
+  + arch-mismatch (match.any)
+  - entrypoint-misconfigured (match.none)
+
 imagepullbackoff
   + image-pull-backoff (match.any)
   - docker-auth (match.none)
@@ -606,6 +688,7 @@ imported and not used
   + go-compile-error (match.any)
   - go-test-failure (match.none)
   - gradle-build (match.none)
+  - topology-boundary-crossed (match.none)
 
 importerror: no module named
   + python-module-missing (match.any)
@@ -623,6 +706,10 @@ insufficient permissions
 invalid configuration
   + config-mismatch (match.any)
   + invalid-config-schema (match.any)
+
+invalid workflow file
+  + github-actions-syntax (match.any)
+  - circleci-config-validation (match.none)
 
 invalidclienttokenid
   + aws-credentials (match.any)
@@ -680,6 +767,12 @@ lint failed
 listen tcp
   + port-in-use (match.any)
   - port-conflict (match.none)
+
+listen tcp6
+  + ipv6-ipv4-resolution (match.any)
+  - dns-enotfound (match.none)
+  - dns-resolution (match.none)
+  - firewall-egress-blocked (match.none)
 
 manifest unknown
   + docker-manifest-not-found (match.any)
@@ -903,6 +996,10 @@ parse error
   + syntax-error (match.any)
   - go-compile-error (match.none)
 
+path does not exist in build context
+  + multistage-build-missing-artifact (match.any)
+  - runner-disk-full (match.none)
+
 path.*\.bin/jest
   + jest-command-not-found (match.any)
   - jest-test-failure (match.none)
@@ -932,10 +1029,6 @@ pluginresolutionexception
   + maven-dependency-resolution (match.any)
   - dependency-drift (match.none)
 
-pnpm install --frozen-lockfile
-  + pnpm-lockfile (match.any)
-  + pnpm-lockfile-missing (match.any)
-
 pnpm-lock.yaml
   + package-manager-mismatch (match.any)
   - eslint-failure (match.none)
@@ -948,6 +1041,22 @@ port conflict
 port is already allocated
   + port-conflict (match.any)
   - port-in-use (match.none)
+
+prefer-ipv4
+  + ipv6-ipv4-resolution (match.any)
+  - dns-enotfound (match.none)
+  - dns-resolution (match.none)
+  - firewall-egress-blocked (match.none)
+
+prefer-ipv6
+  + ipv6-ipv4-resolution (match.any)
+  - dns-enotfound (match.none)
+  - dns-resolution (match.none)
+  - firewall-egress-blocked (match.none)
+
+prettier.*check
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
 
 process.env.
   + env-var-missing (match.any)
@@ -975,6 +1084,11 @@ pull access denied for
   + image-pull-backoff (match.any)
   - permission-denied (match.none)
 
+quality gate failed
+  + quality-gate-failure (match.any)
+  - eslint-failure (match.none)
+  - formatting-failure (match.none)
+
 race detected
   + go-data-race (match.any)
   + parallelism-conflict (match.any)
@@ -997,6 +1111,7 @@ redis::cannotconnecterror
 remote: invalid username or password
   + git-auth (match.any)
   - git-shallow-checkout (match.none)
+  - git-submodule-not-initialized (match.none)
 
 required env
   + env-var-missing (match.any)
@@ -1012,8 +1127,25 @@ resolutionimpossible
   - pip-hash-mismatch (match.none)
   - tox-invocation-error (match.none)
 
+run gofmt
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
+
+run goimports
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
+
+runner killed
+  + process-killed-no-logs (match.any)
+  - oom-killed (match.none)
+
+rustfmt.*diff
+  + formatting-failure (match.any)
+  - quality-gate-failure (match.none)
+
 scopemismatch
   + pytest-fixture-error (match.any)
+  - missing-test-fixture (match.none)
   - pytest-no-tests (match.none)
 
 secret is empty
@@ -1039,6 +1171,10 @@ service connection.*not found
   + azure-pipelines-service-connection (match.any)
   - azure-pipelines-task-not-found (match.none)
 
+settings file not found
+  + config-file-missing (match.any)
+  - config-mismatch (match.none)
+
 sigkill
   + circleci-resource-class-oom (match.any)
   + process-killed-no-logs (match.any)
@@ -1047,6 +1183,10 @@ sigkill
 signal: killed
   + oom-killed (match.any)
   + process-killed-no-logs (match.any)
+
+sigterm
+  + process-killed-no-logs (match.any)
+  - oom-killed (match.none)
 
 skip command
   + missing-executable (match.any)
@@ -1064,9 +1204,18 @@ ssh: handshake failed
   + ssh-key-auth (match.any)
   - git-auth (match.none)
 
+static analysis failed
+  + quality-gate-failure (match.any)
+  - eslint-failure (match.none)
+  - formatting-failure (match.none)
+
 stored snapshot
   + snapshot-mismatch (match.any)
   - coverage-gate-failure (match.none)
+
+style violations found
+  + quality-gate-failure (match.any)
+  - formatting-failure (match.none)
 
 syntaxerror:
   + syntax-error (match.any)
@@ -1075,6 +1224,10 @@ syntaxerror:
   - go-compile-error (match.none)
   - quality-gate-failure (match.none)
 
+task was canceled
+  + process-killed-no-logs (match.any)
+  - oom-killed (match.none)
+
 temporary failure in name resolution
   + dns-resolution (match.any)
   - network-timeout (match.none)
@@ -1082,6 +1235,7 @@ temporary failure in name resolution
 terminal prompts disabled
   + git-auth (match.any)
   - git-refspec-mismatch (match.none)
+  - git-submodule-not-initialized (match.none)
 
 test is not parallelizable
   + parallelism-conflict (match.any)
@@ -1110,6 +1264,10 @@ testdata
 the security token included in the request is expired
   + aws-credentials (match.any)
   + expired-credentials (match.any)
+
+the workflow is not valid
+  + github-actions-syntax (match.any)
+  - circleci-config-validation (match.none)
 
 these packages do not match the hashes from the requirements file
   + pip-hash-mismatch (match.any)
@@ -1195,6 +1353,7 @@ waiting for assertion
 warning: data race
   + go-data-race (match.any)
   - go-test-failure (match.none)
+  - parallelism-conflict (match.none)
 
 what went wrong:
   + gradle-build (match.any)
@@ -1213,6 +1372,7 @@ working directory not found
 would reformat
   + formatting-failure (match.any)
   - container-crash (match.none)
+  - quality-gate-failure (match.none)
 
 write failed: no space left
   + disk-full (match.any)

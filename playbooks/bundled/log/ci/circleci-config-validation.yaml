@@ -67,6 +67,9 @@ match:
     - "No space left on device"
     - "Job's timeout exceeded"
     - "secrets.* is not available"
+    - ".github/workflows"
+    - "Invalid workflow file"
+    - "The workflow is not valid"
 workflow:
   likely_files:
     - .circleci/config.yml

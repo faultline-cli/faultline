@@ -1,0 +1,6 @@
+ERROR at setup of test_get_user_profile
+conftest.py:45: in setup_db
+    session = db.connect()
+E   fixture 'db_session' not found
+fixture not found
+available fixtures: tmp_path, capsys, monkeypatch

@@ -64,6 +64,9 @@ match:
     - "Back-off restarting failed container"
     - resource_class
     - CircleCI resource class
+    - runner killed
+    - task was canceled
+    - "SIGTERM"
 why_it_matters: |-
   ## Why it matters
 

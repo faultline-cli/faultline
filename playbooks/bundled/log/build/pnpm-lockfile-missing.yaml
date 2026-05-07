@@ -78,7 +78,6 @@ match:
     - "ERR_PNPM_FROZEN_LOCKFILE_CHANGED"
     - "pnpm-lock.yaml.*not in sync"
     - "lockfile.*missing"
-    - "pnpm install --frozen-lockfile"
     - "pnpm ERR!"
   none:
     - "npm ERR!"

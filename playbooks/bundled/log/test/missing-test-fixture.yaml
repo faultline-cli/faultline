@@ -72,6 +72,9 @@ match:
     - "command 'gcc' failed"
     - "Could not build wheels for"
     - "No matching distribution found for"
+    - "conftest.py"
+    - "ERROR at setup of"
+    - "ScopeMismatch"
 hypothesis:
   supports:
     - signal: test.fixture.missing

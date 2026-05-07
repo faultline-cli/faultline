@@ -1,0 +1,5 @@
+Running gofmt check...
+format check failed
+run gofmt -w on the following files:
+  internal/app/main.go
+would reformat internal/app/main.go

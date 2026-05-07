@@ -1,0 +1,4 @@
+connect: Network is unreachable
+EAFNOSUPPORT: address family not supported
+prefer-ipv4 flag is needed
+listen tcp6: bind failed

@@ -196,6 +196,78 @@ func TestBundledPlaybookAdversarialFixtures(t *testing.T) {
 			wantTopID: "coverage-gate-failure",
 			absentIDs: []string{"test-timeout", "network-timeout", "pipeline-timeout"},
 		},
+		{
+			name:      "go data race beats parallelism conflict on pure race detector output",
+			file:      "go-data-race-no-parallelism.log",
+			wantTopID: "go-data-race",
+			absentIDs: []string{"parallelism-conflict"},
+		},
+		{
+			name:      "multistage build missing artifact beats runner disk full on copy failures",
+			file:      "multistage-build-artifact-no-disk-full.log",
+			wantTopID: "multistage-build-missing-artifact",
+			absentIDs: []string{"runner-disk-full"},
+		},
+		{
+			name:      "arch mismatch beats entrypoint misconfigured on exec format error",
+			file:      "arch-mismatch-no-entrypoint.log",
+			wantTopID: "arch-mismatch",
+			absentIDs: []string{"entrypoint-misconfigured"},
+		},
+		{
+			name:      "pytest fixture error beats missing test fixture on fixture not found with conftest context",
+			file:      "pytest-fixture-not-found.log",
+			wantTopID: "pytest-fixture-error",
+			absentIDs: []string{"missing-test-fixture"},
+		},
+		{
+			name:      "github actions syntax beats circleci config validation on generic YAML mapping error",
+			file:      "github-actions-yaml-mapping-error.log",
+			wantTopID: "github-actions-syntax",
+			absentIDs: []string{"circleci-config-validation"},
+		},
+		{
+			name:      "config file missing beats config mismatch on filesystem missing config",
+			file:      "config-file-missing-no-mismatch.log",
+			wantTopID: "config-file-missing",
+			absentIDs: []string{"config-mismatch"},
+		},
+		{
+			name:      "oom killed beats process killed on OOMKilled container context",
+			file:      "oom-killed-no-process-killed.log",
+			wantTopID: "oom-killed",
+			absentIDs: []string{"process-killed-no-logs"},
+		},
+		{
+			name:      "git auth beats git submodule on credential failure with exit 128",
+			file:      "git-auth-no-submodule.log",
+			wantTopID: "git-auth",
+			absentIDs: []string{"git-submodule-not-initialized"},
+		},
+		{
+			name:      "formatting failure beats quality gate on gofmt specific output",
+			file:      "formatting-failure-no-quality-gate.log",
+			wantTopID: "formatting-failure",
+			absentIDs: []string{"quality-gate-failure"},
+		},
+		{
+			name:      "eslint failure beats quality gate on ESLint specific output",
+			file:      "eslint-failure-no-quality-gate.log",
+			wantTopID: "eslint-failure",
+			absentIDs: []string{"quality-gate-failure"},
+		},
+		{
+			name:      "ipv6 ipv4 resolution beats dns enotfound on EAFNOSUPPORT context",
+			file:      "ipv6-ipv4-no-dns-enotfound.log",
+			wantTopID: "ipv6-ipv4-resolution",
+			absentIDs: []string{"dns-enotfound"},
+		},
+		{
+			name:      "ipv6 ipv4 resolution beats firewall egress blocked on EAFNOSUPPORT context",
+			file:      "ipv6-ipv4-no-firewall.log",
+			wantTopID: "ipv6-ipv4-resolution",
+			absentIDs: []string{"firewall-egress-blocked"},
+		},
 	}
 
 	for _, tc := range tests {

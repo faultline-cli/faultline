@@ -77,6 +77,9 @@ match:
     - "executable file not found in $PATH"
     - "command not found"
     - "cannot stat"
+    - "imported and not used"
+    - "declared and not used"
+    - "build failed"
 workflow:
   likely_files:
     - CODEOWNERS

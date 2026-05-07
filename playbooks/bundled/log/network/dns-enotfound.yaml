@@ -87,6 +87,11 @@ match:
     - "ETIMEDOUT"
     - "EACCES"
     - "ModuleNotFoundError"
+    - "EAFNOSUPPORT"
+    - "ADDRESS_FAMILY_NOT_SUPPORTED"
+    - prefer-ipv4
+    - prefer-ipv6
+    - listen tcp6
 
 workflow:
   likely_files:

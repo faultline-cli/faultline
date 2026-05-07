@@ -52,6 +52,12 @@ match:
     - "dial tcp: lookup"
     - could not resolve host
     - nodename nor servname provided
+  none:
+    - "EAFNOSUPPORT"
+    - "ADDRESS_FAMILY_NOT_SUPPORTED"
+    - prefer-ipv4
+    - prefer-ipv6
+    - listen tcp6
 why_it_matters: |-
   ## Why it matters
 

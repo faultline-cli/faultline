@@ -30,8 +30,8 @@ match:
   any:
     - resource is busy
     - test is not parallelizable
-    - race detected
     - concurrently
+    - race detected
     - "too many connections"
     - database locked
     - "concurrent ="
@@ -52,6 +52,7 @@ match:
     - "re:concurrent-\\d+"
     - runner-
     - "ssl connection"
+    - "WARNING: DATA RACE"
     - "concurrent/futures"
     - "concurrent mark"
     - "concurrent gc"

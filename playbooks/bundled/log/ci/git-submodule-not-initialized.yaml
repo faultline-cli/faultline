@@ -16,6 +16,12 @@ match:
     - "does not contain .git"
     - "missing or broken submodule"
     - "exit code 128"
+  none:
+    - "terminal prompts disabled"
+    - "could not read username"
+    - "authentication failed for"
+    - "remote: invalid username or password"
+    - "fatal: credential helper"
 hypothesis:
   supports:
     - signal: log.contains:no such file or directory

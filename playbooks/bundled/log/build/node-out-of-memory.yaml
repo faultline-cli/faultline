@@ -38,6 +38,10 @@ match:
     - "<--- JS stacktrace --->"
     - "Allocation failed - JavaScript heap out of memory"
     - "ERR_WORKER_OUT_OF_MEMORY"
+  none:
+    - resource_class
+    - ".circleci"
+    - "CircleCI resource class"
 workflow:
   likely_files:
     - package.json

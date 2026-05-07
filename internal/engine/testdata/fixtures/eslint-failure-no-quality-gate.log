@@ -1,0 +1,5 @@
+Running ESLint...
+/src/components/App.tsx
+  42:5  error  'foo' is defined but never used  no-unused-vars
+lint failed
+ESLint found 1 error

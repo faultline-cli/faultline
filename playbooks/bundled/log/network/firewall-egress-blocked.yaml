@@ -43,6 +43,11 @@ match:
     - "Outbound connections are blocked"
   none:
     - "docker login"
+    - "EAFNOSUPPORT"
+    - "ADDRESS_FAMILY_NOT_SUPPORTED"
+    - prefer-ipv4
+    - prefer-ipv6
+    - listen tcp6
     - "certificate"
     - "429"
     - "rate limit"

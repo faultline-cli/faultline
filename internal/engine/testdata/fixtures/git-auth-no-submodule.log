@@ -1,0 +1,4 @@
+fatal: could not read Username for 'https://github.com': terminal prompts disabled
+remote: Invalid username or password.
+authentication failed for 'https://github.com/org/repo.git'
+exit code 128
