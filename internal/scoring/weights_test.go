@@ -34,4 +34,17 @@ func TestDefaultWeightsIsDeterministic(t *testing.T) {
 	if len(w1.FeatureWeights) != len(w2.FeatureWeights) {
 		t.Errorf("FeatureWeights lengths differ: %d != %d", len(w1.FeatureWeights), len(w2.FeatureWeights))
 	}
+	// Spot-check known stable keys from the embedded bayes_v1.json.
+	knownKeys := []string{"detector_score", "detector_confidence", "candidate_separation"}
+	for _, key := range knownKeys {
+		v1, ok1 := w1.FeatureWeights[key]
+		v2, ok2 := w2.FeatureWeights[key]
+		if !ok1 || !ok2 {
+			t.Errorf("expected feature weight key %q to exist in both calls", key)
+			continue
+		}
+		if v1 != v2 {
+			t.Errorf("feature weight %q differs between calls: %f != %f", key, v1, v2)
+		}
+	}
 }

@@ -291,7 +291,6 @@ func TestLoadHistoryFile_ValidJSONL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateTemp: %v", err)
 	}
-	defer f.Close()
 
 	lines := []string{
 		`{"matched":true,"failure_id":"docker-auth"}`,
@@ -300,10 +299,13 @@ func TestLoadHistoryFile_ValidJSONL(t *testing.T) {
 	}
 	for _, line := range lines {
 		if _, err := fmt.Fprintln(f, line); err != nil {
+			f.Close()
 			t.Fatalf("write line: %v", err)
 		}
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatalf("close: %v", err)
+	}
 
 	entries, err := LoadHistoryFile(f.Name())
 	if err != nil {

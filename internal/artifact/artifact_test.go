@@ -897,9 +897,15 @@ func TestBuildWithResultAndSuggestedSeed(t *testing.T) {
 	if got == nil {
 		t.Fatal("expected non-nil artifact")
 	}
-	// SuggestedPlaybookSeed must be deep-copied
+	// Build copies the seed struct (shallow copy), so the pointer address must differ.
 	if got.SuggestedPlaybookSeed == &seed {
-		t.Error("SuggestedPlaybookSeed must be a copy, not the original pointer")
+		t.Error("SuggestedPlaybookSeed must not be the same pointer as the original")
+	}
+	// Mutating a scalar field on the original seed must not affect the artifact's copy.
+	seed.Category = "mutated"
+	if got.SuggestedPlaybookSeed.Category != "build" {
+		t.Errorf("artifact SuggestedPlaybookSeed.Category changed after mutating original: got %q, want %q",
+			got.SuggestedPlaybookSeed.Category, "build")
 	}
 }
 
