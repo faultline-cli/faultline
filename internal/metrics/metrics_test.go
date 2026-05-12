@@ -2,6 +2,8 @@ package metrics
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -281,6 +283,59 @@ not-json
 	}
 	if len(entries) != 2 {
 		t.Errorf("expected 2 valid entries (malformed skipped), got %d", len(entries))
+	}
+}
+
+func TestLoadHistoryFile_ValidJSONL(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "history-*.jsonl")
+	if err != nil {
+		t.Fatalf("CreateTemp: %v", err)
+	}
+	defer f.Close()
+
+	lines := []string{
+		`{"matched":true,"failure_id":"docker-auth"}`,
+		`{"matched":true,"failure_id":"npm-install"}`,
+		`{"matched":false}`,
+	}
+	for _, line := range lines {
+		if _, err := fmt.Fprintln(f, line); err != nil {
+			t.Fatalf("write line: %v", err)
+		}
+	}
+	f.Close()
+
+	entries, err := LoadHistoryFile(f.Name())
+	if err != nil {
+		t.Fatalf("LoadHistoryFile: %v", err)
+	}
+	if len(entries) != 3 {
+		t.Errorf("expected 3 entries, got %d", len(entries))
+	}
+	if !entries[0].Matched {
+		t.Errorf("entries[0].Matched = false, want true")
+	}
+	if entries[0].FailureID != "docker-auth" {
+		t.Errorf("entries[0].FailureID = %q, want docker-auth", entries[0].FailureID)
+	}
+	if entries[2].Matched {
+		t.Errorf("entries[2].Matched = true, want false (unmatched run)")
+	}
+}
+
+func TestLoadHistoryFile_EmptyFile(t *testing.T) {
+	f, err := os.CreateTemp(t.TempDir(), "empty-*.jsonl")
+	if err != nil {
+		t.Fatalf("CreateTemp: %v", err)
+	}
+	f.Close()
+
+	entries, err := LoadHistoryFile(f.Name())
+	if err != nil {
+		t.Fatalf("LoadHistoryFile empty: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected 0 entries for empty file, got %d", len(entries))
 	}
 }
 
