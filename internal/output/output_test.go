@@ -1240,3 +1240,161 @@ func TestPartialMatchLinesWithoutLabel(t *testing.T) {
 		t.Errorf("expected minimum count in line, got %q", got[0])
 	}
 }
+
+// ── stableHashAnalysis ────────────────────────────────────────────────────────
+
+func TestStableHashAnalysisNil(t *testing.T) {
+	got := stableHashAnalysis(nil)
+	if got != nil {
+		t.Errorf("stableHashAnalysis(nil) = %v, want nil", got)
+	}
+}
+
+func TestStableHashAnalysisStripsHistoryFields(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, []string{"pull access denied"})
+	a.Results[0].SeenCount = 5
+	a.Results[0].SeenBefore = true
+	a.Results[0].OccurrenceCount = 12
+	a.Results[0].FirstSeenAt = "2024-01-01T00:00:00Z"
+	a.Results[0].LastSeenAt = "2024-03-01T00:00:00Z"
+
+	got := stableHashAnalysis(a)
+	if got == nil {
+		t.Fatal("stableHashAnalysis returned nil")
+	}
+	if got.Results[0].SeenCount != 0 {
+		t.Errorf("SeenCount not zeroed: %d", got.Results[0].SeenCount)
+	}
+	if got.Results[0].SeenBefore {
+		t.Error("SeenBefore not zeroed")
+	}
+	if got.Results[0].OccurrenceCount != 0 {
+		t.Errorf("OccurrenceCount not zeroed: %d", got.Results[0].OccurrenceCount)
+	}
+	if got.Results[0].FirstSeenAt != "" {
+		t.Errorf("FirstSeenAt not zeroed: %q", got.Results[0].FirstSeenAt)
+	}
+	if got.Results[0].LastSeenAt != "" {
+		t.Errorf("LastSeenAt not zeroed: %q", got.Results[0].LastSeenAt)
+	}
+}
+
+func TestStableHashAnalysisStripsMetricsAndPolicy(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+	a.Metrics = &model.Metrics{HistoryCount: 10}
+	a.Policy = &model.Policy{Recommendation: "observe"}
+
+	got := stableHashAnalysis(a)
+	if got.Metrics != nil {
+		t.Errorf("Metrics not stripped: %+v", got.Metrics)
+	}
+	if got.Policy != nil {
+		t.Errorf("Policy not stripped: %+v", got.Policy)
+	}
+}
+
+func TestStableHashAnalysisDoesNotMutateOriginal(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+	a.Results[0].SeenCount = 7
+
+	_ = stableHashAnalysis(a)
+
+	if a.Results[0].SeenCount != 7 {
+		t.Errorf("stableHashAnalysis mutated original SeenCount: %d", a.Results[0].SeenCount)
+	}
+}
+
+func TestStableHashAnalysisCopiesArtifact(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+	a.Artifact = &model.FailureArtifact{
+		SchemaVersion: "v1",
+		MatchedPlaybook: &model.ArtifactPlaybook{
+			ID: "docker-auth",
+		},
+		HistoryContext: &model.ArtifactHistoryContext{
+			SeenCount:   3,
+			SeenBefore:  true,
+			FirstSeenAt: "2024-01-01",
+			LastSeenAt:  "2024-02-01",
+		},
+		SuggestedPlaybookSeed: &model.SuggestedPlaybookSeed{Category: "auth"},
+		Remediation:           &model.RemediationPlan{},
+	}
+
+	got := stableHashAnalysis(a)
+	if got.Artifact == nil {
+		t.Fatal("expected non-nil Artifact in stable clone")
+	}
+	if got.Artifact.HistoryContext == nil {
+		t.Fatal("expected non-nil HistoryContext in stable clone")
+	}
+	// History context fields must be zeroed in the stable clone
+	if got.Artifact.HistoryContext.SeenCount != 0 {
+		t.Errorf("Artifact.HistoryContext.SeenCount not zeroed: %d", got.Artifact.HistoryContext.SeenCount)
+	}
+	if got.Artifact.HistoryContext.SeenBefore {
+		t.Error("Artifact.HistoryContext.SeenBefore not zeroed")
+	}
+}
+
+// ── repoContextJSON / parseRepoContextJSON round-trip ─────────────────────────
+
+func TestRepoContextJSONNil(t *testing.T) {
+	got := repoContextJSON(nil)
+	if got != nil {
+		t.Errorf("repoContextJSON(nil) = %v, want nil", got)
+	}
+}
+
+func TestParseRepoContextJSONNil(t *testing.T) {
+	got := parseRepoContextJSON(nil)
+	if got != nil {
+		t.Errorf("parseRepoContextJSON(nil) = %v, want nil", got)
+	}
+}
+
+func TestRepoContextJSONRoundTrip(t *testing.T) {
+	original := &model.RepoContext{
+		RepoRoot:           "/repo",
+		RecentFiles:        []string{"main.go", "go.mod"},
+		HotspotDirectories: []string{"internal/"},
+		CoChangeHints:      []string{"co-change hint"},
+		HotfixSignals:      []string{"hotfix signal"},
+		DriftSignals:       []string{"drift signal"},
+		ConfigDriftSignals: []string{"config drift"},
+		CIChangeSignals:    []string{"ci change"},
+		LargeCommitSignals: []string{"large commit"},
+		RelatedCommits: []model.RepoCommit{
+			{Hash: "abc123", Subject: "fix: something", Date: "2024-01-01"},
+			{Hash: "def456", Subject: "feat: other thing", Date: "2024-01-02"},
+		},
+	}
+
+	j := repoContextJSON(original)
+	if j == nil {
+		t.Fatal("repoContextJSON returned nil for non-nil input")
+	}
+	if len(j.RelatedCommits) != 2 {
+		t.Fatalf("expected 2 related commits in JSON form, got %d", len(j.RelatedCommits))
+	}
+	if j.RelatedCommits[0].Hash != "abc123" {
+		t.Errorf("commit[0].Hash = %q, want abc123", j.RelatedCommits[0].Hash)
+	}
+
+	parsed := parseRepoContextJSON(j)
+	if parsed == nil {
+		t.Fatal("parseRepoContextJSON returned nil")
+	}
+	if parsed.RepoRoot != original.RepoRoot {
+		t.Errorf("RepoRoot = %q, want %q", parsed.RepoRoot, original.RepoRoot)
+	}
+	if len(parsed.RelatedCommits) != 2 {
+		t.Fatalf("expected 2 parsed commits, got %d", len(parsed.RelatedCommits))
+	}
+	if parsed.RelatedCommits[1].Subject != "feat: other thing" {
+		t.Errorf("commit[1].Subject = %q, want %q", parsed.RelatedCommits[1].Subject, "feat: other thing")
+	}
+	if parsed.HotfixSignals[0] != "hotfix signal" {
+		t.Errorf("HotfixSignals[0] = %q, want hotfix signal", parsed.HotfixSignals[0])
+	}
+}

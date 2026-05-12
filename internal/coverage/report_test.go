@@ -301,3 +301,83 @@ func TestWriteTextFixtureRootAndMode(t *testing.T) {
 		t.Errorf("expected fixture mode in output; got:\n%s", got)
 	}
 }
+
+// ── normalizeReport ───────────────────────────────────────────────────────────
+
+func TestNormalizeReportConvertsNilSlicesToEmpty(t *testing.T) {
+	r := Report{} // all slice fields are nil
+	got := normalizeReport(r)
+	if got.ByCategory == nil {
+		t.Error("ByCategory must be non-nil after normalizeReport")
+	}
+	if got.ByDomain == nil {
+		t.Error("ByDomain must be non-nil after normalizeReport")
+	}
+	if got.MissingFixtures == nil {
+		t.Error("MissingFixtures must be non-nil after normalizeReport")
+	}
+	if got.SourceDetectorPlaybooks == nil {
+		t.Error("SourceDetectorPlaybooks must be non-nil after normalizeReport")
+	}
+	if got.DuplicateIDs == nil {
+		t.Error("DuplicateIDs must be non-nil after normalizeReport")
+	}
+}
+
+func TestNormalizeReportPreservesExistingSlices(t *testing.T) {
+	r := Report{
+		ByCategory:      []Category{{Category: "auth", Count: 2}},
+		ByDomain:        []Domain{{Domain: "security", Count: 1}},
+		MissingFixtures: []string{"playbook-without-fixture"},
+	}
+	got := normalizeReport(r)
+	if len(got.ByCategory) != 1 || got.ByCategory[0].Category != "auth" {
+		t.Errorf("ByCategory was modified: %v", got.ByCategory)
+	}
+	if len(got.ByDomain) != 1 {
+		t.Errorf("ByDomain was modified: %v", got.ByDomain)
+	}
+	if len(got.MissingFixtures) != 1 || got.MissingFixtures[0] != "playbook-without-fixture" {
+		t.Errorf("MissingFixtures was modified: %v", got.MissingFixtures)
+	}
+}
+
+// ── fixtureLayoutForRoot ──────────────────────────────────────────────────────
+
+func TestFixtureLayoutForRootNotFound(t *testing.T) {
+	dir := t.TempDir() // empty directory — no fixture class subdirs
+	_, ok := fixtureLayoutForRoot(dir)
+	if ok {
+		t.Errorf("expected ok=false for directory with no fixture class dirs, got true")
+	}
+}
+
+func TestFixtureLayoutForRootWithDirectClassDirs(t *testing.T) {
+	root := t.TempDir()
+	// Create at least one fixture class directory directly under root
+	if err := os.MkdirAll(filepath.Join(root, "minimal"), 0o755); err != nil {
+		t.Fatalf("mkdir minimal: %v", err)
+	}
+	layout, ok := fixtureLayoutForRoot(root)
+	if !ok {
+		t.Fatal("expected ok=true when minimal/ exists under root")
+	}
+	if layout.Fixtures != root {
+		t.Errorf("Layout.Fixtures = %q, want %q", layout.Fixtures, root)
+	}
+}
+
+func TestFixtureLayoutForRootWithChildFixturesDir(t *testing.T) {
+	parent := t.TempDir()
+	fixtures := filepath.Join(parent, "fixtures")
+	if err := os.MkdirAll(filepath.Join(fixtures, "real"), 0o755); err != nil {
+		t.Fatalf("mkdir fixtures/real: %v", err)
+	}
+	layout, ok := fixtureLayoutForRoot(parent)
+	if !ok {
+		t.Fatal("expected ok=true when fixtures/real/ exists")
+	}
+	if layout.Root != parent {
+		t.Errorf("Layout.Root = %q, want %q", layout.Root, parent)
+	}
+}

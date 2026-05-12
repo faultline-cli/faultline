@@ -511,6 +511,427 @@ func TestExecutableName(t *testing.T) {
 	}
 }
 
+// ── unknownConfidence ─────────────────────────────────────────────────────────
+
+func TestUnknownConfidenceNilAnalysis(t *testing.T) {
+	got := unknownConfidence(nil)
+	if got != 0.2 {
+		t.Errorf("unknownConfidence(nil) = %f, want 0.2", got)
+	}
+}
+
+func TestUnknownConfidenceNoClusters(t *testing.T) {
+	a := &model.Analysis{}
+	got := unknownConfidence(a)
+	if got != 0.2 {
+		t.Errorf("unknownConfidence(no clusters) = %f, want 0.2", got)
+	}
+}
+
+func TestUnknownConfidenceWithCluster(t *testing.T) {
+	a := &model.Analysis{
+		CandidateClusters: []model.CandidateCluster{
+			{Confidence: 0.42, Key: "build"},
+			{Confidence: 0.3, Key: "network"},
+		},
+	}
+	got := unknownConfidence(a)
+	if got != 0.42 {
+		t.Errorf("unknownConfidence with clusters = %f, want 0.42", got)
+	}
+}
+
+// ── unknownFixSteps ───────────────────────────────────────────────────────────
+
+func TestUnknownFixStepsBaseSteps(t *testing.T) {
+	steps := unknownFixSteps(&model.Analysis{})
+	// Base: capture excerpt, faultline list, re-run.
+	if len(steps) < 3 {
+		t.Fatalf("expected at least 3 base steps, got %d: %v", len(steps), steps)
+	}
+}
+
+func TestUnknownFixStepsWithSeedAndDominantSignals(t *testing.T) {
+	a := &model.Analysis{
+		SuggestedPlaybookSeed: &model.SuggestedPlaybookSeed{
+			MatchAny: []string{"npm ERR! code ENOTFOUND"},
+		},
+		DominantSignals: []string{"npm ERR! code ENOTFOUND"},
+	}
+	steps := unknownFixSteps(a)
+	// Should include both the seed step and the dominant signals step.
+	var hasSeedStep, hasDominantStep bool
+	for _, s := range steps {
+		if s == "Start a new playbook seed from the dominant unmatched signals and confirm the nearest bundled neighbor cannot absorb them." {
+			hasSeedStep = true
+		}
+		if s == "Inspect the dominant signals first and group them by one root cause before adding any new rule." {
+			hasDominantStep = true
+		}
+	}
+	if !hasSeedStep {
+		t.Errorf("expected seed step in fix steps, got: %v", steps)
+	}
+	if !hasDominantStep {
+		t.Errorf("expected dominant signals step in fix steps, got: %v", steps)
+	}
+}
+
+// ── markdownListItems ─────────────────────────────────────────────────────────
+
+func TestMarkdownListItemsEmpty(t *testing.T) {
+	got := markdownListItems("")
+	if len(got) != 0 {
+		t.Errorf("expected empty items for empty string, got %v", got)
+	}
+}
+
+func TestMarkdownListItemsBullets(t *testing.T) {
+	input := "- Run the tests\n- Check the output\n- Commit\n"
+	got := markdownListItems(input)
+	want := []string{"Run the tests", "Check the output", "Commit"}
+	if len(got) != len(want) {
+		t.Fatalf("markdownListItems returned %d items, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("item[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestMarkdownListItemsNumbered(t *testing.T) {
+	input := "1. First step\n2. Second step\n3. Third step\n"
+	got := markdownListItems(input)
+	want := []string{"First step", "Second step", "Third step"}
+	if len(got) != len(want) {
+		t.Fatalf("markdownListItems returned %d numbered items, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("item[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+func TestMarkdownListItemsSkipsBlankAndNonList(t *testing.T) {
+	input := "Some header\n\n- bullet one\nPlain line\n- bullet two\n"
+	got := markdownListItems(input)
+	want := []string{"bullet one", "bullet two"}
+	if len(got) != len(want) {
+		t.Fatalf("markdownListItems = %v, want %v", got, want)
+	}
+}
+
+// ── displayPackName ───────────────────────────────────────────────────────────
+
+func TestDisplayPackName(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{"   ", ""},
+		{"starter", ""},
+		{"custom", ""},
+		{"security", "security"},
+		{"  my-pack  ", "my-pack"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.in, func(t *testing.T) {
+			got := displayPackName(tc.in)
+			if got != tc.want {
+				t.Errorf("displayPackName(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// ── likelyFiles ───────────────────────────────────────────────────────────────
+
+func TestLikelyFilesFromPlaybookWorkflow(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{
+			ID: "npm-install",
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{"package.json", "package-lock.json"},
+			},
+		},
+	}
+	got := likelyFiles(a, result)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 files, got %d: %v", len(got), got)
+	}
+}
+
+func TestLikelyFilesDeduplicates(t *testing.T) {
+	a := &model.Analysis{
+		RepoContext: &model.RepoContext{
+			RecentFiles: []string{"package.json", "README.md"},
+		},
+	}
+	result := model.Result{
+		Playbook: model.Playbook{
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{"package.json", "tsconfig.json"},
+			},
+		},
+	}
+	got := likelyFiles(a, result)
+	// package.json appears in both but should only appear once
+	seen := map[string]int{}
+	for _, f := range got {
+		seen[f]++
+	}
+	if seen["package.json"] > 1 {
+		t.Errorf("package.json appeared %d times, want 1: %v", seen["package.json"], got)
+	}
+}
+
+func TestLikelyFilesCapsAtFive(t *testing.T) {
+	a := &model.Analysis{
+		RepoContext: &model.RepoContext{
+			RecentFiles: []string{"r1.go", "r2.go", "r3.go"},
+		},
+	}
+	result := model.Result{
+		Playbook: model.Playbook{
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{"a.go", "b.go", "c.go", "d.go"},
+			},
+		},
+	}
+	got := likelyFiles(a, result)
+	if len(got) > 5 {
+		t.Errorf("expected at most 5 likely files, got %d: %v", len(got), got)
+	}
+}
+
+func TestLikelyFilesRepoContextNil(t *testing.T) {
+	result := model.Result{
+		Playbook: model.Playbook{
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{"Makefile"},
+			},
+		},
+	}
+	got := likelyFiles(nil, result)
+	if len(got) != 1 || got[0] != "Makefile" {
+		t.Errorf("likelyFiles with nil analysis = %v, want [Makefile]", got)
+	}
+}
+
+// ── buildFacts ────────────────────────────────────────────────────────────────
+
+func TestBuildFactsEmptyForGenericPlaybook(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{ID: "npm-install"},
+	}
+	got := buildFacts(a, result)
+	if got != nil {
+		t.Errorf("expected nil facts for generic playbook, got %v", got)
+	}
+}
+
+func TestBuildFactsCommandHint(t *testing.T) {
+	a := &model.Analysis{
+		Context: model.Context{CommandHint: "npm ci"},
+	}
+	result := model.Result{
+		Playbook: model.Playbook{ID: "npm-install"},
+	}
+	got := buildFacts(a, result)
+	if got == nil {
+		t.Fatal("expected non-nil facts with command hint")
+	}
+	if got["command_hint"] != "npm ci" {
+		t.Errorf("command_hint = %q, want %q", got["command_hint"], "npm ci")
+	}
+}
+
+func TestBuildFactsMissingExecutableFromEvidence(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{ID: "missing-executable"},
+		Evidence: []string{"exec /usr/bin/node: no such file or directory"},
+	}
+	got := buildFacts(a, result)
+	if got == nil {
+		t.Fatal("expected non-nil facts for missing-executable playbook")
+	}
+	if got["missing_executable"] != "node" {
+		t.Errorf("missing_executable = %q, want %q", got["missing_executable"], "node")
+	}
+	if got["expected_path"] != "/usr/bin/node" {
+		t.Errorf("expected_path = %q, want %q", got["expected_path"], "/usr/bin/node")
+	}
+}
+
+func TestBuildFactsMissingExecutableNoMatch(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{ID: "missing-executable"},
+		Evidence: []string{"some unrelated line"},
+	}
+	got := buildFacts(a, result)
+	if got != nil {
+		t.Errorf("expected nil facts when evidence has no executable pattern, got %v", got)
+	}
+}
+
+// ── buildMatchedRemediation ───────────────────────────────────────────────────
+
+func TestBuildMatchedRemediationEmptyReturnsNil(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{ID: "generic"},
+	}
+	got := buildMatchedRemediation(a, result)
+	if got != nil {
+		t.Errorf("expected nil remediation when playbook has no workflow, got %+v", got)
+	}
+}
+
+func TestBuildMatchedRemediationWithLocalReproAndVerify(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{
+			ID: "npm-install",
+			Workflow: model.WorkflowSpec{
+				LocalRepro: []string{"npm install", "npm test"},
+				Verify:     []string{"npm run lint"},
+			},
+		},
+	}
+	got := buildMatchedRemediation(a, result)
+	if got == nil {
+		t.Fatal("expected non-nil remediation for playbook with workflow")
+	}
+	if len(got.Commands) != 3 {
+		t.Errorf("expected 3 commands, got %d: %v", len(got.Commands), got.Commands)
+	}
+	if got.Commands[0].Phase != "local-repro" {
+		t.Errorf("first command phase = %q, want local-repro", got.Commands[0].Phase)
+	}
+	if got.Commands[2].Phase != "verify" {
+		t.Errorf("third command phase = %q, want verify", got.Commands[2].Phase)
+	}
+}
+
+func TestBuildMatchedRemediationWithCIFile(t *testing.T) {
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{
+			ID:  "ci-failure",
+			Fix: "- Update the workflow step",
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{".github/workflows/ci.yml"},
+			},
+		},
+	}
+	got := buildMatchedRemediation(a, result)
+	if got == nil {
+		t.Fatal("expected non-nil remediation")
+	}
+	if len(got.PatchSuggestions) == 0 {
+		t.Fatal("expected at least one patch suggestion for likely file")
+	}
+	if len(got.CIConfigDiffs) == 0 {
+		t.Fatal("expected at least one CI config diff for .github/workflows/ file")
+	}
+	if got.CIConfigDiffs[0].TargetFile != ".github/workflows/ci.yml" {
+		t.Errorf("CI config diff target = %q, want .github/workflows/ci.yml", got.CIConfigDiffs[0].TargetFile)
+	}
+}
+
+func TestBuildMatchedRemediationPatchSuggestionFallbackAction(t *testing.T) {
+	// When fix has no list items, a default action is used.
+	a := &model.Analysis{}
+	result := model.Result{
+		Playbook: model.Playbook{
+			ID:  "generic-failure",
+			Fix: "Some prose without bullets",
+			Workflow: model.WorkflowSpec{
+				LikelyFiles: []string{"Makefile"},
+			},
+		},
+	}
+	got := buildMatchedRemediation(a, result)
+	if got == nil {
+		t.Fatal("expected non-nil remediation")
+	}
+	if len(got.PatchSuggestions) == 0 {
+		t.Fatal("expected patch suggestion")
+	}
+	actions := got.PatchSuggestions[0].Actions
+	if len(actions) == 0 {
+		t.Fatal("expected at least one action")
+	}
+	const want = "Apply the smallest deterministic change that aligns the file with the diagnosed fix path."
+	if actions[0] != want {
+		t.Errorf("fallback action = %q, want %q", actions[0], want)
+	}
+}
+
+// ── Build integration with remediation ───────────────────────────────────────
+
+func TestBuildWithResultAndSuggestedSeed(t *testing.T) {
+	seed := model.SuggestedPlaybookSeed{Category: "build", MatchAny: []string{"go build failed"}}
+	a := &model.Analysis{
+		SuggestedPlaybookSeed: &seed,
+		Results: []model.Result{
+			{
+				Playbook: model.Playbook{
+					ID:       "go-build",
+					Title:    "Go build failed",
+					Category: "build",
+					Workflow: model.WorkflowSpec{LikelyFiles: []string{"go.mod"}},
+				},
+				Confidence: 0.8,
+			},
+		},
+	}
+	got := Build(a)
+	if got == nil {
+		t.Fatal("expected non-nil artifact")
+	}
+	// Build copies the seed struct (shallow copy), so the pointer address must differ.
+	if got.SuggestedPlaybookSeed == &seed {
+		t.Error("SuggestedPlaybookSeed must not be the same pointer as the original")
+	}
+	// Mutating a scalar field on the original seed must not affect the artifact's copy.
+	seed.Category = "mutated"
+	if got.SuggestedPlaybookSeed.Category != "build" {
+		t.Errorf("artifact SuggestedPlaybookSeed.Category changed after mutating original: got %q, want %q",
+			got.SuggestedPlaybookSeed.Category, "build")
+	}
+}
+
+func TestBuildWithDelta(t *testing.T) {
+	a := &model.Analysis{
+		Source: "ci.log",
+		Delta: &model.Delta{
+			Provider: "github",
+			Signals:  []model.DeltaSignal{{ID: "dep-bump"}},
+		},
+		Results: []model.Result{
+			{
+				Playbook:   model.Playbook{ID: "dep-conflict", Title: "Dep conflict"},
+				Confidence: 0.7,
+			},
+		},
+	}
+	got := Build(a)
+	if got == nil {
+		t.Fatal("expected non-nil artifact")
+	}
+	if got.Environment.DeltaProvider != "github" {
+		t.Errorf("DeltaProvider = %q, want github", got.Environment.DeltaProvider)
+	}
+}
+
 // ── extractMissingExecutable ──────────────────────────────────────────────────
 
 func TestExtractMissingExecutable(t *testing.T) {
