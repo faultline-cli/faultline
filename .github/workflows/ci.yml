@@ -27,12 +27,6 @@ jobs:
       - name: Report coverage summary
         run: go tool cover -func=coverage.out | tail -1
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: coverage.out
-          fail_ci_if_error: false
-
       - name: Review bundled playbook conflicts
         run: make review
 
