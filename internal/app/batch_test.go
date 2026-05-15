@@ -14,10 +14,18 @@ import (
 )
 
 // writeTempLogFile creates a temporary log file with the given content and
-// returns its path. Cleaned up automatically via t.TempDir.
+// returns its path.
 func writeTempLogFile(t *testing.T, content string) string {
 	t.Helper()
-	dir := t.TempDir()
+	// Batch validates source paths relative to the current working directory, so
+	// test fixtures are created under "." to stay within the allowed root.
+	dir, err := os.MkdirTemp(".", "batch-test-*")
+	if err != nil {
+		t.Fatalf("create temp dir: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dir)
+	})
 	f, err := os.CreateTemp(dir, "batch-*.log")
 	if err != nil {
 		t.Fatalf("create temp log: %v", err)
@@ -431,6 +439,30 @@ func TestResolvePathWithinRootAllowsPathInRoot(t *testing.T) {
 func TestResolvePathWithinRootRejectsPathTraversal(t *testing.T) {
 	root := t.TempDir()
 	_, err := resolvePathWithinRoot("../outside.log", root)
+	if err == nil {
+		t.Fatal("expected path traversal error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
+	}
+}
+
+func TestResolvePathWithinRootAllowsAbsolutePathInRoot(t *testing.T) {
+	root := t.TempDir()
+	inside := filepath.Join(root, "inside.log")
+	got, err := resolvePathWithinRoot(inside, root)
+	if err != nil {
+		t.Fatalf("resolvePathWithinRoot returned error: %v", err)
+	}
+	if got != inside {
+		t.Fatalf("resolvePathWithinRoot path = %q, want %q", got, inside)
+	}
+}
+
+func TestResolvePathWithinRootRejectsAbsolutePathOutsideRoot(t *testing.T) {
+	root := t.TempDir()
+	outside := filepath.Join(filepath.Dir(root), "outside.log")
+	_, err := resolvePathWithinRoot(outside, root)
 	if err == nil {
 		t.Fatal("expected path traversal error, got nil")
 	}

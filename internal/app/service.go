@@ -636,13 +636,9 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 	}
 	patternMap := map[string]*model.BatchPattern{}
 
-	cwd, err := os.Getwd()
+	rootAbs, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("resolve working directory: %w", err)
-	}
-	rootAbs, err := filepath.Abs(cwd)
-	if err != nil {
-		return fmt.Errorf("resolve working directory absolute path: %w", err)
 	}
 
 	for _, src := range sources {
@@ -732,21 +728,23 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 	return nil
 }
 
+// resolvePathWithinRoot normalizes src and ensures the resulting absolute path
+// remains inside rootAbs. It rejects empty paths and traversal attempts (for
+// both relative and absolute inputs) that escape the allowed root.
 func resolvePathWithinRoot(src, rootAbs string) (string, error) {
 	if src == "" {
 		return "", errors.New("path is empty")
 	}
 
 	cleaned := filepath.Clean(src)
+	var candidate string
 	if filepath.IsAbs(cleaned) {
-		candidateAbs, err := filepath.Abs(cleaned)
-		if err != nil {
-			return "", fmt.Errorf("resolve absolute path: %w", err)
-		}
-		return candidateAbs, nil
+		candidate = cleaned
+	} else {
+		candidate = filepath.Join(rootAbs, cleaned)
 	}
 
-	candidateAbs, err := filepath.Abs(filepath.Join(rootAbs, cleaned))
+	candidateAbs, err := filepath.Abs(candidate)
 	if err != nil {
 		return "", fmt.Errorf("resolve absolute path: %w", err)
 	}
