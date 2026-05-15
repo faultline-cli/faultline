@@ -234,7 +234,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 ```
 
 ```bash
-VERSION=v0.4.4
+VERSION=v0.4.6
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

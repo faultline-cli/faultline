@@ -71,8 +71,7 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
 | 2026-05-01 v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
 | 2026-05-02 playbook triage pass (removed 20 low-signal bundled playbooks) | 173 | 211 | 32 | 100% | 100% | 0% | 0 |
-| 2026-05-02 fixture promotion pass (promoted 4 staging candidates) | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
-
+| 2026-05-02 fixture promotion pass (promoted 4 staging candidates) | 173 | 215 | 32 | 100% | 100% | 0% | 0 || 2026-05-15 v0.4.6 robustness improvements + playbook refinement + test coverage pass | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
