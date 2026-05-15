@@ -31,6 +31,14 @@ import (
 // Service owns app-level orchestration for CLI commands.
 type Service struct{}
 
+const (
+	defaultFixtureBaselineMinTop1          = 0.65
+	defaultFixtureBaselineMinTop3          = 0.85
+	defaultFixtureBaselineMaxUnmatched     = 0.15
+	defaultFixtureBaselineMaxFalsePositive = 0.35
+	defaultFixtureBaselineMaxWeakMatch     = 0.15
+)
+
 var ErrGuardFindings = errors.New("guard findings emitted")
 
 // ErrSilentFailure is returned by Analyze when --fail-on-silent is set and a
@@ -360,7 +368,8 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string,
 		a.Source = source
 	}
 	if a != nil || errors.Is(err, engine.ErrNoMatch) {
-		a, prepErr := prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
+		var prepErr error
+		a, prepErr = prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
 		if prepErr != nil {
 			return nil, prepErr
 		}
@@ -581,7 +590,13 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 		report.AppliedBaselinePath = baselinePath
 	}
 	if updateBaseline {
-		thresholds := fixtures.Thresholds{MinTop1: 0.65, MinTop3: 0.85, MaxUnmatched: 0.15, MaxFalsePositive: 0.35, MaxWeakMatch: 0.15}
+		thresholds := fixtures.Thresholds{
+			MinTop1:          defaultFixtureBaselineMinTop1,
+			MinTop3:          defaultFixtureBaselineMinTop3,
+			MaxUnmatched:     defaultFixtureBaselineMaxUnmatched,
+			MaxFalsePositive: defaultFixtureBaselineMaxFalsePositive,
+			MaxWeakMatch:     defaultFixtureBaselineMaxWeakMatch,
+		}
 		if err := fixtures.WriteBaseline(baselinePath, report.Baseline(thresholds)); err != nil {
 			return err
 		}
@@ -621,8 +636,22 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 	}
 	patternMap := map[string]*model.BatchPattern{}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("resolve working directory: %w", err)
+	}
+	rootAbs, err := filepath.Abs(cwd)
+	if err != nil {
+		return fmt.Errorf("resolve working directory absolute path: %w", err)
+	}
+
 	for _, src := range sources {
-		f, err := os.Open(src) // #nosec G304 -- src comes from CLI args, not untrusted input
+		validatedPath, err := resolvePathWithinRoot(src, rootAbs)
+		if err != nil {
+			return fmt.Errorf("invalid source path %s: %w", src, err)
+		}
+
+		f, err := os.Open(validatedPath)
 		if err != nil {
 			return fmt.Errorf("open %s: %w", src, err)
 		}
@@ -701,6 +730,36 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 		return ErrBatchUnmatched
 	}
 	return nil
+}
+
+func resolvePathWithinRoot(src, rootAbs string) (string, error) {
+	if src == "" {
+		return "", errors.New("path is empty")
+	}
+
+	cleaned := filepath.Clean(src)
+	if filepath.IsAbs(cleaned) {
+		candidateAbs, err := filepath.Abs(cleaned)
+		if err != nil {
+			return "", fmt.Errorf("resolve absolute path: %w", err)
+		}
+		return candidateAbs, nil
+	}
+
+	candidateAbs, err := filepath.Abs(filepath.Join(rootAbs, cleaned))
+	if err != nil {
+		return "", fmt.Errorf("resolve absolute path: %w", err)
+	}
+
+	rel, err := filepath.Rel(rootAbs, candidateAbs)
+	if err != nil {
+		return "", fmt.Errorf("compute relative path: %w", err)
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return "", fmt.Errorf("path escapes allowed root")
+	}
+
+	return candidateAbs, nil
 }
 
 func formatBatchText(r *model.BatchResult) string {

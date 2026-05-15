@@ -1,6 +1,6 @@
 # Faultline
 
-> Deterministic CI failure diagnosis CLI. Analyzes build logs against 173 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
+> Deterministic CI failure diagnosis CLI. Analyzes build logs against 181 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
 
 Faultline reads a CI log, scores it against bundled playbooks, and surfaces the most likely failure with diagnosis, fix steps, and validation. Primary commands: `faultline analyze`, `faultline workflow`, `faultline list`, `faultline explain`, `faultline fix`.
 
@@ -22,7 +22,7 @@ Coding agents: read `AGENTS.md` and `SYSTEM.md` before making changes. Run `make
 
 ## Failure catalog
 
-- [docs/failures/llms.txt](docs/failures/llms.txt): Machine-readable index of all 173 failure playbooks, grouped by category, with one-line descriptions and direct links to each page
+- [docs/failures/llms.txt](docs/failures/llms.txt): Machine-readable index of all failure playbooks, grouped by category, with one-line descriptions and direct links to each page
 - [docs/failures/catalog/README.md](docs/failures/catalog/README.md): Human-readable catalog index — all 173 playbooks with diagnosis and fix links
 
 ## Optional

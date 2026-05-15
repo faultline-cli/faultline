@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -114,7 +115,7 @@ func TestDeriveSignals_largeCommit(t *testing.T) {
 	// Build a commit with LargeCommitFileThreshold files.
 	largeFiles := make([]string, LargeCommitFileThreshold)
 	for i := range largeFiles {
-		largeFiles[i] = "src/file" + string(rune('a'+i)) + ".go"
+		largeFiles[i] = fmt.Sprintf("src/file%d.go", i)
 	}
 	commits := []Commit{
 		{Hash: "aaa1111", Subject: "chore: big refactor", Files: largeFiles},
@@ -271,7 +272,7 @@ func TestDeriveSignals_topAuthorsLimit(t *testing.T) {
 	}
 	commits := make([]Commit, len(authors))
 	for i, a := range authors {
-		commits[i] = Commit{Hash: "h" + string(rune('0'+i)), Subject: "change", Author: a, Files: []string{"file.go"}}
+		commits[i] = Commit{Hash: fmt.Sprintf("h%d", i), Subject: "change", Author: a, Files: []string{"file.go"}}
 	}
 	sigs := DeriveSignals(commits)
 
@@ -316,7 +317,7 @@ func TestCorrelate_newSignalFields(t *testing.T) {
 	// Build commits that trigger all three new context fields.
 	largeFiles := make([]string, LargeCommitFileThreshold)
 	for i := range largeFiles {
-		largeFiles[i] = "src/module" + string(rune('a'+i)) + ".go"
+		largeFiles[i] = fmt.Sprintf("src/module%d.go", i)
 	}
 	commits := []Commit{
 		{

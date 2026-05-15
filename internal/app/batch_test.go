@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -412,5 +413,28 @@ func TestBatchMarkdownSourceListTruncatedAboveThree(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "+1 more") {
 		t.Errorf("expected '+1 more' truncation in markdown output, got %q", out)
+	}
+}
+
+func TestResolvePathWithinRootAllowsPathInRoot(t *testing.T) {
+	root := t.TempDir()
+	got, err := resolvePathWithinRoot("logs/build.log", root)
+	if err != nil {
+		t.Fatalf("resolvePathWithinRoot returned error: %v", err)
+	}
+	want := filepath.Join(root, "logs", "build.log")
+	if got != want {
+		t.Fatalf("resolvePathWithinRoot path = %q, want %q", got, want)
+	}
+}
+
+func TestResolvePathWithinRootRejectsPathTraversal(t *testing.T) {
+	root := t.TempDir()
+	_, err := resolvePathWithinRoot("../outside.log", root)
+	if err == nil {
+		t.Fatal("expected path traversal error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
 	}
 }
