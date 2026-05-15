@@ -1,0 +1,13 @@
+id: jest-worker-crash-noisy
+title: Noisy CI run where Jest worker exits unexpectedly
+fixture_class: noisy
+normalized_log: |
+  Running tests in CI mode
+  jest --maxWorkers=50%
+  A worker process has quit unexpectedly! Most likely this is an error in the code that is being tested.
+  Worker failed after 3 retries
+  Jest worker exited with signal SIGABRT
+  Force exiting Jest: Have you considered using '--runInBand'?
+  error Command failed with exit code 1.
+expectation:
+  expected_playbook: jest-worker-crash

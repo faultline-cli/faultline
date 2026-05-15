@@ -1,0 +1,7 @@
+id: multistage-build-missing-artifact-canonical
+title: Docker multi-stage COPY --from references missing artifact path
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/multistage-build-artifact-no-disk-full.log
+expectation:
+  expected_playbook: multistage-build-missing-artifact
+  strict_top1: true

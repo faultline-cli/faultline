@@ -1,0 +1,6 @@
+id: github-actions-syntax-noisy
+title: Noisy GitHub Actions run where workflow YAML cannot be parsed
+fixture_class: noisy
+path: internal/engine/testdata/fixtures/github-actions-yaml-mapping-error.log
+expectation:
+  expected_playbook: github-actions-syntax

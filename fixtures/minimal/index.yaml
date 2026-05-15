@@ -55,6 +55,8 @@ fixtures:
     path: internal/engine/testdata/fixtures/artifact-upload-failure.log
     expectation:
       expected_playbook: artifact-upload-failure
+      disallowed_playbooks:
+        - gitlab-ci-artifact-expired
   - id: minimal-port-conflict
     path: internal/engine/testdata/fixtures/port-conflict.log
     expectation:
@@ -119,6 +121,7 @@ fixtures:
     path: internal/engine/testdata/fixtures/gitlab-ci-artifact-expired.log
     expectation:
       expected_playbook: gitlab-ci-artifact-expired
+      strict_top1: true
   - id: minimal-order-dependency
     path: internal/engine/testdata/fixtures/order-dependency.log
     expectation:

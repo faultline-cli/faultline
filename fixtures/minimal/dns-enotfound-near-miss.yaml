@@ -1,0 +1,8 @@
+id: dns-enotfound-near-miss
+title: IPv6/IPv4 address-family mismatch is a near-miss for dns-enotfound
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/ipv6-ipv4-no-dns-enotfound.log
+expectation:
+  expected_playbook: ipv6-ipv4-resolution
+  disallowed_playbooks:
+    - dns-enotfound

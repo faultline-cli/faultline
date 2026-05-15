@@ -1,0 +1,7 @@
+id: github-actions-syntax-canonical
+title: GitHub Actions workflow rejected due to YAML syntax error
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/github-actions-syntax.log
+expectation:
+  expected_playbook: github-actions-syntax
+  strict_top1: true

@@ -1,0 +1,12 @@
+id: multistage-build-missing-artifact-near-miss
+title: Single-stage COPY source missing is not a multistage artifact issue
+fixture_class: minimal
+normalized_log: |
+  #7 [stage-1 4/6] COPY ./dist/app /usr/local/bin/app
+  #7 ERROR: failed to compute cache key: "/dist/app" not found: not found
+  Dockerfile:12
+  failed to solve with frontend dockerfile.v0: failed to compute cache key
+expectation:
+  expected_playbook: dockerfile-copy-source-missing
+  disallowed_playbooks:
+    - multistage-build-missing-artifact

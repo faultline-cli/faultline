@@ -1,0 +1,6 @@
+id: go-data-race-noisy
+title: Noisy Go test output with embedded race detector traces
+fixture_class: noisy
+path: internal/engine/testdata/corpus/go-data-race-noisy.log
+expectation:
+  expected_playbook: go-data-race

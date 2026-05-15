@@ -8,3 +8,4 @@ normalized_log: |
   Force exiting Jest: Have you considered using '--forceExit'?
 expectation:
   expected_playbook: jest-worker-crash
+  strict_top1: true

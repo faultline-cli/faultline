@@ -1,0 +1,11 @@
+id: multistage-build-missing-artifact-noisy
+title: Noisy BuildKit output where final stage cannot copy from builder artifact path
+fixture_class: noisy
+normalized_log: |
+  #15 [builder 8/8] RUN go build -o /out/server ./cmd/server
+  #15 DONE 6.2s
+  #16 [final 2/2] COPY --from=builder /app/bin/server /server
+  #16 ERROR: failed to copy files: copy file range failed: /app/bin/server: no such file or directory
+  failed to solve: process "/bin/sh -c COPY --from=builder /app/bin/server /server" did not complete successfully
+expectation:
+  expected_playbook: multistage-build-missing-artifact

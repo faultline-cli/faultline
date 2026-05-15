@@ -1,0 +1,14 @@
+id: gitlab-ci-artifact-expired-noisy
+title: Noisy GitLab pipeline where downstream job cannot fetch expired artifacts
+fixture_class: noisy
+normalized_log: |
+  Running with gitlab-runner 17.5.0
+  Resolving secrets
+  Preparing the shell executor
+  Downloading artifacts for build-job (12345678)...
+  WARNING: no artifacts to download from previous attempt
+  ERROR: Could not retrieve artifact from coordinator
+  ERROR: artifacts have expired for job build-job
+  Job failed: exit code 1
+expectation:
+  expected_playbook: gitlab-ci-artifact-expired

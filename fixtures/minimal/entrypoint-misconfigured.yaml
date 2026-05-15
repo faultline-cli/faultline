@@ -10,3 +10,4 @@ normalized_log: |
   The container exited immediately after startup.
 expectation:
   expected_playbook: entrypoint-misconfigured
+  strict_top1: true

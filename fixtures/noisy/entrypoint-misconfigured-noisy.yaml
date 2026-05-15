@@ -1,0 +1,13 @@
+id: entrypoint-misconfigured-noisy
+title: Noisy container startup log with invalid ENTRYPOINT command
+fixture_class: noisy
+normalized_log: |
+  Pulling image myorg/api:sha-4f29b8
+  Starting container api-service
+  time="2026-05-15T19:41:27Z" level=info msg="container create"
+  OCI runtime create failed: container_linux.go:380: starting container process caused:
+  exec: "./docker-entrypoint": stat ./docker-entrypoint: no such file or directory
+  Error response from daemon: failed to create task for container
+  container exited with status 127
+expectation:
+  expected_playbook: entrypoint-misconfigured

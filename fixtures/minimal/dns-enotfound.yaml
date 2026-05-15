@@ -9,3 +9,4 @@ normalized_log: |
   Cannot resolve hostname api.internal.example.com
 expectation:
   expected_playbook: dns-enotfound
+  strict_top1: true

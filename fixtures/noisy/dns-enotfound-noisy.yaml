@@ -1,0 +1,15 @@
+id: dns-enotfound-noisy
+title: Noisy CI integration log ending in getaddrinfo ENOTFOUND failure
+fixture_class: noisy
+normalized_log: |
+  Restoring npm cache
+  Installing dependencies
+  Running integration tests against staging gateway
+  DEBUG retrying request to https://gateway.staging.internal/api/health
+  WARN request failed, attempt=1 error=getaddrinfo ENOTFOUND gateway.staging.internal
+  WARN request failed, attempt=2 error=getaddrinfo ENOTFOUND gateway.staging.internal
+  Error: getaddrinfo ENOTFOUND gateway.staging.internal
+  DNS resolution failed for host gateway.staging.internal
+  Job failed with exit code 1
+expectation:
+  expected_playbook: dns-enotfound

@@ -1,0 +1,13 @@
+id: go-data-race-near-miss
+title: Generic Go test assertion failure without race detector signals
+fixture_class: minimal
+normalized_log: |
+  $ go test ./...
+  --- FAIL: TestConcurrentAccess (0.02s)
+      store_test.go:41: expected cache miss, got hit
+  FAIL    github.com/myorg/app/internal/session   0.042s
+  exit status 1
+expectation:
+  expected_playbook: go-test-failure
+  disallowed_playbooks:
+    - go-data-race

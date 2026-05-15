@@ -1,0 +1,11 @@
+id: github-actions-syntax-near-miss
+title: GitLab CI YAML validation is a near-miss for GitHub Actions syntax
+fixture_class: minimal
+normalized_log: |
+  ERROR: Config file is not valid
+  stage does not exist
+  jobs:deploy config contains unknown keys: scriptz
+expectation:
+  expected_playbook: gitlab-ci-yaml-invalid
+  disallowed_playbooks:
+    - github-actions-syntax

@@ -1,0 +1,18 @@
+id: jest-worker-crash-near-miss
+title: Standard Jest assertion failures should not map to worker crash
+fixture_class: minimal
+normalized_log: |
+  FAIL src/utils/math.test.ts
+    ● add › returns correct sum
+
+      expect(received).toBe(expected)
+
+      Expected: 4
+      Received: 5
+
+  Test Suites: 1 failed, 3 total
+  Tests:       1 failed, 9 passed, 10 total
+expectation:
+  expected_playbook: jest-test-failure
+  disallowed_playbooks:
+    - jest-worker-crash

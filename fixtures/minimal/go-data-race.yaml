@@ -1,0 +1,7 @@
+id: go-data-race-canonical
+title: Go race detector reports concurrent read/write data race
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/go-data-race-no-parallelism.log
+expectation:
+  expected_playbook: go-data-race
+  strict_top1: true

@@ -1,0 +1,8 @@
+id: entrypoint-misconfigured-near-miss
+title: Exec format from architecture mismatch is a near-miss for entrypoint misconfiguration
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/arch-mismatch-no-entrypoint.log
+expectation:
+  expected_playbook: arch-mismatch
+  disallowed_playbooks:
+    - entrypoint-misconfigured
