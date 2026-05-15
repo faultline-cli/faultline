@@ -224,7 +224,7 @@ Faultline optimizes for high precision over broad coverage. The current checked-
 - Accepted real fixtures: 215
 - Fixture top-1 baseline pass rate: 100% (215/215)
 - Fixture false positives: 0
-- Weak matches: 1
+- Weak matches: 0
 - Published large-scale GitHub Actions evaluation: 89.4% of 30,094 failed logs matched at least one bundled playbook
 
 The lower playbook count is intentional: this release favors a smaller, cleaner default catalog over keeping low-evidence rules in the main path. These metrics mean the known corpus is reproducible and guarded against regression. The 89.4% figure is a match-rate claim, not a claim that every match was manually judged as the correct diagnosis. These metrics do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.
