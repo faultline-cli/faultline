@@ -86,11 +86,22 @@ source:
       paths: [examples/, example/]
       discount: 2.0
 summary: |-
-  A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
+  An error return from an I/O, database, or side-effecting call is discarded with `_ =` or silently overwritten, so failures pass undetected.
 diagnosis: |-
   ## Diagnosis
 
-  A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or side-effecting operations would pass silently.
+  A function returns an error that is discarded with `_ =` or left unchecked.
+  Failures in I/O, database, or side-effecting operations pass silently.
+
+  Common patterns that trigger this:
+  - `_ = db.Exec(...)` — database write result dropped
+  - `_ = f.Write(...)` — file write error ignored
+  - `_, _ = someFunc()` — both returns discarded in a multi-return call
+  - `err = nil` — error forced to nil before the check
+
+  The risk is highest when the ignored call produces a side effect that the
+  caller assumes succeeded (for example, a committed transaction, a written file,
+  or a deleted record).
 fix: |-
   ## Fix steps
 

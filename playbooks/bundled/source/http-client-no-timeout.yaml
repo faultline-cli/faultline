@@ -1,0 +1,113 @@
+id: http-client-no-timeout
+title: HTTP client used without a timeout
+category: runtime
+severity: high
+detector: source
+base_score: 0.8
+tags: [source, go, http, timeout, reliability, production]
+domain: source
+class: runtime-fault
+mode: http-client-no-timeout
+context_filters:
+  path_includes: [.go]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: timeout_less_http_call
+      label: package-level HTTP function or empty client literal (no timeout by default)
+      patterns:
+        - "http.Get("
+        - "http.Post("
+        - "http.Head("
+        - "http.PostForm("
+        - "http.DefaultClient"
+        - "&http.Client{}"
+      weight: 1.3
+  amplifiers:
+    - id: external_url
+      label: call targets an external URL or configurable endpoint
+      patterns:
+        - "https://"
+        - "http://"
+        - "baseURL"
+        - "endpoint"
+        - "apiURL"
+        - "apiUrl"
+      weight: 1.0
+  mitigations:
+    - id: timeout_configured
+      label: timeout explicitly set on client or request context
+      patterns:
+        - "Timeout:"
+        - "context.WithTimeout("
+        - "context.WithDeadline("
+        - "http.NewRequestWithContext("
+      weight: 4.0
+  safe_context:
+    - id: test_files_safer
+      label: test-only path
+      paths: [_test.go, tests/, test/]
+      discount: 2.0
+summary: |-
+  An HTTP request is made using the package-level `http.Get` / `http.Post`
+  functions or an empty `&http.Client{}` literal — neither sets a timeout, so
+  the call can hang indefinitely if the server is slow or unresponsive.
+diagnosis: |-
+  ## Diagnosis
+
+  The package-level `http.Get`, `http.Post`, or `http.DefaultClient` all rely
+  on a default `http.Client` with `Timeout: 0` (no timeout). A call to a slow
+  or unreachable server will block the goroutine until the OS TCP timeout fires
+  — typically tens of minutes.
+
+  Common patterns:
+  - `resp, err := http.Get(url)` — uses DefaultClient with no timeout
+  - `resp, err := http.Post(url, ...)` — uses DefaultClient with no timeout
+  - `client := &http.Client{}` followed by `client.Do(req)` — Timeout is zero
+
+  In production services, this causes goroutine exhaustion, request queue
+  buildup, and cascading timeouts across all downstream callers.
+fix: |-
+  ## Fix steps
+
+  1. Create a client with a timeout appropriate for the operation:
+     ```go
+     client := &http.Client{Timeout: 10 * time.Second}
+     resp, err := client.Get(url)
+     ```
+  2. For per-request control, use a context with a deadline:
+     ```go
+     ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+     defer cancel()
+     req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+     if err != nil { return nil, err }
+     resp, err := client.Do(req)
+     ```
+  3. Define timeouts as named constants or environment-driven configuration so
+     they can be tuned without a code change.
+  4. Avoid using `http.DefaultClient` in any production code path.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Add a test that confirms the client respects the configured timeout by
+    pointing it at a handler that delays its response.
+scoring:
+  blast_radius_bonus: 1.1
+  hot_path_bonus: 1.1
+why_it_matters: |-
+  ## Why it matters
+
+  A single stuck HTTP call can saturate a goroutine pool. Without a timeout, a
+  slow dependency becomes a liveness threat: incoming requests accumulate waiting
+  for a free goroutine, memory grows, and eventually the process is killed or
+  stops responding to health checks.
+workflow:
+  likely_files:
+    - "**/*.go"
+  local_repro:
+    - faultline inspect .
+    - "rg -n 'http.Get\\|http.Post\\|http.DefaultClient' ."
+  verify:
+    - faultline guard .
+    - go vet ./...

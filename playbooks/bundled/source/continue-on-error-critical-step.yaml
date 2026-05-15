@@ -24,16 +24,27 @@ source:
       patterns:
         - "npm test"
         - "npm run build"
+        - "npm run test"
         - "go test"
         - "pytest"
+        - "python -m pytest"
+        - "python -m unittest"
         - "mvn test"
         - "gradle test"
+        - "cargo test"
+        - "bundle exec rspec"
+        - "pnpm test"
+        - "yarn test"
         - "docker build"
         - "deploy"
         - "publish"
         - "upload-artifact"
+        - "actions/upload-artifact"
         - "trivy"
+        - "trivy scan"
         - "snyk"
+        - "snyk test"
+        - "cosign sign"
       weight: 1.4
   mitigations:
     - id: explicitly_experimental

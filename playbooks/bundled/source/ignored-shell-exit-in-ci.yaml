@@ -99,7 +99,7 @@ workflow:
     - scripts/*.sh
   local_repro:
     - faultline inspect .
-    - rg -n true .
+    - "rg -n '\\|\\| true' .github/workflows scripts"
   verify:
     - faultline guard .
     - git diff --check

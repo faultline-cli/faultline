@@ -1,0 +1,10 @@
+name: Notify
+on: push
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Slack
+        continue-on-error: true
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} -d '{"text":"CI run started"}'

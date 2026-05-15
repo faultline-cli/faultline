@@ -82,7 +82,7 @@ workflow:
     - scripts/*.sh
   local_repro:
     - faultline inspect .
-    - rg -n shell .
+    - "rg -n 'shell: sh|#!/bin/sh' .github/workflows scripts"
   verify:
     - faultline guard .
-    - sh -n scripts/*.sh
+    - "sh -n scripts/*.sh"

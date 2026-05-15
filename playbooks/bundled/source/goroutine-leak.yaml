@@ -1,0 +1,145 @@
+id: goroutine-leak
+title: Goroutine spawned without context or stop channel
+category: runtime
+severity: high
+detector: source
+base_score: 0.9
+tags: [source, go, goroutine, leak, context, concurrency]
+domain: source
+class: runtime-fault
+mode: goroutine-leak
+context_filters:
+  path_includes: [.go]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: goroutine_spawn
+      label: goroutine spawned with go keyword
+      patterns:
+        - "go func("
+        - "go func() {"
+      weight: 1.2
+  amplifiers:
+    - id: infinite_loop
+      label: infinite loop inside goroutine body
+      patterns:
+        - "for {"
+        - "for true {"
+      weight: 1.4
+    - id: sleep_in_loop
+      label: sleep call inside a loop (long-running goroutine pattern)
+      patterns:
+        - "time.Sleep("
+        - "time.After("
+        - "time.Tick("
+      weight: 1.2
+  mitigations:
+    - id: context_arg
+      label: context passed into goroutine
+      patterns:
+        - "ctx context.Context"
+        - "ctx.Done()"
+        - "<-ctx.Done()"
+        - "select {"
+        - "context.WithCancel"
+        - "context.WithTimeout"
+        - "context.WithDeadline"
+      weight: 3.0
+    - id: stop_channel
+      label: stop or done channel used to terminate goroutine
+      patterns:
+        - "done <-"
+        - "<-done"
+        - "stop <-"
+        - "<-stop"
+        - "quit <-"
+        - "<-quit"
+      weight: 2.5
+    - id: waitgroup
+      label: WaitGroup used to track goroutine lifecycle
+      patterns:
+        - "wg.Add("
+        - "wg.Done()"
+        - "sync.WaitGroup"
+      weight: 2.0
+  compound_signals:
+    - id: unbounded_goroutine
+      label: goroutine with infinite loop and no stop mechanism
+      require: [goroutine_spawn, infinite_loop]
+      scope: function
+      bonus: 2.0
+      required: true
+  safe_context:
+    - id: test_files_safer
+      label: test-only path
+      paths: [_test.go, tests/, test/]
+      discount: 2.0
+summary: |-
+  A goroutine is spawned with an infinite loop and no context cancellation, stop channel, or WaitGroup — it will leak when the calling function returns.
+diagnosis: |-
+  ## Diagnosis
+
+  A goroutine is started with `go func()` and runs an infinite or long-running
+  loop without any mechanism to stop it. When the parent context or server shuts
+  down, this goroutine keeps running, leaking memory and CPU over time.
+
+  Common patterns:
+  - A background poller that loops with `time.Sleep` and no shutdown signal
+  - A cache-refresh goroutine that runs forever without a done channel
+  - A background worker spawned in `init()` or `main()` without lifecycle control
+fix: |-
+  ## Fix steps
+
+  1. Accept a `context.Context` parameter and check `ctx.Done()` in the loop:
+
+     ```go
+     func StartWorker(ctx context.Context) {
+         go func() {
+             for {
+                 select {
+                 case <-ctx.Done():
+                     return
+                 default:
+                     doWork()
+                     time.Sleep(time.Second)
+                 }
+             }
+         }()
+     }
+     ```
+
+  2. Alternatively, use a stop channel: `stop <- struct{}{}` from the caller and
+     `case <-stop: return` in the goroutine select.
+  3. Track goroutines with a `sync.WaitGroup` so callers can wait for clean shutdown.
+  4. For periodic background work, prefer `time.NewTicker` with a select over
+     `time.Sleep` in a loop — the ticker can be stopped.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `go test -race ./...` to catch races introduced during cleanup.
+  - Confirm that the background goroutine exits cleanly when the context is cancelled.
+scoring:
+  blast_radius_bonus: 1.1
+  hot_path_bonus: 1.0
+why_it_matters: |-
+  ## Why it matters
+
+  Goroutine leaks accumulate silently. Each leaked goroutine holds its stack and
+  any variables it closes over. In long-running services, hundreds of leaked
+  goroutines can exhaust memory, hold open database connections, or prevent clean
+  shutdown of a Kubernetes pod, causing the process to be force-killed instead of
+  draining gracefully.
+workflow:
+  likely_files:
+    - worker.go
+    - background.go
+    - scheduler.go
+    - poller.go
+    - server.go
+  local_repro:
+    - faultline inspect .
+    - "rg -n 'go func' ."
+  verify:
+    - go test -race ./...
+    - go vet ./...

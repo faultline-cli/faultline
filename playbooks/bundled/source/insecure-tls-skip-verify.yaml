@@ -1,0 +1,117 @@
+id: insecure-tls-skip-verify
+title: TLS certificate verification disabled in HTTP client
+category: security
+severity: high
+detector: source
+base_score: 0.9
+tags: [source, security, tls, certificate, owasp]
+domain: source
+class: silent-failure
+mode: insecure-tls-skip-verify
+context_filters:
+  path_includes: [.go, .py, .js, .ts]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/, _test.go, _test.py, tests/, test/, .example, .sample]
+source:
+  triggers:
+    - id: tls_skip_verify
+      label: TLS certificate verification explicitly disabled
+      patterns:
+        - "InsecureSkipVerify: true"
+        - "InsecureSkipVerify:true"
+        - "verify=False"
+        - "verify = False"
+        - "rejectUnauthorized: false"
+        - "rejectUnauthorized:false"
+        - "ssl_verify: false"
+        - "ssl_verify:false"
+      weight: 1.6
+  amplifiers:
+    - id: production_transport
+      label: TLS config applied to a transport or session
+      patterns:
+        - "http.Transport{"
+        - "tls.Config{"
+        - "requests.get("
+        - "requests.post("
+        - "requests.session("
+        - "https.Agent("
+      weight: 1.1
+  safe_context:
+    - id: dev_comment
+      label: comment marks as development or debug use only
+      patterns:
+        - "// dev only"
+        - "// development only"
+        - "// local only"
+        - "# dev only"
+        - "# development only"
+        - "# local only"
+      discount: 2.5
+summary: |-
+  TLS certificate verification is explicitly disabled, allowing the client to
+  connect to servers with invalid, expired, or self-signed certificates without
+  raising an error.
+diagnosis: |-
+  ## Diagnosis
+
+  A TLS configuration or HTTP client has certificate verification disabled.
+  This removes the protection TLS is designed to provide: without certificate
+  verification, any server can impersonate the intended target and all traffic
+  is vulnerable to interception.
+
+  Common patterns:
+  - Go: `&tls.Config{InsecureSkipVerify: true}` used in an `http.Transport`
+  - Python: `requests.get(url, verify=False)` or `session.verify = False`
+  - Node.js: `new https.Agent({ rejectUnauthorized: false })`
+
+  This often starts as a quick workaround for a self-signed certificate in a
+  development environment and then gets committed and promoted to production.
+fix: |-
+  ## Fix steps
+
+  1. **Go**: Remove `InsecureSkipVerify` and configure a CA pool if needed:
+     ```go
+     certPool, err := x509.SystemCertPool()
+     if err != nil { return nil, err }
+     tlsConfig := &tls.Config{
+         RootCAs:    certPool,
+         MinVersion: tls.VersionTLS12,
+     }
+     transport := &http.Transport{TLSClientConfig: tlsConfig}
+     ```
+  2. **Python**: Remove `verify=False` or point to a CA bundle:
+     `verify="/path/to/ca-bundle.pem"`.
+  3. **Node.js**: Remove `rejectUnauthorized: false` or set `ca` to the correct
+     certificate PEM string.
+  4. For internal services, use a private CA and distribute the root certificate
+     via environment configuration rather than disabling verification.
+  5. For development, use `mkcert` to generate locally-trusted certificates
+     rather than disabling TLS validation.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Confirm the client connects successfully with certificate verification enabled.
+  - Run `go vet ./...` or your linter to catch any remaining misconfigurations.
+scoring:
+  blast_radius_bonus: 1.2
+  hot_path_bonus: 1.1
+why_it_matters: |-
+  ## Why it matters
+
+  Disabled TLS verification makes every HTTPS connection susceptible to
+  man-in-the-middle attacks. An attacker on the same network path can intercept
+  or modify all traffic without the client raising an alert. This is one of the
+  OWASP Top 10 cryptographic failures (A04).
+workflow:
+  likely_files:
+    - "**/*.go"
+    - "**/*.py"
+    - "**/*.ts"
+    - "**/*.js"
+  local_repro:
+    - faultline inspect .
+    - "rg -n 'InsecureSkipVerify|verify=False|rejectUnauthorized' ."
+  verify:
+    - faultline guard .
+    - go build ./...

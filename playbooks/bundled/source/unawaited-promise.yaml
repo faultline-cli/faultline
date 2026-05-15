@@ -28,6 +28,20 @@ source:
         - "new Promise("
         - "Promise.all("
         - "Promise.race("
+        - "prisma."
+        - "mongoose."
+        - "db.query("
+        - "db.execute("
+        - "pool.query("
+        - "redis."
+        - "s3."
+        - "fs.promises."
+        - "readFile("
+        - "writeFile("
+        - "unlink("
+        - "sendEmail("
+        - "sendMessage("
+        - "publish("
       weight: 1.2
   mitigations:
     - id: awaited_promise

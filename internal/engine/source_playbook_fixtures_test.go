@@ -61,6 +61,36 @@ func TestBundledSourcePlaybookFixtures(t *testing.T) {
 			dir:    filepath.Join("testdata", "source", "shell-dialect-mismatch-positive"),
 			wantID: "shell-dialect-mismatch",
 		},
+		{
+			name:   "unawaited promise db client",
+			dir:    filepath.Join("testdata", "source", "unawaited-promise-db-positive"),
+			wantID: "unawaited-promise",
+		},
+		{
+			name:   "hardcoded secret",
+			dir:    filepath.Join("testdata", "source", "hardcoded-secret-positive"),
+			wantID: "hardcoded-secret",
+		},
+		{
+			name:   "goroutine leak",
+			dir:    filepath.Join("testdata", "source", "goroutine-leak-positive"),
+			wantID: "goroutine-leak",
+		},
+		{
+			name:   "insecure tls skip verify",
+			dir:    filepath.Join("testdata", "source", "insecure-tls-skip-verify-positive"),
+			wantID: "insecure-tls-skip-verify",
+		},
+		{
+			name:   "missing transaction rollback",
+			dir:    filepath.Join("testdata", "source", "missing-transaction-rollback-positive"),
+			wantID: "missing-transaction-rollback",
+		},
+		{
+			name:   "http client no timeout",
+			dir:    filepath.Join("testdata", "source", "http-client-no-timeout-positive"),
+			wantID: "http-client-no-timeout",
+		},
 	}
 
 	for _, tc := range tests {
@@ -100,6 +130,12 @@ func TestBundledSourcePlaybookSafeFixturesDoNotMatch(t *testing.T) {
 		{name: "ignored shell exit optional probe", dir: filepath.Join("testdata", "source", "ignored-shell-exit-in-ci-safe")},
 		{name: "floating docker base image pinned", dir: filepath.Join("testdata", "source", "floating-docker-base-image-safe")},
 		{name: "shell dialect mismatch uses bash", dir: filepath.Join("testdata", "source", "shell-dialect-mismatch-safe")},
+		{name: "continue on error notification step only", dir: filepath.Join("testdata", "source", "continue-on-error-critical-step-noisy2")},
+		{name: "hardcoded secret env var lookup", dir: filepath.Join("testdata", "source", "hardcoded-secret-env-safe")},
+		{name: "goroutine with context cancel", dir: filepath.Join("testdata", "source", "goroutine-leak-context-safe")},
+		{name: "insecure tls verify enabled", dir: filepath.Join("testdata", "source", "insecure-tls-skip-verify-safe")},
+		{name: "transaction with deferred rollback", dir: filepath.Join("testdata", "source", "missing-transaction-rollback-safe")},
+		{name: "http client with timeout", dir: filepath.Join("testdata", "source", "http-client-no-timeout-safe")},
 	}
 	for _, tc := range tests {
 		tc := tc

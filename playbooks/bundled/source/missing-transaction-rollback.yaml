@@ -1,0 +1,117 @@
+id: missing-transaction-rollback
+title: Database transaction opened without a deferred rollback
+category: runtime
+severity: high
+detector: source
+base_score: 0.7
+tags: [source, go, database, transaction, sql, reliability]
+domain: source
+class: silent-failure
+mode: missing-transaction-rollback
+context_filters:
+  path_includes: [.go]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: tx_begin
+      label: database transaction opened
+      patterns:
+        - "db.Begin("
+        - "db.BeginTx("
+        - ".Begin(ctx"
+        - ".BeginTx(ctx"
+      weight: 1.1
+  amplifiers:
+    - id: tx_commit
+      label: transaction explicitly committed
+      patterns:
+        - "tx.Commit("
+        - ".Commit()"
+      weight: 1.2
+  mitigations:
+    - id: rollback_present
+      label: rollback guard is present in same function
+      patterns:
+        - "defer tx.Rollback("
+        - "tx.Rollback("
+        - ".Rollback()"
+        - "Rollback(ctx"
+      weight: 6.0
+  compound_signals:
+    - id: tx_without_rollback_guard
+      label: transaction opened and committed in same function scope
+      require: [tx_begin, tx_commit]
+      scope: function
+      bonus: 1.5
+      required: true
+  safe_context:
+    - id: test_files_safer
+      label: test-only path
+      paths: [_test.go, tests/, test/]
+      discount: 2.0
+summary: |-
+  A database transaction is opened and committed in the same function with no
+  `defer tx.Rollback()` guard, so if an error path returns early the transaction
+  is silently left open, holding connections and locks.
+diagnosis: |-
+  ## Diagnosis
+
+  A `db.Begin()` or `db.BeginTx()` call is followed by `tx.Commit()` in the
+  same function, but there is no `defer tx.Rollback()` to release the
+  transaction on error paths.
+
+  The idiomatic Go pattern defers a rollback immediately after a successful
+  `Begin`:
+
+  ```go
+  tx, err := db.Begin()
+  if err != nil { return err }
+  defer tx.Rollback() // safe no-op if Commit already succeeded
+  ```
+
+  Without the deferred rollback:
+  - Any early return on an error before `Commit` leaves the transaction open
+    until the database connection times out.
+  - Under concurrent load, leaked transactions exhaust the connection pool.
+  - Table locks held by uncommitted transactions block other writers.
+fix: |-
+  ## Fix steps
+
+  1. Add `defer tx.Rollback()` immediately after a successful `Begin`:
+     ```go
+     tx, err := db.BeginTx(ctx, nil)
+     if err != nil {
+         return fmt.Errorf("begin tx: %w", err)
+     }
+     defer tx.Rollback() // always deferred; no-op after a successful Commit
+
+     // ... mutations ...
+
+     return tx.Commit()
+     ```
+  2. Return the error from `Commit` so the caller knows if it failed.
+  3. Avoid capturing `tx` in a closure that may outlive the deferred rollback.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Test that an error on any path before `Commit` releases the connection
+    cleanly without exhausting the pool.
+scoring:
+  blast_radius_bonus: 1.1
+  hot_path_bonus: 1.0
+why_it_matters: |-
+  ## Why it matters
+
+  Unreleased transactions hold database connections and table locks. Under load,
+  a handful of leaked transactions can exhaust the connection pool and cause
+  cascading failures across every service that shares the same database.
+workflow:
+  likely_files:
+    - "**/*.go"
+  local_repro:
+    - faultline inspect .
+    - "rg -n 'db.Begin|db.BeginTx' ."
+  verify:
+    - faultline guard .
+    - go vet ./...

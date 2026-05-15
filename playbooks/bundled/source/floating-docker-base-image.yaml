@@ -9,7 +9,7 @@ domain: source
 class: dependency
 mode: floating-docker-base-image
 context_filters:
-  path_includes: [Dockerfile]
+  path_includes: [Dockerfile, Dockerfile., .dockerfile]
   path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
 source:
   triggers:
@@ -73,7 +73,7 @@ workflow:
     - .github/workflows/*.yml
   local_repro:
     - faultline inspect .
-    - rg -n latest .
+    - rg -n latest Dockerfile
   verify:
     - faultline guard .
     - docker build .
