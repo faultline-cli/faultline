@@ -359,8 +359,8 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string,
 	if a != nil {
 		a.Source = source
 	}
-	if prepErr := error(nil); a != nil || errors.Is(err, engine.ErrNoMatch) {
-		a, prepErr = prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
+	if a != nil || errors.Is(err, engine.ErrNoMatch) {
+		a, prepErr := prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
 		if prepErr != nil {
 			return nil, prepErr
 		}
