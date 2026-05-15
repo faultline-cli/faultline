@@ -1,0 +1,16 @@
+id: npm-peer-dependency-conflict-canonical
+title: npm ERESOLVE with explicit incompatible peer dependency range
+fixture_class: minimal
+normalized_log: |
+  npm i
+  npm error code ERESOLVE
+  npm error ERESOLVE unable to resolve dependency tree
+  npm error While resolving: storefront@2.1.0
+  npm error Found: react@19.2.4
+  npm error Could not resolve dependency:
+  npm error peer react@"^18.3.1" from @vendor/ui@4.1.1
+  npm error Fix the upstream dependency conflict, or retry
+  npm error this command with --force or --legacy-peer-deps
+expectation:
+  expected_playbook: npm-peer-dependency-conflict
+  strict_top1: true

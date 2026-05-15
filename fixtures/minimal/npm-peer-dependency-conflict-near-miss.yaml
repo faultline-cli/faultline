@@ -1,0 +1,15 @@
+id: npm-peer-dependency-conflict-near-miss
+title: Generic npm ERESOLVE conflict without explicit peer mismatch
+fixture_class: minimal
+normalized_log: |
+  npm ERR! code ERESOLVE
+  npm ERR! ERESOLVE could not resolve
+  npm ERR! While resolving: web-app@5.0.0
+  npm ERR! Found: webpack@5.95.0
+  npm ERR! Could not resolve dependency:
+  npm ERR! dev webpack@"^4.46.0" from legacy-loader@2.0.0
+  npm ERR! Conflicting peer dependency graph detected
+expectation:
+  expected_playbook: npm-eresolve-conflict
+  disallowed_playbooks:
+    - npm-peer-dependency-conflict

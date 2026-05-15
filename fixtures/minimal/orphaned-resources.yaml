@@ -1,0 +1,10 @@
+id: orphaned-resources-canonical
+title: CI job fails due to leftover container from prior run
+fixture_class: minimal
+normalized_log: |
+  ERROR: for db Cannot start service db: Conflict. The container name "/myrepo_db_1" is already in use by container "dc420fc36e19"
+  You have to remove (or rename) that container to be able to reuse that name.
+  orphaned container from previous run detected
+expectation:
+  expected_playbook: orphaned-resources
+  strict_top1: true

@@ -1,0 +1,11 @@
+id: orphaned-resources-noisy
+title: Noisy CI rerun fails because stale container and network already exist
+fixture_class: noisy
+normalized_log: |
+  docker compose up -d
+  ERROR: for web Cannot start service web: Conflict. The container name "/ci-web" is already in use by container "a1b2c3d4"
+  ERROR: for redis network ci_default already exists
+  leftover container from cancelled workflow was not cleaned up
+  cleanup hint: remove container and rerun with docker compose down --remove-orphans
+expectation:
+  expected_playbook: orphaned-resources

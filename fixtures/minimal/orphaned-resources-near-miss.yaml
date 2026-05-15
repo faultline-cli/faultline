@@ -1,0 +1,11 @@
+id: orphaned-resources-near-miss
+title: Deploy port binding conflict without orphaned resource indicators
+fixture_class: minimal
+normalized_log: |
+  deploy step failed: failed to bind to port 8080 on target host
+  port is already allocated by ingress-gateway service
+  rollout aborted due to port conflict
+expectation:
+  expected_playbook: port-conflict
+  disallowed_playbooks:
+    - orphaned-resources

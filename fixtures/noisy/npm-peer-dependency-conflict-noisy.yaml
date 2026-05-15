@@ -1,0 +1,21 @@
+id: npm-peer-dependency-conflict-noisy
+title: Verbose npm install log with peer range mismatch and legacy-peer-deps hint
+fixture_class: noisy
+normalized_log: |
+  npm install --no-audit
+  npm error code ERESOLVE
+  npm error ERESOLVE unable to resolve dependency tree
+  npm error While resolving: frontend@3.4.2
+  npm error Found: eslint@9.12.0
+  npm error node_modules/eslint
+  npm error eslint@"^9.0.0" from the root project
+  npm error
+  npm error Could not resolve dependency:
+  npm error peer eslint@"^8.57.0" from eslint-config-legacy@7.3.0
+  npm error node_modules/eslint-config-legacy
+  npm error eslint-config-legacy@"^7.3.0" from the root project
+  npm error
+  npm error Fix the upstream dependency conflict, or retry
+  npm error this command with --force or --legacy-peer-deps
+expectation:
+  expected_playbook: npm-peer-dependency-conflict
