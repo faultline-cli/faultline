@@ -1,12 +1,12 @@
 # Faultline Failure Catalog
 
-> 173 bundled CI failure playbooks across 8 categories. Each entry covers cause, log signals, diagnosis, fix steps, and the Faultline playbook ID used to detect it.
+> 177 bundled CI failure playbooks across 8 categories. Each entry covers cause, log signals, diagnosis, fix steps, and the Faultline playbook ID used to detect it.
 
 Generated from `playbooks/bundled/`. Run `make docs-generate` to rebuild after adding or modifying playbooks.
 
 ## Index
 
-- [All 173 playbooks by category](catalog/README.md): Full generated catalog index with one-line descriptions
+- [All 177 playbooks by category](catalog/README.md): Full generated catalog index with one-line descriptions
 
 ## Auth (11)
 
@@ -23,7 +23,7 @@ outside of CI.
 - [SSH key authentication failure](auth/ssh-key-auth.md): An SSH operation (git clone, deploy, rsync) failed because the SSH key was not found, not loaded into the agent, or the remote host does not accept it.
 - [SSH permission denied (publickey) authentication failed](auth/ssh-permission-denied.md): SSH authentication to a Git host or remote server failed with explicit "Permission denied (publickey)" message.
 
-## Build (65)
+## Build (67)
 
 - [Alpine vs Debian/Ubuntu package or binary incompatibility](build/alpine-debian-incompatibility.md): A CI build or container fails because it mixes Alpine Linux (musl libc) and
 Debian/Ubuntu (glibc) artifacts.
@@ -53,6 +53,7 @@ upstream registry.
 cannot be interpreted in the assumed encoding.
 - [ESLint or linter check failure](build/eslint-failure.md): A linting or formatting check step (`eslint`, `tslint`, `prettier`) found violations in the source code and exited with a non-zero
 - [ffmpeg or avconv not available in the CI environment](build/ffmpeg-avconv-missing.md): The job requires ffmpeg (or its libav counterpart avconv) for media processing but neither tool is installed or reachable on
+- [Docker base image uses a floating latest tag](build/floating-docker-base-image.md): A Dockerfile uses a `:latest` base image tag, so rebuilds can pull different bytes over time without a source change.
 - [Code formatting check failure](build/formatting-failure.md): A CI formatting check failed because one or more source files do not match the project's required code style as
 - [Git refspec or branch does not exist](build/git-refspec-mismatch.md): A git checkout or clone operation failed because the requested refspec (branch name, tag, or commit reference) does not exist on the remote repository.
 - [Go compilation error](build/go-compile-error.md): The Go compiler rejected the package because of a semantic error — undefined
@@ -94,6 +95,7 @@ Unix LF endings are expected.
 - [Lint, format, or static-analysis gate failure](build/quality-gate-failure.md): A non-compiler quality gate failed during CI.
 - [Python, Ruby, or Go runtime version mismatch](build/runtime-mismatch.md): The installed Python, Ruby, or Go runtime does not satisfy the version
 constraint declared by the project.
+- [Bash syntax used under a POSIX sh shell](build/shell-dialect-mismatch.md): A CI workflow or script selects `sh` but uses Bash-only syntax such as `[[ .
 - [Shell compatibility issue (sh vs bash)](build/shell-sh-vs-bash.md): A shell script uses bash-specific syntax but is executed by `/bin/sh`, which
 is commonly `dash` on Ubuntu/Debian or `ash` on Alpine.
 - [Symlink resolution failure in CI](build/symlink-in-ci.md): A symlink in the repository or the build workspace is broken or cannot be
@@ -192,7 +194,7 @@ or `CMD` is misconfigured.
 - [Docker volume mount failure or inaccessible mount](runtime/volume-mount-issue.md): A Docker container failed to start or operate correctly because a volume
 or bind mount is inaccessible.
 
-## Silent Failure (8)
+## Silent Failure (10)
 
 - [Artifact upload step ran but no files were found](silent-failure/artifact-missing.md): An artifact upload step was executed but reported that no files matched the
 configured path.
@@ -200,12 +202,14 @@ configured path.
 error), but the CI job continued without flagging this as a failure.
 - [CI step configured to continue on error](silent-failure/continue-on-error.md): A CI step uses `continue-on-error: true` or `allow_failure: true`, which
 causes the pipeline to proceed even when the step exits non-zero.
+- [Critical CI step allowed to fail](silent-failure/continue-on-error-critical-step.md): A CI workflow marks a critical build, test, deploy, artifact, or security step with `continue-on-error: true`, so the workflow can
 - [Deploy or publish step ran but had nothing deployable](silent-failure/empty-deployment-target.md): A deploy, apply, publish, or release step ran, but the log indicates there
 was nothing deployable to apply or publish.
 - [Lint, scan, or coverage step ran but checked nothing](silent-failure/empty-quality-check.md): A lint, security-scan, or coverage step ran, but the log shows it processed
 zero files or produced no meaningful report.
 - [Command failure suppressed with exit-code override](silent-failure/ignored-exit-code.md): A failing command's exit code was deliberately suppressed using `|| true`,
 `set +e`, or similar shell constructs.
+- [CI command failure hidden by shell exit-code swallowing](silent-failure/ignored-shell-exit-in-ci.md): A CI script or workflow swallows a critical shell command failure with `|| true` or `set +e`, allowing the job to pass after important work failed.
 - [Critical CI step skipped due to condition](silent-failure/skipped-critical-step.md): A CI step was skipped because its `if:` condition evaluated to false.
 - [Test command ran but zero tests were executed](silent-failure/zero-tests-executed.md): A test runner command was invoked but discovered or executed zero tests.
 

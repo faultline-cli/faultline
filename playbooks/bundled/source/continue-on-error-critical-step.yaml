@@ -1,0 +1,93 @@
+id: continue-on-error-critical-step
+title: Critical CI step allowed to fail
+category: silent_failure
+severity: high
+detector: source
+base_score: 1.0
+tags: [source, ci, github-actions, silent-failure, workflow]
+domain: source
+class: silent-failure
+mode: continue-on-error-critical-step
+context_filters:
+  path_includes: [.github/workflows/]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: continue_on_error
+      label: continue-on-error enabled
+      patterns:
+        - "continue-on-error: true"
+      weight: 1.4
+  amplifiers:
+    - id: critical_ci_command
+      label: critical build, test, deploy, artifact, or security step
+      patterns:
+        - "npm test"
+        - "npm run build"
+        - "go test"
+        - "pytest"
+        - "mvn test"
+        - "gradle test"
+        - "docker build"
+        - "deploy"
+        - "publish"
+        - "upload-artifact"
+        - "trivy"
+        - "snyk"
+      weight: 1.4
+  mitigations:
+    - id: explicitly_experimental
+      label: step is explicitly experimental or optional
+      patterns:
+        - "experimental"
+        - "allow failure"
+        - "allowed failure"
+        - "optional"
+        - "best effort"
+      weight: 2.0
+  compound_signals:
+    - id: critical_step_can_fail
+      label: critical CI step can fail without failing the workflow
+      require: [continue_on_error, critical_ci_command]
+      scope: file
+      bonus: 2.0
+      required: true
+  safe_context:
+    - id: examples_are_safer
+      label: example workflow
+      paths: [examples/, example/, docs/]
+      discount: 2.0
+summary: |-
+  A CI workflow marks a critical build, test, deploy, artifact, or security step with `continue-on-error: true`, so the workflow can pass while the important work failed.
+diagnosis: |-
+  ## Diagnosis
+
+  A critical CI step is allowed to fail. This can hide broken tests, failed builds, missing artifacts, or skipped security checks behind a green workflow result.
+fix: |-
+  ## Fix steps
+
+  1. Remove `continue-on-error: true` from critical build, test, deploy, artifact, and security steps.
+  2. If the step is intentionally experimental, rename it clearly and keep it away from release or required-check jobs.
+  3. Split optional probes into a separate non-blocking job so required jobs still fail on real quality gates.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Re-run the workflow and confirm the critical step fails the job when its command fails.
+scoring:
+  blast_radius_bonus: 1.2
+  hot_path_bonus: 1.0
+why_it_matters: |-
+  ## Why it matters
+
+  Silent CI failures are expensive because they erase the signal that would normally block a bad change. A hidden failed test, build, artifact upload, or security scan turns release confidence into guesswork.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+  local_repro:
+    - faultline inspect .
+    - rg -n continue-on-error .github/workflows
+  verify:
+    - faultline guard .
+    - git diff --check

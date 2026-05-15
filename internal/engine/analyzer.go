@@ -749,7 +749,7 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 
 func shouldSkipSourceDir(name string) bool {
 	switch name {
-	case ".git", "node_modules", "vendor", ".venv", "venv":
+	case ".git", "node_modules", "vendor", ".venv", "venv", "dist":
 		return true
 	default:
 		return false
@@ -757,8 +757,12 @@ func shouldSkipSourceDir(name string) bool {
 }
 
 func looksLikeSourceFile(path string) bool {
+	switch strings.ToLower(filepath.Base(path)) {
+	case "dockerfile":
+		return true
+	}
 	switch strings.ToLower(filepath.Ext(path)) {
-	case ".go", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".rb", ".php", ".cs", ".kt", ".yaml", ".yml":
+	case ".go", ".js", ".jsx", ".ts", ".tsx", ".py", ".java", ".rb", ".php", ".cs", ".kt", ".yaml", ".yml", ".sh", ".bash":
 		return true
 	default:
 		return false

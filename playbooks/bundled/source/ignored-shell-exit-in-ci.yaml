@@ -1,0 +1,105 @@
+id: ignored-shell-exit-in-ci
+title: CI command failure hidden by shell exit-code swallowing
+category: silent_failure
+severity: high
+detector: source
+base_score: 1.0
+tags: [source, ci, shell, silent-failure, exit-code]
+domain: source
+class: silent-failure
+mode: ignored-shell-exit-in-ci
+context_filters:
+  path_includes: [.github/workflows/, .gitlab-ci.yml, .sh, .bash]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: exit_code_swallowed
+      label: shell command failure is ignored
+      patterns:
+        - "npm test || true"
+        - "npm run build || true"
+        - "go test ./... || true"
+        - "pytest || true"
+        - "mvn test || true"
+        - "gradle test || true"
+        - "docker build . || true"
+        - "terraform apply || true"
+        - "kubectl apply -f . || true"
+        - "npm publish || true"
+        - "set +e"
+      weight: 1.3
+  amplifiers:
+    - id: critical_shell_command
+      label: swallowed command is near a critical CI command
+      patterns:
+        - "npm test"
+        - "npm run build"
+        - "go test"
+        - "pytest"
+        - "mvn test"
+        - "gradle test"
+        - "docker build"
+        - "terraform apply"
+        - "kubectl apply"
+        - "deploy"
+        - "publish"
+      weight: 1.3
+  mitigations:
+    - id: optional_probe
+      label: ignored failure is documented as optional probing or cleanup
+      patterns:
+        - "optional"
+        - "best effort"
+        - "probe"
+        - "cleanup"
+        - "command -v"
+        - "rm -f"
+      weight: 2.0
+  compound_signals:
+    - id: critical_exit_swallowed
+      label: critical CI command can fail without failing the step
+      require: [exit_code_swallowed, critical_shell_command]
+      scope: file
+      bonus: 2.0
+      required: true
+  safe_context:
+    - id: examples_are_safer
+      label: example script or workflow
+      paths: [examples/, example/, docs/]
+      discount: 2.0
+summary: |-
+  A CI script or workflow swallows a critical shell command failure with `|| true` or `set +e`, allowing the job to pass after important work failed.
+diagnosis: |-
+  ## Diagnosis
+
+  A critical CI command can fail without propagating a non-zero exit code. The workflow may report success even when tests, builds, deploys, or release commands failed.
+fix: |-
+  ## Fix steps
+
+  1. Remove broad `|| true` or `set +e` around critical commands.
+  2. If a cleanup command may fail safely, isolate it and document why it is non-blocking.
+  3. Use explicit `if` handling that fails the job for unexpected command failures.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run the affected script with a forced failing command and confirm the process exits non-zero.
+scoring:
+  blast_radius_bonus: 1.2
+  hot_path_bonus: 1.0
+why_it_matters: |-
+  ## Why it matters
+
+  CI depends on exit codes. Swallowing the exit code around a critical command turns real failures into green builds and delays diagnosis until broken artifacts or deployments surface elsewhere.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - scripts/*.sh
+  local_repro:
+    - faultline inspect .
+    - rg -n true .
+  verify:
+    - faultline guard .
+    - git diff --check

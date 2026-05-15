@@ -31,6 +31,36 @@ func TestBundledSourcePlaybookFixtures(t *testing.T) {
 			dir:    filepath.Join("testdata", "source", "unawaited-promise-positive"),
 			wantID: "unawaited-promise",
 		},
+		{
+			name:   "continue on error critical step",
+			dir:    filepath.Join("testdata", "source", "continue-on-error-critical-step-positive"),
+			wantID: "continue-on-error-critical-step",
+		},
+		{
+			name:   "continue on error critical step noisy",
+			dir:    filepath.Join("testdata", "source", "continue-on-error-critical-step-noisy"),
+			wantID: "continue-on-error-critical-step",
+		},
+		{
+			name:   "ignored shell exit in ci",
+			dir:    filepath.Join("testdata", "source", "ignored-shell-exit-in-ci-positive"),
+			wantID: "ignored-shell-exit-in-ci",
+		},
+		{
+			name:   "ignored shell exit in ci noisy",
+			dir:    filepath.Join("testdata", "source", "ignored-shell-exit-in-ci-noisy"),
+			wantID: "ignored-shell-exit-in-ci",
+		},
+		{
+			name:   "floating docker base image",
+			dir:    filepath.Join("testdata", "source", "floating-docker-base-image-positive"),
+			wantID: "floating-docker-base-image",
+		},
+		{
+			name:   "shell dialect mismatch",
+			dir:    filepath.Join("testdata", "source", "shell-dialect-mismatch-positive"),
+			wantID: "shell-dialect-mismatch",
+		},
 	}
 
 	for _, tc := range tests {
@@ -53,73 +83,29 @@ func TestBundledSourcePlaybookFixtures(t *testing.T) {
 	}
 }
 
-func TestBundledSourcePlaybookMitigationsLowerScore(t *testing.T) {
+func TestBundledSourcePlaybookSafeFixturesDoNotMatch(t *testing.T) {
 	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
 
 	tests := []struct {
-		name      string
-		playbook  string
-		unsafeDir string
-		safeDir   string
+		name string
+		dir  string
 	}{
-		{
-			name:      "unawaited promise",
-			playbook:  "unawaited-promise",
-			unsafeDir: filepath.Join("testdata", "source", "unawaited-promise-positive"),
-			safeDir:   filepath.Join("testdata", "source", "unawaited-promise-safe"),
-		},
+		{name: "missing error propagation checked error", dir: filepath.Join("testdata", "source", "missing-error-propagation-safe")},
+		{name: "missing error propagation ignores javascript noise", dir: filepath.Join("testdata", "source", "missing-error-propagation-js-noise")},
+		{name: "panic in http handler recovered", dir: filepath.Join("testdata", "source", "panic-in-http-handler-safe")},
+		{name: "unawaited promise awaited", dir: filepath.Join("testdata", "source", "unawaited-promise-safe")},
+		{name: "unawaited promise returned", dir: filepath.Join("testdata", "source", "unawaited-promise-return-safe")},
+		{name: "unawaited promise caught", dir: filepath.Join("testdata", "source", "unawaited-promise-catch-safe")},
+		{name: "continue on error optional step", dir: filepath.Join("testdata", "source", "continue-on-error-critical-step-safe")},
+		{name: "ignored shell exit optional probe", dir: filepath.Join("testdata", "source", "ignored-shell-exit-in-ci-safe")},
+		{name: "floating docker base image pinned", dir: filepath.Join("testdata", "source", "floating-docker-base-image-safe")},
+		{name: "shell dialect mismatch uses bash", dir: filepath.Join("testdata", "source", "shell-dialect-mismatch-safe")},
 	}
-
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			unsafeResult := requireSourcePlaybookResult(t, analyzeSourceFixture(t, e, tc.unsafeDir).Results, tc.playbook)
-			safeResult := requireSourcePlaybookResult(t, analyzeSourceFixture(t, e, tc.safeDir).Results, tc.playbook)
-			if safeResult.Score >= unsafeResult.Score {
-				t.Fatalf(
-					"expected mitigated repository score %.2f to be lower than unsafe score %.2f for %s",
-					safeResult.Score,
-					unsafeResult.Score,
-					tc.playbook,
-				)
-			}
+			assertSourceFixtureNoMatch(t, e, tc.dir)
 		})
-	}
-}
-
-func TestMissingErrorPropagationSafeFixtureDoesNotMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
-
-	analysis, err := e.AnalyzeRepository(
-		filepath.Join("testdata", "source", "missing-error-propagation-safe"),
-		detectors.ChangeSet{},
-	)
-	if err != ErrNoMatch {
-		t.Fatalf("expected ErrNoMatch for checked error fixture, got %v", err)
-	}
-	if analysis == nil {
-		t.Fatal("expected non-nil analysis for checked error fixture")
-	}
-	if len(analysis.Results) != 0 {
-		t.Fatalf("expected checked error fixture to stay unmatched, got %v", resultIDs(analysis.Results))
-	}
-}
-
-func TestPanicInHTTPHandlerSafeFixtureDoesNotMatch(t *testing.T) {
-	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
-
-	analysis, err := e.AnalyzeRepository(
-		filepath.Join("testdata", "source", "panic-in-http-handler-safe"),
-		detectors.ChangeSet{},
-	)
-	if err != ErrNoMatch {
-		t.Fatalf("expected ErrNoMatch for recovered handler fixture, got %v", err)
-	}
-	if analysis == nil {
-		t.Fatal("expected non-nil analysis for recovered handler fixture")
-	}
-	if len(analysis.Results) != 0 {
-		t.Fatalf("expected recovered handler fixture to stay unmatched, got %v", resultIDs(analysis.Results))
 	}
 }
 
@@ -182,6 +168,21 @@ func requireSourcePlaybookResult(t *testing.T, results []model.Result, id string
 	}
 	t.Fatalf("expected source result %s in %v", id, resultIDs(results))
 	return model.Result{}
+}
+
+func assertSourceFixtureNoMatch(t *testing.T, e *Engine, dir string) {
+	t.Helper()
+
+	analysis, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
+	if err != ErrNoMatch {
+		t.Fatalf("expected ErrNoMatch for source fixture %s, got %v", dir, err)
+	}
+	if analysis == nil {
+		t.Fatalf("expected non-nil analysis for source fixture %s", dir)
+	}
+	if len(analysis.Results) != 0 {
+		t.Fatalf("expected source fixture %s to stay unmatched, got %v", dir, resultIDs(analysis.Results))
+	}
 }
 
 func assertDeterministicSourceResults(t *testing.T, first, second []model.Result) {

@@ -4,7 +4,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 173
+- Bundled playbooks: 177
 - Accepted real fixtures: 215
 - Top-1 baseline pass rate: 100% (215/215)
 - Top-3 baseline pass rate: 100% (215/215)

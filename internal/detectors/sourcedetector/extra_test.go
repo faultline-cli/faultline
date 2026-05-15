@@ -62,6 +62,107 @@ func TestCollectConsistencyReturnsAmplifierWhenPeersLackMitigation(t *testing.T)
 	}
 }
 
+func TestRequiredCompoundWithoutEvidenceSuppressesResult(t *testing.T) {
+	pb := model.Playbook{
+		ID:        "required-compound",
+		BaseScore: 1,
+		Source: model.SourceSpec{
+			Triggers: []model.SignalMatcher{
+				{ID: "trigger", Patterns: []string{"danger()"}, Weight: 1},
+			},
+			Amplifiers: []model.SignalMatcher{
+				{ID: "context", Patterns: []string{"critical"}, Weight: 1},
+			},
+			Mitigations: []model.SignalMatcher{
+				{ID: "safe", Patterns: []string{"recover()"}, Weight: 3},
+			},
+			CompoundSignals: []model.CompoundSignal{
+				{ID: "required", Require: []string{"trigger", "context"}, Scope: "file", Bonus: 2, Required: true},
+			},
+		},
+	}
+	target := detectors.Target{
+		Files: []detectors.SourceFile{
+			{
+				Path: "handler.go",
+				Lines: []string{
+					"func handler() {",
+					"  // critical path",
+					"  recover()",
+					"  danger()",
+					"}",
+				},
+			},
+		},
+	}
+
+	results := Detector{}.Detect([]model.Playbook{pb}, target)
+	if len(results) != 0 {
+		t.Fatalf("expected required compound to suppress mitigated result, got %#v", results)
+	}
+}
+
+func TestCompoundRequiresDistinctSignalsInScope(t *testing.T) {
+	pb := model.Playbook{
+		ID:        "distinct-compound-signals",
+		BaseScore: 1,
+		Source: model.SourceSpec{
+			Triggers: []model.SignalMatcher{
+				{ID: "trigger", Patterns: []string{"#!/bin/sh"}, Weight: 1},
+			},
+			CompoundSignals: []model.CompoundSignal{
+				{ID: "compound", Require: []string{"trigger", "missing"}, Scope: "file", Bonus: 2, Required: true},
+			},
+		},
+	}
+	target := detectors.Target{
+		Files: []detectors.SourceFile{
+			{
+				Path: "install.sh",
+				Lines: []string{
+					"#!/bin/sh",
+					"cat <<EOF",
+					"#!/bin/sh",
+					"EOF",
+				},
+			},
+		},
+	}
+
+	results := Detector{}.Detect([]model.Playbook{pb}, target)
+	if len(results) != 0 {
+		t.Fatalf("expected duplicate trigger hits not to satisfy missing compound signal, got %#v", results)
+	}
+}
+
+func TestSafeContextPatternsApplyToMatchingLines(t *testing.T) {
+	pb := model.Playbook{
+		ID:        "safe-pattern",
+		BaseScore: 1,
+		Source: model.SourceSpec{
+			Triggers: []model.SignalMatcher{
+				{ID: "trigger", Patterns: []string{"danger()"}, Weight: 1},
+			},
+			SafeContextClasses: []model.SafeContextRule{
+				{ID: "safe", Label: "documented safe context", Patterns: []string{"optional"}, Discount: 1.5},
+			},
+		},
+	}
+	target := detectors.Target{
+		Files: []detectors.SourceFile{
+			{Path: "script.sh", Lines: []string{"danger() # optional probe"}},
+		},
+	}
+
+	results := Detector{}.Detect([]model.Playbook{pb}, target)
+	if len(results) == 0 {
+		t.Fatal("expected result with safe context evidence")
+	}
+	if len(results[0].EvidenceBy.Context) == 0 {
+		t.Fatalf("expected safe context evidence, got %#v", results[0].EvidenceBy)
+	}
+}
+
 func TestCollectConsistencySkipsWhenBelowMinimumPeers(t *testing.T) {
 	pb := model.Playbook{
 		ID: "consistency-min-peers",

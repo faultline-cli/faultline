@@ -8,14 +8,17 @@ tags: [source, go, panic, http, rpc, recovery, middleware]
 domain: source
 class: runtime-fault
 mode: panic-in-http-handler
+context_filters:
+  path_includes: [.go]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
 source:
   triggers:
     - id: http_handler
       label: HTTP or RPC handler function
       patterns:
-        - "func.*Handler"
         - "handler("
-        - "func.*Handle("
+        - "Handler("
+        - "Handle("
         - "func(w http.ResponseWriter, r *http.Request)"
         - "func(w http.ResponseWriter, req *http.Request)"
         - "func(w http.ResponseWriter, request *http.Request)"
@@ -35,7 +38,7 @@ source:
         - "chi.Post("
         - "echo.GET"
         - "gin.GET"
-        - "grpc.*Handler"
+        - "grpc"
       weight: 1.2
   amplifiers:
     - id: panic_call
@@ -77,6 +80,7 @@ source:
       require: [http_handler, panic_call]
       scope: function
       bonus: 2.0
+      required: true
   safe_context:
     - id: test_files_safer
       label: test-only path
@@ -127,7 +131,7 @@ workflow:
     - server.go
   local_repro:
     - faultline inspect .
-    - rg -n "panic\\(|recover\\(|http.HandleFunc|gin.Recovery|middleware.Recover" .
+    - rg -n panic .
   verify:
     - go test ./...
     - go vet ./...

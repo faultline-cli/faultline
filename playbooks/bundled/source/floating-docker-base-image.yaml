@@ -1,0 +1,79 @@
+id: floating-docker-base-image
+title: Docker base image uses a floating latest tag
+category: build
+severity: medium
+detector: source
+base_score: 0.9
+tags: [source, docker, build, reproducibility, image]
+domain: source
+class: dependency
+mode: floating-docker-base-image
+context_filters:
+  path_includes: [Dockerfile]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: latest_base_image
+      label: base image uses latest tag
+      patterns:
+        - ":latest"
+      weight: 1.4
+  amplifiers:
+    - id: docker_from
+      label: Dockerfile base image declaration
+      patterns:
+        - "FROM "
+      weight: 1.2
+  mitigations:
+    - id: digest_pinned
+      label: base image is pinned by digest
+      patterns:
+        - "@sha256:"
+      weight: 3.0
+  compound_signals:
+    - id: floating_base_image
+      label: Dockerfile FROM line uses a mutable latest tag
+      require: [latest_base_image, docker_from]
+      scope: file
+      bonus: 2.0
+      required: true
+  safe_context:
+    - id: examples_are_safer
+      label: example Dockerfile
+      paths: [examples/, example/, docs/]
+      discount: 2.0
+summary: |-
+  A Dockerfile uses a `:latest` base image tag, so rebuilds can pull different bytes over time without a source change.
+diagnosis: |-
+  ## Diagnosis
+
+  The Docker base image is mutable. CI builds that rely on `:latest` can become non-reproducible when the upstream image moves.
+fix: |-
+  ## Fix steps
+
+  1. Replace `:latest` with a specific version tag that matches the supported runtime.
+  2. For release images, pin the base image by digest or use an automated dependency update workflow.
+  3. Rebuild the image and commit the intended base version in the Dockerfile.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Build the Docker image from a clean cache and confirm it uses the pinned base image.
+scoring:
+  blast_radius_bonus: 1.0
+  hot_path_bonus: 0.8
+why_it_matters: |-
+  ## Why it matters
+
+  Floating base images make builds change without a repository diff. That can introduce dependency, OS package, architecture, and runtime changes that are hard to reproduce after CI fails.
+workflow:
+  likely_files:
+    - Dockerfile
+    - docker/Dockerfile
+    - .github/workflows/*.yml
+  local_repro:
+    - faultline inspect .
+    - rg -n latest .
+  verify:
+    - faultline guard .
+    - docker build .

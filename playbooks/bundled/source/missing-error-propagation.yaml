@@ -8,6 +8,9 @@ tags: [source, error-handling, go, silent-failure, observability]
 domain: source
 class: silent-failure
 mode: missing-error-propagation
+context_filters:
+  path_includes: [.go]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
 source:
   triggers:
     - id: error_discarded
@@ -61,6 +64,7 @@ source:
       require: [error_discarded, side_effect_call]
       scope: function
       bonus: 2.0
+      required: true
   local_consistency:
     - id: local_error_check_idiom
       label: violates local error-check idiom
@@ -120,7 +124,7 @@ workflow:
     - cmd/*.go
   local_repro:
     - faultline inspect .
-    - rg -n "_ =|err :=|err = nil|db.Exec\\(|cmd.Run\\(|tx.Commit\\(|rows.Close\\(" .
+    - rg -n _= .
   verify:
     - go test ./...
     - go vet ./...

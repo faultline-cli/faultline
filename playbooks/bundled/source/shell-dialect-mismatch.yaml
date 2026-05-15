@@ -1,0 +1,88 @@
+id: shell-dialect-mismatch
+title: Bash syntax used under a POSIX sh shell
+category: build
+severity: medium
+detector: source
+base_score: 0.9
+tags: [source, shell, ci, bash, sh]
+domain: source
+class: runtime-fault
+mode: shell-dialect-mismatch
+context_filters:
+  path_includes: [.github/workflows/, .gitlab-ci.yml, .sh, .bash]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
+source:
+  triggers:
+    - id: sh_shell
+      label: POSIX sh shell selected
+      patterns:
+        - "shell: sh"
+        - "#!/bin/sh"
+      weight: 1.3
+  amplifiers:
+    - id: bash_only_syntax
+      label: Bash-only syntax appears in the same script or workflow
+      patterns:
+        - "if [["
+        - "set -o pipefail"
+        - "source ./"
+        - "source scripts/"
+        - "function "
+        - "<<<"
+      weight: 1.3
+  mitigations:
+    - id: bash_shell_selected
+      label: Bash shell selected
+      patterns:
+        - "shell: bash"
+        - "#!/usr/bin/env bash"
+        - "#!/bin/bash"
+      weight: 3.0
+  compound_signals:
+    - id: bash_syntax_under_sh
+      label: Bash syntax is configured to run under sh
+      require: [sh_shell, bash_only_syntax]
+      scope: file
+      bonus: 2.0
+      required: true
+  safe_context:
+    - id: examples_are_safer
+      label: example script or workflow
+      paths: [examples/, example/, docs/]
+      discount: 2.0
+summary: |-
+  A CI workflow or script selects `sh` but uses Bash-only syntax such as `[[ ... ]]`, `source`, heredoc strings, functions, or `set -o pipefail`.
+diagnosis: |-
+  ## Diagnosis
+
+  The command is likely to run under POSIX `sh` while using syntax that requires Bash. This causes CI-only failures on runners where `/bin/sh` is not Bash.
+fix: |-
+  ## Fix steps
+
+  1. Change the workflow step to `shell: bash` or update the script shebang to Bash.
+  2. If Bash is not required, rewrite the command using POSIX-compatible syntax.
+  3. Keep the selected shell and script syntax aligned in CI and local runs.
+validation: |-
+  ## Validation
+
+  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run the script with the configured shell and confirm it exits successfully.
+scoring:
+  blast_radius_bonus: 1.0
+  hot_path_bonus: 0.8
+why_it_matters: |-
+  ## Why it matters
+
+  Shell dialect mismatches are portable until they are not: they often pass on one machine and fail on CI images where `/bin/sh` points to `dash` or another minimal shell.
+workflow:
+  likely_files:
+    - .github/workflows/*.yml
+    - .github/workflows/*.yaml
+    - .gitlab-ci.yml
+    - scripts/*.sh
+  local_repro:
+    - faultline inspect .
+    - rg -n shell .
+  verify:
+    - faultline guard .
+    - sh -n scripts/*.sh

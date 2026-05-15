@@ -303,7 +303,7 @@ func resolveLikelyFiles(root string, patterns []string) []string {
 		}
 		if d.IsDir() {
 			switch d.Name() {
-			case ".git", "bin", "dist":
+			case ".git", "bin", "dist", "docs", "fixtures", "playbooks", "testdata":
 				return filepath.SkipDir
 			}
 			return nil

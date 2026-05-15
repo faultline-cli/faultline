@@ -4,7 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/faultline-cli/faultline)](https://github.com/faultline-cli/faultline/releases)
 [![Coverage](https://img.shields.io/badge/coverage-87.8%25-brightgreen)](docs/fixture-corpus.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Playbooks](https://img.shields.io/badge/playbooks-173-blue)](docs/failures/catalog/README.md)
+[![Playbooks](https://img.shields.io/badge/playbooks-177-blue)](docs/failures/catalog/README.md)
 
 Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for the first pass over a failed CI log. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify. If no known pattern matches, it stays quiet. Same log in -> same result out.
 
@@ -14,7 +14,7 @@ Faultline is built for teams that want a trustworthy local classifier before dee
 - Evidence copied from the input log so humans and agents can verify the diagnosis.
 - Stable text, markdown, JSON, and workflow output for CI steps, tickets, agent handoff, and postmortems.
 - Local single-repo recurrence memory for seeing which known failures keep coming back.
-- 173 bundled playbooks, 215 accepted real fixtures, and an 89.4% large-corpus GitHub Actions match-rate evaluation.
+- 177 bundled playbooks, 215 accepted real fixtures, and an 89.4% large-corpus GitHub Actions match-rate evaluation.
 
 ## Try this in 30 seconds
 
@@ -131,7 +131,7 @@ Unknown output is not a failure of the CLI contract. If the log does not match a
 
 ## What It Catches
 
-Faultline ships with 173 bundled playbooks for common CI failure classes.
+Faultline ships with 177 bundled playbooks for common CI failure classes.
 
 | Category | Examples |
 | --- | --- |
@@ -223,7 +223,7 @@ The team questions stay simple:
 
 Faultline optimizes for high precision over broad coverage. The current checked-in fixture baseline is scoped to the repository corpus, not every possible CI failure.
 
-- Bundled playbooks: 173
+- Bundled playbooks: 177
 - Accepted real fixtures: 215
 - Fixture top-1 baseline pass rate: 100% (215/215)
 - Fixture false positives: 0

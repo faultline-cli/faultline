@@ -8,6 +8,9 @@ tags: [source, javascript, typescript, async, promise, unhandled-rejection]
 domain: source
 class: runtime-fault
 mode: unawaited-promise
+context_filters:
+  path_includes: [.js, .jsx, .ts, .tsx]
+  path_excludes: [playbooks/, docs/, fixtures/, internal/engine/testdata/]
 source:
   triggers:
     - id: async_wrapper
@@ -39,6 +42,10 @@ source:
         - ".catch("
         - "try {"
         - "} catch ("
+        - "return fetch("
+        - "return axios."
+        - "return client.request("
+        - "return Promise."
       weight: 1.2
   compound_signals:
     - id: async_fire_and_forget
@@ -46,6 +53,7 @@ source:
       require: [async_wrapper, promise_call]
       scope: function
       bonus: 2.0
+      required: true
   safe_context:
     - id: test_files_safer
       label: test-only path
@@ -79,7 +87,7 @@ workflow:
     - services/**/*.js
   local_repro:
     - faultline inspect .
-    - rg -n "async \\(|async function|fetch\\(|Promise\\.|\\.then\\(" src handlers services
+    - rg -n async .
   verify:
     - faultline guard .
     - npm test

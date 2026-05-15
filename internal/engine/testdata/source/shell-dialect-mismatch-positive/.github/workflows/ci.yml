@@ -1,0 +1,13 @@
+name: ci
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bad shell
+        shell: sh
+        run: |
+          set -o pipefail
+          if [[ -f package.json ]]; then
+            npm test
+          fi

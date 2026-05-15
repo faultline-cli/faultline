@@ -1,0 +1,12 @@
+name: release
+on: [push]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build package
+        run: npm run build
+      - name: Publish package
+        run: npm publish
+        continue-on-error: true

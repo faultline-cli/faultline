@@ -28,9 +28,9 @@ Snapshot date: 2026-05-15.
 
 Current bundled catalog:
 
-- total bundled playbooks: 173
+- total bundled playbooks: 177
 - positive fixture-backed playbooks: 170
-- source-detector playbooks: 3, covered by source fixture tests
+- source-detector playbooks: 7, covered by source fixture tests
 - fixture assertions: 392 positive, 16 negative
 - strict top-1 fixtures: 87
 - duplicate IDs: 0

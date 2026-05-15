@@ -71,6 +71,9 @@ func detectPlaybook(pb model.Playbook, files []preparedFile, changeSet detectors
 	safeDiscount := weightedSum(safeContext, triggers)
 	exceptionDiscount := weightedSuppression(suppressions)
 	compoundBonus, compoundEvidence := applyCompoundSignals(pb, triggers, amplifiers, mitigations)
+	if missingRequiredCompound(pb, compoundEvidence) {
+		return model.Result{}
+	}
 	amplifiers = append(amplifiers, compoundEvidence...)
 	blastBonus, hotBonus := contextBonuses(pb, triggers, contextEvidence)
 	changeBonus, changeStatus := changeAdjustment(pb, triggers, changeSet)
@@ -171,30 +174,64 @@ func collectSafeContext(pb model.Playbook, files []preparedFile) []occurrence {
 	out := make([]occurrence, 0)
 	for _, rule := range pb.Source.SafeContextClasses {
 		for _, file := range files {
-			if !containsAnyPath(file.path, rule.Paths) {
+			if !pathAllowed(file.path, pb.Contextual, nil, nil) {
 				continue
 			}
-			out = append(out, occurrence{
-				evidence: model.Evidence{
-					Kind:      model.EvidenceContext,
-					SignalID:  rule.ID,
-					Label:     coalesce(rule.Label, "safe context"),
-					Detail:    fmt.Sprintf("%s is classified as safe context", file.path),
-					File:      file.path,
-					PathClass: file.pathClass,
-					Scope:     "file",
-					ScopeName: file.path,
-					Proximity: "same_file",
-					Weight:    defaultFloat(rule.Discount, pb.Scoring.SafeContextDiscount, 1),
-					Source:    "source",
-				},
-				scopeKey:  file.path,
-				moduleKey: file.moduleKey,
-			})
+			if len(rule.Paths) > 0 && !containsAnyPath(file.path, rule.Paths) {
+				continue
+			}
+			if len(rule.Patterns) > 0 {
+				for _, line := range file.lines {
+					if !containsPattern(line.normalized, rule.Patterns) {
+						continue
+					}
+					scopeName, scopeKey, proximity := inferScope(file, line)
+					out = append(out, occurrence{
+						evidence: model.Evidence{
+							Kind:      model.EvidenceContext,
+							SignalID:  rule.ID,
+							Label:     coalesce(rule.Label, "safe context"),
+							Detail:    strings.TrimSpace(line.original),
+							File:      file.path,
+							Line:      line.number,
+							PathClass: file.pathClass,
+							Scope:     "function",
+							ScopeName: scopeName,
+							Proximity: proximity,
+							Weight:    defaultFloat(rule.Discount, pb.Scoring.SafeContextDiscount, 1),
+							Source:    "source",
+						},
+						scopeKey:  scopeKey,
+						moduleKey: file.moduleKey,
+					})
+				}
+				continue
+			}
+			out = append(out, safePathOccurrence(rule, pb, file))
 		}
 	}
 	sortOccurrences(out)
 	return out
+}
+
+func safePathOccurrence(rule model.SafeContextRule, pb model.Playbook, file preparedFile) occurrence {
+	return occurrence{
+		evidence: model.Evidence{
+			Kind:      model.EvidenceContext,
+			SignalID:  rule.ID,
+			Label:     coalesce(rule.Label, "safe context"),
+			Detail:    fmt.Sprintf("%s is classified as safe context", file.path),
+			File:      file.path,
+			PathClass: file.pathClass,
+			Scope:     "file",
+			ScopeName: file.path,
+			Proximity: "same_file",
+			Weight:    defaultFloat(rule.Discount, pb.Scoring.SafeContextDiscount, 1),
+			Source:    "source",
+		},
+		scopeKey:  file.path,
+		moduleKey: file.moduleKey,
+	}
 }
 
 func collectSuppressions(pb model.Playbook, files []preparedFile) ([]occurrence, bool) {
@@ -375,35 +412,39 @@ func applyCompoundSignals(pb model.Playbook, triggers, amplifiers, mitigations [
 	for _, item := range append(append([]occurrence{}, triggers...), amplifiers...) {
 		signalMap[item.evidence.SignalID] = append(signalMap[item.evidence.SignalID], item)
 	}
-	mitigatedScopes := make(map[string]struct{})
-	for _, mitigation := range mitigations {
-		mitigatedScopes[mitigation.scopeKey] = struct{}{}
-	}
 	for _, compound := range pb.Source.CompoundSignals {
 		if len(compound.Require) == 0 {
 			continue
 		}
-		scopeCounts := make(map[string]int)
+		mitigatedScopes := make(map[string]struct{})
+		for _, mitigation := range mitigations {
+			mitigatedScopes[scopedKey(compound.Scope, mitigation)] = struct{}{}
+		}
+		scopeSignals := make(map[string]map[string]struct{})
 		reference := make(map[string]occurrence)
 		for _, signalID := range compound.Require {
 			for _, hit := range signalMap[signalID] {
 				scopeKey := scopedKey(compound.Scope, hit)
-				scopeCounts[scopeKey]++
+				signals := scopeSignals[scopeKey]
+				if signals == nil {
+					signals = make(map[string]struct{})
+					scopeSignals[scopeKey] = signals
+				}
+				signals[signalID] = struct{}{}
 				if _, ok := reference[scopeKey]; !ok {
 					reference[scopeKey] = hit
 				}
 			}
 		}
 		// Collect and sort scope keys for deterministic iteration
-		scopeKeys := make([]string, 0, len(scopeCounts))
-		for scopeKey := range scopeCounts {
+		scopeKeys := make([]string, 0, len(scopeSignals))
+		for scopeKey := range scopeSignals {
 			scopeKeys = append(scopeKeys, scopeKey)
 		}
 		sort.Strings(scopeKeys)
 
 		for _, scopeKey := range scopeKeys {
-			count := scopeCounts[scopeKey]
-			if count < len(compound.Require) {
+			if len(scopeSignals[scopeKey]) < len(compound.Require) {
 				continue
 			}
 			if !compound.AllowMitigated {
@@ -437,6 +478,22 @@ func applyCompoundSignals(pb model.Playbook, triggers, amplifiers, mitigations [
 	}
 	sortOccurrences(out)
 	return total, out
+}
+
+func missingRequiredCompound(pb model.Playbook, compoundEvidence []occurrence) bool {
+	required := make(map[string]struct{})
+	for _, compound := range pb.Source.CompoundSignals {
+		if compound.Required {
+			required[compound.ID] = struct{}{}
+		}
+	}
+	if len(required) == 0 {
+		return false
+	}
+	for _, item := range compoundEvidence {
+		delete(required, item.evidence.SignalID)
+	}
+	return len(required) > 0
 }
 
 func contextBonuses(pb model.Playbook, triggers, contextEvidence []occurrence) (float64, float64) {

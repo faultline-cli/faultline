@@ -1,0 +1,9 @@
+name: ci
+on: [push]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Experimental optional coverage probe
+        run: npm run coverage
+        continue-on-error: true

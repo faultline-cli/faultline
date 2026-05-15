@@ -3,7 +3,7 @@
 Faultline now supports multiple deterministic detector modules behind a shared
 result model.
 
-The bundled catalog currently splits into 98 log playbooks and 3 source
+The bundled catalog currently splits into 170 log playbooks and 7 source
 playbooks.
 
 ## Built-in detectors
@@ -40,6 +40,10 @@ source:
 scoring: {}
 ```
 
+Source playbooks may mark a compound signal as `required: true` when a finding
+should only exist for a co-occurring risky pattern. Required compound signals
+are not emitted when same-scope mitigation evidence is present.
+
 ## Scoring flow
 
 The source detector computes a final score from:
@@ -72,9 +76,11 @@ and line-level edits can be scored as introduced or modified rather than only
 as legacy repository risk. Positive and mitigated repository fixtures for the
 shipped source rules live under `internal/engine/testdata/source/` and are
 validated in `internal/engine/source_playbook_fixtures_test.go`.
-The repository scan skips dependency trees such as `.git/`, `node_modules/`,
-`vendor/`, `.venv/`, and `venv/` so `inspect` and `guard` stay focused on the
-repository's own source rather than bundled tooling copies.
+The repository scan skips dependency and generated-output trees such as `.git/`,
+`node_modules/`, `vendor/`, `.venv/`, `venv/`, and `dist/` so `inspect` and
+`guard` stay focused on the
+repository's own source rather than bundled tooling copies. It includes common
+source files, workflow YAML, shell scripts, and `Dockerfile`.
 
 Shipped source playbooks should also carry deterministic `workflow.likely_files`,
 `workflow.local_repro`, and `workflow.verify` hints so source findings hand off
