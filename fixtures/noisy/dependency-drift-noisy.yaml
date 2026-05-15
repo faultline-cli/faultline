@@ -1,0 +1,6 @@
+id: dependency-drift-noisy
+title: Noisy monorepo build log with dependency version drift in React toolchain
+fixture_class: noisy
+path: internal/signature/testdata/variants/dependency-drift-react.log
+expectation:
+  expected_playbook: dependency-drift

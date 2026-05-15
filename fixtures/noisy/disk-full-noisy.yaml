@@ -1,0 +1,6 @@
+id: disk-full-noisy
+title: Noisy build log with ENOSPC during filesystem writes
+fixture_class: noisy
+path: internal/engine/testdata/corpus/disk-full-noisy.log
+expectation:
+  expected_playbook: disk-full

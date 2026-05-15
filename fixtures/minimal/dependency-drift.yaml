@@ -1,0 +1,7 @@
+id: dependency-drift-canonical
+title: Resolver reports incompatible dependency requirements across packages
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/dependency-drift.log
+expectation:
+  expected_playbook: dependency-drift
+  strict_top1: true

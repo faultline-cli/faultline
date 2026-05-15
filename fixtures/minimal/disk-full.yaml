@@ -1,0 +1,7 @@
+id: disk-full-canonical
+title: Host or container filesystem reports ENOSPC and write failures
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/disk-full.log
+expectation:
+  expected_playbook: disk-full
+  strict_top1: true

@@ -27,10 +27,6 @@ fixtures:
     path: internal/engine/testdata/fixtures/dns-resolution.log
     expectation:
       expected_playbook: dns-resolution
-  - id: minimal-disk-full
-    path: internal/engine/testdata/fixtures/disk-full.log
-    expectation:
-      expected_playbook: disk-full
   - id: minimal-network-context-deadline
     path: internal/engine/testdata/fixtures/network-context-deadline.log
     expectation:
@@ -159,10 +155,6 @@ fixtures:
     path: internal/engine/testdata/fixtures/coverage-gate-failure.log
     expectation:
       expected_playbook: coverage-gate-failure
-  - id: minimal-dependency-drift
-    path: internal/engine/testdata/fixtures/dependency-drift.log
-    expectation:
-      expected_playbook: dependency-drift
   - id: minimal-go-compile-error
     path: internal/engine/testdata/fixtures/go-compile-error.log
     expectation:

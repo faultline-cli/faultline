@@ -1,0 +1,8 @@
+id: dependency-drift-near-miss
+title: npm ERESOLVE peer dependency conflict is a near-miss for generic dependency drift
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/npm-eresolve-conflict.log
+expectation:
+  expected_playbook: npm-eresolve-conflict
+  disallowed_playbooks:
+    - dependency-drift
