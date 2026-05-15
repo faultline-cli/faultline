@@ -15,7 +15,6 @@ pnpm failed because the lockfile is missing, out of sync, or was not committed. 
 ERR_PNPM_FROZEN_LOCKFILE_CHANGED
 pnpm-lock.yaml.*not in sync
 lockfile.*missing
-pnpm install --frozen-lockfile
 pnpm ERR!
 ```
 

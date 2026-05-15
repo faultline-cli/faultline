@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,24 @@ func TestAnalyzeHelpOmitsExperimentalDeltaFlags(t *testing.T) {
 	}
 	if strings.Contains(out.String(), "delta-provider") {
 		t.Fatalf("expected analyze help to omit hidden experimental delta flags, got %q", out.String())
+	}
+	if strings.Contains(out.String(), "metrics-history") {
+		t.Fatalf("expected analyze help to omit hidden metrics history flag, got %q", out.String())
+	}
+}
+
+func TestWorkflowHelpOmitsMetricsHistoryFlag(t *testing.T) {
+	cmd := newRootCommand()
+	cmd.SetArgs([]string{"workflow", "--help"})
+	out := &bytes.Buffer{}
+	cmd.SetOut(out)
+	cmd.SetErr(new(bytes.Buffer))
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("execute workflow --help: %v", err)
+	}
+	if strings.Contains(out.String(), "metrics-history") {
+		t.Fatalf("expected workflow help to omit hidden metrics history flag, got %q", out.String())
 	}
 }
 
@@ -111,6 +130,80 @@ func TestExampleWorkflowSnapshots(t *testing.T) {
 			t.Fatal("agent workflow snapshot mismatch")
 		}
 	})
+}
+
+func TestMetricsHistoryFlagEnablesExplicitMetricsOnlyWhenRequested(t *testing.T) {
+	playbookDir, err := filepath.Abs("../playbooks/bundled")
+	if err != nil {
+		t.Fatalf("abs playbook dir: %v", err)
+	}
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+	repoRoot := filepath.Clean("..")
+
+	logPath := "examples/missing-executable.log"
+	withoutMetrics := runRootCommand(t, repoRoot, "analyze", "--json", "--no-history", "--git=false", logPath)
+	var plain map[string]interface{}
+	if err := json.Unmarshal([]byte(withoutMetrics), &plain); err != nil {
+		t.Fatalf("unmarshal default analyze JSON: %v", err)
+	}
+	if _, ok := plain["metrics"]; ok {
+		t.Fatalf("default analyze output should not include metrics: %s", withoutMetrics)
+	}
+	if _, ok := plain["policy"]; ok {
+		t.Fatalf("default analyze output should not include policy: %s", withoutMetrics)
+	}
+
+	historyPath := writeMetricsHistory(t)
+	withMetrics := runRootCommand(t, repoRoot, "analyze", "--json", "--no-history", "--git=false", "--metrics-history", historyPath, logPath)
+	var enriched map[string]interface{}
+	if err := json.Unmarshal([]byte(withMetrics), &enriched); err != nil {
+		t.Fatalf("unmarshal metrics analyze JSON: %v", err)
+	}
+	if enriched["metrics"] == nil {
+		t.Fatalf("expected explicit metrics history to emit metrics: %s", withMetrics)
+	}
+	if enriched["policy"] == nil {
+		t.Fatalf("expected explicit metrics history to emit advisory policy: %s", withMetrics)
+	}
+}
+
+func TestWorkflowMetricsHistoryFlagAddsDeterministicHints(t *testing.T) {
+	playbookDir, err := filepath.Abs("../playbooks/bundled")
+	if err != nil {
+		t.Fatalf("abs playbook dir: %v", err)
+	}
+	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
+	repoRoot := filepath.Clean("..")
+
+	historyPath := writeMetricsHistory(t)
+	got := runRootCommand(t, repoRoot, "workflow", "--json", "--mode", "agent", "--no-history", "--git=false", "--metrics-history", historyPath, "examples/missing-executable.log")
+	var payload map[string]interface{}
+	if err := json.Unmarshal([]byte(got), &payload); err != nil {
+		t.Fatalf("unmarshal workflow JSON: %v", err)
+	}
+	if hints, ok := payload["metrics_hints"].([]interface{}); !ok || len(hints) == 0 {
+		t.Fatalf("expected metrics_hints from explicit metrics history: %s", got)
+	}
+	if hints, ok := payload["policy_hints"].([]interface{}); !ok || len(hints) == 0 {
+		t.Fatalf("expected policy_hints from explicit metrics history: %s", got)
+	}
+}
+
+func writeMetricsHistory(t *testing.T) string {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), "metrics-history.jsonl")
+	data := strings.Join([]string{
+		`{"matched":true,"failure_id":"missing-executable"}`,
+		`{"matched":true,"failure_id":"missing-executable"}`,
+		`{"matched":true,"failure_id":"missing-executable"}`,
+		`{"matched":true,"failure_id":"missing-executable"}`,
+		`{"matched":false}`,
+	}, "\n") + "\n"
+	if err := os.WriteFile(path, []byte(data), 0o644); err != nil {
+		t.Fatalf("write metrics history: %v", err)
+	}
+	return path
 }
 
 func runRootCommand(t *testing.T, workdir string, args ...string) string {

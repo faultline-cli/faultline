@@ -11,8 +11,14 @@ go test ./...
 printf '%s\n' "release verification: make fixture-check"
 make fixture-check
 
+printf '%s\n' "release verification: make bayes-check"
+make bayes-check
+
 printf '%s\n' "release verification: make review"
 make review
+
+printf '%s\n' "release verification: make docs-check"
+make docs-check
 
 printf '%s\n' "release verification: make cli-smoke"
 make cli-smoke

@@ -45,6 +45,8 @@ Local history enrichment in `analyze` output remains explicit opt-in through:
 - `--history`
 - `--store /path/to/store.db`
 - `FAULTLINE_STORE` set to a concrete store path
+- the hidden advanced `--metrics-history <jsonl>` flag when only explicit
+  reliability metrics are needed
 
 `--no-history` and `--no-store` remain hidden compatibility switches and force
 the no-op store. Explicit history commands (`report`, `history`, `signatures`,
@@ -125,6 +127,9 @@ The store is additive to the analysis path:
 - the engine still analyzes input without reading SQL
 - default `faultline analyze` writes to local SQLite, but normal output omits
   recurrence counters unless `--history`, `--store`, or `FAULTLINE_STORE` is set
+- reliability metrics and advisory policy fields stay absent unless local
+  history is explicitly surfaced or an explicit metrics history file provides
+  enough input data
 - disabling the store or leaving history off does not change match logic
 - store failures do not block core analysis by default
 - JSON remains stable and additive for automation
@@ -148,6 +153,10 @@ That history summary is intentionally concise:
 - a short `signature_hash` prefix so users can pivot into `faultline history --signature <hash>`
 - a recurrence line such as `seen 3 times over 7d in local history`
 - explicit `first seen` and `last seen` timestamps
+
+When reliability metrics are emitted, they are advisory context only. Faultline
+does not trigger retries, quarantine suites, route CI jobs, or mutate pipeline
+state from local metrics or policy recommendations.
 
 To keep repeated-run verification useful, `output_hash` is computed from the
 stable diagnosis payload before local-history counters and policy summaries are

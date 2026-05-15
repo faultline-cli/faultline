@@ -43,6 +43,7 @@ func newAnalyzeCommand() *cobra.Command {
 		gitlabPipelineID int64
 		gitlabJobID      int64
 		gitlabAPIBaseURL string
+		metricsHistory   string
 		failOnSilent     bool
 	)
 
@@ -132,12 +133,13 @@ func newAnalyzeCommand() *cobra.Command {
 					GitLabToken:      firstNonEmpty(os.Getenv("GITLAB_TOKEN"), os.Getenv("GITLAB_PRIVATE_TOKEN"), os.Getenv("CI_JOB_TOKEN")),
 					GitLabAPIBaseURL: firstNonEmpty(gitlabAPIBaseURL, os.Getenv("CI_API_V4_URL"), deriveGitLabAPIBaseURL(os.Getenv("CI_SERVER_URL"))),
 				},
-				PlaybookDir:      playbookDir,
-				PlaybookPackDirs: playbookPacks,
-				BayesEnabled:     bayes,
-				Store:            resolvedStore,
-				History:          resolveStoreHistoryOutput(history, noHistory, noStore, storePath),
-				FailOnSilent:     failOnSilent,
+				PlaybookDir:        playbookDir,
+				PlaybookPackDirs:   playbookPacks,
+				BayesEnabled:       bayes,
+				MetricsHistoryFile: metricsHistory,
+				Store:              resolvedStore,
+				History:            resolveStoreHistoryOutput(history, noHistory, noStore, storePath),
+				FailOnSilent:       failOnSilent,
 			}, cmd.OutOrStdout())
 		},
 	}
@@ -173,6 +175,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().Int64Var(&gitlabPipelineID, "gitlab-pipeline-id", 0, "GitLab pipeline ID for --delta-provider gitlab-ci (defaults to CI_PIPELINE_ID)")
 	cmd.Flags().Int64Var(&gitlabJobID, "gitlab-job-id", 0, "GitLab job ID for --delta-provider gitlab-ci (defaults to CI_JOB_ID)")
 	cmd.Flags().StringVar(&gitlabAPIBaseURL, "gitlab-api-base-url", "", "GitLab API v4 base URL for --delta-provider gitlab-ci (defaults to CI_API_V4_URL)")
+	cmd.Flags().StringVar(&metricsHistory, "metrics-history", "", "read explicit metrics history JSONL for reliability metrics")
 	cmd.Flags().BoolVar(&failOnSilent, "fail-on-silent", false, "exit non-zero when a silent failure is detected")
 	_ = cmd.Flags().MarkHidden("delta-provider")
 	_ = cmd.Flags().MarkHidden("github-repo")
@@ -183,6 +186,7 @@ func newAnalyzeCommand() *cobra.Command {
 	_ = cmd.Flags().MarkHidden("gitlab-pipeline-id")
 	_ = cmd.Flags().MarkHidden("gitlab-job-id")
 	_ = cmd.Flags().MarkHidden("gitlab-api-base-url")
+	_ = cmd.Flags().MarkHidden("metrics-history")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")

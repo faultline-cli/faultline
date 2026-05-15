@@ -26,7 +26,7 @@ help:
 		"  review-verbose  Print the full bundled playbook pattern conflict report" \
 		"  eval-build      Build the faultline-eval corpus evaluation tool" \
 		"  eval-run        Ingest, run, report, and gap-analyse the Travis Torrent dataset" \
-		"  release-check   Run release-grade validation: tests, review, archive build, and smoke" \
+		"  release-check   Run release-grade validation: tests, fixtures, Bayes, docs, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
 		"  clean-dist      Remove generated release artifacts" \
@@ -100,7 +100,7 @@ smoke-release:
 release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
-release-check: test fixture-check review cli-smoke release-snapshot smoke-release
+release-check: test fixture-check bayes-check review docs-check cli-smoke release-snapshot smoke-release
 	@if EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh >/dev/null 2>&1; then \
 		$(MAKE) extra-pack-check EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)"; \
 	else \

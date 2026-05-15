@@ -130,7 +130,7 @@ faultline workflow build.log --json --mode agent
 
 - Code formatting check failure
 - Build: code formatting check failure
-- declaration-block-no-duplicate-properties
+- Line longer than 100 characters
 - GitHub Actions code formatting check failure
 - faultline explain formatting-failure
 

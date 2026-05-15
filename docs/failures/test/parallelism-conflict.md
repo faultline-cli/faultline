@@ -14,8 +14,8 @@ Parallel test execution caused a resource conflict: two tests tried to bind the 
 ```text
 resource is busy
 test is not parallelizable
-race detected
 concurrently
+race detected
 too many connections
 database locked
 concurrent =

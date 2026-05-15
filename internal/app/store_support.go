@@ -166,6 +166,9 @@ func shouldIncludeHistoryOutput(opts AnalyzeOptions) bool {
 	if opts.History {
 		return true
 	}
+	if strings.TrimSpace(opts.MetricsHistoryFile) != "" {
+		return true
+	}
 	value := strings.TrimSpace(opts.Store)
 	if value == "" || strings.EqualFold(value, string(store.ModeAuto)) || strings.EqualFold(value, string(store.ModeOff)) {
 		return false

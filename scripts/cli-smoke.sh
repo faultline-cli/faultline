@@ -58,6 +58,7 @@ run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/missing.analysis.json"
+grep -F '"pack_provenance":[{"name":"starter","playbook_count":173}]' "$TMP_DIR/missing.analysis.json" >/dev/null
 cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/runtime.analysis.json"
 
@@ -77,6 +78,25 @@ compare_file "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executabl
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false >"$TMP_DIR/workflow.agent.json"
 compare_file "$TMP_DIR/workflow.agent.json" "$ROOT_DIR/examples/missing-executable.workflow.agent.json"
+
+cat >"$TMP_DIR/metrics-history.jsonl" <<'EOF'
+{"matched":true,"failure_id":"missing-executable"}
+{"matched":true,"failure_id":"missing-executable"}
+{"matched":true,"failure_id":"missing-executable"}
+{"matched":true,"failure_id":"missing-executable"}
+{"matched":false}
+EOF
+cat "$ROOT_DIR/examples/missing-executable.log" | \
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false --metrics-history "$TMP_DIR/metrics-history.jsonl" >"$TMP_DIR/workflow.metrics.agent.json"
+grep -F '"metrics_hints":' "$TMP_DIR/workflow.metrics.agent.json" >/dev/null
+grep -F '"policy_hints":' "$TMP_DIR/workflow.metrics.agent.json" >/dev/null
+
+STORE_PATH="$TMP_DIR/faultline-store.db"
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --store "$STORE_PATH" --git=false >/dev/null
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --store "$STORE_PATH" --git=false >/dev/null
+FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" report --store "$STORE_PATH" --json >"$TMP_DIR/report.json"
+grep -F '"failure_id": "missing-executable"' "$TMP_DIR/report.json" >/dev/null
+grep -F '"count": 2' "$TMP_DIR/report.json" >/dev/null
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" explain docker-auth >"$TMP_DIR/explain.txt"
 grep -F "docker-auth" "$TMP_DIR/explain.txt" >/dev/null
@@ -121,6 +141,13 @@ grep -F "panic-in-http-handler" "$TMP_DIR/guard.txt" >/dev/null
 
 HOME="$TMP_DIR/home" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs list >"$TMP_DIR/packs.txt"
 grep -F "No installed playbook packs." "$TMP_DIR/packs.txt" >/dev/null
+
+PACK_HOME="$TMP_DIR/pack-home"
+HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs install "$ROOT_DIR/examples/packs/minimal" --name example-pack >"$TMP_DIR/packs-install.txt"
+printf '%s\n' "example cache prime missing" | \
+	HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/extra-pack.analysis.json"
+grep -F '"failure_id":"example-cache-prime-missing"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
+grep -F '"pack_provenance":[{"name":"starter","playbook_count":173},{"name":"example-pack","version":"0.0.0+local"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage >"$TMP_DIR/coverage.txt"
 grep -F "Playbook coverage report" "$TMP_DIR/coverage.txt" >/dev/null

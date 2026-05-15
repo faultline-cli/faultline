@@ -22,7 +22,7 @@ Faultline is currently implemented as a CLI-first deterministic product with bot
 The repository currently ships these user-visible commands:
 
 - core path: `analyze`, `workflow`, `list`, `explain`, `fix`
-- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `packs`
+- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `batch`, `coverage`, `packs`
 
 Important current behavior:
 
@@ -30,6 +30,7 @@ Important current behavior:
 - `workflow` supports `local` and `agent` modes and emits `workflow.v1` JSON
 - `inspect` and `guard` expose the source detector through repository-local checks
 - `replay` and `compare` operate on saved analysis artifacts without re-running matching
+- `report` and `history` read only the local forensic store and remain companion surfaces
 - `packs install` and `packs list` support optional extra catalog composition
 - hidden maintainer-only `fixtures` commands remain available for corpus curation
 
@@ -47,7 +48,9 @@ The repository is in the expected current state when these remain true:
 
 - `go test ./...` passes
 - `make fixture-check` passes on the accepted real corpus baseline
+- `make bayes-check` passes with no ranking regressions
 - `make review` remains clean after playbook or pattern changes
+- `make docs-check` confirms generated failure docs are current
 - `make cli-smoke` passes against checked-in examples and companion-command snapshots
 - `make release-check VERSION=<tag>` passes before a release cut
 

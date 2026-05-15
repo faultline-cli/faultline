@@ -10,7 +10,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Top-3 baseline pass rate: 100% (215/215)
 - Unmatched fixtures: 0 (0.0%)
 - False positives: 0
-- Weak matches: 1 (0.5%)
+- Weak matches: 0 (0.0%)
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
@@ -71,13 +71,14 @@ Starting snapshot table for release-over-release tracking:
 | 2026-04-30 v0.4.4 corpus hardening pass | 193 | 228 | 32 | 92.1% | 92.1% | 7.9% | 0 |
 | 2026-05-01 v0.4.4 corpus quality pass (removed 17 no-signal fixtures, added if-no-files-found pattern) | 193 | 211 | 32 | 100% | 100% | 0% | 0 |
 | 2026-05-02 playbook triage pass (removed 20 low-signal bundled playbooks) | 173 | 211 | 32 | 100% | 100% | 0% | 0 |
-| 2026-05-02 fixture promotion pass (promoted 4 staging candidates) | 173 | 215 | 32 | 100% | 100% | 0% | 0 || 2026-05-15 v0.4.6 robustness improvements + playbook refinement + test coverage pass | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
+| 2026-05-02 fixture promotion pass (promoted 4 staging candidates) | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
+| 2026-05-15 v0.4.6 robustness improvements + playbook refinement + test coverage pass | 173 | 215 | 32 | 100% | 100% | 0% | 0 |
 Append one row per release cut so corpus growth and match stability stay visible over time.
 
 ## Coverage Observations
 
 - The corpus mix is still GitHub-heavy: 104 GitHub fixtures (48%) out of 215 accepted real fixtures.
-- The current baseline shows 0 unmatched fixtures and 1 weak match (`stackexchange-stackoverflow-66973433-s4-52f19765e92d43ae`). All recent promotions are clean top-1 matches.
+- The current baseline shows 0 unmatched fixtures, 0 weak matches, and 0 false positives. All recent promotions are clean top-1 matches.
 - Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
   the noisy variant corpus under `internal/signature/testdata/variants/` plus

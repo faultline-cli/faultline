@@ -6,26 +6,31 @@
 # Matchers defined here can be composed across playbooks to reduce duplication
 # and improve maintainability of complex match logic.
 
-matchers:
+schema_version: matchers.v1
+
+named_matches:
   # Example matcher for cache-related patterns
   cache_store_patterns:
-    - cache restored
-    - cache hit
-    - loaded from cache
-    - cache miss
-    - cache not found
+    any:
+      - cache restored
+      - cache hit
+      - loaded from cache
+      - cache miss
+      - cache not found
 
   # Example matcher for common error keywords
   error_keywords:
-    - error:
-    - failed
-    - failure
-    - cannot
-    - unable to
+    any:
+      - "error:"
+      - failed
+      - failure
+      - cannot
+      - unable to
 
   # Example matcher for setup/initialization errors
   setup_errors:
-    - setup failed
-    - initialization error
-    - bootstrap failed
-    - startup error
+    any:
+      - setup failed
+      - initialization error
+      - bootstrap failed
+      - startup error

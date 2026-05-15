@@ -62,6 +62,9 @@ Faultline ships a deliberately narrow default experience for the next release:
 - Use `faultline fix` when only the top remediation steps are needed
 
 Everything else should either be a bounded companion surface with explicit verification or a hidden maintainer workflow.
+Local recurrence commands such as `report` and `history` remain companion
+surfaces: useful after stored local runs exist, but not part of the first-run
+diagnosis narrative.
 
 Team commands and Team-enriched modes are intentionally outside this default
 onboarding narrative.
@@ -168,6 +171,8 @@ The repository is release-ready only when all of these stay true:
 - `make test` passes
 - `make review` passes after playbook or pattern changes
 - `make fixture-check` passes on the accepted real corpus baseline
+- `make bayes-check` passes because Bayes is default ranking behavior
+- `make docs-check` passes so generated failure docs stay aligned with bundled playbooks
 - `make cli-smoke` passes against checked-in examples and workflow snapshots
 - `make release-check VERSION=<tag>` passes before a release cut
 

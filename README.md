@@ -90,7 +90,24 @@ Faultline output is designed to be inspectable.
 
 Unknown output is not a failure of the CLI contract. If the log does not match a known class, Faultline should say so instead of inventing a diagnosis.
 
-## v0.4.6 Release Signal
+## v0.4.7 Release
+
+v0.4.7 is a hardening release for the existing local-first product. It does
+not add a new first-run surface; it tightens the release gates and makes local
+recurrence, metrics, and generated docs easier to trust.
+
+- Added generated failure-doc validation and Bayes regression checks to the
+  release gate so stale docs or ranking drift block release cuts.
+- Kept normal `analyze` and `workflow` output stable unless local history or
+  explicit metrics history is requested.
+- Added hidden advanced metrics-history input for deterministic reliability
+  metrics and advisory policy hints without adding new public JSON fields.
+- Expanded CLI smoke coverage for local `report`, workflow metrics hints, and
+  bundled-plus-installed pack provenance ordering.
+- Backfilled v0.4.6 release notes and corrected fixture-corpus drift so the
+  repository proof matches the current checked-in baseline.
+
+## v0.4.6 Release
 
 v0.4.6 keeps the default story narrow: classify the failed log, show the evidence, and hand off the known fix path. The release favors fewer, stronger defaults over broad but weak inference.
 
@@ -117,7 +134,11 @@ faultline explain missing-executable
 - `list`: browse known failure classes.
 - `explain`: inspect one failure class before trusting or changing it.
 
-Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`, `report`, and `packs` exist, but they are not the first-run story.
+Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`,
+`report`, `history`, `batch`, `coverage`, and `packs` exist, but they are not
+the first-run story. `report` and `history` read only the local forensic store
+created by prior local runs; cross-repo recurrence and coordination belong to
+the Team layer.
 
 ## What It Catches
 
@@ -209,7 +230,9 @@ For code changes:
 ```bash
 make build
 make test
+make fixture-check
 make review
+make docs-check
 make cli-smoke
 ```
 
@@ -243,7 +266,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 ```
 
 ```bash
-VERSION=v0.4.6
+VERSION=v0.4.7
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"

@@ -23,7 +23,7 @@ fix: |-
   ## Fix steps
 
   1. Understand that hypothesis fields are optional but powerful for disambiguation.
-  2. Use supports/contradicts to add confidence weights when source-repo context is available.
+  2. Use supports/contradicts to add confidence weights when log, context, or delta signals are available.
   3. Use discriminators when you have clear evidence that rules out rival playbooks.
   4. See the hypothesis field in this playbook for concrete examples.
 
@@ -51,26 +51,28 @@ match:
 hypothesis:
   # Supports: signals that increase confidence in THIS playbook
   supports:
-    - signal: build.system.package
-      weight: 0.6
+    - signal: context.stage:build
+      weight: 0.3
+    - signal: log.contains:example hypothesis demo
+      weight: 0.4
   
   # Contradicts: signals that decrease confidence in THIS playbook
   # (they suggest a rival playbook is more likely)
   contradicts:
-    - signal: network.timeout
+    - signal: runtime.version.mismatch
       weight: -0.5
-    - signal: runtime.memory.constrained
+    - signal: test.timeout.detected
       weight: -0.4
   
   # Discriminators: when system detects BOTH this signal and the pattern,
   # it's strong evidence for THIS playbook over rivals
   discriminators:
-    - description: "Package errors clearly point to build system, not runtime"
-      signal: build.system.package
+    - description: "The synthetic demo marker clearly points to this example playbook"
+      signal: log.contains:example hypothesis demo
   
   # Excludes: signals whose presence means this playbook should not match
   excludes:
-    - signal: network.connectivity.offline
+    - signal: log.contains:network timeout
 
 workflow:
   likely_files:
