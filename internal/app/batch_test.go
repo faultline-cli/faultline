@@ -470,3 +470,25 @@ func TestResolvePathWithinRootRejectsAbsolutePathOutsideRoot(t *testing.T) {
 		t.Fatalf("expected path escape error, got %v", err)
 	}
 }
+
+func TestResolvePathWithinRootRejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	outsideDir := t.TempDir()
+	outsideTarget := filepath.Join(outsideDir, "outside.log")
+	if err := os.WriteFile(outsideTarget, []byte("outside"), 0o644); err != nil {
+		t.Fatalf("write outside target: %v", err)
+	}
+
+	linkPath := filepath.Join(root, "linked.log")
+	if err := os.Symlink(outsideTarget, linkPath); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	_, err := resolvePathWithinRoot(linkPath, root)
+	if err == nil {
+		t.Fatal("expected symlink escape error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
+	}
+}

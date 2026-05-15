@@ -749,7 +749,16 @@ func resolvePathWithinRoot(src, rootAbs string) (string, error) {
 		return "", fmt.Errorf("resolve absolute path: %w", err)
 	}
 
-	rel, err := filepath.Rel(rootAbs, candidateAbs)
+	rootEval, err := filepath.EvalSymlinks(rootAbs)
+	if err != nil {
+		return "", fmt.Errorf("resolve root symlinks: %w", err)
+	}
+	candidateEval, err := resolvePathForContainment(candidateAbs)
+	if err != nil {
+		return "", fmt.Errorf("resolve candidate symlinks: %w", err)
+	}
+
+	rel, err := filepath.Rel(rootEval, candidateEval)
 	if err != nil {
 		return "", fmt.Errorf("compute relative path: %w", err)
 	}
@@ -758,6 +767,40 @@ func resolvePathWithinRoot(src, rootAbs string) (string, error) {
 	}
 
 	return candidateAbs, nil
+}
+
+func resolvePathForContainment(candidateAbs string) (string, error) {
+	candidateEval, err := filepath.EvalSymlinks(candidateAbs)
+	if err == nil {
+		return candidateEval, nil
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		return "", err
+	}
+
+	ancestor := filepath.Dir(candidateAbs)
+	for {
+		if _, statErr := os.Lstat(ancestor); statErr == nil {
+			ancestorEval, evalErr := filepath.EvalSymlinks(ancestor)
+			if evalErr != nil {
+				return "", evalErr
+			}
+			tail, relErr := filepath.Rel(ancestor, candidateAbs)
+			if relErr != nil {
+				return "", relErr
+			}
+			return filepath.Join(ancestorEval, tail), nil
+		} else if !errors.Is(statErr, os.ErrNotExist) {
+			return "", statErr
+		}
+
+		next := filepath.Dir(ancestor)
+		// filepath.Dir returns the same value at filesystem root.
+		if next == ancestor {
+			return candidateAbs, nil
+		}
+		ancestor = next
+	}
 }
 
 func formatBatchText(r *model.BatchResult) string {

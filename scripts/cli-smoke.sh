@@ -5,6 +5,7 @@ set -eu
 ROOT_DIR="${ROOT_DIR:-$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)}"
 BINARY="${BINARY:-$ROOT_DIR/bin/faultline}"
 PLAYBOOK_DIR="${FAULTLINE_PLAYBOOK_DIR:-$ROOT_DIR/playbooks/bundled}"
+STARTER_PLAYBOOK_COUNT="${STARTER_PLAYBOOK_COUNT:-173}"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
@@ -63,7 +64,9 @@ run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/missing.analysis.json"
-grep -F '"pack_provenance":[{"name":"starter"' "$TMP_DIR/missing.analysis.json" >/dev/null
+jq -e --argjson expected_count "$STARTER_PLAYBOOK_COUNT" \
+	'.pack_provenance | length == 1 and .[0].name == "starter" and .[0].playbook_count == $expected_count' \
+	"$TMP_DIR/missing.analysis.json" >/dev/null
 cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/runtime.analysis.json"
 
@@ -152,8 +155,9 @@ HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs install
 printf '%s\n' "example cache prime missing" | \
 	HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/extra-pack.analysis.json"
 grep -F '"failure_id":"example-cache-prime-missing"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
-grep -F '"pack_provenance":[{"name":"starter"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
-grep -F '{"name":"example-pack","version":"0.0.0+local"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
+jq -e --argjson expected_count "$STARTER_PLAYBOOK_COUNT" \
+	'.pack_provenance | length == 2 and .[0].name == "starter" and .[0].playbook_count == $expected_count and .[1].name == "example-pack" and .[1].version == "0.0.0+local"' \
+	"$TMP_DIR/extra-pack.analysis.json" >/dev/null
 
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage >"$TMP_DIR/coverage.txt"
 grep -F "Playbook coverage report" "$TMP_DIR/coverage.txt" >/dev/null
