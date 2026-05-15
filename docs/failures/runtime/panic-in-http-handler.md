@@ -7,7 +7,7 @@
 
 ## What this failure means
 
-A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
+A `panic` call appears inside an HTTP or RPC handler with no `recover()` in a deferred function, which can crash the goroutine or take down the server process.
 
 ## Common log signals
 
@@ -15,7 +15,19 @@ A `panic` call appears inside an HTTP or RPC handler function without a correspo
 
 ## Diagnosis
 
-A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function. An unrecovered panic in a handler crashes the goroutine serving that request and may take down the entire server process (or cause a 500 with no explanation).
+A `panic` call appears inside an HTTP or RPC handler function without a
+corresponding `recover()` in a deferred function.
+
+In Go, an unrecovered panic propagates up the call stack and terminates the
+goroutine. For HTTP servers, each request runs in its own goroutine — an
+unrecovered panic in a handler leaves the client connection broken and may
+produce no log entry explaining why.
+
+Common scenarios:
+- Explicit `panic(...)` used as a shortcut for "impossible" conditions that
+  are reachable via external input
+- Unsafe type assertions (`.(*T)`) without the two-value form
+- Calling a third-party function that panics on bad input
 
 ## Fix steps
 

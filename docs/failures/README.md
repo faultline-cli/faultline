@@ -6,7 +6,7 @@ Each page is designed to win searches for exact CI error strings, explain the fa
 
 ## Full failure catalog
 
-**[docs/failures/catalog/README.md](catalog/README.md)** — all 177 bundled playbooks, generated directly from the playbook YAML. Every failure category is indexed with links to its dedicated diagnosis and fix page.
+**[docs/failures/catalog/README.md](catalog/README.md)** — all 182 bundled playbooks, generated directly from the playbook YAML. Every failure category is indexed with links to its dedicated diagnosis and fix page.
 
 ## Generating this catalog
 

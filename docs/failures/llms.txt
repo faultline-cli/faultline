@@ -1,12 +1,12 @@
 # Faultline Failure Catalog
 
-> 177 bundled CI failure playbooks across 8 categories. Each entry covers cause, log signals, diagnosis, fix steps, and the Faultline playbook ID used to detect it.
+> 182 bundled CI failure playbooks across 9 categories. Each entry covers cause, log signals, diagnosis, fix steps, and the Faultline playbook ID used to detect it.
 
 Generated from `playbooks/bundled/`. Run `make docs-generate` to rebuild after adding or modifying playbooks.
 
 ## Index
 
-- [All 177 playbooks by category](catalog/README.md): Full generated catalog index with one-line descriptions
+- [All 182 playbooks by category](catalog/README.md): Full generated catalog index with one-line descriptions
 
 ## Auth (11)
 
@@ -172,7 +172,7 @@ or an equivalent rate-limit error.
 (npm, PyPI, Maven Central, RubyGems, etc.
 - [SSL/TLS certificate error](network/ssl-cert-error.md): A TLS/SSL certificate error prevented a secure connection.
 
-## Runtime (17)
+## Runtime (20)
 
 - [CPU architecture or platform mismatch](runtime/arch-mismatch.md): A binary, container image, or build artifact targets the wrong CPU architecture for the current runner.
 - [Disk space exhausted](runtime/disk-full.md): The host or container filesystem ran out of disk space.
@@ -182,9 +182,13 @@ or an equivalent rate-limit error.
 - [Docker entrypoint or CMD misconfiguration](runtime/entrypoint-misconfigured.md): A Docker container exits immediately after start because its `ENTRYPOINT`
 or `CMD` is misconfigured.
 - [Required environment variable missing or empty](runtime/env-var-missing.md): A required environment variable was not set or was empty when the process tried to read it.
-- [Error return value ignored or silently discarded](runtime/missing-error-propagation.md): A function returns an error that is discarded with `_ =` or left unchecked, meaning failures in I/O, database, or
+- [Goroutine spawned without context or stop channel](runtime/goroutine-leak.md): A goroutine is spawned with an infinite loop and no context cancellation, stop channel, or WaitGroup — it will leak
+- [HTTP client used without a timeout](runtime/http-client-no-timeout.md): An HTTP request is made using the package-level `http.
+- [Error return value ignored or silently discarded](runtime/missing-error-propagation.md): An error return from an I/O, database, or side-effecting call is discarded with `_ =` or silently overwritten, so failures pass undetected.
+- [Database transaction opened without a deferred rollback](runtime/missing-transaction-rollback.md): A database transaction is opened and committed in the same function with no
+`defer tx.
 - [Process killed by OOM killer](runtime/oom-killed.md): The process was terminated by the operating system's out-of-memory (OOM) killer.
-- [Unrecovered panic in HTTP or RPC handler](runtime/panic-in-http-handler.md): A `panic` call appears inside an HTTP or RPC handler function without a corresponding `recover()` in a deferred function.
+- [Unrecovered panic in HTTP or RPC handler](runtime/panic-in-http-handler.md): A `panic` call appears inside an HTTP or RPC handler with no `recover()` in a deferred function, which can crash
 - [Permission denied](runtime/permission-denied.md): The process tried to read, write, execute, or connect to a resource it does not have permission to access.
 - [Port already in use](runtime/port-in-use.md): A process attempted to bind to a TCP or UDP port that is already occupied by another process on the same CI runner.
 - [Process killed without diagnostic output](runtime/process-killed-no-logs.md): A CI process was killed externally, producing little or no diagnostic output.
@@ -194,7 +198,11 @@ or `CMD` is misconfigured.
 - [Docker volume mount failure or inaccessible mount](runtime/volume-mount-issue.md): A Docker container failed to start or operate correctly because a volume
 or bind mount is inaccessible.
 
-## Silent Failure (10)
+## Security (1)
+
+- [TLS certificate verification disabled in HTTP client](security/insecure-tls-skip-verify.md): TLS certificate verification is explicitly disabled, allowing the client to connect to servers with invalid, expired, or self-signed certificates without
+
+## Silent Failure (11)
 
 - [Artifact upload step ran but no files were found](silent-failure/artifact-missing.md): An artifact upload step was executed but reported that no files matched the
 configured path.
@@ -207,6 +215,7 @@ causes the pipeline to proceed even when the step exits non-zero.
 was nothing deployable to apply or publish.
 - [Lint, scan, or coverage step ran but checked nothing](silent-failure/empty-quality-check.md): A lint, security-scan, or coverage step ran, but the log shows it processed
 zero files or produced no meaningful report.
+- [Hardcoded secret, token, or password in source code](silent-failure/hardcoded-secret.md): A secret-named variable is assigned a literal string value in source code, exposing credentials, API keys, or tokens to anyone with repository access.
 - [Command failure suppressed with exit-code override](silent-failure/ignored-exit-code.md): A failing command's exit code was deliberately suppressed using `|| true`,
 `set +e`, or similar shell constructs.
 - [CI command failure hidden by shell exit-code swallowing](silent-failure/ignored-shell-exit-in-ci.md): A CI script or workflow swallows a critical shell command failure with `|| true` or `set +e`, allowing the job to pass after important work failed.
