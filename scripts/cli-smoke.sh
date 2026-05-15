@@ -5,7 +5,7 @@ set -eu
 ROOT_DIR="${ROOT_DIR:-$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)}"
 BINARY="${BINARY:-$ROOT_DIR/bin/faultline}"
 PLAYBOOK_DIR="${FAULTLINE_PLAYBOOK_DIR:-$ROOT_DIR/playbooks/bundled}"
-STARTER_PLAYBOOK_COUNT="${STARTER_PLAYBOOK_COUNT:-173}"
+STARTER_PLAYBOOK_COUNT="${STARTER_PLAYBOOK_COUNT:-182}"
 TMP_DIR="$(mktemp -d)"
 
 cleanup() {
