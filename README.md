@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/faultline-cli/faultline)](https://github.com/faultline-cli/faultline/releases)
+[![codecov](https://codecov.io/gh/faultline-cli/faultline/branch/main/graph/badge.svg)](https://codecov.io/gh/faultline-cli/faultline)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-173-blue)](docs/failures/catalog/README.md)
 
