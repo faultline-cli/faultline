@@ -40,7 +40,7 @@ The product loop is intentionally explicit:
 
 The release boundary is intentionally small:
 
-1. Run `faultline analyze <logfile>` on a failing CI log.
+1. Run `faultline analyze <logfile>` on a failing CI log, or `faultline batch <file> [file ...]` when a workflow produced several logs.
 2. Review the evidence-backed top diagnosis.
 3. Run `faultline workflow <logfile>` when you want a deterministic follow-up artifact.
 4. Use `faultline list`, `faultline explain <id>`, or `faultline fix <logfile>` to inspect the catalog or narrow to remediation.
@@ -53,6 +53,7 @@ That boundary is documented in [`docs/release-boundary.md`](../release-boundary.
 
 ```text
 faultline analyze [file]
+faultline batch <file> [file ...]
 faultline workflow [file]
 faultline list
 faultline explain <id>
@@ -92,7 +93,13 @@ Current user-facing characteristics:
   available for narrow deterministic snapshot cases
 - `--bayes` can rerank already-matched candidates additively
 
-### 2. Deterministic workflow handoff
+### 2. Multi-log diagnosis
+
+`faultline batch` analyzes multiple CI logs independently and groups the
+matched diagnoses by failure pattern for local build matrices and multi-job
+workflows. Its JSON output uses `batch.v1`.
+
+### 3. Deterministic workflow handoff
 
 `faultline workflow` turns the top diagnosis into a follow-up plan.
 
@@ -105,17 +112,17 @@ Current modes:
 
 The JSON workflow artifact uses `workflow.v1` and may include additive hints such as `ranking_hints`, `delta_hints`, `metrics_hints`, and `policy_hints` when the underlying analysis contains that context.
 
-### 3. Catalog inspection
+### 4. Catalog inspection
 
 `faultline list` and `faultline explain <id>` expose the checked-in playbook catalog.
 
 The catalog is authored in YAML, stored in version control, and loaded deterministically from the bundled pack plus any explicitly configured extra packs.
 
-### 4. Narrow remediation view
+### 5. Narrow remediation view
 
 `faultline fix` prints the remediation guidance for the top diagnosis without the rest of the analysis view.
 
-### 5. Companion inspection surfaces
+### 6. Companion inspection surfaces
 
 These remain important, but they are not the first-run story:
 

@@ -55,6 +55,11 @@ run_compare "missing-executable.expected.md" "$ROOT_DIR/examples/missing-executa
 	"$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --format markdown --no-history --git=false
 run_compare "runtime-mismatch.expected.md" "$ROOT_DIR/examples/runtime-mismatch.expected.md" \
 	"$BINARY" analyze "$ROOT_DIR/examples/runtime-mismatch.log" --format markdown --no-history --git=false
+(
+	cd "$ROOT_DIR"
+	run_compare "batch.expected.md" "$ROOT_DIR/examples/batch.expected.md" \
+		"$BINARY" batch examples/missing-executable.log examples/runtime-mismatch.log --format markdown --no-history
+)
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/missing.analysis.json"

@@ -58,6 +58,19 @@ func TestVisibleCommandSurfaceStaysWithinReleaseBoundary(t *testing.T) {
 	}
 }
 
+func TestShipReadyCoreCommandSet(t *testing.T) {
+	want := []string{"analyze", "workflow", "list", "explain", "fix", "batch"}
+	got := []string{}
+	for _, surface := range CommandSurfaces {
+		if surface.Category == SurfaceCore && surface.Maturity == MaturityShipReady {
+			got = append(got, surface.Path)
+		}
+	}
+	if !slices.Equal(got, want) {
+		t.Fatalf("ship-ready core commands = %v, want %v", got, want)
+	}
+}
+
 func walkCommands(cmd *cobra.Command, prefix []string, out map[string]*cobra.Command) {
 	for _, child := range cmd.Commands() {
 		if child.IsAdditionalHelpTopicCommand() {

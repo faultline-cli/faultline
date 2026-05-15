@@ -25,6 +25,7 @@ func NewRootCommand(version string) *cobra.Command {
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
 			"  cat build.log | faultline analyze --json",
+			"  faultline batch build-1.log build-2.log --json",
 			"  faultline workflow build.log --json --mode agent",
 			"  faultline explain docker-auth",
 			"  faultline list --category auth",

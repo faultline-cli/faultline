@@ -5,7 +5,7 @@ tests, fixture gates, playbook review, and CLI smoke snapshots before a release.
 
 | Surface | Required checks |
 | --- | --- |
-| `analyze`, `fix`, JSON output, artifact fields | `go test ./...`, `make fixture-check`, `make bayes-check`, `make cli-smoke` |
+| `analyze`, `batch`, `fix`, JSON output, artifact fields | `go test ./...`, `make fixture-check`, `make bayes-check`, `make cli-smoke` |
 | `workflow` handoff | `go test ./internal/workflow ./internal/app ./cmd`, `make cli-smoke` |
 | `list`, `explain`, `packs`, catalog composition | `go test ./internal/playbooks ./internal/cli ./cmd`, `make cli-smoke` |
 | `trace`, `replay`, `compare`, focused views | `go test ./internal/output ./internal/trace ./internal/compare ./cmd`, `make cli-smoke` |

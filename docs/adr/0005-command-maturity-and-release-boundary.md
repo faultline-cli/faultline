@@ -13,7 +13,7 @@ The current state is documented in [docs/release-boundary.md](../release-boundar
 
 Faultline keeps a maturity-tier model for command surfaces:
 
-- stable default path: `analyze`, `workflow`, `list`, `explain`, `fix`
+- stable default path: `analyze`, `batch`, `workflow`, `list`, `explain`, `fix`
 - complete companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `packs`
 - experimental opt-in: provider-backed delta behind `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1` (legacy `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1` also accepted)
 

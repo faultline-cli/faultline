@@ -21,12 +21,13 @@ Faultline is currently implemented as a CLI-first deterministic product with bot
 
 The repository currently ships these user-visible commands:
 
-- core path: `analyze`, `workflow`, `list`, `explain`, `fix`
-- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `batch`, `coverage`, `packs`
+- core path: `analyze`, `batch`, `workflow`, `list`, `explain`, `fix`
+- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `coverage`, `packs`
 
 Important current behavior:
 
 - `analyze` supports `terminal`, `markdown`, and `json` output
+- `batch` analyzes multiple local CI logs independently and groups matches by failure pattern
 - `workflow` supports `local` and `agent` modes and emits `workflow.v1` JSON
 - `inspect` and `guard` expose the source detector through repository-local checks
 - `replay` and `compare` operate on saved analysis artifacts without re-running matching
@@ -51,7 +52,7 @@ The repository is in the expected current state when these remain true:
 - `make bayes-check` passes with no ranking regressions
 - `make review` remains clean after playbook or pattern changes
 - `make docs-check` confirms generated failure docs are current
-- `make cli-smoke` passes against checked-in examples and companion-command snapshots
+- `make cli-smoke` passes against checked-in examples and command snapshots
 - `make release-check VERSION=<tag>` passes before a release cut
 
 ## Notes On Scope

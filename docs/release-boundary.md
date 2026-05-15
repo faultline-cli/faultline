@@ -16,7 +16,7 @@ team state.
 
 Core includes:
 
-- CLI analysis surfaces (`analyze`, `workflow`, `list`, `explain`, `fix`)
+- CLI analysis surfaces (`analyze`, `batch`, `workflow`, `list`, `explain`, `fix`)
 - deterministic playbook matching and ranking
 - local playbook system and pack composition
 - opt-in single-repo local history and forensic recall
@@ -57,6 +57,7 @@ Rule of thumb:
 Faultline ships a deliberately narrow default experience for the next release:
 
 - Diagnose a failing CI log with `faultline analyze`
+- Diagnose several local CI logs with `faultline batch`
 - Turn the winning diagnosis into a deterministic handoff with `faultline workflow`
 - Inspect the bundled catalog with `faultline list` and `faultline explain`
 - Use `faultline fix` when only the top remediation steps are needed
@@ -74,6 +75,7 @@ onboarding narrative.
 ### Ship-Ready Core
 
 - `analyze` text, markdown, and JSON output
+- `batch` text, markdown, and JSON output for local multi-log diagnosis
 - `workflow` local and agent output
 - `list` and `explain`
 - bundled playbook catalog under `playbooks/bundled/`
@@ -92,7 +94,7 @@ onboarding narrative.
 - `history`, `signatures`, and `verify-determinism` as single-repo forensic-memory companions
 - `inspect` and `guard` as advanced local-prevention companions
 - `packs install` and `packs list` for optional extra catalog composition
-- `batch` and `coverage` as bounded companion surfaces with smoke coverage
+- `coverage` as a bounded companion surface with smoke coverage
 - hidden `fixtures` commands for corpus curation and maintainer workflows
 
 These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis plus workflow handoff.
@@ -137,7 +139,7 @@ These capabilities may exist, but they should not define the release boundary.
 
 The current roadmap for v0.4 should extend this boundary rather than replace it:
 
-- keep the default narrative centered on `analyze`, `workflow`, `list`,
+- keep the default narrative centered on `analyze`, `batch`, `workflow`, `list`,
   `explain`, and `fix`
 - treat managed inheritance as a `packs`-driven capability with explicit sync
   or update flows, not runtime network fetch during analysis

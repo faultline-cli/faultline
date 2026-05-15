@@ -97,6 +97,7 @@ This makes Faultline useful before investigation starts: route the obvious failu
 ```bash
 faultline analyze build.log
 cat build.log | faultline analyze --json
+faultline batch build-1.log build-2.log --json
 faultline fix build.log
 faultline workflow build.log --json --mode agent
 faultline list
@@ -104,13 +105,14 @@ faultline explain missing-executable
 ```
 
 - `analyze`: classify a failing log and show evidence, diagnosis, and next action.
+- `batch`: classify several logs and group the results by failure pattern.
 - `fix`: print the remediation steps for the top diagnosis.
 - `workflow`: generate deterministic follow-through output for automation or handoff.
 - `list`: browse known failure classes.
 - `explain`: inspect one failure class before trusting or changing it.
 
 Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`,
-`report`, `history`, `batch`, `coverage`, and `packs` exist, but they are not
+`report`, `history`, `coverage`, and `packs` exist, but they are not
 the first-run story. `report` and `history` read only the local forensic store
 created by prior local runs; cross-repo recurrence and coordination belong to
 the Team layer.
@@ -200,11 +202,11 @@ This local memory is deliberately single-repo. Cross-repo aggregation, ownership
 
 ## Team Operating Loop
 
-Faultline Core answers one-log questions locally: what failed, what evidence supports that classification, and what fix path is known.
+Faultline Core answers local diagnosis questions: what failed, what evidence supports that classification, and what fix path is known.
 
 For teams with flaky CI, uneven documentation, or too much tribal knowledge, use the output as a shared operating loop:
 
-1. Classify the failure with `faultline analyze build.log`.
+1. Classify the failure with `faultline analyze build.log`, or group several job logs with `faultline batch`.
 2. Use `failure_id` as the stable label in tickets, incident notes, and postmortems.
 3. Paste markdown or JSON output into the handoff so the evidence and fix path travel together.
 4. Run `faultline workflow build.log --json --mode agent` when a human or agent needs likely files, reproduction steps, verification steps, and remediation context.
@@ -235,6 +237,11 @@ Faultline is most useful when a team already sees recurring CI failures and want
 Details: [docs/fixture-corpus.md](docs/fixture-corpus.md).
 
 ## Release Notes
+
+v0.4.8 promotes `faultline batch` into the core release path for local
+multi-log diagnosis. Use it when one workflow produces several job logs and you
+want the same deterministic classification grouped across the set. `report`,
+`history`, `trace`, and the other advanced surfaces remain companion commands.
 
 v0.4.7 is a hardening release for the existing local-first product. It does
 not add a new first-run surface; it tightens the release gates and makes local
@@ -314,7 +321,7 @@ docker run --rm -v "$(pwd)":/workspace faultline analyze /workspace/examples/mis
 ```
 
 ```bash
-VERSION=v0.4.7
+VERSION=v0.4.8
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
