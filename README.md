@@ -1,13 +1,19 @@
 # Faultline
 
-Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost proving what did not cause the failure. Faultline is a deterministic CLI for the first pass over a failed CI log. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify. If no known pattern matches, it stays quiet. Same log in -> same result out.
+[![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/faultline-cli/faultline)](https://github.com/faultline-cli/faultline/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Playbooks](https://img.shields.io/badge/playbooks-173-blue)](docs/failures/catalog/README.md)
 
-Faultline is built for teams that want a trustworthy local classifier before deeper investigation starts:
+Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for the first pass over a failed CI log. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify. If no known pattern matches, it stays quiet. Same log in -> same result out.
+
+Faultline is built for teams that want a trustworthy local classifier before deeper investigation starts and a repeatable way to turn CI incidents into shared knowledge:
 
 - Local-first analysis with no LLM, search, issue tracker, or hosted service dependency.
 - Evidence copied from the input log so humans and agents can verify the diagnosis.
-- Stable text and JSON output for CI steps, tickets, agent handoff, and postmortems.
-- 173 bundled playbooks, 215 accepted real fixtures, and a published 89.4% large-corpus GitHub Actions match evaluation.
+- Stable text, markdown, JSON, and workflow output for CI steps, tickets, agent handoff, and postmortems.
+- Local single-repo recurrence memory for seeing which known failures keep coming back.
+- 173 bundled playbooks, 215 accepted real fixtures, and an 89.4% large-corpus GitHub Actions match-rate evaluation.
 
 ## Try this in 30 seconds
 
@@ -39,6 +45,13 @@ Emit JSON for automation:
 
 ```bash
 faultline analyze examples/missing-executable.log --json
+```
+
+Generate a deterministic handoff for a human, ticket, or agent:
+
+```bash
+faultline fix examples/missing-executable.log
+faultline workflow examples/missing-executable.log --json --mode agent
 ```
 
 JSON output includes stable fields like:
@@ -78,45 +91,6 @@ Faultline is a known-pattern classifier for CI failure logs.
 
 This makes Faultline useful before investigation starts: route the obvious failures, standardize known fixes, and avoid spending attention on classes the team already understands.
 
-## What to Trust
-
-Faultline output is designed to be inspectable.
-
-- `failure_id` is the stable class name.
-- `evidence` is copied from the input log.
-- `confidence` reflects rule strength, not certainty about your whole system.
-- `faultline explain <failure-id>` shows the diagnosis, fix guidance, and matching rules for that class.
-- `--json` returns the same classification in a machine-readable artifact for CI, agents, tickets, or postmortems.
-
-Unknown output is not a failure of the CLI contract. If the log does not match a known class, Faultline should say so instead of inventing a diagnosis.
-
-## v0.4.7 Release
-
-v0.4.7 is a hardening release for the existing local-first product. It does
-not add a new first-run surface; it tightens the release gates and makes local
-recurrence, metrics, and generated docs easier to trust.
-
-- Added generated failure-doc validation and Bayes regression checks to the
-  release gate so stale docs or ranking drift block release cuts.
-- Kept normal `analyze` and `workflow` output stable unless local history or
-  explicit metrics history is requested.
-- Added hidden advanced metrics-history input for deterministic reliability
-  metrics and advisory policy hints without adding new public JSON fields.
-- Expanded CLI smoke coverage for local `report`, workflow metrics hints, and
-  bundled-plus-installed pack provenance ordering.
-- Backfilled v0.4.6 release notes and corrected fixture-corpus drift so the
-  repository proof matches the current checked-in baseline.
-
-## v0.4.6 Release
-
-v0.4.6 keeps the default story narrow: classify the failed log, show the evidence, and hand off the known fix path. The release favors fewer, stronger defaults over broad but weak inference.
-
-- Removed 20 low-signal or overly narrow playbooks from the default bundle, including project-specific test-suite rules, weak inference rules, and absence-of-run workflow variants.
-- Regenerated the failure catalog from the tightened playbook set and added checks so stale generated docs are caught instead of drifting after a playbook is removed.
-- Promoted 4 additional real fixtures, bringing the checked-in real corpus to 215 accepted failures with 100% top-1 and top-3 baseline pass rates.
-- Reduced overlap noise in the bundled catalog; `make review` now passes against 260 classified conflict patterns.
-- Kept specialized, provider-specific, and maintainer-only work out of the first-run story unless it has deterministic tests, fixture evidence, and release-grade verification.
-
 ## Core Commands
 
 ```bash
@@ -140,6 +114,18 @@ the first-run story. `report` and `history` read only the local forensic store
 created by prior local runs; cross-repo recurrence and coordination belong to
 the Team layer.
 
+## What to Trust
+
+Faultline output is designed to be inspectable.
+
+- `failure_id` is the stable class name.
+- `evidence` is copied from the input log.
+- `confidence` reflects rule strength, not certainty about your whole system.
+- `faultline explain <failure-id>` shows the diagnosis, fix guidance, and matching rules for that class.
+- `--json` returns the same classification in a machine-readable artifact for CI, agents, tickets, or postmortems.
+
+Unknown output is not a failure of the CLI contract. If the log does not match a known class, Faultline should say so instead of inventing a diagnosis.
+
 ## What It Catches
 
 Faultline ships with 173 bundled playbooks for common CI failure classes.
@@ -159,7 +145,18 @@ Use `faultline list` to inspect the full catalog and `faultline explain <failure
 
 ## CI Use
 
-Use Faultline after a job fails and you have a log file to classify.
+Use Faultline after a job fails and you have a log file to classify. The key is
+capturing the failing command's output to a file first.
+
+```yaml
+- name: Run tests
+  shell: bash
+  run: |
+    set -o pipefail
+    make test 2>&1 | tee build.log
+```
+
+Then run Faultline in a failure-only step:
 
 ```yaml
 - name: Diagnose failure
@@ -182,6 +179,43 @@ Manual install works anywhere the CLI can read a log:
 
 See the [GitHub Actions contract](docs/github-action-contract.md) and [GitLab CI contract](docs/gitlab-ci-contract.md) for wrapper details.
 
+## Recurring Failures
+
+`faultline analyze` records small matched-failure metadata in a local forensic
+store by default. It does not store full raw logs by default. After repeated
+local runs, or CI runs that persist the store between jobs, use:
+
+```bash
+faultline report
+faultline history
+faultline analyze build.log --history
+```
+
+- `report` groups stored local runs by failure class so repeated breakages are easier to see.
+- `history` shows recurring signatures and quality summaries from the local store.
+- `--history` adds explicit local recurrence context to the current analysis output.
+
+This local memory is deliberately single-repo. Cross-repo aggregation, ownership-aware recurrence, and team coordination belong to the Team layer documented in [docs/release-boundary.md](docs/release-boundary.md).
+
+## Team Operating Loop
+
+Faultline Core answers one-log questions locally: what failed, what evidence supports that classification, and what fix path is known.
+
+For teams with flaky CI, uneven documentation, or too much tribal knowledge, use the output as a shared operating loop:
+
+1. Classify the failure with `faultline analyze build.log`.
+2. Use `failure_id` as the stable label in tickets, incident notes, and postmortems.
+3. Paste markdown or JSON output into the handoff so the evidence and fix path travel together.
+4. Run `faultline workflow build.log --json --mode agent` when a human or agent needs likely files, reproduction steps, verification steps, and remediation context.
+5. Use `faultline report` and `faultline history` to pick the repeated classes worth standardizing.
+6. When a missed or weak diagnosis keeps recurring, submit a sanitized failure or add a playbook so the next engineer gets the documented path first.
+
+The team questions stay simple:
+
+- What keeps failing?
+- Where are we losing time?
+- What should we standardize?
+
 ## Metrics
 
 Faultline optimizes for high precision over broad coverage. The current checked-in fixture baseline is scoped to the repository corpus, not every possible CI failure.
@@ -193,23 +227,36 @@ Faultline optimizes for high precision over broad coverage. The current checked-
 - Weak matches: 1
 - Published large-scale GitHub Actions evaluation: 89.4% of 30,094 failed logs matched at least one bundled playbook
 
-The lower playbook count is intentional: this release favors a smaller, cleaner default catalog over keeping low-evidence rules in the main path. These metrics mean the known corpus is reproducible and guarded against regression. They do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.
+The lower playbook count is intentional: this release favors a smaller, cleaner default catalog over keeping low-evidence rules in the main path. These metrics mean the known corpus is reproducible and guarded against regression. The 89.4% figure is a match-rate claim, not a claim that every match was manually judged as the correct diagnosis. These metrics do not mean every new log should match. Silence is intentional when the evidence is unknown, ambiguous, or below the classifier threshold.
 
 Faultline is most useful when a team already sees recurring CI failures and wants standard classifications, repeatable fix paths, and machine-readable artifacts without adding runtime network calls to the analysis path.
 
 Details: [docs/fixture-corpus.md](docs/fixture-corpus.md).
 
-## Team Questions
+## Release Notes
 
-Faultline Core answers one-log questions locally: what failed, what evidence supports that classification, and what fix path is known.
+v0.4.7 is a hardening release for the existing local-first product. It does
+not add a new first-run surface; it tightens the release gates and makes local
+recurrence, metrics, and generated docs easier to trust.
 
-Team work should be framed around operational questions:
+- Added generated failure-doc validation and Bayes regression checks to the
+  release gate so stale docs or ranking drift block release cuts.
+- Kept normal `analyze` and `workflow` output stable unless local history or
+  explicit metrics history is requested.
+- Added hidden advanced metrics-history input for deterministic reliability
+  metrics and advisory policy hints without adding new public JSON fields.
+- Expanded CLI smoke coverage for local `report`, workflow metrics hints, and
+  bundled-plus-installed pack provenance ordering.
+- Backfilled v0.4.6 release notes and corrected fixture-corpus drift so the
+  repository proof matches the current checked-in baseline.
 
-- What keeps failing?
-- Where are we losing time?
-- What should we standardize?
+v0.4.6 keeps the default story narrow: classify the failed log, show the evidence, and hand off the known fix path. The release favors fewer, stronger defaults over broad but weak inference.
 
-The release boundary is documented in [docs/release-boundary.md](docs/release-boundary.md).
+- Removed 20 low-signal or overly narrow playbooks from the default bundle, including project-specific test-suite rules, weak inference rules, and absence-of-run workflow variants.
+- Regenerated the failure catalog from the tightened playbook set and added checks so stale generated docs are caught instead of drifting after a playbook is removed.
+- Promoted 4 additional real fixtures, bringing the checked-in real corpus to 215 accepted failures with 100% top-1 and top-3 baseline pass rates.
+- Reduced overlap noise in the bundled catalog; `make review` now passes against 260 classified conflict patterns.
+- Kept specialized, provider-specific, and maintainer-only work out of the first-run story unless it has deterministic tests, fixture evidence, and release-grade verification.
 
 ## Submit a Failure
 
