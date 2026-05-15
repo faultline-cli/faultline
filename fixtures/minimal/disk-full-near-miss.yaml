@@ -1,7 +1,14 @@
 id: disk-full-near-miss
 title: CI runner disk exhaustion is a near-miss for generic disk-full
 fixture_class: minimal
-path: internal/engine/testdata/fixtures/runner-disk-full.log
+normalized_log: |
+  Running on gitlab-runner 16.2.0 (docker executor)
+  Preparing the "docker" executor
+  Pulling docker image docker:24.0
+
+  executor_docker.go:1234: Error response from daemon: Write failed: No space left
+  buildkit-mount: failed to copy files: write /var/lib/docker/tmp/buildkit-mount/cache.tgz: no space left on device
+  Job failed: exit code 1
 expectation:
   expected_playbook: runner-disk-full
   disallowed_playbooks:
