@@ -21,8 +21,9 @@ func TestNullableBoolNilReturnsNil(t *testing.T) {
 func TestNullableBoolTrueReturnsOne(t *testing.T) {
 	v := true
 	got := nullableBool(&v)
-	if got != 1 {
-		t.Errorf("expected 1, got %v", got)
+	want := 1
+	if got != want {
+		t.Errorf("expected %v, got %v", want, got)
 	}
 }
 

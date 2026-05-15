@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -13,10 +14,18 @@ import (
 )
 
 // writeTempLogFile creates a temporary log file with the given content and
-// returns its path. Cleaned up automatically via t.TempDir.
+// returns its path.
 func writeTempLogFile(t *testing.T, content string) string {
 	t.Helper()
-	dir := t.TempDir()
+	// Batch validates source paths relative to the current working directory, so
+	// test fixtures are created under "." to stay within the allowed root.
+	dir, err := os.MkdirTemp(".", "batch-test-*")
+	if err != nil {
+		t.Fatalf("create temp dir: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = os.RemoveAll(dir)
+	})
 	f, err := os.CreateTemp(dir, "batch-*.log")
 	if err != nil {
 		t.Fatalf("create temp log: %v", err)
@@ -412,5 +421,74 @@ func TestBatchMarkdownSourceListTruncatedAboveThree(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "+1 more") {
 		t.Errorf("expected '+1 more' truncation in markdown output, got %q", out)
+	}
+}
+
+func TestResolvePathWithinRootAllowsPathInRoot(t *testing.T) {
+	root := t.TempDir()
+	got, err := resolvePathWithinRoot("logs/build.log", root)
+	if err != nil {
+		t.Fatalf("resolvePathWithinRoot returned error: %v", err)
+	}
+	want := filepath.Join(root, "logs", "build.log")
+	if got != want {
+		t.Fatalf("resolvePathWithinRoot path = %q, want %q", got, want)
+	}
+}
+
+func TestResolvePathWithinRootRejectsPathTraversal(t *testing.T) {
+	root := t.TempDir()
+	_, err := resolvePathWithinRoot("../outside.log", root)
+	if err == nil {
+		t.Fatal("expected path traversal error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
+	}
+}
+
+func TestResolvePathWithinRootAllowsAbsolutePathInRoot(t *testing.T) {
+	root := t.TempDir()
+	inside := filepath.Join(root, "inside.log")
+	got, err := resolvePathWithinRoot(inside, root)
+	if err != nil {
+		t.Fatalf("resolvePathWithinRoot returned error: %v", err)
+	}
+	if got != inside {
+		t.Fatalf("resolvePathWithinRoot path = %q, want %q", got, inside)
+	}
+}
+
+func TestResolvePathWithinRootRejectsAbsolutePathOutsideRoot(t *testing.T) {
+	root := t.TempDir()
+	outside := filepath.Join(filepath.Dir(root), "outside.log")
+	_, err := resolvePathWithinRoot(outside, root)
+	if err == nil {
+		t.Fatal("expected path traversal error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
+	}
+}
+
+func TestResolvePathWithinRootRejectsSymlinkEscape(t *testing.T) {
+	root := t.TempDir()
+	outsideDir := t.TempDir()
+	outsideTarget := filepath.Join(outsideDir, "outside.log")
+	if err := os.WriteFile(outsideTarget, []byte("outside"), 0o644); err != nil {
+		t.Fatalf("write outside target: %v", err)
+	}
+
+	linkPath := filepath.Join(root, "linked.log")
+	if err := os.Symlink(outsideTarget, linkPath); err != nil {
+		t.Fatalf("create symlink: %v", err)
+	}
+
+	_, err := resolvePathWithinRoot(linkPath, root)
+	if err == nil {
+		t.Fatal("expected symlink escape error, got nil")
+	}
+	if !strings.Contains(err.Error(), "escapes allowed root") {
+		t.Fatalf("expected path escape error, got %v", err)
 	}
 }

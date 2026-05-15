@@ -22,8 +22,8 @@ Coding agents: read `AGENTS.md` and `SYSTEM.md` before making changes. Run `make
 
 ## Failure catalog
 
-- [docs/failures/llms.txt](docs/failures/llms.txt): Machine-readable index of all 173 failure playbooks, grouped by category, with one-line descriptions and direct links to each page
-- [docs/failures/catalog/README.md](docs/failures/catalog/README.md): Human-readable catalog index — all 173 playbooks with diagnosis and fix links
+- [docs/failures/llms.txt](docs/failures/llms.txt): Machine-readable index of all failure playbooks, grouped by category, with one-line descriptions and direct links to each page
+- [docs/failures/catalog/README.md](docs/failures/catalog/README.md): Human-readable catalog index of bundled playbooks with diagnosis and fix links
 
 ## Optional
 
