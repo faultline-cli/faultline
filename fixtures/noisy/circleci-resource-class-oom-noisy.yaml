@@ -1,0 +1,13 @@
+id: circleci-resource-class-oom-noisy
+title: Noisy CircleCI test run killed by OOM killer
+fixture_class: noisy
+normalized_log: |
+  Running on CircleCI image cimg/node:20.11
+  parallelism: 4
+  resource_class: medium
+  Jest worker started.
+  OOM killer terminated the process
+  exit code: 137
+  Consider increasing CircleCI resource class or reducing parallelism.
+expectation:
+  expected_playbook: circleci-resource-class-oom

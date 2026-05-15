@@ -1,0 +1,12 @@
+id: ignored-exit-code-exit-zero
+title: Script forces success after a failed command
+fixture_class: minimal
+normalized_log: |
+  + ./deploy.sh
+  deploy failed but continuing
+  ignoring error from deploy.sh
+  + exit 0
+  Job completed successfully.
+expectation:
+  expected_playbook: ignored-exit-code
+  strict_top1: true

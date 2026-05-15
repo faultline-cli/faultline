@@ -1,0 +1,13 @@
+id: ignored-exit-code-noisy
+title: Noisy shell log where command failure is swallowed
+fixture_class: noisy
+normalized_log: |
+  + set +e
+  + npm test
+  Tests failed with exit code 1
+  + echo "failed but continuing"
+  failed but continuing
+  + npm test || true
+  Workflow completed with status success.
+expectation:
+  expected_playbook: ignored-exit-code

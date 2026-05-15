@@ -9,3 +9,4 @@ normalized_log: |
   Killed
 expectation:
   expected_playbook: process-killed-no-logs
+  strict_top1: true

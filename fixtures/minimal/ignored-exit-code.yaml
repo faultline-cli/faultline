@@ -11,3 +11,4 @@ normalized_log: |
   Tests failed with exit code 1
 expectation:
   expected_playbook: ignored-exit-code
+  strict_top1: true

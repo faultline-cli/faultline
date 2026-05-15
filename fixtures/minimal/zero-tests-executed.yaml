@@ -9,3 +9,4 @@ normalized_log: |
   WARNING: No tests were run!
 expectation:
   expected_playbook: zero-tests-executed
+  strict_top1: true

@@ -1,0 +1,15 @@
+id: config-mismatch-near-miss
+title: Runtime KeyError for missing environment variable, not deployment secret mismatch
+fixture_class: minimal
+normalized_log: |
+  Traceback (most recent call last):
+    File "app.py", line 42, in <module>
+      db_url = os.environ["DATABASE_URL"]
+  KeyError: 'DATABASE_URL'
+
+  FATAL: required env DATABASE_URL must be set before startup
+  Process exited with code 1
+expectation:
+  expected_playbook: env-var-missing
+  disallowed_playbooks:
+    - config-mismatch

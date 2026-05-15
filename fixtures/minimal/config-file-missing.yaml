@@ -10,3 +10,4 @@ normalized_log: |
   Application startup failed.
 expectation:
   expected_playbook: config-file-missing
+  strict_top1: true

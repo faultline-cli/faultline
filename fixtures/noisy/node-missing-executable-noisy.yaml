@@ -1,0 +1,14 @@
+id: node-missing-executable-noisy
+title: Noisy frontend build where npm binary is unavailable
+fixture_class: noisy
+normalized_log: |
+  Checkout repository.
+  Restore frontend dependency cache.
+  Run npm ci
+  node: command not found
+  sh: npm: not found
+  npm: command not found
+  The container image does not include Node.js.
+  Error: Process completed before package installation could start.
+expectation:
+  expected_playbook: node-missing-executable

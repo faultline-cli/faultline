@@ -434,7 +434,7 @@ func TestLoadHistoryIncludesAuthor(t *testing.T) {
 
 	writeCommits(t, repoDir, []commitSpec{
 		{
-			Date:    "2026-04-10T10:00:00Z",
+			Date:    recentCommitDate(2),
 			Subject: "feat: add go module",
 			Files:   map[string]string{"go.mod": "module example.com\n"},
 		},
@@ -467,7 +467,7 @@ func TestDeriveSignalsFromGitRepo(t *testing.T) {
 	// Create a commit that touches CI + config files.
 	writeCommits(t, repoDir, []commitSpec{
 		{
-			Date:    "2026-04-10T09:00:00Z",
+			Date:    recentCommitDate(2),
 			Subject: "build: update go.mod and CI",
 			Files: map[string]string{
 				"go.mod":                   "module example.com\ngo 1.22\n",

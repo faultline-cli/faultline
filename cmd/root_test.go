@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"faultline/internal/app"
 )
@@ -98,9 +99,10 @@ func writeTempRepo(t *testing.T) string {
 		t.Fatalf("write .dockerignore: %v", err)
 	}
 	runGit(t, dir, nil, "add", ".")
+	commitDate := recentGitDate(2)
 	runGit(t, dir, []string{
-		"GIT_AUTHOR_DATE=2026-04-10T10:00:00Z",
-		"GIT_COMMITTER_DATE=2026-04-10T10:00:00Z",
+		"GIT_AUTHOR_DATE=" + commitDate,
+		"GIT_COMMITTER_DATE=" + commitDate,
 	}, "commit", "--quiet", "-m", "hotfix: adjust healthcheck config")
 	return dir
 }
@@ -120,15 +122,20 @@ func writeTempGuardRepo(t *testing.T) string {
 		t.Fatalf("write handler file: %v", err)
 	}
 	runGit(t, dir, nil, "add", ".")
+	commitDate := recentGitDate(2)
 	runGit(t, dir, []string{
-		"GIT_AUTHOR_DATE=2026-04-10T10:00:00Z",
-		"GIT_COMMITTER_DATE=2026-04-10T10:00:00Z",
+		"GIT_AUTHOR_DATE=" + commitDate,
+		"GIT_COMMITTER_DATE=" + commitDate,
 	}, "commit", "--quiet", "-m", "baseline: add handler")
 
 	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string {\n\tpanic(\"boom\")\n}\n"), 0o644); err != nil {
 		t.Fatalf("rewrite handler file: %v", err)
 	}
 	return dir
+}
+
+func recentGitDate(daysAgo int) string {
+	return time.Now().UTC().AddDate(0, 0, -daysAgo).Format(time.RFC3339)
 }
 
 func runGit(t *testing.T, dir string, env []string, args ...string) {

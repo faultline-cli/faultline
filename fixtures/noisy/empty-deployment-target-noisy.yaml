@@ -1,0 +1,11 @@
+id: empty-deployment-target-noisy
+title: Noisy deploy job where kubectl receives no manifests
+fixture_class: noisy
+normalized_log: |
+  Downloaded build metadata.
+  Running kubectl apply -f manifests/
+  No manifests found in manifests/
+  No objects passed to apply
+  Deploy step completed successfully with no deployable artifacts.
+expectation:
+  expected_playbook: empty-deployment-target

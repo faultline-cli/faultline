@@ -1,0 +1,12 @@
+id: process-killed-no-logs-noisy
+title: Noisy build log ending in external kill signal
+fixture_class: noisy
+normalized_log: |
+  Compiling package 412 of 510
+  warning: generated code is stale
+  Running final link step
+  runner killed the process after it stopped producing output
+  job was killed by external watchdog
+  exit code 143
+expectation:
+  expected_playbook: process-killed-no-logs

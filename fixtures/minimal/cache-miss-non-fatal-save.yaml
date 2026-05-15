@@ -1,0 +1,11 @@
+id: cache-miss-non-fatal-save
+title: Cache save failed but job continued
+fixture_class: minimal
+normalized_log: |
+  Post job cleanup.
+  Failed to save cache: cache miss for primary key pip-linux-abc123
+  No cache found for key pip-linux-abc123
+  Cache step continued without failing the job.
+expectation:
+  expected_playbook: cache-miss-non-fatal
+  strict_top1: true

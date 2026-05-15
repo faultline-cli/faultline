@@ -1,0 +1,13 @@
+id: formatting-failure-prettier
+title: Prettier check reports files would be reformatted
+fixture_class: minimal
+normalized_log: |
+  Run npx prettier --check .
+  Checking formatting...
+  src/App.tsx
+  Code style issues found in the above file.
+  files would be reformatted
+  Error: Process completed with exit code 1.
+expectation:
+  expected_playbook: formatting-failure
+  strict_top1: true

@@ -9,3 +9,4 @@ normalized_log: |
   Deploy step completed with no deployable artifacts.
 expectation:
   expected_playbook: empty-deployment-target
+  strict_top1: true

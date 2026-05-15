@@ -1,0 +1,11 @@
+id: node-missing-executable-env
+title: Shebang cannot find node runtime
+fixture_class: minimal
+normalized_log: |
+  Run esbuild --version
+  node: command not found
+  /usr/bin/env: 'node': No such file or directory
+  Error: Process completed with exit code 127.
+expectation:
+  expected_playbook: node-missing-executable
+  strict_top1: true

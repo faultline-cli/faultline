@@ -8,3 +8,4 @@ normalized_log: |
   listen tcp6 [::]:8080: bind: cannot assign requested address
 expectation:
   expected_playbook: ipv6-ipv4-resolution
+  strict_top1: true

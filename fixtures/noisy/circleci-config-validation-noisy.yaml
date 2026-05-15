@@ -1,0 +1,12 @@
+id: circleci-config-validation-noisy
+title: Noisy CircleCI pipeline rejected before scheduling jobs
+fixture_class: noisy
+normalized_log: |
+  Preparing pipeline.
+  Error parsing config at .circleci/config.yml
+  mapping values are not allowed here
+  Invalid config detected
+  was not accepted by the CircleCI API
+  No jobs were scheduled.
+expectation:
+  expected_playbook: circleci-config-validation

@@ -1,0 +1,11 @@
+id: base-image-breaking-change-package
+title: Floating base image removed package required by Docker build
+fixture_class: minimal
+normalized_log: |
+  Step 3/7 : RUN apt-get update && apt-get install -y libssl1.1
+  E: Package 'libssl1.1' has no installation candidate
+  Unable to locate package libssl1.1
+  base image tag ubuntu:latest changed upstream yesterday
+expectation:
+  expected_playbook: base-image-breaking-change
+  strict_top1: true

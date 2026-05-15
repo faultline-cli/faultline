@@ -1,0 +1,11 @@
+id: arch-mismatch-exec-format
+title: Linux runner cannot execute binary built for another architecture
+fixture_class: minimal
+normalized_log: |
+  Run ./bin/service --version
+  ./bin/service: cannot execute binary file: Exec format error
+  docker image's platform linux/arm64 does not match the detected host platform linux/amd64
+  Error: Process completed with exit code 126.
+expectation:
+  expected_playbook: arch-mismatch
+  strict_top1: true

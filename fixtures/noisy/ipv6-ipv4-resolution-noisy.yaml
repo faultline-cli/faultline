@@ -1,0 +1,13 @@
+id: ipv6-ipv4-resolution-noisy
+title: Noisy container log with unsupported IPv6 address family
+fixture_class: noisy
+normalized_log: |
+  Pulling service image redis:7
+  Service container started.
+  Waiting for readiness probe...
+  resolve registry.internal.example AAAA
+  dial tcp [2606:4700:4700::1111]:443: connect: Network is unreachable
+  ADDRESS_FAMILY_NOT_SUPPORTED
+  fallback to IPv4 was disabled in this test environment
+expectation:
+  expected_playbook: ipv6-ipv4-resolution

@@ -1,0 +1,11 @@
+id: continue-on-error-noisy
+title: Noisy workflow where failed quality step continues
+fixture_class: noisy
+normalized_log: |
+  Run npm run lint
+  npm ERR! Found 12 lint errors.
+  continue-on-error: true
+  GitHub Actions marked the step outcome as neutral because continue-on-error: true was set.
+  Continuing pipeline execution despite step failure.
+expectation:
+  expected_playbook: continue-on-error

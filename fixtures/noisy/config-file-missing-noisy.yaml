@@ -1,0 +1,15 @@
+id: config-file-missing-noisy
+title: Noisy CI log where application settings file is missing
+fixture_class: noisy
+normalized_log: |
+  Checkout complete.
+  Restored dependency cache.
+  Run ./gradlew test
+  Starting integration-test profile
+  settings file not found: config/settings.ci.yml
+  application.yml not found for profile ci
+  failed to load config from config/settings.ci.yml
+  error loading configuration
+  Build failed with exit code 1.
+expectation:
+  expected_playbook: config-file-missing

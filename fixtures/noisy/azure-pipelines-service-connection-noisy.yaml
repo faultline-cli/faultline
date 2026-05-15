@@ -1,0 +1,12 @@
+id: azure-pipelines-service-connection-noisy
+title: Noisy Azure deployment blocked by unauthorized service endpoint
+fixture_class: noisy
+normalized_log: |
+  ##[section]Starting: Deploy infrastructure
+  Task         : Azure Resource Manager template deployment
+  Service Endpoint prod-arm not found
+  TF400889: The service endpoint prod-arm is not valid.
+  pipeline is not authorized to use this resource
+  ##[error]Deployment failed before template validation.
+expectation:
+  expected_playbook: azure-pipelines-service-connection

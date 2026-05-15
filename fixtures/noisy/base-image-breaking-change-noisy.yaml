@@ -1,0 +1,12 @@
+id: base-image-breaking-change-noisy
+title: Noisy Docker build where updated base image removed a shared library
+fixture_class: noisy
+normalized_log: |
+  Step 1/8 : FROM node:20
+  Pulling newer digest for node:20
+  Step 5/8 : RUN ./vendor/tool --version
+  ./vendor/tool: symbol lookup error: undefined symbol: SSL_get1_peer_certificate
+  shared library libssl.so.1.1 missing after base image changed
+  The command returned a non-zero code: 127
+expectation:
+  expected_playbook: base-image-breaking-change

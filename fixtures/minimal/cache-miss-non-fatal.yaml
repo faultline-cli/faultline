@@ -10,3 +10,4 @@ normalized_log: |
   Proceeding with fresh install.
 expectation:
   expected_playbook: cache-miss-non-fatal
+  strict_top1: true

@@ -99,10 +99,6 @@ fixtures:
     path: internal/engine/testdata/fixtures/health-check-failure.log
     expectation:
       expected_playbook: health-check-failure
-  - id: minimal-config-mismatch
-    path: internal/engine/testdata/fixtures/config-mismatch.log
-    expectation:
-      expected_playbook: config-mismatch
   - id: minimal-env-var-missing
     path: internal/engine/testdata/fixtures/env-var-missing.log
     expectation:

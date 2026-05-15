@@ -1,0 +1,12 @@
+id: config-file-missing-env-file
+title: CI startup fails because required .env file is absent
+fixture_class: minimal
+normalized_log: |
+  Run bundle exec rails db:prepare
+  .env file is missing
+  failed to load config from .env
+  error loading configuration: No such file or directory: .env
+  Application configuration could not be initialized.
+expectation:
+  expected_playbook: config-file-missing
+  strict_top1: true

@@ -1,0 +1,11 @@
+id: skipped-critical-step-noisy
+title: Noisy CI log where artifact upload is skipped unexpectedly
+fixture_class: noisy
+normalized_log: |
+  Build job completed.
+  Evaluating condition for Upload artifacts.
+  Step "Upload artifacts" was skipped because the condition was false.
+  step was skipped
+  Downstream package job had no artifact input.
+expectation:
+  expected_playbook: skipped-critical-step

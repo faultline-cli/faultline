@@ -1,0 +1,12 @@
+id: ipv6-ipv4-resolution-localhost
+title: Localhost resolves to IPv6 loopback but service is IPv4-only
+fixture_class: minimal
+normalized_log: |
+  integration test connecting to http://localhost:6379
+  EAFNOSUPPORT: address family not supported for ::1:6379
+  ADDRESS_FAMILY_NOT_SUPPORTED while opening IPv6 loopback socket
+  resolver selected IPv6 loopback first
+  retry with prefer-ipv4 was not configured
+expectation:
+  expected_playbook: ipv6-ipv4-resolution
+  strict_top1: true

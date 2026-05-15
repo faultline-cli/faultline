@@ -9,3 +9,4 @@ normalized_log: |
   0 files uploaded
 expectation:
   expected_playbook: artifact-missing
+  strict_top1: true

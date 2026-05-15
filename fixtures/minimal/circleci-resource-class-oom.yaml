@@ -11,3 +11,4 @@ normalized_log: |
   Process killed due to memory pressure on the runner.
 expectation:
   expected_playbook: circleci-resource-class-oom
+  strict_top1: true

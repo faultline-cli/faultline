@@ -8,3 +8,4 @@ normalized_log: |
   Step "Upload artifacts" was skipped because the condition was false.
 expectation:
   expected_playbook: skipped-critical-step
+  strict_top1: true

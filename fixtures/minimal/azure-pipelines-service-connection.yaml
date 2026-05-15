@@ -9,3 +9,4 @@ normalized_log: |
   ##[error]No service connection with name 'my-azure-subscription' found.
 expectation:
   expected_playbook: azure-pipelines-service-connection
+  strict_top1: true

@@ -158,6 +158,9 @@ aliases plus a small generic set:
 ## Improvement pipeline
 
 Treat playbook growth as a deterministic review loop, not a content-volume goal.
+Use the robustness report in [`docs/playbook-robustness.md`](./playbook-robustness.md)
+to prioritize work by false-positive and false-negative risk across the
+resolved catalog, including any extra packs.
 
 1. Ingest evidence from bundled playbooks, clean fixtures, noisy corpus logs, missed detections, false positives, and repository inspection findings.
 2. Normalize each candidate into a root-cause record with likely category, distinctive signatures, confusable neighbors, and an actionable fix path.

@@ -1,0 +1,11 @@
+id: zero-tests-executed-noisy
+title: Noisy Jest run with no discovered test suites
+fixture_class: noisy
+normalized_log: |
+  Run npm test -- --ci
+  No test suites found in /home/runner/work/project/src
+  No tests found
+  0 tests
+  CI step exited successfully even though no tests ran.
+expectation:
+  expected_playbook: zero-tests-executed

@@ -92,6 +92,12 @@ expectation:
 		StrictTop1FixtureCount int      `json:"strict_top_1_fixture_count"`
 		FixtureMode            string   `json:"fixture_mode"`
 		MissingFixtures        []string `json:"missing_fixtures"`
+		Robustness             []struct {
+			PlaybookID        string `json:"playbook_id"`
+			ConfidenceScore   int    `json:"confidence_score"`
+			FalsePositiveRisk string `json:"false_positive_risk"`
+			FalseNegativeRisk string `json:"false_negative_risk"`
+		} `json:"robustness"`
 	}
 	if err := json.Unmarshal(buf.Bytes(), &report); err != nil {
 		t.Fatalf("unmarshal JSON output: %v\nraw: %s", err, buf.String())
@@ -140,6 +146,12 @@ expectation:
 	}
 	if strings.Join(report.MissingFixtures, ",") != "unused-playbook" {
 		t.Fatalf("missing_fixtures = %v, want [unused-playbook]", report.MissingFixtures)
+	}
+	if len(report.Robustness) != 3 {
+		t.Fatalf("robustness length = %d, want 3", len(report.Robustness))
+	}
+	if report.Robustness[0].ConfidenceScore > report.Robustness[len(report.Robustness)-1].ConfidenceScore {
+		t.Fatalf("robustness entries are not sorted by ascending score: %#v", report.Robustness)
 	}
 }
 

@@ -1,0 +1,11 @@
+id: skipped-critical-step-deploy
+title: Production deploy step skipped by false condition
+fixture_class: minimal
+normalized_log: |
+  Skipping step due to condition
+  Condition evaluated to false
+  step was skipped: deploy-production
+  Critical deployment did not run.
+expectation:
+  expected_playbook: skipped-critical-step
+  strict_top1: true

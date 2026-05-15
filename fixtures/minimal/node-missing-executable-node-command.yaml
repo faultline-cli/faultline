@@ -1,0 +1,11 @@
+id: node-missing-executable-node-command
+title: Node command missing from PATH in build step
+fixture_class: minimal
+normalized_log: |
+  Run npm run build
+  /bin/sh: 1: node: command not found
+  npm ERR! command sh -c node scripts/build.js
+  npm ERR! code 127
+expectation:
+  expected_playbook: node-missing-executable
+  strict_top1: true

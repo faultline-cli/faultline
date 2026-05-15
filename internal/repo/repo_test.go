@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type commitSpec struct {
@@ -71,7 +72,7 @@ func TestLoadHistoryAndSignals(t *testing.T) {
 	repoDir := initTempRepo(t)
 	writeCommits(t, repoDir, []commitSpec{
 		{
-			Date:    "2026-04-08T10:00:00Z",
+			Date:    recentCommitDate(4),
 			Subject: "feat: adjust health endpoint",
 			Files: map[string]string{
 				"cmd/server/main.go":      "package main\n",
@@ -79,7 +80,7 @@ func TestLoadHistoryAndSignals(t *testing.T) {
 			},
 		},
 		{
-			Date:    "2026-04-09T10:00:00Z",
+			Date:    recentCommitDate(3),
 			Subject: "hotfix: revert health timeout tweak",
 			Files: map[string]string{
 				"deploy/healthcheck.yaml": "path: /readyz\n",
@@ -87,7 +88,7 @@ func TestLoadHistoryAndSignals(t *testing.T) {
 			},
 		},
 		{
-			Date:    "2026-04-10T10:00:00Z",
+			Date:    recentCommitDate(2),
 			Subject: "revert: restore startup probe",
 			Files: map[string]string{
 				"deploy/healthcheck.yaml": "path: /healthz\n",
@@ -199,6 +200,10 @@ func writeCommits(t *testing.T, repoDir string, commits []commitSpec) {
 		}
 		runGit(t, repoDir, env, "commit", "--quiet", "-m", commit.Subject)
 	}
+}
+
+func recentCommitDate(daysAgo int) string {
+	return time.Now().UTC().AddDate(0, 0, -daysAgo).Format(time.RFC3339)
 }
 
 func runGit(t *testing.T, dir string, env []string, args ...string) {

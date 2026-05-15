@@ -1,0 +1,7 @@
+id: config-mismatch-canonical
+title: Kubernetes deployment fails because required secret and config keys are missing
+fixture_class: minimal
+path: internal/engine/testdata/fixtures/config-mismatch.log
+expectation:
+  expected_playbook: config-mismatch
+  strict_top1: true

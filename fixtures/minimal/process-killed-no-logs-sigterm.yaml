@@ -1,0 +1,12 @@
+id: process-killed-no-logs-sigterm
+title: CI step terminated with SIGTERM and no diagnostic output
+fixture_class: minimal
+normalized_log: |
+  Running integration suite...
+  Process was killed
+  process exited with signal 15
+  exit code 143
+  no test failure details were emitted
+expectation:
+  expected_playbook: process-killed-no-logs
+  strict_top1: true

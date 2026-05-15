@@ -9,3 +9,4 @@ normalized_log: |
   ##[warning]Continuing pipeline execution despite step failure.
 expectation:
   expected_playbook: continue-on-error
+  strict_top1: true

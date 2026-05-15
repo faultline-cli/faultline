@@ -1,0 +1,11 @@
+id: empty-quality-check-semgrep
+title: Security scanner runs but scans zero files
+fixture_class: minimal
+normalized_log: |
+  Run semgrep ci
+  Nothing to scan
+  0 files scanned
+  No source files found in checkout.
+expectation:
+  expected_playbook: empty-quality-check
+  strict_top1: true

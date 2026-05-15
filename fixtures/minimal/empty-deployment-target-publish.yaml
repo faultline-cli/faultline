@@ -1,0 +1,11 @@
+id: empty-deployment-target-publish
+title: Publish step has zero release artifacts
+fixture_class: minimal
+normalized_log: |
+  Running release publisher.
+  No deployable artifacts found in dist/release
+  0 artifacts to publish
+  Nothing to deploy.
+expectation:
+  expected_playbook: empty-deployment-target
+  strict_top1: true

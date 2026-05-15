@@ -1,0 +1,11 @@
+id: azure-pipelines-service-connection-token
+title: Azure Pipeline cannot get token for service connection
+fixture_class: minimal
+normalized_log: |
+  Starting: AzureCLI
+  ##[error]Failed to authenticate with service connection 'prod-subscription'
+  ##[error]could not get a token for service endpoint prod-subscription
+  ##[error]This service connection is not authorized for use by this pipeline.
+expectation:
+  expected_playbook: azure-pipelines-service-connection
+  strict_top1: true

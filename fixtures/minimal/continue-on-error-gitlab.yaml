@@ -1,0 +1,11 @@
+id: continue-on-error-gitlab
+title: GitLab job allows failure on required test step
+fixture_class: minimal
+normalized_log: |
+  test:
+    script: ./run-tests.sh
+    allow_failure: true
+  Job failed with exit code 1 but allow_failure: true was configured.
+expectation:
+  expected_playbook: continue-on-error
+  strict_top1: true

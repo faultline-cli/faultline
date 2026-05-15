@@ -1,0 +1,11 @@
+id: circleci-config-validation-schema
+title: CircleCI config references unknown executor
+fixture_class: minimal
+normalized_log: |
+  Error: config compilation failed
+  Configuration error: Unknown executor "node-large"
+  config.yml is invalid
+  from the CircleCI config compiler
+expectation:
+  expected_playbook: circleci-config-validation
+  strict_top1: true

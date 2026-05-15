@@ -1,0 +1,12 @@
+id: cache-miss-non-fatal-noisy
+title: Noisy workflow with repeated non-fatal cache miss
+fixture_class: noisy
+normalized_log: |
+  Run actions/cache@v4
+  Cache not found for key linux-poetry-2f43c9
+  No cache found, continuing without cache.
+  Failed to restore cache: cache miss
+  Installing dependencies from scratch.
+  Tests passed, but cache hit rate is zero.
+expectation:
+  expected_playbook: cache-miss-non-fatal

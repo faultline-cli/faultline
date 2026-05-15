@@ -65,6 +65,16 @@ expectation:
 	if strings.Join(report.MissingFixtures, ",") != "uncovered-playbook" {
 		t.Fatalf("MissingFixtures = %v, want [uncovered-playbook]", report.MissingFixtures)
 	}
+	if len(report.Robustness) != 3 {
+		t.Fatalf("Robustness length = %d, want 3", len(report.Robustness))
+	}
+	authRobustness := robustnessByID(t, report, "npm-registry-auth")
+	if authRobustness.FalseNegativeRisk != "high" {
+		t.Fatalf("npm-registry-auth false negative risk = %q, want high", authRobustness.FalseNegativeRisk)
+	}
+	if authRobustness.PositiveFixtures != 1 || authRobustness.NegativeAssertions != 1 || authRobustness.StrictTop1Fixtures != 1 {
+		t.Fatalf("npm-registry-auth robustness counts = +%d -%d strict %d, want +1 -1 strict 1", authRobustness.PositiveFixtures, authRobustness.NegativeAssertions, authRobustness.StrictTop1Fixtures)
+	}
 
 	auth := categoryByName(t, report, "auth")
 	if auth.PositiveFixtures != 1 || auth.NegativeAssertions != 1 {
@@ -120,6 +130,9 @@ func TestWriteJSONKeepsStableEmptySlices(t *testing.T) {
 			t.Fatalf("%s rendered as null; want []", key)
 		}
 	}
+	if string(raw["robustness"]) == "null" {
+		t.Fatalf("robustness rendered as null; want []")
+	}
 }
 
 func categoryByName(t *testing.T, report Report, name string) Category {
@@ -131,6 +144,17 @@ func categoryByName(t *testing.T, report Report, name string) Category {
 	}
 	t.Fatalf("category %q not found in %#v", name, report.ByCategory)
 	return Category{}
+}
+
+func robustnessByID(t *testing.T, report Report, id string) Robustness {
+	t.Helper()
+	for _, item := range report.Robustness {
+		if item.PlaybookID == id {
+			return item
+		}
+	}
+	t.Fatalf("robustness item %q not found in %#v", id, report.Robustness)
+	return Robustness{}
 }
 
 func writePlaybook(t *testing.T, dir, id, category, domain string) {

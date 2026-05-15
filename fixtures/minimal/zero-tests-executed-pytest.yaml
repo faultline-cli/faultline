@@ -1,0 +1,12 @@
+id: zero-tests-executed-generic
+title: Generic test command reports zero tests executed
+fixture_class: minimal
+normalized_log: |
+  Running test command.
+  No test files found
+  0 tests
+  tests: 0
+  0 passing
+expectation:
+  expected_playbook: zero-tests-executed
+  strict_top1: true

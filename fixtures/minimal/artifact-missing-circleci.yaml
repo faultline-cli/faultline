@@ -1,0 +1,12 @@
+id: artifact-missing-circleci
+title: CircleCI artifact step matches zero files
+fixture_class: minimal
+normalized_log: |
+  Store artifacts
+  Artifact not found: coverage/lcov.info
+  Path does not exist: coverage/lcov.info
+  no artifacts matched the configured path
+  0 files uploaded
+expectation:
+  expected_playbook: artifact-missing
+  strict_top1: true

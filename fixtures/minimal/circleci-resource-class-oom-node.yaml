@@ -1,0 +1,11 @@
+id: circleci-resource-class-oom-node
+title: CircleCI Node build killed by memory limit
+fixture_class: minimal
+normalized_log: |
+  CircleCI received exit code: 137
+  JavaScript heap out of memory
+  Fatal error: CALL_AND_RETRY_LAST Allocation failed
+  Process killed due to memory pressure in the configured resource_class.
+expectation:
+  expected_playbook: circleci-resource-class-oom
+  strict_top1: true

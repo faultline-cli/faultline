@@ -8,3 +8,4 @@ normalized_log: |
   The command '/bin/sh -c /app/service --version' returned a non-zero code: 127
 expectation:
   expected_playbook: base-image-breaking-change
+  strict_top1: true

@@ -1,0 +1,12 @@
+id: formatting-failure-noisy
+title: Noisy Python formatting check where Black would reformat files
+fixture_class: noisy
+normalized_log: |
+  Run tox -e format
+  py311 installed: black==24.3.0
+  would reformat src/faultline/client.py
+  black would reformat 1 file, 42 files would be left unchanged
+  format check failed
+  Error: command exited with status 1.
+expectation:
+  expected_playbook: formatting-failure

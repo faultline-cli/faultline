@@ -1,0 +1,11 @@
+id: empty-quality-check-noisy
+title: Noisy lint job with empty analysis scope
+fixture_class: noisy
+normalized_log: |
+  Checkout repository.
+  Run golangci-lint run ./...
+  No files were analyzed
+  0 files analyzed
+  Quality step exited 0 without checking source files.
+expectation:
+  expected_playbook: empty-quality-check

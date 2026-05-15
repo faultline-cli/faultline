@@ -1,0 +1,11 @@
+id: arch-mismatch-noisy
+title: Noisy Docker build log with requested image platform mismatch
+fixture_class: noisy
+normalized_log: |
+  Pulling ghcr.io/example/tool:latest
+  WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8)
+  exec /usr/local/bin/tool: exec format error
+  no matching manifest for linux/arm64 in the manifest list entries
+  Build failed before tests started.
+expectation:
+  expected_playbook: arch-mismatch

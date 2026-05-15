@@ -1,0 +1,6 @@
+id: config-mismatch-noisy
+title: Noisy deploy log where Kubernetes ConfigMap and Secret keys are missing
+fixture_class: noisy
+path: internal/engine/testdata/corpus/config-mismatch-noisy.log
+expectation:
+  expected_playbook: config-mismatch

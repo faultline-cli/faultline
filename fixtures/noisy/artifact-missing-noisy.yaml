@@ -1,0 +1,12 @@
+id: artifact-missing-noisy
+title: Noisy artifact upload where no output files were produced
+fixture_class: noisy
+normalized_log: |
+  Build completed successfully.
+  Run actions/upload-artifact@v4
+  Artifact not found: dist/release.tar.gz
+  Skipping upload because no artifacts matched path dist/release.tar.gz
+  0 files uploaded
+  Downstream release job has no artifact to download.
+expectation:
+  expected_playbook: artifact-missing

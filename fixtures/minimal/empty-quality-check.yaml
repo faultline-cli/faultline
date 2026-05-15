@@ -9,3 +9,4 @@ normalized_log: |
   ESLint found no files to analyze. Exiting with code 0.
 expectation:
   expected_playbook: empty-quality-check
+  strict_top1: true
