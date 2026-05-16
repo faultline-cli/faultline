@@ -456,3 +456,146 @@ func TestFormatTraceTextWithScoreAndConfidence(t *testing.T) {
 		t.Errorf("expected Score line in text output, got:\n%s", out)
 	}
 }
+
+// ── traceHistoryWindow ────────────────────────────────────────────────────────
+
+func TestTraceHistoryWindowInvalidStartReturnsEmpty(t *testing.T) {
+	got := traceHistoryWindow("not-a-date", "2026-01-01T00:00:00Z")
+	if got != "" {
+		t.Errorf("expected empty for invalid start, got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowInvalidEndReturnsEmpty(t *testing.T) {
+	got := traceHistoryWindow("2026-01-01T00:00:00Z", "not-a-date")
+	if got != "" {
+		t.Errorf("expected empty for invalid end, got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowEndBeforeStartReturnsEmpty(t *testing.T) {
+	got := traceHistoryWindow("2026-01-02T00:00:00Z", "2026-01-01T00:00:00Z")
+	if got != "" {
+		t.Errorf("expected empty when end is before start, got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowMinutes(t *testing.T) {
+	got := traceHistoryWindow("2026-01-01T00:00:00Z", "2026-01-01T00:45:00Z")
+	if got != "45m" {
+		t.Errorf("expected '45m', got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowHours(t *testing.T) {
+	got := traceHistoryWindow("2026-01-01T00:00:00Z", "2026-01-01T05:00:00Z")
+	if got != "5h" {
+		t.Errorf("expected '5h', got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowDays(t *testing.T) {
+	got := traceHistoryWindow("2026-01-01T00:00:00Z", "2026-01-10T00:00:00Z")
+	if got != "9d" {
+		t.Errorf("expected '9d', got %q", got)
+	}
+}
+
+func TestTraceHistoryWindowLessThanMinuteReturnsEmpty(t *testing.T) {
+	got := traceHistoryWindow("2026-01-01T00:00:00Z", "2026-01-01T00:00:30Z")
+	if got != "" {
+		t.Errorf("expected empty for less-than-minute duration, got %q", got)
+	}
+}
+
+// ── joinTraceSection ──────────────────────────────────────────────────────────
+
+func TestJoinTraceSectionEmptyBodyReturnsEmpty(t *testing.T) {
+	got := joinTraceSection("Title", "")
+	if got != "" {
+		t.Errorf("expected empty for empty body, got %q", got)
+	}
+}
+
+func TestJoinTraceSectionWhitespaceBodyReturnsEmpty(t *testing.T) {
+	got := joinTraceSection("Title", "   ")
+	if got != "" {
+		t.Errorf("expected empty for whitespace body, got %q", got)
+	}
+}
+
+func TestJoinTraceSectionNonEmptyIncludesTitle(t *testing.T) {
+	got := joinTraceSection("Evidence", "line 1\nline 2")
+	if !strings.HasPrefix(got, "Evidence\n") {
+		t.Errorf("expected title as first line, got %q", got)
+	}
+	if !strings.Contains(got, strings.Repeat("-", len("Evidence"))) {
+		t.Errorf("expected underline in section header, got %q", got)
+	}
+	if !strings.Contains(got, "line 1") {
+		t.Errorf("expected body in section, got %q", got)
+	}
+}
+
+// ── FormatCIAnnotations and firstMarkdownListItem ─────────────────────────────
+
+func TestFormatCIAnnotationsNilAnalysis(t *testing.T) {
+	got := FormatCIAnnotations(nil, 3)
+	if got != "" {
+		t.Errorf("expected empty for nil analysis, got %q", got)
+	}
+}
+
+func TestFormatCIAnnotationsEmptyResults(t *testing.T) {
+	got := FormatCIAnnotations(&model.Analysis{Results: nil}, 3)
+	if got != "" {
+		t.Errorf("expected empty for empty results, got %q", got)
+	}
+}
+
+func TestFormatCIAnnotationsWithFix(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{{
+			Playbook: model.Playbook{
+				ID:    "docker-auth",
+				Title: "Docker auth failure",
+				Fix:   "1. Run docker login\n2. Retry the build",
+			},
+		}},
+	}
+	out := FormatCIAnnotations(a, 1)
+	if !strings.Contains(out, "::warning") {
+		t.Errorf("expected ::warning annotation, got %q", out)
+	}
+	if !strings.Contains(out, "Run docker login") {
+		t.Errorf("expected first fix step in annotation, got %q", out)
+	}
+}
+
+func TestFormatCIAnnotationsWithBulletFix(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{{
+			Playbook: model.Playbook{
+				ID:    "docker-auth",
+				Title: "Docker auth",
+				Fix:   "- Configure credentials\n- Retry",
+			},
+		}},
+	}
+	out := FormatCIAnnotations(a, 1)
+	if !strings.Contains(out, "Configure credentials") {
+		t.Errorf("expected bullet fix item in annotation, got %q", out)
+	}
+}
+
+func TestFormatCIAnnotationsNoFix(t *testing.T) {
+	a := &model.Analysis{
+		Results: []model.Result{{
+			Playbook: model.Playbook{ID: "docker-auth", Title: "Docker auth"},
+		}},
+	}
+	out := FormatCIAnnotations(a, 1)
+	if !strings.Contains(out, "::warning") {
+		t.Errorf("expected ::warning even without fix, got %q", out)
+	}
+}

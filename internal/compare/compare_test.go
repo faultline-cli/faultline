@@ -214,6 +214,119 @@ func TestBuildSummaryNewContextAppeared(t *testing.T) {
 	}
 }
 
+// ── fixSteps ──────────────────────────────────────────────────────────────────
+
+func TestFixStepsNilAnalysis(t *testing.T) {
+	got := fixSteps(nil)
+	if got != nil {
+		t.Errorf("expected nil for nil analysis, got %v", got)
+	}
+}
+
+func TestFixStepsNilArtifact(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	got := fixSteps(a)
+	if got != nil {
+		t.Errorf("expected nil when Artifact is nil, got %v", got)
+	}
+}
+
+func TestFixStepsWithArtifact(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	a.Artifact = &model.FailureArtifact{
+		FixSteps: []string{"step 1", "step 2"},
+	}
+	got := fixSteps(a)
+	if len(got) != 2 || got[0] != "step 1" || got[1] != "step 2" {
+		t.Errorf("expected [step 1, step 2], got %v", got)
+	}
+}
+
+func TestFixStepsReturnsIndependentCopy(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	a.Artifact = &model.FailureArtifact{
+		FixSteps: []string{"step 1"},
+	}
+	got := fixSteps(a)
+	got[0] = "mutated"
+	if a.Artifact.FixSteps[0] != "step 1" {
+		t.Error("fixSteps should return an independent copy")
+	}
+}
+
+// ── dominantSignals ───────────────────────────────────────────────────────────
+
+func TestDominantSignalsNilAnalysis(t *testing.T) {
+	got := dominantSignals(nil)
+	if got != nil {
+		t.Errorf("expected nil for nil analysis, got %v", got)
+	}
+}
+
+func TestDominantSignalsNilArtifact(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	got := dominantSignals(a)
+	if got != nil {
+		t.Errorf("expected nil when Artifact is nil, got %v", got)
+	}
+}
+
+func TestDominantSignalsWithArtifact(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	a.Artifact = &model.FailureArtifact{
+		DominantSignals: []string{"signal-A", "signal-B"},
+	}
+	got := dominantSignals(a)
+	if len(got) != 2 || got[0] != "signal-A" || got[1] != "signal-B" {
+		t.Errorf("expected [signal-A, signal-B], got %v", got)
+	}
+}
+
+func TestDominantSignalsReturnsIndependentCopy(t *testing.T) {
+	a := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	a.Artifact = &model.FailureArtifact{
+		DominantSignals: []string{"signal-A"},
+	}
+	got := dominantSignals(a)
+	got[0] = "mutated"
+	if a.Artifact.DominantSignals[0] != "signal-A" {
+		t.Error("dominantSignals should return an independent copy")
+	}
+}
+
+// ── fixSteps and dominantSignals propagate via Build ─────────────────────────
+
+func TestBuildFixStepsDelta(t *testing.T) {
+	left := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	left.Artifact = &model.FailureArtifact{FixSteps: []string{"old fix"}}
+	right := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	right.Artifact = &model.FailureArtifact{FixSteps: []string{"new fix"}}
+	report := Build(left, right)
+	if len(report.FixSteps.Added) != 1 || report.FixSteps.Added[0] != "new fix" {
+		t.Errorf("expected FixSteps.Added=[new fix], got %v", report.FixSteps.Added)
+	}
+	if len(report.FixSteps.Removed) != 1 || report.FixSteps.Removed[0] != "old fix" {
+		t.Errorf("expected FixSteps.Removed=[old fix], got %v", report.FixSteps.Removed)
+	}
+	if !report.Changed {
+		t.Error("expected Changed=true when fix steps differ")
+	}
+}
+
+func TestBuildDominantSignalsDelta(t *testing.T) {
+	left := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	left.Artifact = &model.FailureArtifact{DominantSignals: []string{"sig-A"}}
+	right := makeAnalysis("docker-auth", "Docker auth", 0.9, nil)
+	right.Artifact = &model.FailureArtifact{DominantSignals: []string{"sig-B"}}
+	report := Build(left, right)
+	if len(report.DominantSignals.Added) != 1 || report.DominantSignals.Added[0] != "sig-B" {
+		t.Errorf("expected DominantSignals.Added=[sig-B], got %v", report.DominantSignals.Added)
+	}
+	if len(report.DominantSignals.Removed) != 1 || report.DominantSignals.Removed[0] != "sig-A" {
+		t.Errorf("expected DominantSignals.Removed=[sig-A], got %v", report.DominantSignals.Removed)
+	}
+}
+
 // ── diffStrings ───────────────────────────────────────────────────────────────
 
 func TestDiffStringsEmptyInputs(t *testing.T) {

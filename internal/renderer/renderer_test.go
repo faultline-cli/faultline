@@ -385,3 +385,33 @@ func TestTrimTerminalPunctuation(t *testing.T) {
 		}
 	}
 }
+
+// ── New ───────────────────────────────────────────────────────────────────────
+
+func TestNewZeroWidthDefaultsToDefaultWidth(t *testing.T) {
+	r := New(Options{Width: 0, Plain: true})
+	if r.opts.Width != defaultWidth {
+		t.Errorf("expected defaultWidth %d for zero-width option, got %d", defaultWidth, r.opts.Width)
+	}
+}
+
+func TestNewNonZeroWidthPreserved(t *testing.T) {
+	r := New(Options{Width: 100, Plain: true})
+	if r.opts.Width != 100 {
+		t.Errorf("expected width 100 to be preserved, got %d", r.opts.Width)
+	}
+}
+
+func TestNewPlainFlagPreserved(t *testing.T) {
+	r := New(Options{Plain: true})
+	if !r.opts.Plain {
+		t.Error("expected Plain=true to be preserved")
+	}
+}
+
+func TestNewDarkBackgroundPreserved(t *testing.T) {
+	r := New(Options{DarkBackground: true, Width: 88})
+	if !r.opts.DarkBackground {
+		t.Error("expected DarkBackground=true to be preserved")
+	}
+}

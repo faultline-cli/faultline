@@ -570,3 +570,257 @@ func TestPartialRuleNote(t *testing.T) {
 		})
 	}
 }
+
+// ── allRuleNote ───────────────────────────────────────────────────────────────
+
+func TestAllRuleNoteMatched(t *testing.T) {
+	got := allRuleNote(true)
+	if got != "required rule matched" {
+		t.Errorf("expected 'required rule matched', got %q", got)
+	}
+}
+
+func TestAllRuleNoteMissing(t *testing.T) {
+	got := allRuleNote(false)
+	if got != "required rule was missing" {
+		t.Errorf("expected 'required rule was missing', got %q", got)
+	}
+}
+
+// ── anyRuleNote ───────────────────────────────────────────────────────────────
+
+func TestAnyRuleNoteMatched(t *testing.T) {
+	got := anyRuleNote(true)
+	if got != "trigger rule matched the log" {
+		t.Errorf("expected 'trigger rule matched the log', got %q", got)
+	}
+}
+
+func TestAnyRuleNoteNotMatched(t *testing.T) {
+	got := anyRuleNote(false)
+	if got != "trigger rule did not match" {
+		t.Errorf("expected 'trigger rule did not match', got %q", got)
+	}
+}
+
+// ── noneRuleNote ──────────────────────────────────────────────────────────────
+
+func TestNoneRuleNoteBlocked(t *testing.T) {
+	got := noneRuleNote(true)
+	if !strings.Contains(got, "blocks the playbook") {
+		t.Errorf("expected 'blocks the playbook', got %q", got)
+	}
+}
+
+func TestNoneRuleNoteClear(t *testing.T) {
+	got := noneRuleNote(false)
+	if got != "exclusion rule stayed clear" {
+		t.Errorf("expected 'exclusion rule stayed clear', got %q", got)
+	}
+}
+
+// ── buildWhy ──────────────────────────────────────────────────────────────────
+
+func TestBuildWhyFromHypothesisWhy(t *testing.T) {
+	result := model.Result{
+		Hypothesis: &model.HypothesisAssessment{
+			Why: []string{"registry rejected credentials"},
+		},
+	}
+	got := buildWhy(result, nil)
+	if len(got) != 1 || got[0] != "registry rejected credentials" {
+		t.Errorf("expected hypothesis Why, got %v", got)
+	}
+}
+
+func TestBuildWhyFallsBackToWhyLessLikely(t *testing.T) {
+	result := model.Result{
+		Hypothesis: &model.HypothesisAssessment{
+			Why:           nil,
+			WhyLessLikely: []string{"weaker signal present"},
+		},
+	}
+	got := buildWhy(result, nil)
+	if len(got) != 1 || got[0] != "weaker signal present" {
+		t.Errorf("expected WhyLessLikely fallback, got %v", got)
+	}
+}
+
+func TestBuildWhyFromRulesMatchedAny(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.any", Status: StatusMatched},
+	}
+	result := model.Result{}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "trigger rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected trigger rule reason, got %v", got)
+	}
+}
+
+func TestBuildWhyFromRulesMatchedAll(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.all", Status: StatusMatched},
+	}
+	result := model.Result{}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "required rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected required rule reason, got %v", got)
+	}
+}
+
+func TestBuildWhyFromRulesClearNone(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.none", Status: StatusClear},
+	}
+	result := model.Result{}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "exclusion rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected exclusion rule reason, got %v", got)
+	}
+}
+
+func TestBuildWhyFromRulesBlockedNone(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.none", Status: StatusBlocked},
+	}
+	result := model.Result{}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "exclusion rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected blocked exclusion reason, got %v", got)
+	}
+}
+
+func TestBuildWhyFromEvidence(t *testing.T) {
+	rules := []Rule{}
+	result := model.Result{Evidence: []string{"auth error"}}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "matched evidence") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected evidence reason, got %v", got)
+	}
+}
+
+func TestBuildWhyFromRulesMatchedPartial(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.partial", Status: StatusMatched},
+	}
+	result := model.Result{}
+	got := buildWhy(result, rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "partial group") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected partial group reason, got %v", got)
+	}
+}
+
+// ── buildUnmatchedWhy ─────────────────────────────────────────────────────────
+
+func TestBuildUnmatchedWhyNoTrigger(t *testing.T) {
+	rules := []Rule{}
+	got := buildUnmatchedWhy(rules)
+	if len(got) == 0 {
+		t.Fatal("expected at least one reason for unmatched")
+	}
+	if got[0] != "no trigger rule matched the input log" {
+		t.Errorf("expected 'no trigger rule matched', got %q", got[0])
+	}
+}
+
+func TestBuildUnmatchedWhyMissingAll(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.all", Status: StatusMissing},
+	}
+	got := buildUnmatchedWhy(rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "required rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected required rule missing reason, got %v", got)
+	}
+}
+
+func TestBuildUnmatchedWhyBlockedNone(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.any", Status: StatusMatched},
+		{Group: "match.none", Status: StatusBlocked},
+	}
+	got := buildUnmatchedWhy(rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "exclusion rule") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected exclusion rule blocked reason, got %v", got)
+	}
+}
+
+func TestBuildUnmatchedWhyMissingPartial(t *testing.T) {
+	rules := []Rule{
+		{Group: "match.partial", Status: StatusMissing},
+	}
+	got := buildUnmatchedWhy(rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "partial group") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected partial group reason, got %v", got)
+	}
+}
+
+func TestBuildUnmatchedWhyFallbackReason(t *testing.T) {
+	// A match.any that matched but playbook still unmatched overall
+	rules := []Rule{
+		{Group: "match.any", Status: StatusMatched},
+	}
+	got := buildUnmatchedWhy(rules)
+	found := false
+	for _, reason := range got {
+		if strings.Contains(reason, "did not reach a ranked match") {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected fallback reason, got %v", got)
+	}
+}
