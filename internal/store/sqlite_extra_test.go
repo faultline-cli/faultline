@@ -323,62 +323,62 @@ func TestVerifyDeterminismForInputHashBlank(t *testing.T) {
 // ── BeginRun with zero timestamp ──────────────────────────────────────────────
 
 func TestBeginRunWithZeroTimestampUsesNow(t *testing.T) {
-path := filepath.Join(t.TempDir(), "faultline.db")
-st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
-if err != nil {
-t.Fatalf("OpenBestEffort: %v", err)
-}
-defer st.Close()
+	path := filepath.Join(t.TempDir(), "faultline.db")
+	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
+	if err != nil {
+		t.Fatalf("OpenBestEffort: %v", err)
+	}
+	defer st.Close()
 
-// StartedAt zero → should be auto-populated by BeginRun.
-ctx := context.Background()
-handle, err := st.BeginRun(ctx, BeginRunParams{
-Surface:    "analyze",
-SourceKind: "log",
-Source:     "stdin",
-InputHash:  "zero-ts-input",
-// StartedAt is zero value
-})
-if err != nil {
-t.Fatalf("BeginRun with zero timestamp: %v", err)
-}
-if handle.ID == 0 {
-t.Error("expected non-zero run handle ID")
-}
+	// StartedAt zero → should be auto-populated by BeginRun.
+	ctx := context.Background()
+	handle, err := st.BeginRun(ctx, BeginRunParams{
+		Surface:    "analyze",
+		SourceKind: "log",
+		Source:     "stdin",
+		InputHash:  "zero-ts-input",
+		// StartedAt is zero value
+	})
+	if err != nil {
+		t.Fatalf("BeginRun with zero timestamp: %v", err)
+	}
+	if handle.ID == 0 {
+		t.Error("expected non-zero run handle ID")
+	}
 }
 
 // ── openSQLite creates the directory if it doesn't exist ─────────────────────
 
 func TestOpenSQLiteCreatesParentDirectory(t *testing.T) {
-base := t.TempDir()
-// Nested path that doesn't exist yet.
-path := filepath.Join(base, "sub", "dir", "faultline.db")
-st, err := openSQLite(path)
-if err != nil {
-t.Fatalf("openSQLite with missing parent dir: %v", err)
-}
-defer st.Close()
+	base := t.TempDir()
+	// Nested path that doesn't exist yet.
+	path := filepath.Join(base, "sub", "dir", "faultline.db")
+	st, err := openSQLite(path)
+	if err != nil {
+		t.Fatalf("openSQLite with missing parent dir: %v", err)
+	}
+	defer st.Close()
 
-// Verify the file was created.
-if _, err := os.Stat(path); err != nil {
-t.Errorf("expected db file to exist at %s: %v", path, err)
-}
+	// Verify the file was created.
+	if _, err := os.Stat(path); err != nil {
+		t.Errorf("expected db file to exist at %s: %v", path, err)
+	}
 }
 
 // ── migrate is idempotent ─────────────────────────────────────────────────────
 
 func TestMigrateIsIdempotent(t *testing.T) {
-path := filepath.Join(t.TempDir(), "faultline.db")
-// Open twice — second open will call migrate again on an already-migrated db.
-st1, err := openSQLite(path)
-if err != nil {
-t.Fatalf("first openSQLite: %v", err)
-}
-st1.Close()
+	path := filepath.Join(t.TempDir(), "faultline.db")
+	// Open twice — second open will call migrate again on an already-migrated db.
+	st1, err := openSQLite(path)
+	if err != nil {
+		t.Fatalf("first openSQLite: %v", err)
+	}
+	st1.Close()
 
-st2, err := openSQLite(path)
-if err != nil {
-t.Fatalf("second openSQLite (idempotent migrate): %v", err)
-}
-defer st2.Close()
+	st2, err := openSQLite(path)
+	if err != nil {
+		t.Fatalf("second openSQLite (idempotent migrate): %v", err)
+	}
+	defer st2.Close()
 }
