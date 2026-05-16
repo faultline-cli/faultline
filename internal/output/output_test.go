@@ -1398,3 +1398,239 @@ func TestRepoContextJSONRoundTrip(t *testing.T) {
 		t.Errorf("HotfixSignals[0] = %q, want hotfix signal", parsed.HotfixSignals[0])
 	}
 }
+
+// ── firstMarkdownListItem ─────────────────────────────────────────────────────
+
+func TestFirstMarkdownListItemBullet(t *testing.T) {
+got := firstMarkdownListItem("- first item\n- second item")
+if got != "first item" {
+t.Errorf("expected 'first item', got %q", got)
+}
+}
+
+func TestFirstMarkdownListItemNumbered(t *testing.T) {
+got := firstMarkdownListItem("1. numbered item\n2. second item")
+if got != "numbered item" {
+t.Errorf("expected 'numbered item', got %q", got)
+}
+}
+
+func TestFirstMarkdownListItemParagraphBeforeList(t *testing.T) {
+got := firstMarkdownListItem("Some text.\n\n- the bullet")
+if got != "the bullet" {
+t.Errorf("expected 'the bullet', got %q", got)
+}
+}
+
+func TestFirstMarkdownListItemEmpty(t *testing.T) {
+got := firstMarkdownListItem("")
+if got != "" {
+t.Errorf("expected empty for empty input, got %q", got)
+}
+}
+
+func TestFirstMarkdownListItemNoBullet(t *testing.T) {
+got := firstMarkdownListItem("just plain text\nno list here")
+if got != "" {
+t.Errorf("expected empty when no list item present, got %q", got)
+}
+}
+
+// ── scoreBreakdownLines ───────────────────────────────────────────────────────
+
+func TestScoreBreakdownLinesZeroFinalScore(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{})
+if got != nil {
+t.Errorf("expected nil for zero FinalScore, got %v", got)
+}
+}
+
+func TestScoreBreakdownLinesNoModifiers(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{
+BaseSignalScore: 0.8,
+FinalScore:      0.8,
+})
+if got != nil {
+t.Errorf("expected nil when no modifiers, got %v", got)
+}
+}
+
+func TestScoreBreakdownLinesWithCompoundBonus(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{
+BaseSignalScore:   0.8,
+FinalScore:        0.9,
+CompoundSignalBonus: 0.1,
+})
+if got == nil {
+t.Fatal("expected non-nil lines for compound bonus")
+}
+found := false
+for _, line := range got {
+if strings.Contains(line, "compound") {
+found = true
+}
+}
+if !found {
+t.Errorf("expected 'compound' in breakdown lines, got %v", got)
+}
+}
+
+func TestScoreBreakdownLinesWithBlastRadius(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{
+BaseSignalScore:    0.8,
+FinalScore:         1.0,
+BlastRadiusMultiplier: 0.2,
+})
+if got == nil {
+t.Fatal("expected non-nil lines for blast radius")
+}
+found := false
+for _, line := range got {
+if strings.Contains(line, "blast radius") {
+found = true
+}
+}
+if !found {
+t.Errorf("expected 'blast radius' in breakdown lines, got %v", got)
+}
+}
+
+func TestScoreBreakdownLinesWithMitigations(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{
+BaseSignalScore:            0.9,
+FinalScore:                 0.7,
+MitigatingEvidenceDiscount: 0.2,
+})
+if got == nil {
+t.Fatal("expected non-nil lines for mitigations")
+}
+found := false
+for _, line := range got {
+if strings.Contains(line, "mitigations") {
+found = true
+}
+}
+if !found {
+t.Errorf("expected 'mitigations' in breakdown lines, got %v", got)
+}
+}
+
+func TestScoreBreakdownLinesWithAllModifiers(t *testing.T) {
+got := scoreBreakdownLines(model.ScoreBreakdown{
+BaseSignalScore:            0.7,
+FinalScore:                 1.2,
+CompoundSignalBonus:        0.1,
+BlastRadiusMultiplier:      0.1,
+HotPathMultiplier:          0.1,
+ChangeIntroducedBonus:      0.05,
+MitigatingEvidenceDiscount: 0.05,
+ExplicitExceptionDiscount:  0.05,
+SafeContextDiscount:        0.05,
+})
+if got == nil {
+t.Fatal("expected non-nil lines with all modifiers")
+}
+sectionNames := []string{"base:", "final:", "compound:", "blast radius:", "hot path:", "change bonus:", "mitigations:", "suppressions:", "safe context:"}
+for _, name := range sectionNames {
+found := false
+for _, line := range got {
+if strings.HasPrefix(line, name) {
+found = true
+break
+}
+}
+if !found {
+t.Errorf("expected %q in breakdown lines, got %v", name, got)
+}
+}
+}
+
+// ── formatMatchSummaryMarkdown ────────────────────────────────────────────────
+
+func TestFormatMatchSummaryMarkdownEmpty(t *testing.T) {
+got := formatMatchSummaryMarkdown(model.Playbook{})
+if got != "" {
+t.Errorf("expected empty for empty playbook, got %q", got)
+}
+}
+
+func TestFormatMatchSummaryMarkdownAny(t *testing.T) {
+pb := model.Playbook{
+Match: model.MatchSpec{Any: []string{"error: auth failed"}},
+}
+got := formatMatchSummaryMarkdown(pb)
+if !strings.Contains(got, "### match.any") {
+t.Errorf("expected match.any section, got %q", got)
+}
+if !strings.Contains(got, "error: auth failed") {
+t.Errorf("expected pattern in match.any, got %q", got)
+}
+}
+
+func TestFormatMatchSummaryMarkdownAll(t *testing.T) {
+pb := model.Playbook{
+Match: model.MatchSpec{All: []string{"required-pattern"}},
+}
+got := formatMatchSummaryMarkdown(pb)
+if !strings.Contains(got, "### match.all") {
+t.Errorf("expected match.all section, got %q", got)
+}
+}
+
+func TestFormatMatchSummaryMarkdownNone(t *testing.T) {
+pb := model.Playbook{
+Match: model.MatchSpec{None: []string{"cache hit"}},
+}
+got := formatMatchSummaryMarkdown(pb)
+if !strings.Contains(got, "### match.none") {
+t.Errorf("expected match.none section, got %q", got)
+}
+}
+
+func TestFormatMatchSummaryMarkdownWorkflowVerify(t *testing.T) {
+pb := model.Playbook{
+Match:    model.MatchSpec{Any: []string{"pattern"}},
+Workflow: model.WorkflowSpec{Verify: []string{"go test ./..."}},
+}
+got := formatMatchSummaryMarkdown(pb)
+if !strings.Contains(got, "### workflow.verify") {
+t.Errorf("expected workflow.verify section, got %q", got)
+}
+}
+
+// ── TopResult ─────────────────────────────────────────────────────────────────
+
+func TestTopResultEmptyView(t *testing.T) {
+v := AnalysisView{}
+_, ok := v.TopResult()
+if ok {
+t.Error("expected ok=false for empty AnalysisView")
+}
+}
+
+func TestTopResultWithResults(t *testing.T) {
+a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+v := NewAnalysisView(a, 5)
+result, ok := v.TopResult()
+if !ok {
+t.Fatal("expected ok=true for non-empty view")
+}
+if result.Playbook.ID != "docker-auth" {
+t.Errorf("expected docker-auth, got %q", result.Playbook.ID)
+}
+}
+
+func TestAnalysisViewEmptyNilAnalysis(t *testing.T) {
+v := NewAnalysisView(nil, 5)
+if !v.Empty() {
+t.Error("expected Empty()=true for nil analysis")
+}
+}
+
+func TestAnalysisViewNotEmptyWithResults(t *testing.T) {
+a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
+v := NewAnalysisView(a, 5)
+if v.Empty() {
+t.Error("expected Empty()=false for non-nil analysis with results")
+}
+}
