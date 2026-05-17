@@ -21,6 +21,9 @@ fixtures/staging/*.yaml
 
 .cocoindex_code/*
 
+# Internal marketing/outreach drafts
+docs/superpowers/community-posts.md
+
 fixtures/datasets/*
 
 eval-work/**/*.jsonl

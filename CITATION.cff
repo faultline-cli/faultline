@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use Faultline in your research, toolchain, or infrastructure work, please cite it using these metadata."
+type: software
+title: Faultline
+abstract: >
+  Faultline is a deterministic CLI for diagnosing CI build failures.
+  It matches build logs against evidence-backed playbooks to classify failures,
+  surface fix paths, and produce structured JSON artifacts for automation and
+  agent handoff — with no LLM or external service dependency.
+authors:
+  - name: "Faultline Contributors"
+    website: "https://github.com/faultline-cli/faultline"
+repository-code: "https://github.com/faultline-cli/faultline"
+url: "https://github.com/faultline-cli/faultline"
+license: MIT
+keywords:
+  - CI
+  - continuous integration
+  - build failure
+  - log analysis
+  - failure diagnosis
+  - DevOps
+  - GitHub Actions
+  - GitLab CI
+  - deterministic
+  - CLI
+  - observability
+  - developer tooling
+  - go

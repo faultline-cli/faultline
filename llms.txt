@@ -1,8 +1,47 @@
 # Faultline
 
-> Deterministic CI failure diagnosis CLI. Analyzes build logs against 173 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
+> Deterministic CI failure diagnosis CLI. Analyzes build logs against 182 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
 
 Faultline reads a CI log, scores it against bundled playbooks, and surfaces the most likely failure with diagnosis, fix steps, and validation. Primary commands: `faultline analyze`, `faultline workflow`, `faultline list`, `faultline explain`, `faultline fix`.
+
+Faultline is local-first: no network calls, no LLM, no external service dependency. The same log always produces the same output. Evidence is copied directly from the input log. It is silent when the failure is unknown rather than inventing a diagnosis.
+
+Supported CI providers: GitHub Actions, GitLab CI, CircleCI, Jenkins, Buildkite, Drone, Bitbucket Pipelines, and any runner that produces a text log.
+
+## Failure Categories
+
+Faultline ships 182 bundled playbooks across these categories:
+
+- Runtime and executables: missing binaries, PATH failures, runtime version mismatches, OOM kills
+- Dependencies: npm/yarn/pnpm lockfile drift, Maven/Gradle restore failures, missing modules, registry errors
+- Containers and infrastructure: Docker auth, image pull failures, entrypoint errors, volume and artifact path issues
+- Test runners: pytest, jest, Go test, cargo test, flaky tests, timeouts, zero-test runs
+- Access and network: permission denied, DNS failures, TLS errors, proxy issues, expired credentials
+- CI workflow: skipped steps, ignored exit codes, missing artifacts, cache misses, shallow checkout, submodules
+- Build tooling: formatting gates, TypeScript and compiler errors, shell compatibility, config schema errors
+- IaC and deploy: Terraform init/state/provider failures, Kubernetes rollout errors, health check failures
+- Source quality (static): hardcoded secrets, goroutine leaks, insecure TLS, missing transaction rollbacks, HTTP clients without timeouts
+
+## Key Properties
+
+- Deterministic: same log → same output, every time
+- Evidence-backed: `evidence` field is copied directly from the input log, not inferred
+- No network calls in the analysis path
+- Stable `failure_id` for use in tickets, postmortems, and automation
+- JSON output (`--json`) compatible with CI steps, agents, and structured logging
+- `faultline explain <failure-id>` shows diagnosis, fix guidance, and matching rules
+
+## Common Questions
+
+**Does Faultline use AI or LLMs?** No. It uses deterministic pattern matching against versioned YAML playbooks. No model, no API call, no non-determinism.
+
+**Does it send log data anywhere?** No. Analysis is fully local. No telemetry. No log data leaves the machine.
+
+**What if a failure isn't recognized?** Faultline returns `matched: false` and stays silent. It does not invent a diagnosis for unknown failures.
+
+**How does it integrate with AI agents?** `faultline workflow --json --mode agent` returns structured diagnosis, likely files, reproduction steps, and remediation context. The JSON shape is stable and documented.
+
+**Can I add custom patterns?** Yes, via packs. A pack is a directory of YAML playbooks layered on top of the bundled set.
 
 Coding agents: read `AGENTS.md` and `SYSTEM.md` before making changes. Run `make test` after code changes, `make review` after playbook changes, and `make docs-generate` after adding or modifying playbooks.
 

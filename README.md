@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-182-blue)](docs/failures/catalog/README.md)
 
-Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for the first pass over a failed CI log. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify. If no known pattern matches, it stays quiet. Same log in -> same result out.
+Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for diagnosing CI build failures. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify — with no AI or LLM call required. If no known pattern matches, it stays quiet. Same log in → same result out.
 
 Faultline is built for teams that want a trustworthy local classifier before deeper investigation starts and a repeatable way to turn CI incidents into shared knowledge:
 
@@ -329,6 +329,32 @@ tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
 ./faultline analyze build.log
 ```
+
+## FAQ
+
+**Does Faultline send my logs anywhere?**
+No. Analysis runs entirely on your machine or inside your CI runner. No log data, telemetry, or output is transmitted to any external service. The only network activity is the optional `--git` flag, which reads your local `.git` directory — not the internet.
+
+**What CI providers does it support?**
+Any provider that produces a text log file: GitHub Actions, GitLab CI, CircleCI, Jenkins, Buildkite, Drone, Bitbucket Pipelines, and self-hosted runners. Faultline reads the log file — it has no provider-specific API dependency.
+
+**Does it work with AI coding agents?**
+Yes. `--json` and `--mode agent` output are designed for agent handoff. The `workflow` command returns structured diagnosis, likely files, reproduction steps, and remediation context in a stable JSON shape that agents can consume directly.
+
+**How does it differ from just grepping the log?**
+Faultline applies scored evidence rules against the full log, not a single line match. It normalizes multi-line patterns, ranks competing hypotheses, filters low-confidence matches, and returns a stable `failure_id` that travels cleanly into tickets, postmortems, and automation. `faultline explain <failure-id>` shows the full reasoning behind the classification.
+
+**What if my failure isn't recognized?**
+Faultline stays quiet rather than guessing. If you see a recurring unmatched failure, open a [missed failure issue](https://github.com/faultline-cli/faultline/issues/new?template=missed_failure.md) with a sanitized log excerpt. The playbook authoring guide is in [docs/playbooks.md](docs/playbooks.md).
+
+**Can I add custom failure patterns for my team?**
+Yes, via packs. A pack is a directory of YAML playbooks that Faultline loads alongside the bundled set. See `faultline packs` and [docs/release-boundary.md](docs/release-boundary.md) for the layering model.
+
+**How do I integrate it in a GitHub Actions workflow?**
+Use the [`faultline-cli/action`](https://github.com/faultline-cli/action) wrapper on a failure-only step, or install the binary directly. Full contract in [docs/github-action-contract.md](docs/github-action-contract.md).
+
+**What is the performance overhead?**
+Faultline is a statically compiled Go binary with no runtime dependencies. Typical analysis of a 10 000-line CI log completes in well under one second.
 
 ## License
 
