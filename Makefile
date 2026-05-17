@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval docs-generate docs-check
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval docs-generate docs-check stats-check
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -35,7 +35,8 @@ help:
 		"  docker-smoke    Build the Docker image and verify an auth fixture end to end" \
 		"  WITH_DOCKER=1   Include docker-smoke when running release-check" \
 		"  docs-generate   Generate failure catalog docs from bundled playbooks" \
-		"  docs-check      Verify generated failure catalog docs are up to date"
+		"  docs-check      Verify generated failure catalog docs are up to date" \
+		"  stats-check     Verify hardcoded playbook counts in README and llms.txt match the actual bundled set"
 
 build:
 	@mkdir -p "$$(dirname "$(BINARY)")"
@@ -66,8 +67,21 @@ bench:
 docs-generate:
 	$(GO) run ./tools/gen-failure-docs --src playbooks/bundled --dst docs/failures
 
-docs-check:
+docs-check: stats-check
 	$(GO) run ./tools/gen-failure-docs --src playbooks/bundled --dst docs/failures --check
+
+stats-check:
+	@actual=$$(find playbooks/bundled -name '*.yaml' | wc -l | tr -d ' '); \
+	for file in README.md llms.txt; do \
+		matches=$$(grep -oE '[0-9]+ bundled playbooks?' "$$file" | grep -oE '^[0-9]+' | sort -u); \
+		for n in $$matches; do \
+			if [ "$$n" != "$$actual" ]; then \
+				printf 'stats-check: %s contains playbook count %s but actual is %s\n' "$$file" "$$n" "$$actual" >&2; \
+				exit 1; \
+			fi; \
+		done; \
+	done; \
+	printf 'stats-check: playbook count %s matches README.md and llms.txt\n' "$$actual"
 
 review:
 	$(GO) run ./cmd/playbook-review
