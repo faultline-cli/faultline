@@ -111,11 +111,10 @@ faultline explain missing-executable
 - `list`: browse known failure classes.
 - `explain`: inspect one failure class before trusting or changing it.
 
-Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`,
-`report`, `history`, and `packs` exist, but they are not
-the first-run story. `report` and `history` read only the local forensic store
-created by prior local runs; cross-repo recurrence and coordination belong to
-the Team layer.
+Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `report`,
+`history`, and `packs` exist, but they are not the first-run story. `report`
+and `history` read only the local forensic store created by prior local runs;
+cross-repo recurrence and coordination belong to the Team layer.
 
 ## What to Trust
 
@@ -242,8 +241,9 @@ v0.4.9 expands the source detector catalog from 7 to 12 playbooks. New source pl
 
 v0.4.8 promotes `faultline batch` into the core release path for local
 multi-log diagnosis. Use it when one workflow produces several job logs and you
-want the same deterministic classification grouped across the set. `report`,
-`history`, `trace`, and the other advanced surfaces remain companion commands.
+want the same deterministic classification grouped across the set. This release
+also removes `signatures`, `verify-determinism`, and `compare` — three low-use
+companion commands that added surface area without a clear first-run story.
 
 v0.4.7 is a hardening release for the existing local-first product. It does
 not add a new first-run surface; it tightens the release gates and makes local
