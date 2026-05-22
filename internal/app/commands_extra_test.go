@@ -1,9 +1,7 @@
 package app
 
 import (
-	"context"
 	"bytes"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -248,21 +246,5 @@ func TestWriteAnalysisSelectErrorPropagates(t *testing.T) {
 	err := writeAnalysis(a, opts, &buf)
 	if err == nil {
 		t.Fatal("expected error when Select is out of range")
-	}
-}
-
-// ── VerifyDeterminism ─────────────────────────────────────────────────────────
-
-func TestVerifyDeterminismNoRunsText(t *testing.T) {
-	storePath := filepath.Join(t.TempDir(), "det.db")
-	svc := NewService()
-	var buf bytes.Buffer
-
-	err := svc.VerifyDeterminism(context.Background(), strings.NewReader("some log line\n"), "stdin", storePath, false, &buf)
-	if err != nil {
-		t.Fatalf("VerifyDeterminism: %v", err)
-	}
-	if !strings.Contains(buf.String(), "no stored runs") {
-		t.Errorf("expected 'no stored runs' in output, got %q", buf.String())
 	}
 }

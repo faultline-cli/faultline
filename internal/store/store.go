@@ -47,7 +47,6 @@ type Store interface {
 	ListSignatures(context.Context, int) ([]SignatureSummary, error)
 	GetRecentFindingsBySignature(context.Context, string, int) ([]FindingSummary, error)
 	ListPlaybookStats(context.Context, int) ([]PlaybookStats, error)
-	VerifyDeterminismForInputHash(context.Context, string) (DeterminismSummary, error)
 	Close() error
 }
 
@@ -114,14 +113,6 @@ type PlaybookStats struct {
 	RecurringSignatures int     `json:"recurring_signatures,omitempty"`
 	AvgConfidence       float64 `json:"avg_confidence,omitempty"`
 	LastSeenAt          string  `json:"last_seen_at,omitempty"`
-}
-
-type DeterminismSummary struct {
-	RunCount             int    `json:"run_count,omitempty"`
-	DistinctOutputHashes int    `json:"distinct_output_hashes,omitempty"`
-	FirstSeenAt          string `json:"first_seen_at,omitempty"`
-	LastSeenAt           string `json:"last_seen_at,omitempty"`
-	Stable               bool   `json:"stable,omitempty"`
 }
 
 func DefaultPath() (string, error) {

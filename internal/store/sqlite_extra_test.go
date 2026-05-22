@@ -301,25 +301,6 @@ func TestCompleteRunNilAnalysisIsNoop(t *testing.T) {
 	}
 }
 
-// ── VerifyDeterminismForInputHash blank input ─────────────────────────────────
-
-func TestVerifyDeterminismForInputHashBlank(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "faultline.db")
-	st, _, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
-	if err != nil {
-		t.Fatalf("OpenBestEffort: %v", err)
-	}
-	defer st.Close()
-
-	summary, err := st.VerifyDeterminismForInputHash(context.Background(), "   ")
-	if err != nil {
-		t.Fatalf("VerifyDeterminismForInputHash with blank: %v", err)
-	}
-	if summary.RunCount != 0 {
-		t.Errorf("expected RunCount=0 for blank hash, got %d", summary.RunCount)
-	}
-}
-
 // ── BeginRun with zero timestamp ──────────────────────────────────────────────
 
 func TestBeginRunWithZeroTimestampUsesNow(t *testing.T) {

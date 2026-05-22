@@ -31,13 +31,6 @@ type historyDetailJSON struct {
 	Findings  []store.FindingSummary `json:"findings,omitempty"`
 }
 
-type determinismJSON struct {
-	Store       historyStoreJSON         `json:"store"`
-	Source      string                   `json:"source,omitempty"`
-	InputHash   string                   `json:"input_hash,omitempty"`
-	Determinism store.DeterminismSummary `json:"determinism"`
-}
-
 func (Service) History(ctx context.Context, signatureHash, storePath string, limit int, jsonOut bool, w io.Writer) error {
 	st, info, err := openHistoryStore(storePath)
 	if err != nil {
@@ -49,102 +42,6 @@ func (Service) History(ctx context.Context, signatureHash, storePath string, lim
 		return writeHistorySignature(ctx, st, info, signatureHash, limit, jsonOut, w)
 	}
 	return writeHistoryOverview(ctx, st, info, limit, jsonOut, w)
-}
-
-func (Service) Signatures(ctx context.Context, storePath string, limit int, jsonOut bool, w io.Writer) error {
-	st, info, err := openHistoryStore(storePath)
-	if err != nil {
-		return err
-	}
-	defer st.Close()
-
-	items, err := st.ListSignatures(ctx, limit)
-	if err != nil {
-		return err
-	}
-	if jsonOut {
-		payload := struct {
-			Store      historyStoreJSON         `json:"store"`
-			Signatures []store.SignatureSummary `json:"signatures,omitempty"`
-		}{
-			Store:      historyStorePayload(info),
-			Signatures: items,
-		}
-		return writeJSON(w, payload)
-	}
-
-	var b strings.Builder
-	b.WriteString("Signatures\n")
-	b.WriteString("----------\n\n")
-	writeStoreInfoText(&b, info)
-	if len(items) == 0 {
-		b.WriteString("No stored signatures yet.\n")
-		_, err := fmt.Fprint(w, b.String())
-		return err
-	}
-	for _, item := range items {
-		fmt.Fprintf(&b, "- %s  %s  seen %d time(s)\n", shortHash(item.SignatureHash), item.FailureID, item.OccurrenceCount)
-		if item.Title != "" {
-			fmt.Fprintf(&b, "  %s\n", item.Title)
-		}
-		if item.LastSeenAt != "" {
-			fmt.Fprintf(&b, "  last seen: %s\n", item.LastSeenAt)
-		}
-	}
-	_, err = fmt.Fprint(w, b.String())
-	return err
-}
-
-func (Service) VerifyDeterminism(ctx context.Context, r io.Reader, source, storePath string, jsonOut bool, w io.Writer) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("read log input: %w", err)
-	}
-	inputHash := store.InputHashForLog(string(data))
-
-	st, info, err := openHistoryStore(storePath)
-	if err != nil {
-		return err
-	}
-	defer st.Close()
-
-	summary, err := st.VerifyDeterminismForInputHash(ctx, inputHash)
-	if err != nil {
-		return err
-	}
-	if jsonOut {
-		return writeJSON(w, determinismJSON{
-			Store:       historyStorePayload(info),
-			Source:      source,
-			InputHash:   inputHash,
-			Determinism: summary,
-		})
-	}
-
-	var b strings.Builder
-	b.WriteString("Determinism Check\n")
-	b.WriteString("-----------------\n\n")
-	writeStoreInfoText(&b, info)
-	fmt.Fprintf(&b, "Source: %s\n", fallbackSource(source))
-	fmt.Fprintf(&b, "Input hash: %s\n", inputHash)
-	switch {
-	case summary.RunCount == 0:
-		b.WriteString("Status: no stored runs for this input hash\n")
-	case summary.Stable:
-		b.WriteString("Status: stable across stored runs\n")
-	default:
-		b.WriteString("Status: output drift detected across stored runs\n")
-	}
-	fmt.Fprintf(&b, "Stored runs: %d\n", summary.RunCount)
-	fmt.Fprintf(&b, "Distinct output hashes: %d\n", summary.DistinctOutputHashes)
-	if summary.FirstSeenAt != "" {
-		fmt.Fprintf(&b, "First seen: %s\n", summary.FirstSeenAt)
-	}
-	if summary.LastSeenAt != "" {
-		fmt.Fprintf(&b, "Last seen: %s\n", summary.LastSeenAt)
-	}
-	_, err = fmt.Fprint(w, b.String())
-	return err
 }
 
 func openHistoryStore(storePath string) (store.Store, store.Info, error) {

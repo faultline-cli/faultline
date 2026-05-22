@@ -44,10 +44,6 @@ func (noopStore) ListPlaybookStats(context.Context, int) ([]PlaybookStats, error
 	return nil, nil
 }
 
-func (noopStore) VerifyDeterminismForInputHash(context.Context, string) (DeterminismSummary, error) {
-	return DeterminismSummary{}, nil
-}
-
 func (noopStore) Close() error {
 	return nil
 }

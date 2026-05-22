@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,88 +40,6 @@ func buildAnalysisArtifact(t *testing.T, log string) string {
 		t.Fatalf("buildAnalysisArtifact: %v", err)
 	}
 	return strings.TrimSpace(buf.String())
-}
-
-// ── newCompareCommand ─────────────────────────────────────────────────────────
-
-func TestCompareCommandRejectsWrongArgCount(t *testing.T) {
-	cmd := newCompareCommand()
-	if err := cmd.Args(cmd, nil); err == nil {
-		t.Fatal("expected error for zero args, got nil")
-	}
-	if err := cmd.Args(cmd, []string{"only-one"}); err == nil {
-		t.Fatal("expected error for one arg, got nil")
-	}
-	if err := cmd.Args(cmd, []string{"a", "b", "c"}); err == nil {
-		t.Fatal("expected error for three args, got nil")
-	}
-	// Exactly two args must succeed.
-	if err := cmd.Args(cmd, []string{"a", "b"}); err != nil {
-		t.Fatalf("expected no error for exactly 2 args, got %v", err)
-	}
-}
-
-func TestCompareCommandRunsWithArtifactFiles(t *testing.T) {
-	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
-
-	leftArtifact := buildAnalysisArtifact(t, leftLog)
-	rightArtifact := buildAnalysisArtifact(t, rightLog)
-
-	dir := t.TempDir()
-	leftFile := filepath.Join(dir, "left.json")
-	rightFile := filepath.Join(dir, "right.json")
-	if err := os.WriteFile(leftFile, []byte(leftArtifact), 0o644); err != nil {
-		t.Fatalf("write left artifact: %v", err)
-	}
-	if err := os.WriteFile(rightFile, []byte(rightArtifact), 0o644); err != nil {
-		t.Fatalf("write right artifact: %v", err)
-	}
-
-	cmd := newCompareCommand()
-	var buf bytes.Buffer
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{leftFile, rightFile})
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("compare command: %v\noutput: %s", err, buf.String())
-	}
-	if buf.Len() == 0 {
-		t.Error("expected non-empty compare output")
-	}
-}
-
-func TestCompareCommandJSONOutput(t *testing.T) {
-	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
-
-	leftArtifact := buildAnalysisArtifact(t, leftLog)
-	rightArtifact := buildAnalysisArtifact(t, rightLog)
-
-	dir := t.TempDir()
-	leftFile := filepath.Join(dir, "left.json")
-	rightFile := filepath.Join(dir, "right.json")
-	if err := os.WriteFile(leftFile, []byte(leftArtifact), 0o644); err != nil {
-		t.Fatalf("write left artifact: %v", err)
-	}
-	if err := os.WriteFile(rightFile, []byte(rightArtifact), 0o644); err != nil {
-		t.Fatalf("write right artifact: %v", err)
-	}
-
-	cmd := newCompareCommand()
-	var buf bytes.Buffer
-	cmd.SetOut(&buf)
-	cmd.SetErr(&buf)
-	cmd.SetArgs([]string{"--json", leftFile, rightFile})
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("compare command --json: %v\noutput: %s", err, buf.String())
-	}
-	var payload map[string]any
-	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &payload); err != nil {
-		t.Fatalf("unmarshal compare JSON: %v\nraw: %s", err, buf.String())
-	}
 }
 
 // ── newReplayCommand ──────────────────────────────────────────────────────────

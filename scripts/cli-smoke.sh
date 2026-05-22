@@ -72,8 +72,6 @@ cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
 
 run_compare "missing-executable.replay.expected.md" "$ROOT_DIR/examples/missing-executable.replay.expected.md" \
 	"$BINARY" replay --format markdown --mode detailed "$TMP_DIR/missing.analysis.json"
-run_compare "missing-vs-runtime.compare.expected.md" "$ROOT_DIR/examples/missing-vs-runtime.compare.expected.md" \
-	"$BINARY" compare --format markdown "$TMP_DIR/missing.analysis.json" "$TMP_DIR/runtime.analysis.json"
 
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history --git=false >"$TMP_DIR/missing.trace.md"

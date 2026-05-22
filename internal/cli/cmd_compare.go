@@ -9,47 +9,6 @@ import (
 	"faultline/internal/output"
 )
 
-func newCompareCommand() *cobra.Command {
-	var (
-		jsonOut bool
-		format  string
-	)
-
-	cmd := &cobra.Command{
-		Use:   "compare <left-analysis.json> <right-analysis.json>",
-		Short: "Compare two saved analysis artifacts",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
-			if err != nil {
-				return err
-			}
-
-			left, err := ReadInput(args[:1])
-			if err != nil {
-				return err
-			}
-			defer left.Close()
-			right, err := ReadInput(args[1:])
-			if err != nil {
-				return err
-			}
-			defer right.Close()
-
-			return app.NewService().Compare(left.Reader, right.Reader, app.AnalyzeOptions{
-				OutputOptions: app.OutputOptions{
-					Format: resolvedFormat,
-					JSON:   resolvedJSON,
-				},
-			}, cmd.OutOrStdout())
-		},
-	}
-
-	cmd.Flags().BoolVar(&jsonOut, "json", false, "emit machine-readable JSON")
-	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
-	return cmd
-}
-
 func newReplayCommand() *cobra.Command {
 	var (
 		jsonOut    bool

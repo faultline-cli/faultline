@@ -25,7 +25,7 @@ func TestOpenBestEffortGracefullyDegradesCorruptFile(t *testing.T) {
 	}
 }
 
-func TestSQLiteStorePersistsRecurrenceAndDeterminism(t *testing.T) {
+func TestSQLiteStorePersistsRecurrence(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "faultline.db")
 	st, info, err := OpenBestEffort(Config{Mode: ModeAuto, Path: path})
 	if err != nil {
@@ -118,14 +118,6 @@ func TestSQLiteStorePersistsRecurrenceAndDeterminism(t *testing.T) {
 	}
 	if seenCount != 2 {
 		t.Fatalf("expected seen count 2, got %d", seenCount)
-	}
-
-	determinism, err := st.VerifyDeterminismForInputHash(ctx, "input-1")
-	if err != nil {
-		t.Fatalf("VerifyDeterminismForInputHash: %v", err)
-	}
-	if !determinism.Stable || determinism.RunCount != 2 || determinism.DistinctOutputHashes != 1 {
-		t.Fatalf("unexpected determinism summary: %#v", determinism)
 	}
 }
 

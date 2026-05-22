@@ -478,24 +478,6 @@ LIMIT ?
 	return out, nil
 }
 
-func (s *sqliteStore) VerifyDeterminismForInputHash(ctx context.Context, inputHash string) (DeterminismSummary, error) {
-	inputHash = strings.TrimSpace(inputHash)
-	if inputHash == "" {
-		return DeterminismSummary{}, nil
-	}
-	var summary DeterminismSummary
-	err := s.db.QueryRowContext(ctx, `
-SELECT COUNT(*), COUNT(DISTINCT output_hash), COALESCE(MIN(completed_at), ''), COALESCE(MAX(completed_at), '')
-FROM analysis_runs
-WHERE input_hash = ? AND output_hash IS NOT NULL AND output_hash != ''
-`, inputHash).Scan(&summary.RunCount, &summary.DistinctOutputHashes, &summary.FirstSeenAt, &summary.LastSeenAt)
-	if err != nil {
-		return DeterminismSummary{}, fmt.Errorf("verify determinism: %w", err)
-	}
-	summary.Stable = summary.RunCount > 0 && summary.DistinctOutputHashes <= 1
-	return summary, nil
-}
-
 func (s *sqliteStore) Close() error {
 	return s.db.Close()
 }

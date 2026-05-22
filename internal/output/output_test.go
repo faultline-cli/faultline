@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	analysiscompare "faultline/internal/compare"
 	"faultline/internal/model"
 	"faultline/internal/renderer"
 	tracereport "faultline/internal/trace"
@@ -458,45 +457,6 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 	}
 }
 
-func TestFormatCompareMarkdownIncludesDiagnosisAndEvidence(t *testing.T) {
-	report := analysiscompare.Report{
-		LeftSource:       "previous.json",
-		RightSource:      "current.json",
-		Changed:          true,
-		DiagnosisChanged: true,
-		Previous:         &analysiscompare.Candidate{FailureID: "docker-auth", Title: "Docker auth", Confidence: 0.67},
-		Current:          &analysiscompare.Candidate{FailureID: "permission-denied", Title: "Permission denied", Confidence: 0.33},
-		Summary:          []string{"top diagnosis changed from docker-auth to permission-denied"},
-		Evidence:         analysiscompare.StringDelta{Added: []string{"permission denied"}, Removed: []string{"authentication required"}},
-	}
-
-	text := FormatCompareMarkdown(report)
-	for _, want := range []string{"# Faultline Compare", "## Diagnosis", "`docker-auth`", "`permission-denied`", "## Evidence Changes"} {
-		if !strings.Contains(text, want) {
-			t.Fatalf("expected %q in compare markdown, got:\n%s", want, text)
-		}
-	}
-}
-
-func TestFormatCompareJSON(t *testing.T) {
-	report := analysiscompare.Report{
-		Changed:          true,
-		DiagnosisChanged: true,
-		Summary:          []string{"top diagnosis changed"},
-	}
-	data, err := FormatCompareJSON(report)
-	if err != nil {
-		t.Fatalf("FormatCompareJSON: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &payload); err != nil {
-		t.Fatalf("unmarshal compare JSON: %v", err)
-	}
-	if payload["changed"] != true {
-		t.Fatalf("expected changed=true, got %v", payload["changed"])
-	}
-}
-
 func TestFormatAnalysisEvidenceText(t *testing.T) {
 	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.67, []string{"authentication required"})
 	a.Source = "stdin"
@@ -783,47 +743,6 @@ func TestViewInvalidNotValid(t *testing.T) {
 		if bad.Valid() {
 			t.Errorf("View(%q).Valid() = true, want false", bad)
 		}
-	}
-}
-
-// ── FormatCompareText ─────────────────────────────────────────────────────────
-
-func TestFormatCompareTextIncludesDiagnosis(t *testing.T) {
-	report := analysiscompare.Report{
-		LeftSource:       "prev.json",
-		RightSource:      "curr.json",
-		Changed:          true,
-		DiagnosisChanged: true,
-		Previous:         &analysiscompare.Candidate{FailureID: "docker-auth", Title: "Docker auth", Confidence: 0.9},
-		Current:          &analysiscompare.Candidate{FailureID: "permission-denied", Title: "Permission denied", Confidence: 0.6},
-		Summary:          []string{"top diagnosis changed from docker-auth to permission-denied"},
-		Evidence:         analysiscompare.StringDelta{Added: []string{"permission denied"}, Removed: []string{"authentication required"}},
-	}
-	text := FormatCompareText(report)
-	for _, want := range []string{"COMPARE", "Previous: prev.json", "Current: curr.json", "docker-auth", "permission-denied", "permission denied"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("expected %q in compare text, got:\n%s", want, text)
-		}
-	}
-}
-
-func TestFormatCompareTextNoDiagnosis(t *testing.T) {
-	report := analysiscompare.Report{
-		Summary: []string{"neither artifact contains a matched diagnosis"},
-	}
-	text := FormatCompareText(report)
-	if !strings.Contains(text, "COMPARE") {
-		t.Errorf("expected COMPARE header in text, got:\n%s", text)
-	}
-}
-
-func TestFormatCompareTextHasNewline(t *testing.T) {
-	report := analysiscompare.Report{
-		Summary: []string{"same diagnosis"},
-	}
-	text := FormatCompareText(report)
-	if !strings.HasSuffix(text, "\n") {
-		t.Error("expected trailing newline in FormatCompareText")
 	}
 }
 

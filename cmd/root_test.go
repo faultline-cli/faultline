@@ -697,68 +697,6 @@ func TestReplayCommandRejectsTraceView(t *testing.T) {
 	}
 }
 
-func TestCompareCommandMarkdown(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-
-	makeArtifact := func(log string) string {
-		var artifact bytes.Buffer
-		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-			t.Fatalf("build analysis artifact: %v", err)
-		}
-		return writeTempAnalysisArtifact(t, artifact.String())
-	}
-
-	left := makeArtifact("pull access denied\nError response from daemon: authentication required\n")
-	right := makeArtifact("pull access denied\npermission denied\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"compare", "--format", "markdown", left, right})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute compare: %v", err)
-	}
-	if !strings.Contains(out.String(), "# Faultline Compare") || !strings.Contains(out.String(), "## Diagnosis") {
-		t.Fatalf("expected compare markdown output, got %q", out.String())
-	}
-}
-
-func TestCompareCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-
-	makeArtifact := func(log string) string {
-		var artifact bytes.Buffer
-		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-			t.Fatalf("build analysis artifact: %v", err)
-		}
-		return writeTempAnalysisArtifact(t, artifact.String())
-	}
-
-	left := makeArtifact("pull access denied\nError response from daemon: authentication required\n")
-	right := makeArtifact("permission denied opening /app/data/config.yaml\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"compare", "--json", left, right})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute compare --json: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal compare JSON: %v", err)
-	}
-	if payload["changed"] != true {
-		t.Fatalf("expected changed=true, got %v", payload["changed"])
-	}
-}
-
 // ── list ─────────────────────────────────────────────────────────────────────
 
 func TestListCommand(t *testing.T) {
@@ -1547,7 +1485,7 @@ func TestReportCommandJSON(t *testing.T) {
 	}
 }
 
-func TestSignaturesAndHistorySignatureCommands(t *testing.T) {
+func TestHistorySignatureCommand(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
@@ -1569,18 +1507,6 @@ func TestSignaturesAndHistorySignatureCommands(t *testing.T) {
 	results := analysisPayload["results"].([]any)
 	signatureHash := results[0].(map[string]any)["signature_hash"].(string)
 
-	signaturesCmd := newRootCommand()
-	signaturesCmd.SetArgs([]string{"signatures", "--json", "--store", storePath})
-	signaturesOut := &bytes.Buffer{}
-	signaturesCmd.SetOut(signaturesOut)
-	signaturesCmd.SetErr(new(bytes.Buffer))
-	if err := signaturesCmd.Execute(); err != nil {
-		t.Fatalf("execute signatures --json: %v", err)
-	}
-	if !strings.Contains(signaturesOut.String(), signatureHash) {
-		t.Fatalf("expected signatures output to include %s, got %q", signatureHash, signaturesOut.String())
-	}
-
 	historyCmd := newRootCommand()
 	historyCmd.SetArgs([]string{"history", "--json", "--store", storePath, "--signature", signatureHash})
 	historyOut := &bytes.Buffer{}
@@ -1601,50 +1527,6 @@ func TestSignaturesAndHistorySignatureCommands(t *testing.T) {
 	findings, ok := historyPayload["findings"].([]any)
 	if !ok || len(findings) != 1 {
 		t.Fatalf("expected one recent finding, got %v", historyPayload["findings"])
-	}
-}
-
-func TestVerifyDeterminismCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	runAnalyze := func() {
-		cmd := newRootCommand()
-		cmd.SetArgs([]string{"analyze", "--json", "--store", storePath, logPath})
-		out := &bytes.Buffer{}
-		cmd.SetOut(out)
-		cmd.SetErr(new(bytes.Buffer))
-		t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("execute analyze for determinism setup: %v", err)
-		}
-	}
-	runAnalyze()
-	runAnalyze()
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"verify-determinism", "--json", "--store", storePath, logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute verify-determinism --json: %v", err)
-	}
-
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal determinism JSON: %v", err)
-	}
-	determinism, ok := payload["determinism"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected determinism object, got %v", payload["determinism"])
-	}
-	if determinism["stable"] != true {
-		t.Fatalf("expected stable determinism summary, got %v", determinism)
-	}
-	if determinism["run_count"] != float64(2) {
-		t.Fatalf("expected run_count=2, got %v", determinism["run_count"])
 	}
 }
 

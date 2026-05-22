@@ -252,35 +252,6 @@ func TestReplayRejectsTraceForAnalysisArtifact(t *testing.T) {
 	}
 }
 
-func TestCompareArtifacts(t *testing.T) {
-	svc := NewService()
-	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "permission denied opening /app/data/config.yaml\n"
-
-	makeArtifact := func(log string) string {
-		var buf bytes.Buffer
-		opts := baseOpts()
-		opts.JSON = true
-		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
-			t.Fatalf("Analyze to artifact: %v", err)
-		}
-		return buf.String()
-	}
-
-	var out bytes.Buffer
-	err := svc.Compare(strings.NewReader(makeArtifact(leftLog)), strings.NewReader(makeArtifact(rightLog)), AnalyzeOptions{
-		OutputOptions: OutputOptions{Format: output.FormatMarkdown},
-	}, &out)
-	if err != nil {
-		t.Fatalf("Compare: %v", err)
-	}
-	for _, want := range []string{"# Faultline Compare", "## Diagnosis", "## Evidence Changes"} {
-		if !strings.Contains(out.String(), want) {
-			t.Fatalf("expected %q in compare output, got:\n%s", want, out.String())
-		}
-	}
-}
-
 func TestAnalyzeEvidenceView(t *testing.T) {
 	svc := NewService()
 	log := "pull access denied\nError response from daemon: authentication required\n"
@@ -848,125 +819,40 @@ func runServiceGitEnv(t *testing.T, dir string, env []string, args ...string) {
 	}
 }
 
-// ── History and Signatures ──────────────────────────────────────────────────
-
-func TestSignaturesEmptyStore(t *testing.T) {
-	svc := NewService()
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-
-	// Test text output
-	var buf bytes.Buffer
-	err := svc.Signatures(context.Background(), storePath, 10, false, &buf)
-	if err != nil {
-		t.Fatalf("Signatures: %v", err)
-	}
-	output := buf.String()
-	if !strings.Contains(output, "No stored signatures yet") {
-		t.Errorf("expected 'No stored signatures yet' in output, got: %s", output)
-	}
-
-	// Test JSON output
-	buf.Reset()
-	err = svc.Signatures(context.Background(), storePath, 10, true, &buf)
-	if err != nil {
-		t.Fatalf("Signatures JSON: %v", err)
-	}
-	var result map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("unmarshal JSON output: %v", err)
-	}
-	if storeObj, ok := result["store"].(map[string]any); !ok {
-		t.Errorf("expected store object in JSON output")
-	} else if storeObj["mode"] != "auto" {
-		t.Errorf("expected store mode 'auto' for empty store, got %v", storeObj["mode"])
-	}
-}
-
-func TestSignaturesWithData(t *testing.T) {
-	svc := NewService()
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-
-	// First, analyze a log to create some history
-	log := "Error response from daemon: pull access denied for mcr/microsoft.com/mssql/server, repository does not exist or may require 'docker login'\n"
-	opts := AnalyzeOptions{
-		OutputOptions: OutputOptions{JSON: true},
-
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
-	}
-
-	var analysisBuf bytes.Buffer
-	err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &analysisBuf)
-	if err != nil {
-		t.Fatalf("Analyze to create history: %v", err)
-	}
-
-	// Now test Signatures with data
-	var buf bytes.Buffer
-	err = svc.Signatures(context.Background(), storePath, 10, false, &buf)
-	if err != nil {
-		t.Fatalf("Signatures: %v", err)
-	}
-	output := buf.String()
-	if !strings.Contains(output, "Signatures") {
-		t.Errorf("expected 'Signatures' header in output, got: %s", output)
-	}
-	if strings.Contains(output, "No stored signatures yet") {
-		t.Errorf("expected signatures in output, got 'No stored signatures yet'")
-	}
-
-	// Test JSON output with data
-	buf.Reset()
-	err = svc.Signatures(context.Background(), storePath, 10, true, &buf)
-	if err != nil {
-		t.Fatalf("Signatures JSON: %v", err)
-	}
-	var result map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		t.Fatalf("unmarshal JSON output: %v", err)
-	}
-	if signatures, ok := result["signatures"].([]any); !ok {
-		t.Errorf("expected signatures array in JSON output")
-	} else if len(signatures) == 0 {
-		t.Errorf("expected at least one signature in JSON output")
-	}
-}
-
 func TestHistoryDeterminismVerification(t *testing.T) {
 	svc := NewService()
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 
-	// First analysis
 	log := "Error response from daemon: pull access denied\n"
 	opts := AnalyzeOptions{
 		OutputOptions: OutputOptions{JSON: true},
+		Store:         storePath,
+		PlaybookDir:   repoPlaybookDir(),
+	}
 
-		Store:       storePath,
-		PlaybookDir: repoPlaybookDir(),
+	extractOutputHash := func(buf *bytes.Buffer) string {
+		var payload map[string]any
+		if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
+			t.Fatalf("unmarshal analyze JSON: %v", err)
+		}
+		h, _ := payload["output_hash"].(string)
+		return h
 	}
 
 	var firstBuf bytes.Buffer
-	err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &firstBuf)
-	if err != nil {
+	if err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &firstBuf); err != nil {
 		t.Fatalf("First Analyze: %v", err)
 	}
 
-	// Second analysis with same input
 	var secondBuf bytes.Buffer
-	err = svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &secondBuf)
-	if err != nil {
+	if err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &secondBuf); err != nil {
 		t.Fatalf("Second Analyze: %v", err)
 	}
 
-	// Verify determinism
-	var buf bytes.Buffer
-	err = svc.VerifyDeterminism(context.Background(), bytes.NewBufferString(log), "stdin", storePath, false, &buf)
-	if err != nil {
-		t.Fatalf("VerifyDeterminism: %v", err)
-	}
-	output := buf.String()
-	if !strings.Contains(output, "deterministic") && !strings.Contains(output, "Determinism") {
-		t.Errorf("expected determinism check output, got: %s", output)
+	h1 := extractOutputHash(&firstBuf)
+	h2 := extractOutputHash(&secondBuf)
+	if h1 == "" || h1 != h2 {
+		t.Errorf("output_hash is not deterministic across runs: first=%q second=%q", h1, h2)
 	}
 }
 
@@ -1036,105 +922,6 @@ func TestFixJSONOutput(t *testing.T) {
 	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal fix JSON: %v", err)
-	}
-}
-
-// ── Compare (additional format variants) ─────────────────────────────────────
-
-func TestCompareArtifactsJSONFormat(t *testing.T) {
-	svc := NewService()
-	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "permission denied opening /app/data/config.yaml\n"
-
-	makeArtifact := func(log string) string {
-		var buf bytes.Buffer
-		opts := baseOpts()
-		opts.JSON = true
-		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
-			t.Fatalf("Analyze to artifact: %v", err)
-		}
-		return buf.String()
-	}
-
-	var out bytes.Buffer
-	err := svc.Compare(
-		strings.NewReader(makeArtifact(leftLog)),
-		strings.NewReader(makeArtifact(rightLog)),
-		AnalyzeOptions{OutputOptions: OutputOptions{JSON: true}},
-		&out,
-	)
-	if err != nil {
-		t.Fatalf("Compare JSON: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal compare JSON: %v", err)
-	}
-}
-
-func TestCompareArtifactsTerminalFormat(t *testing.T) {
-	svc := NewService()
-	leftLog := "pull access denied\nError response from daemon: authentication required\n"
-	rightLog := "permission denied opening /app/data/config.yaml\n"
-
-	makeArtifact := func(log string) string {
-		var buf bytes.Buffer
-		opts := baseOpts()
-		opts.JSON = true
-		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
-			t.Fatalf("Analyze to artifact: %v", err)
-		}
-		return buf.String()
-	}
-
-	var out bytes.Buffer
-	err := svc.Compare(
-		strings.NewReader(makeArtifact(leftLog)),
-		strings.NewReader(makeArtifact(rightLog)),
-		AnalyzeOptions{},
-		&out,
-	)
-	if err != nil {
-		t.Fatalf("Compare terminal: %v", err)
-	}
-	if out.Len() == 0 {
-		t.Error("expected non-empty terminal compare output")
-	}
-}
-
-func TestCompareInvalidLeftJSONErrors(t *testing.T) {
-	svc := NewService()
-	var out bytes.Buffer
-	err := svc.Compare(
-		strings.NewReader("{not valid json}"),
-		strings.NewReader(`{"matched":false,"results":[]}`),
-		AnalyzeOptions{},
-		&out,
-	)
-	if err == nil {
-		t.Fatal("expected error for invalid left JSON")
-	}
-}
-
-func TestCompareInvalidRightJSONErrors(t *testing.T) {
-	svc := NewService()
-	var buf bytes.Buffer
-	opts := baseOpts()
-	opts.JSON = true
-	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\n"), "stdin", opts, &buf); err != nil {
-		t.Fatalf("Analyze to artifact: %v", err)
-	}
-	artifact := buf.String()
-
-	var out bytes.Buffer
-	err := svc.Compare(
-		strings.NewReader(artifact),
-		strings.NewReader("{not valid json}"),
-		AnalyzeOptions{},
-		&out,
-	)
-	if err == nil {
-		t.Fatal("expected error for invalid right JSON")
 	}
 }
 
@@ -1329,35 +1116,6 @@ func TestHistorySignatureHashTextAndJSON(t *testing.T) {
 	}
 	if jsonPayload["signature"] == nil {
 		t.Errorf("expected 'signature' key in JSON output, got %v", jsonPayload)
-	}
-}
-
-func TestVerifyDeterminismJSONOutput(t *testing.T) {
-	svc := NewService()
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-
-	log := "pull access denied\nError response from daemon: authentication required\n"
-	analyzeOpts := AnalyzeOptions{
-		OutputOptions: OutputOptions{JSON: true},
-		Store:         storePath,
-		PlaybookDir:   repoPlaybookDir(),
-	}
-	var analysisBuf bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
-		t.Fatalf("Analyze: %v", err)
-	}
-
-	var buf bytes.Buffer
-	err := svc.VerifyDeterminism(context.Background(), strings.NewReader(log), "stdin", storePath, true, &buf)
-	if err != nil {
-		t.Fatalf("VerifyDeterminism JSON: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
-		t.Fatalf("unmarshal determinism JSON: %v", err)
-	}
-	if payload["determinism"] == nil {
-		t.Errorf("expected 'determinism' key in JSON output, got %v", payload)
 	}
 }
 

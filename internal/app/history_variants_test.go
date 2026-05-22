@@ -141,7 +141,7 @@ func TestAnalyzeJSONRecurrenceVariantHarness(t *testing.T) {
 	}
 }
 
-func TestVerifyDeterminismStaysStableAsHistoryAccumulates(t *testing.T) {
+func TestAnalyzeOutputStaysStableAcrossRuns(t *testing.T) {
 	svc := NewService()
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	logPath := filepath.Join("..", "signature", "testdata", "variants", "missing-executable-1.log")
@@ -185,24 +185,6 @@ func TestVerifyDeterminismStaysStableAsHistoryAccumulates(t *testing.T) {
 	}
 	if second.Results[0].SeenBefore != true {
 		t.Fatalf("expected second run to report seen_before, got %#v", second.Results[0])
-	}
-
-	var determinismOut bytes.Buffer
-	if err := svc.VerifyDeterminism(context.Background(), bytes.NewReader(data), logPath, storePath, true, &determinismOut); err != nil {
-		t.Fatalf("VerifyDeterminism: %v", err)
-	}
-	var determinismPayload struct {
-		Determinism struct {
-			RunCount             int  `json:"run_count"`
-			DistinctOutputHashes int  `json:"distinct_output_hashes"`
-			Stable               bool `json:"stable"`
-		} `json:"determinism"`
-	}
-	if err := json.Unmarshal(determinismOut.Bytes(), &determinismPayload); err != nil {
-		t.Fatalf("unmarshal determinism JSON: %v", err)
-	}
-	if !determinismPayload.Determinism.Stable || determinismPayload.Determinism.RunCount != 2 || determinismPayload.Determinism.DistinctOutputHashes != 1 {
-		t.Fatalf("unexpected determinism summary: %#v", determinismPayload.Determinism)
 	}
 }
 

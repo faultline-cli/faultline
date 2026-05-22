@@ -306,7 +306,4 @@ func TestNoopStoreMethodsReturnSafeDefaults(t *testing.T) {
 	if _, err := st.ListPlaybookStats(ctx, 10); err != nil {
 		t.Fatalf("noop ListPlaybookStats: %v", err)
 	}
-	if _, err := st.VerifyDeterminismForInputHash(ctx, "hash"); err != nil {
-		t.Fatalf("noop VerifyDeterminismForInputHash: %v", err)
-	}
 }
