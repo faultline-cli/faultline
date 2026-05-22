@@ -90,8 +90,7 @@ onboarding narrative.
 - `report` as a local-only recurrence summary over stored `analyze` runs
 - `trace` as an advanced deterministic companion for rule-by-rule evaluation and rejection context
 - `replay` as a deterministic companion for re-rendering saved analysis artifacts
-- `compare` as a deterministic companion for diffing saved analysis artifacts
-- `history`, `signatures`, and `verify-determinism` as single-repo forensic-memory companions
+- `history` as a single-repo forensic-memory companion
 - `inspect` and `guard` as advanced local-prevention companions
 - `packs install` and `packs list` for optional extra catalog composition
 - hidden `fixtures` commands for corpus curation and maintainer workflows
