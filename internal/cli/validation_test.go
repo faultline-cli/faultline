@@ -136,6 +136,42 @@ func TestValidateExperimentalDeltaProvider(t *testing.T) {
 	})
 }
 
+func TestValidateAnalyzeView(t *testing.T) {
+	cases := []struct {
+		value   string
+		want    string
+		wantErr bool
+	}{
+		// Valid non-trace views pass through
+		{"", "", false},
+		{"summary", "summary", false},
+		{"evidence", "evidence", false},
+		{"fix", "fix", false},
+		{"raw", "raw", false},
+		// trace view was removed from analyze
+		{"trace", "", true},
+		// Invalid values return error
+		{"invalid", "", true},
+		{"json", "", true},
+		// Case-insensitive matching
+		{"SUMMARY", "summary", false},
+		{"Fix", "fix", false},
+	}
+	for _, tc := range cases {
+		got, err := validateAnalyzeView(tc.value)
+		if (err != nil) != tc.wantErr {
+			t.Errorf("validateAnalyzeView(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
+			continue
+		}
+		if !tc.wantErr && string(got) != tc.want {
+			t.Errorf("validateAnalyzeView(%q): got=%q want=%q", tc.value, got, tc.want)
+		}
+		if tc.value == "trace" && err != nil && !strings.Contains(err.Error(), "trace") {
+			t.Errorf("validateAnalyzeView(trace): expected error mentioning 'trace', got: %v", err)
+		}
+	}
+}
+
 func TestDeriveGitLabAPIBaseURL(t *testing.T) {
 	cases := []struct {
 		name      string

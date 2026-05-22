@@ -2,11 +2,11 @@
 
 [![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/faultline-cli/faultline)](https://github.com/faultline-cli/faultline/releases)
-[![Coverage](https://img.shields.io/badge/coverage-87.6%25-brightgreen)](docs/fixture-corpus.md)
+[![Coverage](https://img.shields.io/badge/coverage-88.8%25-brightgreen)](docs/fixture-corpus.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-182-blue)](docs/failures/catalog/README.md)
 
-Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for diagnosing CI build failures. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify — with no AI or LLM call required. If no known pattern matches, it stays quiet. Same log in → same result out.
+Recurring CI failures turn build logs into time sinks: repeated breakages, red herrings, flaky pipelines, and hours lost rediscovering fixes the team already knows. Faultline is a deterministic CLI for diagnosing CI build failures. It matches the log against known failure patterns and returns the failure class, evidence lines, and fix path it can justify, with no AI or LLM call required. If no known pattern matches, it stays quiet. Same log in → same result out.
 
 Faultline is built for teams that want a trustworthy local classifier before deeper investigation starts and a repeatable way to turn CI incidents into shared knowledge:
 
@@ -143,7 +143,7 @@ Faultline ships with 182 bundled playbooks for common CI failure classes.
 | Build tooling | formatting gates, TypeScript and compiler errors, shell compatibility, config schema errors |
 | IaC and deploy | Terraform init/state/provider failures, Kubernetes rollout errors, health check failures |
 
-Use `faultline list` to inspect the full catalog and `faultline explain <failure-id>` to see how a class is matched.
+Use `faultline list` to inspect the full catalog and `faultline explain <failure-id>` to see how a class is matched. The full browseable catalog is at [docs/failures/catalog/README.md](docs/failures/catalog/README.md).
 
 ## CI Use
 
@@ -237,12 +237,19 @@ Details: [docs/fixture-corpus.md](docs/fixture-corpus.md).
 
 ## Release Notes
 
-v0.4.9 expands the source detector catalog from 7 to 12 playbooks. New source playbooks cover hardcoded secrets (`hardcoded-secret`), goroutine leaks (`goroutine-leak`), disabled TLS verification (`insecure-tls-skip-verify`), missing transaction rollbacks (`missing-transaction-rollback`), and HTTP clients without timeouts (`http-client-no-timeout`). Each adds positive and safe fixtures. The 5 pre-existing source playbooks are tightened with improved scoring, compound signal logic, and fix guidance. `make review` passes at 294 classified conflict patterns.
+v0.4.8 expands the source detector catalog from 7 to 12 playbooks. New source
+playbooks cover hardcoded secrets (`hardcoded-secret`), goroutine leaks
+(`goroutine-leak`), disabled TLS verification (`insecure-tls-skip-verify`),
+missing transaction rollbacks (`missing-transaction-rollback`), and HTTP clients
+without timeouts (`http-client-no-timeout`). Each adds positive and safe
+fixtures. The 5 pre-existing source playbooks are tightened with improved
+scoring, compound signal logic, and fix guidance. `make review` passes at 294
+classified conflict patterns.
 
-v0.4.8 promotes `faultline batch` into the core release path for local
-multi-log diagnosis. Use it when one workflow produces several job logs and you
-want the same deterministic classification grouped across the set. This release
-also removes `signatures`, `verify-determinism`, and `compare` — three low-use
+This release also promotes `faultline batch` into the core release path for
+local multi-log diagnosis. Use it when one workflow produces several job logs
+and you want the same deterministic classification grouped across the set. Also
+removes `signatures`, `verify-determinism`, and `compare` — three low-use
 companion commands that added surface area without a clear first-run story.
 
 v0.4.7 is a hardening release for the existing local-first product. It does
@@ -354,7 +361,7 @@ Yes, via packs. A pack is a directory of YAML playbooks that Faultline loads alo
 Use the [`faultline-cli/action`](https://github.com/faultline-cli/action) wrapper on a failure-only step, or install the binary directly. Full contract in [docs/github-action-contract.md](docs/github-action-contract.md).
 
 **What is the performance overhead?**
-Faultline is a statically compiled Go binary with no runtime dependencies. Typical analysis of a 10 000-line CI log completes in well under one second.
+Faultline is a statically compiled Go binary with no runtime dependencies. Typical analysis of a 10,000 line CI log completes in well under one second.
 
 ## License
 
