@@ -274,3 +274,115 @@ func mkdirAll(t *testing.T, path string) {
 		t.Fatalf("mkdirAll %s: %v", path, err)
 	}
 }
+
+// --------------------------------------------------------------------------
+// globMatch edge cases
+// --------------------------------------------------------------------------
+
+func TestGlobMatchDoubleStar(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		pattern string
+		name    string
+		want    bool
+	}{
+		// ** crosses slash boundaries
+		{"internal/**/handler.go", "internal/auth/handler.go", true},
+		{"internal/**/handler.go", "internal/auth/v2/handler.go", true},
+		{"internal/**/handler.go", "cmd/handler.go", false},
+		// ** at end matches anything
+		{"src/**", "src/main.go", true},
+		{"src/**", "src/pkg/util.go", true},
+		// ** alone matches the empty suffix too
+		{"docs/**", "docs/", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.pattern+"~"+tc.name, func(t *testing.T) {
+			if got := globMatch(tc.pattern, tc.name); got != tc.want {
+				t.Errorf("globMatch(%q, %q) = %v, want %v", tc.pattern, tc.name, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGlobMatchQuestionMark(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		pattern string
+		name    string
+		want    bool
+	}{
+		// ? matches exactly one non-slash character
+		{"file?.go", "file1.go", true},
+		{"file?.go", "file.go", false},   // no character to match
+		{"file?.go", "file/a.go", false}, // / is not matched by ?
+		{"?.go", "a.go", true},
+		{"?.go", "ab.go", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.pattern+"~"+tc.name, func(t *testing.T) {
+			if got := globMatch(tc.pattern, tc.name); got != tc.want {
+				t.Errorf("globMatch(%q, %q) = %v, want %v", tc.pattern, tc.name, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestGlobMatchLiteralAndSingleStar(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		pattern string
+		name    string
+		want    bool
+	}{
+		// exact literal match
+		{"main.go", "main.go", true},
+		{"main.go", "main_test.go", false},
+		// * does not cross slashes
+		{"*.go", "main.go", true},
+		{"*.go", "internal/main.go", false},
+		// empty pattern and name
+		{"", "", true},
+		{"", "x", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.pattern+"~"+tc.name, func(t *testing.T) {
+			if got := globMatch(tc.pattern, tc.name); got != tc.want {
+				t.Errorf("globMatch(%q, %q) = %v, want %v", tc.pattern, tc.name, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsAncestorDir(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		ancestor   string
+		descendant string
+		want       bool
+	}{
+		{ancestor: ".", descendant: "any/path", want: true},
+		{ancestor: ".", descendant: "", want: true},
+		{ancestor: "", descendant: "any/path", want: true},
+		{ancestor: "", descendant: "", want: true},
+		{ancestor: "cmd", descendant: "cmd", want: true},
+		{ancestor: "internal", descendant: "internal/cli/root.go", want: true},
+		{ancestor: "internal/cli", descendant: "internal/cli/root.go", want: true},
+		{ancestor: "internal/cli", descendant: "internal/cli", want: true},
+		{ancestor: "cmd", descendant: "internal/cli/root.go", want: false},
+		{ancestor: "internal/cli", descendant: "internal/clx/root.go", want: false},
+		{ancestor: "internal/cl", descendant: "internal/cli/root.go", want: false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.ancestor+"|"+tc.descendant, func(t *testing.T) {
+			t.Parallel()
+			got := isAncestorDir(tc.ancestor, tc.descendant)
+			if got != tc.want {
+				t.Errorf("isAncestorDir(%q, %q) = %v, want %v", tc.ancestor, tc.descendant, got, tc.want)
+			}
+		})
+	}
+}

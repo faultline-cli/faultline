@@ -385,7 +385,7 @@ func TestAnalyzeEvidenceView(t *testing.T) {
 	}
 }
 
-func TestAnalyzeTraceView(t *testing.T) {
+func TestAnalyzeTraceViewPointsToTraceCommand(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
 
@@ -396,11 +396,12 @@ func TestAnalyzeTraceView(t *testing.T) {
 	cmd.SetErr(new(bytes.Buffer))
 	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
 
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute analyze --view trace: %v", err)
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected analyze --view trace to be rejected")
 	}
-	if !strings.Contains(out.String(), "TRACE") || !strings.Contains(out.String(), "Rule Evaluation") {
-		t.Fatalf("expected trace view output, got %q", out.String())
+	if !strings.Contains(err.Error(), "faultline trace") {
+		t.Fatalf("expected guidance to use faultline trace, got %v", err)
 	}
 }
 

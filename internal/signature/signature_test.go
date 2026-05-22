@@ -183,6 +183,134 @@ func TestIsHomePathDetectsHomePathPrefixes(t *testing.T) {
 	}
 }
 
+// --- normalizePathToken ---
+
+func TestNormalizePathTokenTempPath(t *testing.T) {
+	cases := []struct {
+		token string
+		want  string
+	}{
+		// 3+ components → last 2 after stripping the temp prefix
+		{"/tmp/build123/pkg/foo.go", "<tmp>/pkg/foo.go"},
+		// only 1 component below /tmp → keep it in tail (2-component result)
+		{"/tmp/xyz/main.go", "<tmp>/xyz/main.go"},
+		{"/var/folders/abc/T/file.go", "<tmp>/T/file.go"},
+	}
+	for _, tc := range cases {
+		if got := normalizePathToken(tc.token); got != tc.want {
+			t.Errorf("normalizePathToken(%q) = %q, want %q", tc.token, got, tc.want)
+		}
+	}
+}
+
+func TestNormalizePathTokenWorkspacePath(t *testing.T) {
+	cases := []struct {
+		token string
+		want  string
+	}{
+		{"/home/runner/work/myrepo/myrepo/pkg/handler.go", "<workspace>/myrepo/pkg/handler.go"},
+		{"/workspace/project/src/main.go", "<workspace>/project/src/main.go"},
+	}
+	for _, tc := range cases {
+		if got := normalizePathToken(tc.token); got != tc.want {
+			t.Errorf("normalizePathToken(%q) = %q, want %q", tc.token, got, tc.want)
+		}
+	}
+}
+
+func TestNormalizePathTokenRunnerToolPath(t *testing.T) {
+	cases := []struct {
+		token string
+		want  string
+	}{
+		{"/opt/hostedtoolcache/go/1.21.0/x64/bin/go", "<runner>/x64/bin/go"},
+		{"/__e/externals/node16/bin/node", "<runner>/node16/bin/node"},
+	}
+	for _, tc := range cases {
+		if got := normalizePathToken(tc.token); got != tc.want {
+			t.Errorf("normalizePathToken(%q) = %q, want %q", tc.token, got, tc.want)
+		}
+	}
+}
+
+func TestNormalizePathTokenHomePath(t *testing.T) {
+	cases := []struct {
+		token string
+		want  string
+	}{
+		// 6 components → last 3
+		{"/home/alice/go/pkg/mod/github.com", "<home>/pkg/mod/github.com"},
+		// 5 components → last 3
+		{"/users/bob/projects/app/main.go", "<home>/projects/app/main.go"},
+	}
+	for _, tc := range cases {
+		if got := normalizePathToken(tc.token); got != tc.want {
+			t.Errorf("normalizePathToken(%q) = %q, want %q", tc.token, got, tc.want)
+		}
+	}
+}
+
+func TestNormalizePathTokenAbsoluteGenericPath(t *testing.T) {
+	cases := []struct {
+		token string
+		want  string
+	}{
+		{"/opt/myapp/bin/server", "<path>/myapp/bin/server"},
+		{"/usr/local/bin/tool", "<path>/local/bin/tool"},
+	}
+	for _, tc := range cases {
+		if got := normalizePathToken(tc.token); got != tc.want {
+			t.Errorf("normalizePathToken(%q) = %q, want %q", tc.token, got, tc.want)
+		}
+	}
+}
+
+func TestNormalizePathTokenRelativePathUnchanged(t *testing.T) {
+	// Relative paths not matching any category should pass through.
+	token := "internal/engine/engine.go"
+	if got := normalizePathToken(token); got != token {
+		t.Errorf("normalizePathToken(%q) = %q, want unchanged %q", token, got, token)
+	}
+}
+
+func TestNormalizePathTokenStripsSurroundingPunctuation(t *testing.T) {
+	// Surrounding brackets/quotes should be stripped.
+	got := normalizePathToken(`"/tmp/build/main.go"`)
+	if got != "<tmp>/build/main.go" {
+		t.Errorf("normalizePathToken with quotes = %q, want %q", got, "<tmp>/build/main.go")
+	}
+}
+
+func TestNormalizePathTokenLineNumbers(t *testing.T) {
+	// Trailing :<n> suffixes should be normalized.
+	got := normalizePathToken("/tmp/build/main.go:42:10")
+	if got != "<tmp>/build/main.go:<n>:<n>" {
+		t.Errorf("normalizePathToken with line numbers = %q, want %q", got, "<tmp>/build/main.go:<n>:<n>")
+	}
+}
+
+// --- meaningfulPathTail ---
+
+func TestMeaningfulPathTail(t *testing.T) {
+	cases := []struct {
+		path string
+		keep int
+		want string
+	}{
+		{"/tmp/build/pkg/foo.go", 2, "pkg/foo.go"},
+		{"/tmp/build/pkg/foo.go", 3, "build/pkg/foo.go"},
+		{"foo.go", 2, "foo.go"},
+		{"", 2, ""},
+		{"/", 2, ""},
+		{"a/b", 3, "a/b"}, // fewer parts than keep → return all
+	}
+	for _, tc := range cases {
+		if got := meaningfulPathTail(tc.path, tc.keep); got != tc.want {
+			t.Errorf("meaningfulPathTail(%q, %d) = %q, want %q", tc.path, tc.keep, got, tc.want)
+		}
+	}
+}
+
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	dir, err := os.Getwd()

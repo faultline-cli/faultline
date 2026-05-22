@@ -137,10 +137,24 @@ func TestValidateExperimentalDeltaProvider(t *testing.T) {
 }
 
 func TestDeriveGitLabAPIBaseURL(t *testing.T) {
-	if got := deriveGitLabAPIBaseURL("https://gitlab.example.com"); got != "https://gitlab.example.com/api/v4" {
-		t.Fatalf("unexpected derived base URL: %q", got)
+	cases := []struct {
+		name      string
+		serverURL string
+		want      string
+	}{
+		{"empty returns empty", "", ""},
+		{"whitespace-only returns empty", "  ", ""},
+		{"plain URL", "https://gitlab.example.com", "https://gitlab.example.com/api/v4"},
+		{"trailing slash stripped", "https://gitlab.example.com/", "https://gitlab.example.com/api/v4"},
+		{"multiple trailing slashes stripped", "https://gitlab.example.com///", "https://gitlab.example.com/api/v4"},
+		{"URL with path", "https://gitlab.example.com/prefix", "https://gitlab.example.com/prefix/api/v4"},
 	}
-	if got := deriveGitLabAPIBaseURL(""); got != "" {
-		t.Fatalf("expected empty input to stay empty, got %q", got)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := deriveGitLabAPIBaseURL(tc.serverURL)
+			if got != tc.want {
+				t.Errorf("deriveGitLabAPIBaseURL(%q) = %q, want %q", tc.serverURL, got, tc.want)
+			}
+		})
 	}
 }

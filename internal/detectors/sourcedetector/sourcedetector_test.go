@@ -349,3 +349,98 @@ func TestSortOccurrences(t *testing.T) {
 		t.Errorf("expected a.go:10 second, got %s:%d", items[1].evidence.File, items[1].evidence.Line)
 	}
 }
+
+// ── contextBonuses ────────────────────────────────────────────────────────────
+
+func TestContextBonusesEmpty(t *testing.T) {
+	blast, hot := contextBonuses(model.Playbook{}, nil, nil)
+	if blast != 0.0 || hot != 0.0 {
+		t.Errorf("empty contextBonuses = (%v, %v), want (0, 0)", blast, hot)
+	}
+}
+
+func TestContextBonusesProductionPathClassAddsBlast(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{PathClass: "production"}},
+	}
+	blast, hot := contextBonuses(model.Playbook{}, triggers, nil)
+	if blast <= 0 {
+		t.Errorf("production path class: blast = %v, want > 0", blast)
+	}
+	if hot != 0.0 {
+		t.Errorf("production path class: hot = %v, want 0", hot)
+	}
+}
+
+func TestContextBonusesTestPathClassDoesNotAddBlast(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{PathClass: "test"}},
+	}
+	blast, _ := contextBonuses(model.Playbook{}, triggers, nil)
+	if blast != 0.0 {
+		t.Errorf("test path class: blast = %v, want 0 (clamped)", blast)
+	}
+}
+
+func TestContextBonusesFixturePathClassDoesNotAddBlast(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{PathClass: "fixture"}},
+	}
+	blast, _ := contextBonuses(model.Playbook{}, triggers, nil)
+	if blast != 0.0 {
+		t.Errorf("fixture path class: blast = %v, want 0 (clamped)", blast)
+	}
+}
+
+func TestContextBonusesExamplePathClassDoesNotAddBlast(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{PathClass: "example"}},
+	}
+	blast, _ := contextBonuses(model.Playbook{}, triggers, nil)
+	if blast != 0.0 {
+		t.Errorf("example path class: blast = %v, want 0 (clamped)", blast)
+	}
+}
+
+func TestContextBonusesSameBlockHandlerAddsHot(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{Proximity: "same_block", File: "http_handler.go"}},
+	}
+	_, hot := contextBonuses(model.Playbook{}, triggers, nil)
+	if hot <= 0 {
+		t.Errorf("same_block handler file: hot = %v, want > 0", hot)
+	}
+}
+
+func TestContextBonusesSameBlockNonHandlerNoHot(t *testing.T) {
+	triggers := []occurrence{
+		{evidence: model.Evidence{Proximity: "same_block", File: "config.go"}},
+	}
+	_, hot := contextBonuses(model.Playbook{}, triggers, nil)
+	if hot != 0.0 {
+		t.Errorf("same_block non-handler: hot = %v, want 0", hot)
+	}
+}
+
+func TestContextBonusesContextEvidenceWithHotPathLabel(t *testing.T) {
+	ctx := []occurrence{
+		{evidence: model.Evidence{Label: "Hot path processing", Weight: 2.5}},
+	}
+	_, hot := contextBonuses(model.Playbook{}, nil, ctx)
+	if hot != 2.5 {
+		t.Errorf("hot path context evidence: hot = %v, want 2.5", hot)
+	}
+}
+
+func TestContextBonusesCustomBlastRadiusBonus(t *testing.T) {
+	pb := model.Playbook{
+		Scoring: model.ScoringConfig{BlastRadiusBonus: 3.0},
+	}
+	triggers := []occurrence{
+		{evidence: model.Evidence{PathClass: "production"}},
+	}
+	blast, _ := contextBonuses(pb, triggers, nil)
+	if blast != 3.0 {
+		t.Errorf("custom blast radius bonus: blast = %v, want 3.0", blast)
+	}
+}

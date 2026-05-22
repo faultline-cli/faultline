@@ -9,13 +9,14 @@ For most teams, this wrapper is the strongest follow-up path after validating th
 The recommended surfaces for a separate `faultline-action` repository are:
 
 - human summary: `faultline analyze <logfile> --format markdown`
-- GitHub annotations: `faultline analyze <logfile> --format markdown --ci-annotations`
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
 - experimental failure delta against the last successful run on the same branch:
   `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 faultline analyze <logfile> --json --delta-provider github-actions`
 
 These contracts already exist in the CLI and should remain the integration boundary.
+GitHub annotations, summaries, and check-run presentation should be generated
+by the wrapper from JSON or markdown artifacts rather than by the core CLI.
 
 `workflow.v1` is the deterministic handoff contract for downstream scripts and agents. Additive fields are allowed; silent removals or renames are not.
 
@@ -46,7 +47,6 @@ Using a local binary:
 
 ```bash
 faultline analyze build.log --format markdown > faultline-summary.md
-faultline analyze build.log --format markdown --ci-annotations > faultline-summary-annotated.md
 faultline analyze build.log --json > faultline-analysis.json
 FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 \
 GITHUB_TOKEN="$GITHUB_TOKEN" \
@@ -61,7 +61,6 @@ Using Docker:
 
 ```bash
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --format markdown > faultline-summary.md
-docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --format markdown --ci-annotations > faultline-summary-annotated.md
 docker run --rm -v "$PWD":/workspace faultline analyze /workspace/build.log --json > faultline-analysis.json
 docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --json --mode agent > faultline-workflow.json
 ```
@@ -74,7 +73,7 @@ docker run --rm -v "$PWD":/workspace faultline workflow /workspace/build.log --j
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   run: |
-    faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
+    faultline analyze build.log --format markdown > faultline-summary.md
     faultline analyze build.log --json > faultline-analysis.json
     FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 faultline analyze build.log --json --delta-provider github-actions > faultline-analysis-delta.json
     faultline workflow build.log --json --mode agent > faultline-workflow.json

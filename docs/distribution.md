@@ -35,7 +35,7 @@ faultline analyze ci.log
 GitHub Actions is the strongest follow-up path when you want the same CLI artifacts attached automatically to failed workflow runs:
 
 ```bash
-faultline analyze build.log --format markdown --ci-annotations > faultline-summary.md
+faultline analyze build.log --format markdown > faultline-summary.md
 faultline analyze build.log --json --bayes > faultline-analysis.json
 faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```

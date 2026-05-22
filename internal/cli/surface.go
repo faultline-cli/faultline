@@ -52,7 +52,6 @@ var CommandSurfaces = []CommandSurface{
 	{Path: "history", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "signatures", Category: SurfaceCompanion, Maturity: MaturityHidden, Hidden: true},
 	{Path: "verify-determinism", Category: SurfaceCompanion, Maturity: MaturityHidden, Hidden: true},
-	{Path: "coverage", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "fixtures", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures ingest", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures review", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},

@@ -112,7 +112,7 @@ faultline explain missing-executable
 - `explain`: inspect one failure class before trusting or changing it.
 
 Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `compare`,
-`report`, `history`, `coverage`, and `packs` exist, but they are not
+`report`, `history`, and `packs` exist, but they are not
 the first-run story. `report` and `history` read only the local forensic store
 created by prior local runs; cross-repo recurrence and coordination belong to
 the Team layer.

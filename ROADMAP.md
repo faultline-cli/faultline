@@ -302,24 +302,25 @@ checked-in fixture and follows the standard review gate.
 Why second: small, self-contained, and immediately measurable against the
 eval corpus.
 
-#### 3. Promote `faultline coverage` to stable
+#### 3. Remove low-value public coverage surface
 
-Remove `Hidden: true` from `newCoverageCommand()`. Add unit tests and a
-smoke snapshot. Coverage becomes a documented command in `faultline --help`
-and the ship-ready command list.
+Keep fixture-evidence reporting available to maintainer automation through
+`internal/coverage`, but do not expose it as a general user command. Catalog
+quality remains enforced by `fixtures`, `review`, `docs-check`, and release
+gates rather than another companion command.
 
-Why third: two-day task, zero risk, immediate utility for playbook authors
-and CI pipelines verifying catalog completeness.
+Why third: removes surface area from the public CLI and keeps the default
+narrative centered on diagnosis and handoff.
 
 #### 4. Ontology Phase 2–4 (tag existing playbooks)
 
 Tag all 181 bundled playbooks with ontology labels from the Phase 1 design.
-Extend the coverage command to report by ontology tag. This completes the
-Phase 1 design intent and makes the catalog machine-navigable.
+Keep ontology grouping available to maintainer reporting. This completes the
+Phase 1 design intent and makes the catalog machine-navigable without adding a
+new default command.
 
 Why fourth: safe additive change to YAML metadata with no analysis path
-impact; best done after coverage is promoted so the tag report is immediately
-visible.
+impact.
 
 #### 5. `faultline fix` operator flags
 
@@ -344,7 +345,7 @@ missing smoke snapshot and the experimental gate.
 |------|--------|---------------|------|
 | Top-5 corpus gap sprint | 8–10 days | +0.11–0.12% (large corpus) | Low |
 | Jest playbook | 2–3 days | +0.9% (large corpus) | Low |
-| Promote coverage | 2–3 days | — | Very low |
+| Remove coverage command | <1 day | — | Very low |
 | Ontology Phase 2–4 | 14–17 days | — | Low (metadata only) |
 | fix operator flags | 3–5 days | — | Very low |
 | Promote compare | 2–3 days | — | Very low |
@@ -353,7 +354,7 @@ missing smoke snapshot and the experimental gate.
 
 - `make test` and `make cli-smoke` pass on all changes
 - eval corpus large-corpus coverage moves from 74.0% toward 74.1%+
-- `faultline coverage` and `faultline compare` appear in `faultline --help`
+- `faultline compare` appears in `faultline --help`; `faultline coverage` is absent
 - all new playbooks pass `make review`
 - no regressions in existing `analyze`, `workflow`, `fix`, or `explain` flows
 

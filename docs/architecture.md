@@ -8,6 +8,9 @@ explicit deterministic layers:
   the app layer.
 - `internal/app` owns command use-cases such as analyze, inspect, fix, list,
   explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+  Command methods should stay thin: shared log-analysis orchestration lives in
+  `internal/app/analysis_pipeline.go`, while source-analysis companion flows
+  live in `internal/app/source_analysis.go`.
 - `internal/artifact` owns construction of the first-class `FailureArtifact`
   used for replay, compare, storage, and remediation handoff.
 - `internal/store` owns optional durable local forensic memory, deterministic
@@ -43,13 +46,13 @@ explicit deterministic layers:
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
-  serialization, focused views (`--view summary|evidence|trace|fix|raw`), compare
+  serialization, focused views (`--view summary|evidence|fix|raw`), compare
   formatting, and evidence-only views.
 - `internal/renderer` owns terminal-aware human rendering, including quick
   (default) and detailed modes, plain fallback, markdown rendering, and
   restrained ANSI styling.
 - `internal/trace` owns per-playbook rule-by-rule trace payloads used by
-  `faultline trace` and `faultline analyze --trace`.
+  `faultline trace`.
 
 ## Playbook boundary
 
@@ -220,10 +223,11 @@ as `summary`, `diagnosis`, `fix`, and
 - structured playbook fields still drive matching and ranking
 - CLI commands render the same deterministic content model to terminal or markdown output
 - `--format json` and `--json` emit the structured machine-readable form
-- `--view summary|evidence|trace|fix|raw` selects a focused slice of the human-readable output
+- `--view summary|evidence|fix|raw` selects a focused slice of the human-readable output
   without changing the underlying analysis; `summary` and `raw` map to quick and
   detailed rendering modes respectively; `evidence` and `fix` emit narrow single-purpose
-  slices of the top result; `trace` routes to deterministic rule-by-rule playbook evaluation
+  slices of the top result. Rule-by-rule evaluation is exposed through the dedicated
+  `faultline trace` command.
 - replayed analysis artifacts support `summary|evidence|fix|raw`; trace replay requires a
   saved trace artifact or rerunning `faultline trace` on the original log
 - non-TTY and no-color environments fall back to plain output

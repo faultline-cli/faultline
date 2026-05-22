@@ -94,7 +94,6 @@ onboarding narrative.
 - `history`, `signatures`, and `verify-determinism` as single-repo forensic-memory companions
 - `inspect` and `guard` as advanced local-prevention companions
 - `packs install` and `packs list` for optional extra catalog composition
-- `coverage` as a bounded companion surface with smoke coverage
 - hidden `fixtures` commands for corpus curation and maintainer workflows
 
 These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis plus workflow handoff.

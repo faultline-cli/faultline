@@ -10,13 +10,8 @@ The robustness report answers two questions for each resolved playbook:
 - false-negative risk: how likely the playbook is to miss legitimate variants
   of its root cause
 
-Run it with:
-
-```sh
-go run ./cmd coverage
-go run ./cmd coverage --json
-go run ./cmd coverage --playbook-pack path/to/pack --json
-```
+Coverage reporting now lives in `internal/coverage` for maintainer automation
+rather than as a general CLI command.
 
 The `--playbook-pack` form is important. Robustness is computed after bundled
 and extra packs are composed, so external playbook sets are evaluated against

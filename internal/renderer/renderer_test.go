@@ -415,3 +415,131 @@ func TestNewDarkBackgroundPreserved(t *testing.T) {
 		t.Error("expected DarkBackground=true to be preserved")
 	}
 }
+
+// ── topN ─────────────────────────────────────────────────────────────────────
+
+func makeResults(n int) []model.Result {
+	out := make([]model.Result, n)
+	for i := range out {
+		out[i] = model.Result{Score: float64(i)}
+	}
+	return out
+}
+
+func TestTopNZeroReturnsAll(t *testing.T) {
+	results := makeResults(5)
+	got := topN(results, 0)
+	if len(got) != 5 {
+		t.Errorf("topN(results, 0) returned %d results, want 5", len(got))
+	}
+}
+
+func TestTopNNegativeReturnsAll(t *testing.T) {
+	results := makeResults(3)
+	got := topN(results, -1)
+	if len(got) != 3 {
+		t.Errorf("topN(results, -1) returned %d results, want 3", len(got))
+	}
+}
+
+func TestTopNExceedsLengthReturnsAll(t *testing.T) {
+	results := makeResults(3)
+	got := topN(results, 10)
+	if len(got) != 3 {
+		t.Errorf("topN(results, 10) returned %d results, want 3", len(got))
+	}
+}
+
+func TestTopNWithinLengthReturnsTruncated(t *testing.T) {
+	results := makeResults(5)
+	got := topN(results, 3)
+	if len(got) != 3 {
+		t.Errorf("topN(results, 3) returned %d results, want 3", len(got))
+	}
+	for i, r := range got {
+		if r.Score != float64(i) {
+			t.Errorf("result[%d].Score = %v, want %v", i, r.Score, float64(i))
+		}
+	}
+}
+
+func TestTopNExactLengthReturnsAll(t *testing.T) {
+	results := makeResults(4)
+	got := topN(results, 4)
+	if len(got) != 4 {
+		t.Errorf("topN(results, 4) returned %d results, want 4", len(got))
+	}
+}
+
+// ── DetectOptions / forcePlain / clampWidth ───────────────────────────────────
+
+func TestDetectOptionsWithNonFileWriterReturnsPlain(t *testing.T) {
+	var buf strings.Builder
+	opts := DetectOptions(&buf)
+	if !opts.Plain {
+		t.Error("expected Plain=true for non-file writer")
+	}
+	if opts.Width != defaultWidth {
+		t.Errorf("expected Width=%d, got %d", defaultWidth, opts.Width)
+	}
+}
+
+func TestDetectOptionsWithCIEnvVarReturnsPlain(t *testing.T) {
+	t.Setenv("CI", "true")
+	var buf strings.Builder
+	opts := DetectOptions(&buf)
+	if !opts.Plain {
+		t.Error("expected Plain=true when CI env var is set")
+	}
+}
+
+func TestDetectOptionsWithNoColorEnvVarReturnsPlain(t *testing.T) {
+	t.Setenv("NO_COLOR", "1")
+	var buf strings.Builder
+	opts := DetectOptions(&buf)
+	if !opts.Plain {
+		t.Error("expected Plain=true when NO_COLOR env var is set")
+	}
+}
+
+func TestForcePlainReturnsTrueForCIEnvVar(t *testing.T) {
+	t.Setenv("CI", "yes")
+	if !forcePlain() {
+		t.Error("expected forcePlain=true when CI is set")
+	}
+}
+
+func TestForcePlainReturnsTrueForGitHubActions(t *testing.T) {
+	t.Setenv("GITHUB_ACTIONS", "true")
+	if !forcePlain() {
+		t.Error("expected forcePlain=true when GITHUB_ACTIONS is set")
+	}
+}
+
+func TestForcePlainReturnsFalseWhenNoEnvVarsSet(t *testing.T) {
+	// Unset all known CI env vars that forcePlain checks.
+	for _, key := range []string{"NO_COLOR", "CI", "GITHUB_ACTIONS", "FAULTLINE_PLAIN"} {
+		t.Setenv(key, "")
+	}
+	if forcePlain() {
+		t.Error("expected forcePlain=false when no relevant env vars are set")
+	}
+}
+
+func TestClampWidthBelowMin(t *testing.T) {
+	if got := clampWidth(30); got != minWidth {
+		t.Errorf("clampWidth(30) = %d, want minWidth=%d", got, minWidth)
+	}
+}
+
+func TestClampWidthAboveMax(t *testing.T) {
+	if got := clampWidth(200); got != maxWidth {
+		t.Errorf("clampWidth(200) = %d, want maxWidth=%d", got, maxWidth)
+	}
+}
+
+func TestClampWidthWithinRange(t *testing.T) {
+	if got := clampWidth(90); got != 90 {
+		t.Errorf("clampWidth(90) = %d, want 90", got)
+	}
+}

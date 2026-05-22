@@ -45,7 +45,7 @@ As of v0.4.1, 170 of 181 bundled playbooks carry ontology metadata.
 
 - [docs/ontology.md](../ontology.md) — Full design, five-level hierarchy, schema
 - [docs/ontology-quick-reference.md](../ontology-quick-reference.md) — Condensed reference
-- [docs/ontology-quick-reference.md](../ontology-quick-reference.md) — Current shipped metadata and coverage-command reference
+- [docs/ontology-quick-reference.md](../ontology-quick-reference.md) — Current shipped metadata and coverage reporting reference
 - [docs/ontology-examples.md](../ontology-examples.md) — Six complete annotated examples
 - [ADR 0008](0008-playbook-catalog-scalability-through-composition-and-inheritance.md) — Composition model that the taxonomy informs
 - Git history: `039f7d0` apply ontology metadata to existing catalog

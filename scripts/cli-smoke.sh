@@ -159,11 +159,4 @@ jq -e --argjson expected_count "$STARTER_PLAYBOOK_COUNT" \
 	'.pack_provenance | length == 2 and .[0].name == "starter" and .[0].playbook_count == $expected_count and .[1].name == "example-pack" and .[1].version == "0.0.0+local"' \
 	"$TMP_DIR/extra-pack.analysis.json" >/dev/null
 
-FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage >"$TMP_DIR/coverage.txt"
-grep -F "Playbook coverage report" "$TMP_DIR/coverage.txt" >/dev/null
-grep -F "Total playbooks" "$TMP_DIR/coverage.txt" >/dev/null
-
-FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" coverage --json >"$TMP_DIR/coverage.json"
-grep -F '"total_playbooks"' "$TMP_DIR/coverage.json" >/dev/null
-
 printf '%s\n' "cli smoke passed"

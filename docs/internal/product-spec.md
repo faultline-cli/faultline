@@ -87,8 +87,8 @@ Current user-facing characteristics:
 - terminal output supports `quick` and `detailed` modes
 - markdown output is available for CI summaries and docs snapshots
 - JSON output is stable and automation-friendly
-- focused views are supported through `--view summary|evidence|fix|raw|trace`
-- ranked drill-down is supported through `--top`, `--select`, `--trace`, and `--trace-playbook`
+- focused views are supported through `--view summary|evidence|fix|raw`
+- ranked drill-down is supported through `--top`, `--select`, and the dedicated `faultline trace` command
 - recent local repository context is included by default, with `--git=false`
   available for narrow deterministic snapshot cases
 - `--bayes` can rerank already-matched candidates additively

@@ -263,3 +263,55 @@ func TestAddEnvDiffTrimsWhitespace(t *testing.T) {
 		t.Errorf("expected no entry after trim, got %#v", out)
 	}
 }
+
+// ── isPrivateHost ─────────────────────────────────────────────────────────────
+
+func TestIsPrivateHostLoopback(t *testing.T) {
+	t.Parallel()
+	for _, host := range []string{"localhost", "[::1]", "::1"} {
+		if !isPrivateHost(host) {
+			t.Errorf("isPrivateHost(%q) = false, want true", host)
+		}
+	}
+}
+
+func TestIsPrivateHostRFC1918Prefixes(t *testing.T) {
+	t.Parallel()
+	cases := []string{
+		"10.0.0.1",
+		"172.16.0.1",
+		"172.31.255.255",
+		"192.168.1.100",
+		"127.0.0.1",
+		"169.254.1.1",
+	}
+	for _, host := range cases {
+		if !isPrivateHost(host) {
+			t.Errorf("isPrivateHost(%q) = false, want true", host)
+		}
+	}
+}
+
+func TestIsPrivateHostIPv6PrivatePrefixes(t *testing.T) {
+	t.Parallel()
+	for _, host := range []string{"fc00::1", "fd00::1", "fe80::1"} {
+		if !isPrivateHost(host) {
+			t.Errorf("isPrivateHost(%q) = false, want true", host)
+		}
+	}
+}
+
+func TestIsPrivateHostPublicHosts(t *testing.T) {
+	t.Parallel()
+	cases := []string{
+		"github.com",
+		"gitlab.example.com",
+		"8.8.8.8",
+		"203.0.113.5",
+	}
+	for _, host := range cases {
+		if isPrivateHost(host) {
+			t.Errorf("isPrivateHost(%q) = true, want false", host)
+		}
+	}
+}

@@ -22,7 +22,7 @@ Faultline is currently implemented as a CLI-first deterministic product with bot
 The repository currently ships these user-visible commands:
 
 - core path: `analyze`, `batch`, `workflow`, `list`, `explain`, `fix`
-- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `coverage`, `packs`
+- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `packs`
 
 Important current behavior:
 

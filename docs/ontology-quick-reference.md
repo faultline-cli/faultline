@@ -39,21 +39,12 @@ Common domain values in the bundled catalog include:
 - Add positive fixture evidence for every shipped playbook when possible.
 - Add negative or disallowed-playbook assertions for nearby confusable rules.
 
-## Coverage Command
+## Coverage Reporting
 
-The shipped coverage command reports fixture evidence for the resolved catalog:
-
-```bash
-faultline coverage
-faultline coverage --json
-faultline coverage --fixture-dir fixtures
-faultline coverage --playbooks playbooks/bundled
-faultline coverage --playbook-pack examples/packs/minimal
-```
-
-Human output includes totals, category/domain grouping, missing positive
-fixtures, and duplicate-ID status. JSON output exposes the same data through
-the `coverage.Report` schema in `internal/coverage/report.go`.
+Fixture-evidence reporting remains implemented in `internal/coverage` for
+maintainer automation, but it is no longer exposed as a general CLI command.
+The default CLI surface stays centered on diagnosis, workflow handoff, and pack
+inspection.
 
 Unsupported historical examples:
 
@@ -61,6 +52,7 @@ Unsupported historical examples:
 - `faultline coverage --depth=shallow`
 - `faultline coverage --gaps`
 - `faultline coverage --format=json`
+- `faultline coverage`
 - `faultline playbooks validate --ontology`
 
 Those commands appeared in earlier planning docs but are not part of the
@@ -71,7 +63,7 @@ current CLI.
 - Does the playbook have a clear `domain`, `class`, and `mode`?
 - Does the metadata agree with the root cause described in `summary`,
   `diagnosis`, and `fix`?
-- Does `faultline coverage` show positive fixture evidence for the playbook?
+- Does maintainer coverage reporting show positive fixture evidence for the playbook?
 - Are known confusable rules protected by negative or disallowed-playbook
   assertions?
 - Do `make test` and `make review` pass after the change?

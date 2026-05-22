@@ -7,8 +7,8 @@ as `domain`, `class`, and `mode`. These fields are catalog metadata: they help
 humans, docs, and coverage reports group playbooks, but they do not change
 matching, ranking, or remediation output.
 
-The current shipped `faultline coverage` implementation is fixture-evidence
-oriented. It reports:
+The current `internal/coverage` implementation is fixture-evidence oriented
+and intended for maintainer automation. It reports:
 
 - total resolved playbooks
 - playbooks with positive fixture evidence
@@ -19,18 +19,7 @@ oriented. It reports:
 - playbooks missing positive fixtures
 - duplicate playbook IDs
 
-Supported command surface:
-
-```bash
-faultline coverage
-faultline coverage --json
-faultline coverage --fixture-dir fixtures
-faultline coverage --playbooks playbooks/bundled
-faultline coverage --playbook-pack examples/packs/minimal
-```
-
-The command does not currently support ontology filtering flags such as
-`--domain`, `--depth`, `--gaps`, CSV output, or ontology validation gates.
+The general `faultline coverage` command is no longer shipped.
 
 ## Documents
 
@@ -40,7 +29,7 @@ The command does not currently support ontology filtering flags such as
   ontology records. Useful as inspiration when refining metadata, but not the
   current required playbook schema.
 - [ontology-quick-reference.md](ontology-quick-reference.md): current concise
-  reference for the shipped metadata and `coverage` command.
+  reference for the shipped metadata and coverage reporting model.
 
 The old implementation roadmap was removed because it described a planned
 coverage implementation that no longer matches the current code.

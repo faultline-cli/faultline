@@ -19,7 +19,6 @@ func newAnalyzeCommand() *cobra.Command {
 		view             string
 		playbookDir      string
 		playbookPacks    []string
-		ciAnnotations    bool
 		history          bool
 		noHistory        bool
 		noStore          bool
@@ -28,10 +27,7 @@ func newAnalyzeCommand() *cobra.Command {
 		gitSince         string
 		repoPath         string
 		bayes            bool
-		traceEnabled     bool
-		tracePlaybook    string
 		selectRank       int
-		showRejected     bool
 		showEvidence     bool
 		showScoring      bool
 		deltaProvider    string
@@ -69,7 +65,7 @@ func newAnalyzeCommand() *cobra.Command {
 			if err := validateOutputMode(mode); err != nil {
 				return err
 			}
-			resolvedView, err := validateView(view)
+			resolvedView, err := validateAnalyzeView(view)
 			if err != nil {
 				return err
 			}
@@ -82,10 +78,6 @@ func newAnalyzeCommand() *cobra.Command {
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
 			if err != nil {
 				return err
-			}
-			if resolvedView == output.ViewTrace {
-				traceEnabled = true
-				resolvedView = output.ViewDefault
 			}
 			if resolvedJSON && resolvedView != output.ViewDefault {
 				return fmt.Errorf("--view cannot be combined with --json")
@@ -100,20 +92,14 @@ func newAnalyzeCommand() *cobra.Command {
 			resolvedStore := resolveAnalyzeStoreSetting(noHistory, noStore, storePath)
 			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
-					Top:           top,
-					Mode:          output.Mode(mode),
-					Format:        resolvedFormat,
-					View:          resolvedView,
-					JSON:          resolvedJSON,
-					CIAnnotations: ciAnnotations,
-					Select:        selectRank,
-					ShowRejected:  showRejected,
-					ShowEvidence:  showEvidence,
-					ShowScoring:   showScoring,
-				},
-				TraceOptions: app.TraceOptions{
-					TraceEnabled:  traceEnabled,
-					TracePlaybook: tracePlaybook,
+					Top:          top,
+					Mode:         output.Mode(mode),
+					Format:       resolvedFormat,
+					View:         resolvedView,
+					JSON:         resolvedJSON,
+					Select:       selectRank,
+					ShowEvidence: showEvidence,
+					ShowScoring:  showScoring,
 				},
 				ProviderOptions: app.ProviderOptions{
 					GitContextEnabled: gitContext,
@@ -148,10 +134,9 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().IntVar(&top, "top", 1, "show top N ranked results")
 	cmd.Flags().StringVar(&mode, "mode", string(output.ModeQuick), "output mode: quick|detailed")
 	cmd.Flags().StringVar(&format, "format", string(output.FormatTerminal), "output format: terminal|markdown|json")
-	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw|trace")
+	cmd.Flags().StringVar(&view, "view", string(output.ViewDefault), "focused output view: summary|evidence|fix|raw")
 	cmd.Flags().StringVar(&playbookDir, "playbooks", "", "override playbook directory")
 	cmd.Flags().StringSliceVar(&playbookPacks, "playbook-pack", nil, "load one or more extra playbook pack directories")
-	cmd.Flags().BoolVar(&ciAnnotations, "ci-annotations", false, "emit GitHub Actions ::warning:: annotations")
 	cmd.Flags().BoolVar(&history, "history", false, "read and write local history for this run")
 	cmd.Flags().BoolVar(&noHistory, "no-history", false, "skip reading and writing local history")
 	cmd.Flags().BoolVar(&noStore, "no-store", false, "disable the local forensic store")
@@ -160,10 +145,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().StringVar(&gitSince, "since", "30d", "git history window for --git (for example 7d, 2w, 1 month ago)")
 	cmd.Flags().StringVar(&repoPath, "repo", ".", "repository path to scan when --git is enabled")
 	cmd.Flags().BoolVar(&bayes, "bayes", true, "rerank deterministic matches with the Bayesian-inspired scoring layer (enabled by default; pass --bayes=false to disable)")
-	cmd.Flags().BoolVar(&traceEnabled, "trace", false, "render a deterministic trace for the selected playbook")
-	cmd.Flags().StringVar(&tracePlaybook, "trace-playbook", "", "render a deterministic trace for the named playbook")
 	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
-	cmd.Flags().BoolVar(&showRejected, "show-rejected", false, "include competing candidates and rejection context in trace output")
 	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix when supported")
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail when supported")
 	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions|gitlab-ci)")
@@ -191,4 +173,15 @@ func newAnalyzeCommand() *cobra.Command {
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
 	return cmd
+}
+
+func validateAnalyzeView(value string) (output.View, error) {
+	view, ok := output.ParseView(value)
+	if !ok {
+		return "", fmt.Errorf("--view must be %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw)
+	}
+	if view == output.ViewTrace {
+		return "", fmt.Errorf("--view trace was removed from analyze; use `faultline trace` instead")
+	}
+	return view, nil
 }
