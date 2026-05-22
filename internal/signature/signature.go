@@ -371,9 +371,11 @@ func mustMarshalPayload(payload Payload) []byte {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)
-	err := enc.Encode(payload)
-	if err != nil {
-		panic(err)
+	if err := enc.Encode(payload); err != nil {
+		// Encoding a struct of plain strings cannot fail in practice.
+		// Avoid a panic that would crash the process; return an empty object
+		// so the caller still gets a deterministic (if degenerate) signature.
+		return []byte(`{}`)
 	}
 	return bytes.TrimSpace(buf.Bytes())
 }

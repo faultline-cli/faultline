@@ -38,7 +38,7 @@ func newFixCommand() *cobra.Command {
 			defer input.Close()
 
 			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
-			return app.NewService().Fix(input.Reader, input.Source, app.AnalyzeOptions{
+			return app.NewService().Fix(cmd.Context(), input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:    1,
 					Format: resolvedFormat,

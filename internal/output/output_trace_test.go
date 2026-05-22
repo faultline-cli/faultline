@@ -192,7 +192,7 @@ func TestFormatTraceJSONMatchedIsValid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v\noutput: %s", err, out)
 	}
@@ -210,7 +210,7 @@ func TestFormatTraceJSONNotMatchedIsValid(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
@@ -226,7 +226,7 @@ func TestFormatTraceJSONIncludesScoringWhenRequested(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
@@ -242,7 +242,7 @@ func TestFormatTraceJSONOmitsScoringByDefault(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
@@ -260,11 +260,11 @@ func TestFormatTraceJSONIncludesCompetingWhenRequested(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
-	competing, ok := m["competing"].([]interface{})
+	competing, ok := m["competing"].([]any)
 	if !ok || len(competing) == 0 {
 		t.Error("expected competing field with entries when showRejected=true")
 	}
@@ -283,11 +283,11 @@ func TestFormatTraceJSONIncludesSignatureWhenAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &m); err != nil {
 		t.Fatalf("invalid JSON: %v", err)
 	}
-	signatureValue, ok := m["signature"].(map[string]interface{})
+	signatureValue, ok := m["signature"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected signature object, got %#v", m["signature"])
 	}

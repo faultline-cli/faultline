@@ -23,9 +23,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"math"
 	"os"
-	"sort"
+	"slices"
 
 	"faultline/internal/model"
 )
@@ -133,7 +134,7 @@ func WithExplicitHistory(m *model.Metrics, entries []model.MetricsHistoryEntry) 
 		}
 	}
 
-	sort.Strings(m.DriftComponents)
+	slices.Sort(m.DriftComponents)
 	return m
 }
 
@@ -193,11 +194,8 @@ func topFailureID(idCounts map[string]int) string {
 	best := ""
 	bestCount := 0
 	// Iterate in sorted key order for deterministic selection when counts tie.
-	keys := make([]string, 0, len(idCounts))
-	for k := range idCounts {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := slices.Collect(maps.Keys(idCounts))
+	slices.Sort(keys)
 	for _, k := range keys {
 		if idCounts[k] > bestCount {
 			bestCount = idCounts[k]

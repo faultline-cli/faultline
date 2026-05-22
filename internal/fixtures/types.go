@@ -4,8 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"maps"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -187,10 +188,7 @@ type Thresholds struct {
 }
 
 func sortedKeys(m map[string]int) []string {
-	keys := make([]string, 0, len(m))
-	for key := range m {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	keys := slices.Collect(maps.Keys(m))
+	slices.Sort(keys)
 	return keys
 }

@@ -21,9 +21,13 @@ match:
     - "env error"
 `)
 	t.Setenv(envKey, dir)
-	pbs, err := LoadDefault()
+	resolved, err := DefaultDir()
 	if err != nil {
-		t.Fatalf("LoadDefault with env: %v", err)
+		t.Fatalf("DefaultDir with env: %v", err)
+	}
+	pbs, err := LoadDir(resolved)
+	if err != nil {
+		t.Fatalf("LoadDir with env: %v", err)
 	}
 	if len(pbs) == 0 {
 		t.Fatal("expected playbooks from env-configured dir")
@@ -42,7 +46,7 @@ match:
 
 func TestLoadDefaultEnvVarInvalidDirErrors(t *testing.T) {
 	t.Setenv(envKey, "/nonexistent/path/that/does/not/exist")
-	_, err := LoadDefault()
+	_, err := DefaultDir()
 	if err == nil {
 		t.Fatal("expected error for invalid env-configured dir")
 	}
@@ -50,13 +54,17 @@ func TestLoadDefaultEnvVarInvalidDirErrors(t *testing.T) {
 
 func TestLoadDefaultWithEnvVarPointingToBundledDir(t *testing.T) {
 	// Set FAULTLINE_PLAYBOOK_DIR to the actual bundled playbooks directory to
-	// verify LoadDefault works when the env var points to a valid directory
-	// with yaml files.
+	// verify DefaultDir + LoadDir work when the env var points to a valid
+	// directory with yaml files.
 	bundledDir := "../../playbooks/bundled"
 	t.Setenv(envKey, bundledDir)
-	pbs, err := LoadDefault()
+	resolved, err := DefaultDir()
 	if err != nil {
-		t.Fatalf("LoadDefault with bundled dir: %v", err)
+		t.Fatalf("DefaultDir with bundled dir: %v", err)
+	}
+	pbs, err := LoadDir(resolved)
+	if err != nil {
+		t.Fatalf("LoadDir with bundled dir: %v", err)
 	}
 	if len(pbs) == 0 {
 		t.Fatal("expected bundled playbooks to be found")

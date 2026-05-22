@@ -2,6 +2,8 @@ package normalize
 
 import (
 	"regexp"
+
+	"faultline/internal/fixtures"
 )
 
 // RedactOptions controls which sensitive patterns are scrubbed.
@@ -13,9 +15,8 @@ type RedactOptions struct {
 }
 
 var (
-	// emailPattern matches common email addresses.
-	emailPattern = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
-
+	// emailPattern matches common email addresses (shared with internal/fixtures).
+	emailPattern = fixtures.EmailAddressPattern
 	// tokenPatterns covers common secret formats found in CI logs.
 	tokenPatterns = []*regexp.Regexp{
 		// Bearer / Authorization header values

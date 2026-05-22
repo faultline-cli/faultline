@@ -38,28 +38,26 @@ type determinismJSON struct {
 	Determinism store.DeterminismSummary `json:"determinism"`
 }
 
-func (Service) History(signatureHash, storePath string, limit int, jsonOut bool, w io.Writer) error {
+func (Service) History(ctx context.Context, signatureHash, storePath string, limit int, jsonOut bool, w io.Writer) error {
 	st, info, err := openHistoryStore(storePath)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
 
-	ctx := context.Background()
 	if strings.TrimSpace(signatureHash) != "" {
 		return writeHistorySignature(ctx, st, info, signatureHash, limit, jsonOut, w)
 	}
 	return writeHistoryOverview(ctx, st, info, limit, jsonOut, w)
 }
 
-func (Service) Signatures(storePath string, limit int, jsonOut bool, w io.Writer) error {
+func (Service) Signatures(ctx context.Context, storePath string, limit int, jsonOut bool, w io.Writer) error {
 	st, info, err := openHistoryStore(storePath)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
 
-	ctx := context.Background()
 	items, err := st.ListSignatures(ctx, limit)
 	if err != nil {
 		return err
@@ -97,7 +95,7 @@ func (Service) Signatures(storePath string, limit int, jsonOut bool, w io.Writer
 	return err
 }
 
-func (Service) VerifyDeterminism(r io.Reader, source, storePath string, jsonOut bool, w io.Writer) error {
+func (Service) VerifyDeterminism(ctx context.Context, r io.Reader, source, storePath string, jsonOut bool, w io.Writer) error {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("read log input: %w", err)
@@ -110,7 +108,7 @@ func (Service) VerifyDeterminism(r io.Reader, source, storePath string, jsonOut 
 	}
 	defer st.Close()
 
-	summary, err := st.VerifyDeterminismForInputHash(context.Background(), inputHash)
+	summary, err := st.VerifyDeterminismForInputHash(ctx, inputHash)
 	if err != nil {
 		return err
 	}

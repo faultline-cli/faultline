@@ -47,7 +47,7 @@ func newTraceCommand() *cobra.Command {
 			defer input.Close()
 
 			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
-			return app.NewService().Trace(input.Reader, input.Source, app.AnalyzeOptions{
+			return app.NewService().Trace(cmd.Context(), input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:          1,
 					Select:       selectRank,

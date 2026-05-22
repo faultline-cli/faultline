@@ -223,31 +223,6 @@ func TestDiagnoseDeltaPopulatesCausesFromFiles(t *testing.T) {
 	}
 }
 
-func TestDebugStringEmptyForNilRanking(t *testing.T) {
-	result := model.Result{
-		Playbook: model.Playbook{ID: "some-playbook"},
-	}
-	if got := DebugString(result); got != "" {
-		t.Fatalf("expected empty string for nil ranking, got %q", got)
-	}
-}
-
-func TestDebugStringFormatsIDAndScore(t *testing.T) {
-	result := model.Result{
-		Playbook: model.Playbook{ID: "my-playbook"},
-		Ranking: &model.Ranking{
-			FinalScore: 3.14159,
-		},
-	}
-	got := DebugString(result)
-	if got == "" {
-		t.Fatal("expected non-empty debug string")
-	}
-	if got != "my-playbook 3.14" {
-		t.Fatalf("unexpected debug string: %q", got)
-	}
-}
-
 func TestCloneEnvDiffReturnsNilForEmpty(t *testing.T) {
 	if got := cloneEnvDiff(nil); got != nil {
 		t.Fatalf("expected nil for nil input, got %#v", got)

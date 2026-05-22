@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -46,7 +47,7 @@ func TestAnalyzeMatchedTextOutput(t *testing.T) {
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(log), "test.log", baseOpts(), &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "test.log", baseOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Analyze: %v", err)
 	}
@@ -62,12 +63,12 @@ func TestAnalyzeMatchedJSONOutput(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf)
 	if err != nil {
 		t.Fatalf("Analyze JSON: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
@@ -84,36 +85,36 @@ func TestAnalyzeSelectChoosesRequestedResult(t *testing.T) {
 	allOpts.JSON = true
 	var all bytes.Buffer
 
-	if err := svc.Analyze(strings.NewReader(log), "test.log", allOpts, &all); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "test.log", allOpts, &all); err != nil {
 		t.Fatalf("Analyze all results: %v", err)
 	}
-	var allPayload map[string]interface{}
+	var allPayload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(all.String())), &allPayload); err != nil {
 		t.Fatalf("unmarshal full analysis JSON: %v", err)
 	}
-	allResults, ok := allPayload["results"].([]interface{})
+	allResults, ok := allPayload["results"].([]any)
 	if !ok || len(allResults) < 2 {
 		t.Fatalf("expected at least two ranked results, got %v", allPayload["results"])
 	}
-	expectedID := allResults[1].(map[string]interface{})["failure_id"]
+	expectedID := allResults[1].(map[string]any)["failure_id"]
 
 	opts := baseOpts()
 	opts.Select = 2
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	if err := svc.Analyze(strings.NewReader(log), "test.log", opts, &buf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "test.log", opts, &buf); err != nil {
 		t.Fatalf("Analyze with --select: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal selected analysis JSON: %v", err)
 	}
-	results, ok := payload["results"].([]interface{})
+	results, ok := payload["results"].([]any)
 	if !ok || len(results) != 1 {
 		t.Fatalf("expected one selected result, got %v", payload["results"])
 	}
-	result := results[0].(map[string]interface{})
+	result := results[0].(map[string]any)
 	if result["failure_id"] != expectedID {
 		t.Fatalf("expected --select to choose %v, got %v", expectedID, result["failure_id"])
 	}
@@ -125,7 +126,7 @@ func TestAnalyzeNoMatchReturnsNoError(t *testing.T) {
 	var buf bytes.Buffer
 
 	// ErrNoMatch is swallowed - output should still be written without error.
-	err := svc.Analyze(strings.NewReader(log), "", baseOpts(), &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "", baseOpts(), &buf)
 	if err != nil {
 		t.Fatalf("expected no error on no-match, got %v", err)
 	}
@@ -139,7 +140,7 @@ func TestAnalyzeTraceOutput(t *testing.T) {
 	opts.ShowScoring = true
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Analyze trace: %v", err)
 	}
@@ -157,7 +158,7 @@ func TestAnalyzeTraceViewOutput(t *testing.T) {
 	opts.View = output.ViewTrace
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Analyze trace view: %v", err)
 	}
@@ -176,7 +177,7 @@ func TestTraceSpecificPlaybookWithoutWinningMatch(t *testing.T) {
 	opts.TracePlaybook = "missing-executable"
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Trace specific playbook: %v", err)
 	}
@@ -193,7 +194,7 @@ func TestTraceEmptyInputReturnsErrNoInput(t *testing.T) {
 	opts.TraceEnabled = true
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader(""), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader(""), "trace.log", opts, &buf)
 	if !errors.Is(err, engine.ErrNoInput) {
 		t.Fatalf("expected engine.ErrNoInput for empty input, got %v", err)
 	}
@@ -207,7 +208,7 @@ func TestTraceSelectOnNoMatchErrors(t *testing.T) {
 	opts.Select = 1
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader("everything is perfectly fine\n"), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader("everything is perfectly fine\n"), "trace.log", opts, &buf)
 	if err == nil {
 		t.Fatal("expected error for Select=1 with no matching result")
 	}
@@ -219,7 +220,7 @@ func TestReplayRendersSavedAnalysis(t *testing.T) {
 	artifactOpts := baseOpts()
 	artifactOpts.JSON = true
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
 		t.Fatalf("Analyze to artifact: %v", err)
 	}
 
@@ -260,7 +261,7 @@ func TestCompareArtifacts(t *testing.T) {
 		var buf bytes.Buffer
 		opts := baseOpts()
 		opts.JSON = true
-		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
 			t.Fatalf("Analyze to artifact: %v", err)
 		}
 		return buf.String()
@@ -287,7 +288,7 @@ func TestAnalyzeEvidenceView(t *testing.T) {
 	opts.View = output.ViewEvidence
 	var buf bytes.Buffer
 
-	if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
 		t.Fatalf("Analyze evidence view: %v", err)
 	}
 	for _, want := range []string{"EVIDENCE  docker-auth", "Matched evidence:", "pull access denied"} {
@@ -303,7 +304,7 @@ func TestReplayFixView(t *testing.T) {
 	artifactOpts := baseOpts()
 	artifactOpts.JSON = true
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
 		t.Fatalf("Analyze to artifact: %v", err)
 	}
 
@@ -322,7 +323,7 @@ func TestAnalyzeEmptyInputReturnsErrNoInput(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(""), "", baseOpts(), &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(""), "", baseOpts(), &buf)
 	if !errors.Is(err, engine.ErrNoInput) {
 		t.Fatalf("expected ErrNoInput, got %v", err)
 	}
@@ -337,7 +338,7 @@ func TestAnalyzeFailOnSilentReturnsErrSilentFailure(t *testing.T) {
 	opts.FailOnSilent = true
 	var buf bytes.Buffer
 
-	err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf)
+	err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf)
 	if !errors.Is(err, ErrSilentFailure) {
 		t.Fatalf("expected ErrSilentFailure, got %v", err)
 	}
@@ -350,7 +351,7 @@ func TestFixOutputContainsFixSteps(t *testing.T) {
 	log := "fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"
 	var buf bytes.Buffer
 
-	err := svc.Fix(strings.NewReader(log), "", baseOpts(), &buf)
+	err := svc.Fix(context.Background(), strings.NewReader(log), "", baseOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Fix: %v", err)
 	}
@@ -366,7 +367,7 @@ func TestFixMarkdownOutput(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Fix(strings.NewReader(log), "", opts, &buf)
+	err := svc.Fix(context.Background(), strings.NewReader(log), "", opts, &buf)
 	if err != nil {
 		t.Fatalf("Fix markdown: %v", err)
 	}
@@ -437,7 +438,7 @@ func TestWorkflowLocalMode(t *testing.T) {
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	var buf bytes.Buffer
 
-	err := svc.Workflow(strings.NewReader(log), "", baseOpts(), workflow.ModeLocal, false, &buf)
+	err := svc.Workflow(context.Background(), strings.NewReader(log), "", baseOpts(), workflow.ModeLocal, false, &buf)
 	if err != nil {
 		t.Fatalf("Workflow: %v", err)
 	}
@@ -451,11 +452,11 @@ func TestWorkflowJSONOutput(t *testing.T) {
 	log := "pull access denied\nError response from daemon: authentication required\n"
 	var buf bytes.Buffer
 
-	err := svc.Workflow(strings.NewReader(log), "", baseOpts(), workflow.ModeLocal, true, &buf)
+	err := svc.Workflow(context.Background(), strings.NewReader(log), "", baseOpts(), workflow.ModeLocal, true, &buf)
 	if err != nil {
 		t.Fatalf("Workflow JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if jsonErr := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); jsonErr != nil {
 		t.Fatalf("unmarshal workflow JSON: %v", jsonErr)
 	}
@@ -471,11 +472,11 @@ func TestWorkflowBayesJSONIncludesHints(t *testing.T) {
 	opts.RepoPath = repoDir
 	var buf bytes.Buffer
 
-	err := svc.Workflow(strings.NewReader(log), "", opts, workflow.ModeAgent, true, &buf)
+	err := svc.Workflow(context.Background(), strings.NewReader(log), "", opts, workflow.ModeAgent, true, &buf)
 	if err != nil {
 		t.Fatalf("Workflow bayes JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if jsonErr := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); jsonErr != nil {
 		t.Fatalf("unmarshal workflow JSON: %v", jsonErr)
 	}
@@ -626,7 +627,7 @@ match:
 	opts := baseOpts()
 	opts.PlaybookDir = emptyPackDir
 	var buf bytes.Buffer
-	err := svc.Inspect(t.TempDir(), opts, &buf)
+	err := svc.Inspect(context.Background(), t.TempDir(), opts, &buf)
 	if err != nil {
 		t.Fatalf("Inspect with log-only playbooks: %v", err)
 	}
@@ -639,7 +640,7 @@ func TestInspectUsesScopedWorktreeDiffForSubdirectory(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Inspect(filepath.Join(repoDir, "api"), opts, &buf)
+	err := svc.Inspect(context.Background(), filepath.Join(repoDir, "api"), opts, &buf)
 	if err != nil {
 		t.Fatalf("Inspect subdir: %v", err)
 	}
@@ -723,7 +724,7 @@ func TestExplainJSONOutput(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Explain json: %v", err)
 	}
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &out); err != nil {
 		t.Fatalf("unmarshal explain json: %v", err)
 	}
@@ -738,7 +739,7 @@ func TestFixNoMatchOutput(t *testing.T) {
 	svc := NewService()
 	log := "everything is perfectly fine\n"
 	var buf bytes.Buffer
-	err := svc.Fix(strings.NewReader(log), "", baseOpts(), &buf)
+	err := svc.Fix(context.Background(), strings.NewReader(log), "", baseOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Fix no-match: %v", err)
 	}
@@ -855,7 +856,7 @@ func TestSignaturesEmptyStore(t *testing.T) {
 
 	// Test text output
 	var buf bytes.Buffer
-	err := svc.Signatures(storePath, 10, false, &buf)
+	err := svc.Signatures(context.Background(), storePath, 10, false, &buf)
 	if err != nil {
 		t.Fatalf("Signatures: %v", err)
 	}
@@ -866,15 +867,15 @@ func TestSignaturesEmptyStore(t *testing.T) {
 
 	// Test JSON output
 	buf.Reset()
-	err = svc.Signatures(storePath, 10, true, &buf)
+	err = svc.Signatures(context.Background(), storePath, 10, true, &buf)
 	if err != nil {
 		t.Fatalf("Signatures JSON: %v", err)
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		t.Fatalf("unmarshal JSON output: %v", err)
 	}
-	if storeObj, ok := result["store"].(map[string]interface{}); !ok {
+	if storeObj, ok := result["store"].(map[string]any); !ok {
 		t.Errorf("expected store object in JSON output")
 	} else if storeObj["mode"] != "auto" {
 		t.Errorf("expected store mode 'auto' for empty store, got %v", storeObj["mode"])
@@ -895,14 +896,14 @@ func TestSignaturesWithData(t *testing.T) {
 	}
 
 	var analysisBuf bytes.Buffer
-	err := svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &analysisBuf)
+	err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &analysisBuf)
 	if err != nil {
 		t.Fatalf("Analyze to create history: %v", err)
 	}
 
 	// Now test Signatures with data
 	var buf bytes.Buffer
-	err = svc.Signatures(storePath, 10, false, &buf)
+	err = svc.Signatures(context.Background(), storePath, 10, false, &buf)
 	if err != nil {
 		t.Fatalf("Signatures: %v", err)
 	}
@@ -916,15 +917,15 @@ func TestSignaturesWithData(t *testing.T) {
 
 	// Test JSON output with data
 	buf.Reset()
-	err = svc.Signatures(storePath, 10, true, &buf)
+	err = svc.Signatures(context.Background(), storePath, 10, true, &buf)
 	if err != nil {
 		t.Fatalf("Signatures JSON: %v", err)
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		t.Fatalf("unmarshal JSON output: %v", err)
 	}
-	if signatures, ok := result["signatures"].([]interface{}); !ok {
+	if signatures, ok := result["signatures"].([]any); !ok {
 		t.Errorf("expected signatures array in JSON output")
 	} else if len(signatures) == 0 {
 		t.Errorf("expected at least one signature in JSON output")
@@ -945,21 +946,21 @@ func TestHistoryDeterminismVerification(t *testing.T) {
 	}
 
 	var firstBuf bytes.Buffer
-	err := svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &firstBuf)
+	err := svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &firstBuf)
 	if err != nil {
 		t.Fatalf("First Analyze: %v", err)
 	}
 
 	// Second analysis with same input
 	var secondBuf bytes.Buffer
-	err = svc.Analyze(bytes.NewBufferString(log), "stdin", opts, &secondBuf)
+	err = svc.Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &secondBuf)
 	if err != nil {
 		t.Fatalf("Second Analyze: %v", err)
 	}
 
 	// Verify determinism
 	var buf bytes.Buffer
-	err = svc.VerifyDeterminism(bytes.NewBufferString(log), "stdin", storePath, false, &buf)
+	err = svc.VerifyDeterminism(context.Background(), bytes.NewBufferString(log), "stdin", storePath, false, &buf)
 	if err != nil {
 		t.Fatalf("VerifyDeterminism: %v", err)
 	}
@@ -1028,11 +1029,11 @@ func TestFixJSONOutput(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Fix(strings.NewReader(log), "", opts, &buf)
+	err := svc.Fix(context.Background(), strings.NewReader(log), "", opts, &buf)
 	if err != nil {
 		t.Fatalf("Fix JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal fix JSON: %v", err)
 	}
@@ -1049,7 +1050,7 @@ func TestCompareArtifactsJSONFormat(t *testing.T) {
 		var buf bytes.Buffer
 		opts := baseOpts()
 		opts.JSON = true
-		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
 			t.Fatalf("Analyze to artifact: %v", err)
 		}
 		return buf.String()
@@ -1065,7 +1066,7 @@ func TestCompareArtifactsJSONFormat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Compare JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal compare JSON: %v", err)
 	}
@@ -1080,7 +1081,7 @@ func TestCompareArtifactsTerminalFormat(t *testing.T) {
 		var buf bytes.Buffer
 		opts := baseOpts()
 		opts.JSON = true
-		if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
 			t.Fatalf("Analyze to artifact: %v", err)
 		}
 		return buf.String()
@@ -1120,7 +1121,7 @@ func TestCompareInvalidRightJSONErrors(t *testing.T) {
 	var buf bytes.Buffer
 	opts := baseOpts()
 	opts.JSON = true
-	if err := svc.Analyze(strings.NewReader("pull access denied\n"), "stdin", opts, &buf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\n"), "stdin", opts, &buf); err != nil {
 		t.Fatalf("Analyze to artifact: %v", err)
 	}
 	artifact := buf.String()
@@ -1147,11 +1148,11 @@ func TestTraceJSONOutput(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Trace JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal trace JSON: %v", err)
 	}
@@ -1165,7 +1166,7 @@ func TestTraceMarkdownOutput(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Trace markdown: %v", err)
 	}
@@ -1182,7 +1183,7 @@ func TestTraceNoMatchWritesAnalysisOutput(t *testing.T) {
 	opts.TraceEnabled = true
 	var buf bytes.Buffer
 
-	err := svc.Trace(strings.NewReader(log), "trace.log", opts, &buf)
+	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
 	if err != nil {
 		t.Fatalf("Trace no-match: %v", err)
 	}
@@ -1199,7 +1200,7 @@ func TestHistoryEmptyStoreText(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	var buf bytes.Buffer
 
-	err := svc.History("", storePath, 10, false, &buf)
+	err := svc.History(context.Background(), "", storePath, 10, false, &buf)
 	if err != nil {
 		t.Fatalf("History empty text: %v", err)
 	}
@@ -1213,11 +1214,11 @@ func TestHistoryEmptyStoreJSON(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	var buf bytes.Buffer
 
-	err := svc.History("", storePath, 10, true, &buf)
+	err := svc.History(context.Background(), "", storePath, 10, true, &buf)
 	if err != nil {
 		t.Fatalf("History empty JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal History JSON: %v", err)
 	}
@@ -1236,13 +1237,13 @@ func TestHistoryOverviewWithDataText(t *testing.T) {
 	}
 	for range 2 {
 		var analysisBuf bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 			t.Fatalf("Analyze: %v", err)
 		}
 	}
 
 	var buf bytes.Buffer
-	err := svc.History("", storePath, 10, false, &buf)
+	err := svc.History(context.Background(), "", storePath, 10, false, &buf)
 	if err != nil {
 		t.Fatalf("History overview text: %v", err)
 	}
@@ -1263,17 +1264,17 @@ func TestHistoryOverviewWithDataJSON(t *testing.T) {
 	}
 	for range 2 {
 		var analysisBuf bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 			t.Fatalf("Analyze: %v", err)
 		}
 	}
 
 	var buf bytes.Buffer
-	err := svc.History("", storePath, 10, true, &buf)
+	err := svc.History(context.Background(), "", storePath, 10, true, &buf)
 	if err != nil {
 		t.Fatalf("History overview JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal History overview JSON: %v", err)
 	}
@@ -1291,7 +1292,7 @@ func TestHistorySignatureHashTextAndJSON(t *testing.T) {
 	}
 
 	var analysisBuf bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 		t.Fatalf("Analyze: %v", err)
 	}
 
@@ -1310,7 +1311,7 @@ func TestHistorySignatureHashTextAndJSON(t *testing.T) {
 
 	// Text format
 	var textBuf bytes.Buffer
-	if err := svc.History(sigHash, storePath, 10, false, &textBuf); err != nil {
+	if err := svc.History(context.Background(), sigHash, storePath, 10, false, &textBuf); err != nil {
 		t.Fatalf("History by signature (text): %v", err)
 	}
 	if !strings.Contains(textBuf.String(), "Signature") {
@@ -1319,10 +1320,10 @@ func TestHistorySignatureHashTextAndJSON(t *testing.T) {
 
 	// JSON format
 	var jsonBuf bytes.Buffer
-	if err := svc.History(sigHash, storePath, 10, true, &jsonBuf); err != nil {
+	if err := svc.History(context.Background(), sigHash, storePath, 10, true, &jsonBuf); err != nil {
 		t.Fatalf("History by signature (JSON): %v", err)
 	}
-	var jsonPayload map[string]interface{}
+	var jsonPayload map[string]any
 	if err := json.Unmarshal(jsonBuf.Bytes(), &jsonPayload); err != nil {
 		t.Fatalf("unmarshal signature history JSON: %v", err)
 	}
@@ -1342,16 +1343,16 @@ func TestVerifyDeterminismJSONOutput(t *testing.T) {
 		PlaybookDir:   repoPlaybookDir(),
 	}
 	var analysisBuf bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 		t.Fatalf("Analyze: %v", err)
 	}
 
 	var buf bytes.Buffer
-	err := svc.VerifyDeterminism(strings.NewReader(log), "stdin", storePath, true, &buf)
+	err := svc.VerifyDeterminism(context.Background(), strings.NewReader(log), "stdin", storePath, true, &buf)
 	if err != nil {
 		t.Fatalf("VerifyDeterminism JSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal determinism JSON: %v", err)
 	}
@@ -1368,7 +1369,7 @@ func TestHistorySignatureNotInDB(t *testing.T) {
 	storePath := filepath.Join(t.TempDir(), "faultline.db")
 	var buf bytes.Buffer
 
-	err := svc.History("deadbeef00000000deadbeef00000000deadbeef00000000deadbeef00000000", storePath, 10, false, &buf)
+	err := svc.History(context.Background(), "deadbeef00000000deadbeef00000000deadbeef00000000deadbeef00000000", storePath, 10, false, &buf)
 	if err != nil {
 		t.Fatalf("History unknown signature text: %v", err)
 	}
@@ -1393,7 +1394,7 @@ func TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence(t *testing.T) {
 		PlaybookDir:   repoPlaybookDir(),
 	}
 	var analysisBuf bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 		t.Fatalf("Analyze: %v", err)
 	}
 
@@ -1411,7 +1412,7 @@ func TestHistorySignatureOccurrenceCountOneShowsSingleOccurrence(t *testing.T) {
 	sigHash := analysisPayload.Results[0].SignatureHash
 
 	var buf bytes.Buffer
-	if err := svc.History(sigHash, storePath, 10, false, &buf); err != nil {
+	if err := svc.History(context.Background(), sigHash, storePath, 10, false, &buf); err != nil {
 		t.Fatalf("History single occurrence text: %v", err)
 	}
 	if !strings.Contains(buf.String(), "1 recorded occurrence") {
@@ -1434,7 +1435,7 @@ func TestHistorySignatureTwoOccurrencesText(t *testing.T) {
 	var analysisBuf bytes.Buffer
 	for i := range 2 {
 		analysisBuf.Reset()
-		if err := svc.Analyze(strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", analyzeOpts, &analysisBuf); err != nil {
 			t.Fatalf("Analyze run %d: %v", i+1, err)
 		}
 	}
@@ -1453,7 +1454,7 @@ func TestHistorySignatureTwoOccurrencesText(t *testing.T) {
 	sigHash := payload.Results[0].SignatureHash
 
 	var buf bytes.Buffer
-	if err := svc.History(sigHash, storePath, 10, false, &buf); err != nil {
+	if err := svc.History(context.Background(), sigHash, storePath, 10, false, &buf); err != nil {
 		t.Fatalf("History: %v", err)
 	}
 	if !strings.Contains(buf.String(), "recorded occurrences") {
@@ -1495,7 +1496,7 @@ func TestFixturesIngestEmptyURLsSucceeds(t *testing.T) {
 	root := t.TempDir()
 	var buf bytes.Buffer
 
-	err := svc.FixturesIngest(root, fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
+	err := svc.FixturesIngest(context.Background(), root, fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
 	if err != nil {
 		t.Fatalf("FixturesIngest with empty URLs: %v", err)
 	}
@@ -1767,7 +1768,7 @@ func TestFixturesPromoteInvalidRootReturnsError(t *testing.T) {
 func TestFixturesIngestInvalidRootReturnsError(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
-	err := svc.FixturesIngest("/nonexistent/ingest/root", fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
+	err := svc.FixturesIngest(context.Background(), "/nonexistent/ingest/root", fixtures.IngestOptions{Adapter: "github-issue"}, false, &buf)
 	if err == nil {
 		t.Fatal("expected error for non-existent ingest root, got nil")
 	}
@@ -1799,7 +1800,7 @@ func TestAnalyzeBayesTopResultMatchesBaseline(t *testing.T) {
 	topFailureID := func(t *testing.T, label string, o AnalyzeOptions) string {
 		t.Helper()
 		var buf bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(canonicalLog), "stdin", o, &buf); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(canonicalLog), "stdin", o, &buf); err != nil {
 			t.Fatalf("%s Analyze: %v", label, err)
 		}
 		var payload map[string]any

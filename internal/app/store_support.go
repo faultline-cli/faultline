@@ -21,7 +21,7 @@ type historySnapshot struct {
 	signatureHit store.SignatureHistory
 }
 
-func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, surface string, opts AnalyzeOptions, persist bool) (*model.Analysis, error) {
+func prepareAnalysisWithStore(ctx context.Context, a *model.Analysis, rawInput string, sourceKind, surface string, opts AnalyzeOptions, persist bool) (*model.Analysis, error) {
 	if a == nil {
 		return nil, nil
 	}
@@ -45,7 +45,6 @@ func prepareAnalysisWithStore(a *model.Analysis, rawInput string, sourceKind, su
 		fmt.Fprintf(os.Stderr, "WARN: faultline store degraded to no-op: %s\n", info.Warning)
 	}
 
-	ctx := context.Background()
 	now := optionNow(opts)
 	historyEnabled := info.Mode != store.ModeOff && !info.Degraded
 	historyOutput := shouldIncludeHistoryOutput(opts)

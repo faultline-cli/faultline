@@ -296,7 +296,7 @@ JOIN findings latest ON latest.id = (
 	LIMIT 1
 )
 ORDER BY grouped.count DESC, grouped.last_seen_at DESC, grouped.failure_id ASC`
-	args := []interface{}{}
+	args := []any{}
 	if limit > 0 {
 		query += "\nLIMIT ?"
 		args = append(args, limit)

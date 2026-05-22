@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"bytes"
 	"encoding/json"
 	"os"
@@ -62,7 +63,7 @@ func TestAnalyzeJSONRecurrenceVariantHarness(t *testing.T) {
 			}
 
 			var out bytes.Buffer
-			if err := svc.Analyze(bytes.NewReader(data), tc.file, opts, &out); err != nil {
+			if err := svc.Analyze(context.Background(), bytes.NewReader(data), tc.file, opts, &out); err != nil {
 				t.Fatalf("Analyze: %v", err)
 			}
 
@@ -114,7 +115,7 @@ func TestAnalyzeJSONRecurrenceVariantHarness(t *testing.T) {
 	}
 
 	var historyOut bytes.Buffer
-	if err := svc.History(groupHashes["env-var-api-base-url"], storePath, 10, true, &historyOut); err != nil {
+	if err := svc.History(context.Background(), groupHashes["env-var-api-base-url"], storePath, 10, true, &historyOut); err != nil {
 		t.Fatalf("History: %v", err)
 	}
 	var historyPayload struct {
@@ -156,13 +157,13 @@ func TestVerifyDeterminismStaysStableAsHistoryAccumulates(t *testing.T) {
 	}
 
 	var firstOut bytes.Buffer
-	if err := svc.Analyze(bytes.NewReader(data), logPath, opts, &firstOut); err != nil {
+	if err := svc.Analyze(context.Background(), bytes.NewReader(data), logPath, opts, &firstOut); err != nil {
 		t.Fatalf("Analyze first: %v", err)
 	}
 	first := decodeAnalysisPayload(t, firstOut.Bytes())
 
 	var secondOut bytes.Buffer
-	if err := svc.Analyze(bytes.NewReader(data), logPath, opts, &secondOut); err != nil {
+	if err := svc.Analyze(context.Background(), bytes.NewReader(data), logPath, opts, &secondOut); err != nil {
 		t.Fatalf("Analyze second: %v", err)
 	}
 	second := decodeAnalysisPayload(t, secondOut.Bytes())
@@ -187,7 +188,7 @@ func TestVerifyDeterminismStaysStableAsHistoryAccumulates(t *testing.T) {
 	}
 
 	var determinismOut bytes.Buffer
-	if err := svc.VerifyDeterminism(bytes.NewReader(data), logPath, storePath, true, &determinismOut); err != nil {
+	if err := svc.VerifyDeterminism(context.Background(), bytes.NewReader(data), logPath, storePath, true, &determinismOut); err != nil {
 		t.Fatalf("VerifyDeterminism: %v", err)
 	}
 	var determinismPayload struct {

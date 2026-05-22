@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"faultline/internal/detectors"
 	"faultline/internal/detectors/logdetector"
@@ -75,10 +76,12 @@ type Engine struct {
 	opts            Options
 	catalog         playbookCatalog
 	registry        detectorRegistry
-	repoEnricher    repoEnricher
 	repoSnapshots   repoSnapshotLoader
 	providerDelta   providerDeltaLoader
 	sourceFileStore sourceLoader
+	pbOnce          sync.Once
+	pbCached        []model.Playbook
+	pbCachedErr     error
 }
 
 type repoSnapshot struct {
@@ -96,7 +99,6 @@ func New(opts Options) *Engine {
 		registry:        detectors.NewRegistry(logdetector.Detector{}, sourcedetector.Detector{}),
 		sourceFileStore: defaultSourceLoader{},
 	}
-	engine.repoEnricher = localRepoEnricher{opts: opts}
 	engine.repoSnapshots = localRepoSnapshotLoader{engine: engine}
 	engine.providerDelta = providerDeltaResolver{opts: opts}
 	return engine
@@ -154,12 +156,12 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		LogAnyWeights: matcher.AnyWeights(logPbs),
 	})
 
+	silentFindings := silentdetector.Run(silentdetector.AnalysisInput{
+		Lines:  lines,
+		RawLog: currentLog,
+	})
 	if len(results) == 0 {
 		clusters, dominantSignals, seed := buildUnknownDiagnosis(lines, ctx)
-		silentFindings := silentdetector.Run(silentdetector.AnalysisInput{
-			Lines:  lines,
-			RawLog: currentLog,
-		})
 		return &model.Analysis{
 			Results:               []model.Result{},
 			Context:               ctx,
@@ -209,17 +211,12 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 		Differential:    differential,
 		PackProvenances: packProv,
 		Status:          model.ArtifactStatusMatched,
-		SilentFindings: silentdetector.Run(silentdetector.AnalysisInput{
-			Lines:  lines,
-			RawLog: currentLog,
-		}),
+		SilentFindings:  silentFindings,
 	}
 
 	// Enrich with git repo context when requested (best-effort; never blocks).
 	if e.opts.GitContextEnabled && len(results) > 0 {
 		if rc := correlateSnapshot(snapshot, results[0]); rc != nil {
-			analysis.RepoContext = rc
-		} else if rc := e.repoEnricher.Enrich(results[0]); rc != nil {
 			analysis.RepoContext = rc
 		} else {
 			analysis.RepoContext = snapshotContext(snapshot)
@@ -315,44 +312,6 @@ func joinOriginalLines(lines []model.Line) string {
 		}
 	}
 	return b.String()
-}
-
-type localRepoEnricher struct {
-	opts Options
-}
-
-// Enrich scans the local git repository and correlates the failure result with
-// recent commit history. Errors are silently swallowed so that git failures
-// never interrupt analysis output.
-func (e localRepoEnricher) Enrich(result model.Result) *model.RepoContext {
-	repoPath := e.opts.RepoPath
-	if repoPath == "" {
-		repoPath = "."
-	}
-	sinceStr := e.opts.GitSince
-	if sinceStr == "" {
-		sinceStr = "30d"
-	}
-
-	scanner, err := repo.NewScanner(repoPath)
-	if err != nil {
-		return nil
-	}
-
-	commits, err := repo.LoadHistory(scanner, sinceStr)
-	if err != nil || len(commits) == 0 {
-		return nil
-	}
-
-	sigs := repo.DeriveSignals(commits)
-	repoCtx := repo.Correlate(
-		scanner.Root,
-		result.Playbook.Category,
-		result.Playbook.ID,
-		commits,
-		sigs,
-	)
-	return &repoCtx
 }
 
 func (e *Engine) loadDefaultRepoSnapshot() *repoSnapshot {
@@ -674,7 +633,15 @@ func ReadLines(r io.Reader) ([]model.Line, error) {
 }
 
 func (e *Engine) loadPlaybooks() ([]model.Playbook, error) {
-	return e.catalog.Load()
+	e.pbOnce.Do(func() {
+		e.pbCached, e.pbCachedErr = e.catalog.Load()
+	})
+	return e.pbCached, e.pbCachedErr
+}
+
+// Playbooks returns the full ordered playbook set, reusing the cached catalog load.
+func (e *Engine) Playbooks() ([]model.Playbook, error) {
+	return e.loadPlaybooks()
 }
 
 // maxLogInputBytes caps the total bytes read from the log reader (100 MiB).

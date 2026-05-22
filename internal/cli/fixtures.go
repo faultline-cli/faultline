@@ -61,7 +61,7 @@ func newFixturesIngestCommand() *cobra.Command {
 			if len(urls) == 0 {
 				return fmt.Errorf("at least one --url is required")
 			}
-			return app.NewService().FixturesIngest(root, fixtures.IngestOptions{
+			return app.NewService().FixturesIngest(cmd.Context(), root, fixtures.IngestOptions{
 				Adapter: adapter,
 				URLs:    urls,
 				Force:   force,

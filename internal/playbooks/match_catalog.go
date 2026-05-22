@@ -2,9 +2,10 @@ package playbooks
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"faultline/internal/model"
@@ -72,11 +73,8 @@ func loadMatchCatalog(root, packName string) (matchCatalog, error) {
 		Named:    make(map[string]model.MatchSpec, len(rawCatalog.NamedMatches)),
 	}
 
-	keys := make([]string, 0, len(rawCatalog.NamedMatches))
-	for key := range rawCatalog.NamedMatches {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	keys := slices.Collect(maps.Keys(rawCatalog.NamedMatches))
+	slices.Sort(keys)
 	for _, key := range keys {
 		id := strings.TrimSpace(key)
 		if id == "" {

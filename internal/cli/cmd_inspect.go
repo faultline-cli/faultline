@@ -39,7 +39,7 @@ func newInspectCommand() *cobra.Command {
 				root = args[0]
 			}
 			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
-			return app.NewService().Inspect(root, app.AnalyzeOptions{
+			return app.NewService().Inspect(cmd.Context(), root, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:    top,
 					Mode:   output.Mode(mode),

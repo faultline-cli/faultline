@@ -181,16 +181,6 @@ type raw struct {
 	} `yaml:"hypothesis"`
 }
 
-// LoadDefault loads playbooks from the default directory resolved by
-// DefaultDir.
-func LoadDefault() ([]model.Playbook, error) {
-	dir, err := DefaultDir()
-	if err != nil {
-		return nil, err
-	}
-	return LoadDir(dir)
-}
-
 // DefaultDir resolves the playbook directory using the following priority:
 //  1. FAULTLINE_PLAYBOOK_DIR environment variable
 //  2. A "playbooks/bundled" directory found by walking upward from the working

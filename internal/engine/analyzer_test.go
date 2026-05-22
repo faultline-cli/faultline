@@ -366,23 +366,6 @@ func TestLoadRepoSnapshotNonGitDir(t *testing.T) {
 	}
 }
 
-// ── localRepoEnricher.Enrich ──────────────────────────────────────────────────
-
-func TestLocalRepoEnricherEnrichNonGitReturnsNil(t *testing.T) {
-	repoPath := t.TempDir()
-	if err := os.WriteFile(filepath.Join(repoPath, ".git"), []byte("not a git dir"), 0o644); err != nil {
-		t.Fatalf("write invalid .git marker: %v", err)
-	}
-
-	enricher := localRepoEnricher{opts: Options{RepoPath: repoPath}}
-	rc := enricher.Enrich(model.Result{
-		Playbook: model.Playbook{ID: "docker-auth", Category: "auth"},
-	})
-	if rc != nil {
-		t.Fatalf("expected nil RepoContext for non-git dir, got %#v", rc)
-	}
-}
-
 // ── List and Explain ──────────────────────────────────────────────────────────
 
 func TestListReturnsBundledPlaybooks(t *testing.T) {

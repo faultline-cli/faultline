@@ -1,7 +1,6 @@
 package scoring
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"strings"
@@ -157,11 +156,4 @@ func dedupeStrings(values []string) []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-func DebugString(result model.Result) string {
-	if result.Ranking == nil {
-		return ""
-	}
-	return fmt.Sprintf("%s %.2f", result.Playbook.ID, result.Ranking.FinalScore)
 }

@@ -250,7 +250,7 @@ func TestFormatCompareJSONIsValidJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatCompareJSON: %v", err)
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if err := json.Unmarshal([]byte(out), &m); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}

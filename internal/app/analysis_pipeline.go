@@ -2,13 +2,13 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 
 	"faultline/internal/engine"
 	"faultline/internal/model"
-	"faultline/internal/playbooks"
 )
 
 type loadedAnalysisInput struct {
@@ -17,18 +17,22 @@ type loadedAnalysisInput struct {
 	Playbooks []model.Playbook
 }
 
-func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string, persist bool) (*model.Analysis, error) {
+func analyzeLog(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, surface string, persist bool) (*model.Analysis, error) {
+	return analyzeLogWithEngine(ctx, engine.New(logEngineOptions(opts)), r, source, opts, surface, persist)
+}
+
+func analyzeLogWithEngine(ctx context.Context, eng *engine.Engine, r io.Reader, source string, opts AnalyzeOptions, surface string, persist bool) (*model.Analysis, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("read log input: %w", err)
 	}
-	a, err := engine.New(logEngineOptions(opts)).AnalyzeReader(bytes.NewReader(data))
+	a, err := eng.AnalyzeReader(bytes.NewReader(data))
 	if a != nil {
 		a.Source = source
 	}
 	if a != nil || errors.Is(err, engine.ErrNoMatch) {
 		var prepErr error
-		a, prepErr = prepareAnalysisWithStore(a, string(data), "log", surface, opts, persist)
+		a, prepErr = prepareAnalysisWithStore(ctx, a, string(data), "log", surface, opts, persist)
 		if prepErr != nil {
 			return nil, prepErr
 		}
@@ -36,7 +40,7 @@ func analyzeLog(r io.Reader, source string, opts AnalyzeOptions, surface string,
 	return a, err
 }
 
-func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedAnalysisInput, error) {
+func loadAnalysisInput(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions) (loadedAnalysisInput, error) {
 	data, err := io.ReadAll(r)
 	if err != nil {
 		return loadedAnalysisInput{}, fmt.Errorf("read log input: %w", err)
@@ -45,14 +49,12 @@ func loadAnalysisInput(r io.Reader, source string, opts AnalyzeOptions) (loadedA
 	if err != nil {
 		return loadedAnalysisInput{}, err
 	}
-	pbs, err := playbooks.NewCatalogWithOptions(playbooks.CatalogOptions{
-		OverrideDir:   opts.PlaybookDir,
-		ExtraPackDirs: opts.PlaybookPackDirs,
-	}).Load()
+	eng := engine.New(logEngineOptions(opts))
+	pbs, err := eng.Playbooks()
 	if err != nil {
 		return loadedAnalysisInput{}, err
 	}
-	analysis, err := analyzeLog(bytes.NewReader(data), source, opts, "trace", false)
+	analysis, err := analyzeLogWithEngine(ctx, eng, bytes.NewReader(data), source, opts, "trace", false)
 	return loadedAnalysisInput{
 		Analysis:  analysis,
 		Lines:     lines,

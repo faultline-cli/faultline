@@ -55,7 +55,7 @@ func newBatchCommand() *cobra.Command {
 				PlaybookPackDirs: playbookPack,
 				Store:            resolveStoreSetting(history, noHistory, noStore, storePath),
 			}
-			return app.NewService().Batch(args, opts, cmd.OutOrStdout())
+			return app.NewService().Batch(cmd.Context(), args, opts, cmd.OutOrStdout())
 		},
 	}
 

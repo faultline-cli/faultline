@@ -28,25 +28,25 @@ func TestFirstNonEmpty(t *testing.T) {
 
 func TestFirstInt64(t *testing.T) {
 	cases := []struct {
-		name  string
-		input []interface{}
-		want  int64
+		name      string
+		flagValue int64
+		envVar    string
+		want      int64
 	}{
-		{"returns first non-zero int64", []interface{}{int64(42), int64(7)}, 42},
-		{"skips zero int64", []interface{}{int64(0), int64(99)}, 99},
-		{"parses string int", []interface{}{"", "123"}, 123},
-		{"skips blank string", []interface{}{"  ", int64(5)}, 5},
-		{"parses string before int64", []interface{}{"10", int64(20)}, 10},
-		{"zero string is skipped", []interface{}{"0", int64(7)}, 7},
-		{"all zero returns 0", []interface{}{int64(0), "0"}, 0},
-		{"invalid string falls through", []interface{}{"abc", int64(3)}, 3},
-		{"no args returns 0", nil, 0},
+		{"flag value returned when non-zero", 42, "", 42},
+		{"flag value wins over env var", 20, "10", 20},
+		{"zero flag falls back to env var", 0, "99", 99},
+		{"parses env var string", 0, "123", 123},
+		{"blank env var returns 0", 0, "  ", 0},
+		{"zero env var string skipped", 0, "0", 0},
+		{"all zero returns 0", 0, "", 0},
+		{"invalid env var falls through to 0", 0, "abc", 0},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := firstInt64(tc.input...)
+			got := firstInt64(tc.flagValue, tc.envVar)
 			if got != tc.want {
-				t.Errorf("firstInt64(%v) = %d, want %d", tc.input, got, tc.want)
+				t.Errorf("firstInt64(%d, %q) = %d, want %d", tc.flagValue, tc.envVar, got, tc.want)
 			}
 		})
 	}

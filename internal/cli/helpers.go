@@ -16,21 +16,13 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func firstInt64(values ...interface{}) int64 {
-	for _, value := range values {
-		switch v := value.(type) {
-		case int64:
-			if v != 0 {
-				return v
-			}
-		case string:
-			if strings.TrimSpace(v) == "" {
-				continue
-			}
-			parsed, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
-			if err == nil && parsed != 0 {
-				return parsed
-			}
+func firstInt64(flagValue int64, envVar string) int64 {
+	if flagValue != 0 {
+		return flagValue
+	}
+	if s := strings.TrimSpace(envVar); s != "" {
+		if parsed, err := strconv.ParseInt(s, 10, 64); err == nil && parsed != 0 {
+			return parsed
 		}
 	}
 	return 0

@@ -90,7 +90,7 @@ func newAnalyzeCommand() *cobra.Command {
 			defer input.Close()
 
 			resolvedStore := resolveAnalyzeStoreSetting(noHistory, noStore, storePath)
-			return app.NewService().Analyze(input.Reader, input.Source, app.AnalyzeOptions{
+			return app.NewService().Analyze(cmd.Context(), input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top:          top,
 					Mode:         output.Mode(mode),

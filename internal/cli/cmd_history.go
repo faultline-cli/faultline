@@ -27,7 +27,7 @@ func newHistoryCommand() *cobra.Command {
 		),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.NewService().History(signatureHash, firstNonEmpty(storePath, os.Getenv(storeEnv)), limit, jsonOut, cmd.OutOrStdout())
+			return app.NewService().History(cmd.Context(), signatureHash, firstNonEmpty(storePath, os.Getenv(storeEnv)), limit, jsonOut, cmd.OutOrStdout())
 		},
 	}
 
@@ -50,7 +50,7 @@ func newSignaturesCommand() *cobra.Command {
 		Short: "List stored recurring signatures",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.NewService().Signatures(firstNonEmpty(storePath, os.Getenv(storeEnv)), limit, jsonOut, cmd.OutOrStdout())
+			return app.NewService().Signatures(cmd.Context(), firstNonEmpty(storePath, os.Getenv(storeEnv)), limit, jsonOut, cmd.OutOrStdout())
 		},
 	}
 
@@ -82,7 +82,7 @@ func newVerifyDeterminismCommand() *cobra.Command {
 				return err
 			}
 			defer input.Close()
-			return app.NewService().VerifyDeterminism(input.Reader, input.Source, firstNonEmpty(storePath, os.Getenv(storeEnv)), jsonOut, cmd.OutOrStdout())
+			return app.NewService().VerifyDeterminism(cmd.Context(), input.Reader, input.Source, firstNonEmpty(storePath, os.Getenv(storeEnv)), jsonOut, cmd.OutOrStdout())
 		},
 	}
 

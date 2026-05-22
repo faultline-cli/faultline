@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"io"
 	"path/filepath"
@@ -23,7 +24,7 @@ const (
 )
 
 // Inspect scans a repository tree with source-detector playbooks.
-func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
+func (Service) Inspect(ctx context.Context, root string, opts AnalyzeOptions, w io.Writer) error {
 	changeSet := detectors.ChangeSet{}
 	if scanner, err := repo.NewScanner(root); err == nil {
 		if loaded, loadErr := repo.LoadWorktreeChangeSet(scanner); loadErr != nil {
@@ -47,7 +48,7 @@ func (Service) Inspect(root string, opts AnalyzeOptions, w io.Writer) error {
 	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
 		return err
 	}
-	a, prepErr := prepareAnalysisWithStore(a, "", "repository", "inspect", opts, true)
+	a, prepErr := prepareAnalysisWithStore(ctx, a, "", "repository", "inspect", opts, true)
 	if prepErr != nil {
 		return prepErr
 	}

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -36,7 +37,7 @@ func buildAnalysisArtifact(t *testing.T, log string) string {
 		PlaybookDir: cliTestPlaybookDir(),
 	}
 	var buf bytes.Buffer
-	if err := svc.Analyze(strings.NewReader(log), "stdin", opts, &buf); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", opts, &buf); err != nil {
 		t.Fatalf("buildAnalysisArtifact: %v", err)
 	}
 	return strings.TrimSpace(buf.String())
@@ -118,7 +119,7 @@ func TestCompareCommandJSONOutput(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("compare command --json: %v\noutput: %s", err, buf.String())
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal(bytes.TrimSpace(buf.Bytes()), &payload); err != nil {
 		t.Fatalf("unmarshal compare JSON: %v\nraw: %s", err, buf.String())
 	}

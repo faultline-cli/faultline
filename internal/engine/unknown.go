@@ -2,7 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 
 	"faultline/internal/authoring"
@@ -27,11 +28,8 @@ func buildUnknownDiagnosis(lines []model.Line, ctx model.Context) ([]model.Candi
 		grouped[category] = append(grouped[category], candidate)
 	}
 
-	keys := make([]string, 0, len(grouped))
-	for key := range grouped {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	keys := slices.Collect(maps.Keys(grouped))
+	slices.Sort(keys)
 
 	clusters := make([]model.CandidateCluster, 0, len(keys))
 	for index, key := range keys {

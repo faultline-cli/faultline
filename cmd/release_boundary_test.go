@@ -142,7 +142,7 @@ func TestMetricsHistoryFlagEnablesExplicitMetricsOnlyWhenRequested(t *testing.T)
 
 	logPath := "examples/missing-executable.log"
 	withoutMetrics := runRootCommand(t, repoRoot, "analyze", "--json", "--no-history", "--git=false", logPath)
-	var plain map[string]interface{}
+	var plain map[string]any
 	if err := json.Unmarshal([]byte(withoutMetrics), &plain); err != nil {
 		t.Fatalf("unmarshal default analyze JSON: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestMetricsHistoryFlagEnablesExplicitMetricsOnlyWhenRequested(t *testing.T)
 
 	historyPath := writeMetricsHistory(t)
 	withMetrics := runRootCommand(t, repoRoot, "analyze", "--json", "--no-history", "--git=false", "--metrics-history", historyPath, logPath)
-	var enriched map[string]interface{}
+	var enriched map[string]any
 	if err := json.Unmarshal([]byte(withMetrics), &enriched); err != nil {
 		t.Fatalf("unmarshal metrics analyze JSON: %v", err)
 	}
@@ -177,14 +177,14 @@ func TestWorkflowMetricsHistoryFlagAddsDeterministicHints(t *testing.T) {
 
 	historyPath := writeMetricsHistory(t)
 	got := runRootCommand(t, repoRoot, "workflow", "--json", "--mode", "agent", "--no-history", "--git=false", "--metrics-history", historyPath, "examples/missing-executable.log")
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(got), &payload); err != nil {
 		t.Fatalf("unmarshal workflow JSON: %v", err)
 	}
-	if hints, ok := payload["metrics_hints"].([]interface{}); !ok || len(hints) == 0 {
+	if hints, ok := payload["metrics_hints"].([]any); !ok || len(hints) == 0 {
 		t.Fatalf("expected metrics_hints from explicit metrics history: %s", got)
 	}
-	if hints, ok := payload["policy_hints"].([]interface{}); !ok || len(hints) == 0 {
+	if hints, ok := payload["policy_hints"].([]any); !ok || len(hints) == 0 {
 		t.Fatalf("expected policy_hints from explicit metrics history: %s", got)
 	}
 }

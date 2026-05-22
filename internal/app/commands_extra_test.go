@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"bytes"
 	"path/filepath"
 	"strings"
@@ -257,7 +258,7 @@ func TestVerifyDeterminismNoRunsText(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.VerifyDeterminism(strings.NewReader("some log line\n"), "stdin", storePath, false, &buf)
+	err := svc.VerifyDeterminism(context.Background(), strings.NewReader("some log line\n"), "stdin", storePath, false, &buf)
 	if err != nil {
 		t.Fatalf("VerifyDeterminism: %v", err)
 	}

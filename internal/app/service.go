@@ -51,15 +51,15 @@ func NewService() Service {
 }
 
 // Analyze performs log analysis and writes formatted output to w.
-func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+func (Service) Analyze(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
 	if opts.View == output.ViewTrace {
 		opts.TraceEnabled = true
 		opts.View = output.ViewDefault
 	}
 	if opts.TraceEnabled || opts.TracePlaybook != "" {
-		return Service{}.Trace(r, source, opts, w)
+		return Service{}.Trace(ctx, r, source, opts, w)
 	}
-	a, err := analyzeLog(r, source, opts, "analyze", true)
+	a, err := analyzeLog(ctx, r, source, opts, "analyze", true)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -76,8 +76,8 @@ func (Service) Analyze(r io.Reader, source string, opts AnalyzeOptions, w io.Wri
 }
 
 // Trace performs log analysis and renders a deterministic playbook trace.
-func (Service) Trace(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	loaded, err := loadAnalysisInput(r, source, opts)
+func (Service) Trace(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+	loaded, err := loadAnalysisInput(ctx, r, source, opts)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -176,8 +176,8 @@ func (Service) Compare(left, right io.Reader, opts AnalyzeOptions, w io.Writer) 
 }
 
 // Fix performs log analysis and writes only the ranked fix steps to w.
-func (Service) Fix(r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	a, err := analyzeLog(r, source, opts, "fix", false)
+func (Service) Fix(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
+	a, err := analyzeLog(ctx, r, source, opts, "fix", false)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -225,8 +225,8 @@ func (Service) InstallPack(srcDir, name string, force bool, w io.Writer) error {
 }
 
 // Workflow analyzes the log and emits the deterministic follow-up handoff.
-func (Service) Workflow(r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
-	a, err := analyzeLog(r, source, opts, "workflow", false)
+func (Service) Workflow(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, mode workflow.Mode, jsonOut bool, w io.Writer) error {
+	a, err := analyzeLog(ctx, r, source, opts, "workflow", false)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
 	}
@@ -269,12 +269,12 @@ func tracePlaybookID(a *model.Analysis, opts AnalyzeOptions) (string, error) {
 	return "", nil
 }
 
-func (Service) FixturesIngest(root string, opts fixtures.IngestOptions, jsonOut bool, w io.Writer) error {
+func (Service) FixturesIngest(ctx context.Context, root string, opts fixtures.IngestOptions, jsonOut bool, w io.Writer) error {
 	layout, err := fixtures.ResolveLayout(root)
 	if err != nil {
 		return err
 	}
-	result, err := fixtures.Ingest(context.Background(), layout, opts)
+	result, err := fixtures.Ingest(ctx, layout, opts)
 	if err != nil {
 		return err
 	}
@@ -433,7 +433,7 @@ func (Service) FixturesStats(root string, class fixtures.Class, opts fixtures.Ev
 // Exit semantics: if any input did not match a playbook, Batch returns
 // ErrBatchUnmatched after writing the full output. Real errors (file open
 // failure, engine failure) abort the run and return the wrapped error.
-func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
+func (Service) Batch(ctx context.Context, sources []string, opts AnalyzeOptions, w io.Writer) error {
 	result := &model.BatchResult{
 		SchemaVersion: "batch.v1",
 		Total:         len(sources),
@@ -446,6 +446,7 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 		return fmt.Errorf("resolve working directory: %w", err)
 	}
 
+	batchEngine := engine.New(logEngineOptions(opts))
 	for _, src := range sources {
 		validatedPath, err := resolvePathWithinRoot(src, rootAbs)
 		if err != nil {
@@ -456,7 +457,7 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 		if err != nil {
 			return fmt.Errorf("open %s: %w", src, err)
 		}
-		a, analyzeErr := analyzeLog(f, src, opts, "batch", false)
+		a, analyzeErr := analyzeLogWithEngine(ctx, batchEngine, f, src, opts, "batch", false)
 		_ = f.Close()
 
 		if analyzeErr != nil && !errors.Is(analyzeErr, engine.ErrNoMatch) {
@@ -518,11 +519,11 @@ func (Service) Batch(sources []string, opts AnalyzeOptions, w io.Writer) error {
 			return err
 		}
 	case opts.Format == output.FormatMarkdown:
-		if _, err := fmt.Fprint(w, formatBatchMarkdown(result)); err != nil {
+		if _, err := fmt.Fprint(w, output.FormatBatchMarkdown(result)); err != nil {
 			return err
 		}
 	default:
-		if _, err := fmt.Fprint(w, formatBatchText(result)); err != nil {
+		if _, err := fmt.Fprint(w, output.FormatBatchText(result)); err != nil {
 			return err
 		}
 	}
@@ -606,128 +607,6 @@ func resolvePathForContainment(candidateAbs string) (string, error) {
 		}
 		ancestor = next
 	}
-}
-
-func formatBatchText(r *model.BatchResult) string {
-	var b strings.Builder
-	fileWord := "files"
-	if r.Total == 1 {
-		fileWord = "file"
-	}
-	fmt.Fprintf(&b, "FAULTLINE  batch  %d %s\n\n", r.Total, fileWord)
-
-	if r.Matched == 0 {
-		fmt.Fprintf(&b, "No playbook matched any of the %d input %s.\n", r.Total, fileWord)
-		for _, src := range r.UnmatchedSources {
-			fmt.Fprintf(&b, "  %s\n", src)
-		}
-		return b.String()
-	}
-
-	patternWord := "patterns"
-	if len(r.Patterns) == 1 {
-		patternWord = "pattern"
-	}
-	fmt.Fprintf(&b, "Patterns  (%d distinct %s)\n", len(r.Patterns), patternWord)
-	fmt.Fprintln(&b, strings.Repeat("-", 40))
-	for _, pat := range r.Patterns {
-		fileCount := "files"
-		if pat.Count == 1 {
-			fileCount = "file"
-		}
-		srcDisplay := ""
-		if len(pat.Sources) <= 3 {
-			srcDisplay = strings.Join(pat.Sources, "  ")
-		} else {
-			srcDisplay = strings.Join(pat.Sources[:3], "  ") + fmt.Sprintf("  +%d more", len(pat.Sources)-3)
-		}
-		fmt.Fprintf(&b, "  %-32s  %d %s    %s\n", pat.FailureID, pat.Count, fileCount, srcDisplay)
-	}
-
-	if r.Unmatched > 0 {
-		fmt.Fprintln(&b)
-		unmatchedWord := "files"
-		if r.Unmatched == 1 {
-			unmatchedWord = "file"
-		}
-		fmt.Fprintf(&b, "Unmatched  (%d %s)\n", r.Unmatched, unmatchedWord)
-		fmt.Fprintln(&b, strings.Repeat("-", 40))
-		for _, src := range r.UnmatchedSources {
-			fmt.Fprintf(&b, "  %s\n", src)
-		}
-	}
-
-	fmt.Fprintln(&b)
-	fmt.Fprintf(&b, "%d/%d matched", r.Matched, r.Total)
-	if len(r.Patterns) > 1 {
-		fmt.Fprintf(&b, "  ·  %d distinct patterns", len(r.Patterns))
-	} else if len(r.Patterns) == 1 {
-		fmt.Fprintf(&b, "  ·  1 pattern")
-	}
-	if r.Unmatched > 0 {
-		fmt.Fprintf(&b, "  ·  %d unmatched", r.Unmatched)
-	}
-	fmt.Fprintln(&b)
-	return b.String()
-}
-
-func formatBatchMarkdown(r *model.BatchResult) string {
-	var b strings.Builder
-	fileWord := "files"
-	if r.Total == 1 {
-		fileWord = "file"
-	}
-	fmt.Fprintf(&b, "# Faultline Batch — %d %s\n\n", r.Total, fileWord)
-	fmt.Fprintf(&b, "- Matched: %d/%d\n", r.Matched, r.Total)
-	if r.Unmatched > 0 {
-		fmt.Fprintf(&b, "- Unmatched: %d/%d\n", r.Unmatched, r.Total)
-	}
-	if len(r.Patterns) > 0 {
-		patternWord := "patterns"
-		if len(r.Patterns) == 1 {
-			patternWord = "pattern"
-		}
-		fmt.Fprintf(&b, "- Patterns: %d distinct %s\n", len(r.Patterns), patternWord)
-	}
-
-	if len(r.Patterns) > 0 {
-		fmt.Fprintf(&b, "\n## Patterns\n\n")
-		fmt.Fprintf(&b, "| Pattern | Files | Sources |\n")
-		fmt.Fprintf(&b, "|---------|------:|---------|\n")
-		for _, pat := range r.Patterns {
-			var srcDisplay string
-			if len(pat.Sources) <= 3 {
-				parts := make([]string, len(pat.Sources))
-				for i, s := range pat.Sources {
-					parts[i] = "`" + s + "`"
-				}
-				srcDisplay = strings.Join(parts, " ")
-			} else {
-				parts := make([]string, 3)
-				for i, s := range pat.Sources[:3] {
-					parts[i] = "`" + s + "`"
-				}
-				srcDisplay = strings.Join(parts, " ") + fmt.Sprintf(" +%d more", len(pat.Sources)-3)
-			}
-			fmt.Fprintf(&b, "| `%s` | %d | %s |\n", pat.FailureID, pat.Count, srcDisplay)
-		}
-	}
-
-	if r.Unmatched > 0 {
-		unmatchedWord := "files"
-		if r.Unmatched == 1 {
-			unmatchedWord = "file"
-		}
-		fmt.Fprintf(&b, "\n## Unmatched — %d %s\n\n", r.Unmatched, unmatchedWord)
-		for _, src := range r.UnmatchedSources {
-			fmt.Fprintf(&b, "- `%s`\n", src)
-		}
-	}
-
-	if r.Matched == 0 {
-		fmt.Fprintf(&b, "\nNo playbook matched any of the %d input %s.\n", r.Total, fileWord)
-	}
-	return b.String()
 }
 
 // FixturesScaffold generates a candidate playbook YAML scaffold from a

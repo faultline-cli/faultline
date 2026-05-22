@@ -14,14 +14,14 @@ type reportJSON struct {
 	Failures []store.FailureReport `json:"failures"`
 }
 
-func (Service) Report(storePath string, jsonOut bool, w io.Writer) error {
+func (Service) Report(ctx context.Context, storePath string, jsonOut bool, w io.Writer) error {
 	st, info, err := openHistoryStore(storePath)
 	if err != nil {
 		return err
 	}
 	defer st.Close()
 
-	failures, err := st.ListFailureReports(context.Background(), 0)
+	failures, err := st.ListFailureReports(ctx, 0)
 	if err != nil {
 		return err
 	}

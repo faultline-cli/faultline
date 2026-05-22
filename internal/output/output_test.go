@@ -68,35 +68,35 @@ func TestFormatAnalysisJSONMatched(t *testing.T) {
 		t.Fatalf("format json: %v", err)
 	}
 
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &out); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
 	if out["matched"] != true {
 		t.Errorf("expected matched=true, got %v", out["matched"])
 	}
-	results, ok := out["results"].([]interface{})
+	results, ok := out["results"].([]any)
 	if !ok || len(results) != 1 {
 		t.Fatalf("expected results array with 1 element, got %v", out["results"])
 	}
-	r := results[0].(map[string]interface{})
+	r := results[0].(map[string]any)
 	if r["failure_id"] != "docker-auth" {
 		t.Errorf("expected failure_id docker-auth, got %v", r["failure_id"])
 	}
 	if r["detector"] != "log" {
 		t.Errorf("expected detector log, got %v", r["detector"])
 	}
-	if _, ok := r["hypothesis"].(map[string]interface{}); !ok {
+	if _, ok := r["hypothesis"].(map[string]any); !ok {
 		t.Fatalf("expected hypothesis object, got %v", r["hypothesis"])
 	}
-	repoCtx, ok := out["repo_context"].(map[string]interface{})
+	repoCtx, ok := out["repo_context"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected repo_context object, got %v", out["repo_context"])
 	}
 	if repoCtx["repo_root"] != "/repo" {
 		t.Fatalf("expected repo_root in repo_context, got %v", repoCtx["repo_root"])
 	}
-	if _, ok := out["differential"].(map[string]interface{}); !ok {
+	if _, ok := out["differential"].(map[string]any); !ok {
 		t.Fatalf("expected differential object, got %v", out["differential"])
 	}
 }
@@ -126,7 +126,7 @@ func TestFormatAnalysisJSONNoMatch(t *testing.T) {
 		t.Fatalf("format json no match: %v", err)
 	}
 
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &out); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
@@ -136,10 +136,10 @@ func TestFormatAnalysisJSONNoMatch(t *testing.T) {
 	if out["status"] != "unknown" {
 		t.Errorf("expected status=unknown, got %v", out["status"])
 	}
-	if _, ok := out["artifact"].(map[string]interface{}); !ok {
+	if _, ok := out["artifact"].(map[string]any); !ok {
 		t.Fatalf("expected artifact object for no-match, got %v", out["artifact"])
 	}
-	if _, ok := out["candidate_clusters"].([]interface{}); !ok {
+	if _, ok := out["candidate_clusters"].([]any); !ok {
 		t.Fatalf("expected candidate_clusters for no-match, got %v", out["candidate_clusters"])
 	}
 	if out["message"] == "" {
@@ -153,7 +153,7 @@ func TestFormatAnalysisJSONEmptyResults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("format json: %v", err)
 	}
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &out); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
@@ -442,7 +442,7 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 		t.Fatalf("FormatTraceJSON: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &payload); err != nil {
 		t.Fatalf("unmarshal trace JSON: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestFormatTraceJSONIncludesRules(t *testing.T) {
 	if payload["history"] == nil {
 		t.Fatalf("expected history object in trace JSON, got %v", payload["history"])
 	}
-	rules, ok := payload["rules"].([]interface{})
+	rules, ok := payload["rules"].([]any)
 	if !ok || len(rules) != 1 {
 		t.Fatalf("expected one rule in trace JSON, got %v", payload["rules"])
 	}
@@ -488,7 +488,7 @@ func TestFormatCompareJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FormatCompareJSON: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &payload); err != nil {
 		t.Fatalf("unmarshal compare JSON: %v", err)
 	}
@@ -1082,7 +1082,7 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("format workflow json: %v", err)
 	}
-	var out map[string]interface{}
+	var out map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(data)), &out); err != nil {
 		t.Fatalf("unmarshal workflow json: %v", err)
 	}
@@ -1095,16 +1095,16 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	if out["status"] != "matched" {
 		t.Fatalf("expected status in workflow JSON, got %v", out["status"])
 	}
-	if _, ok := out["metrics_hints"].([]interface{}); !ok {
+	if _, ok := out["metrics_hints"].([]any); !ok {
 		t.Fatalf("expected metrics_hints in workflow JSON, got %v", out["metrics_hints"])
 	}
-	if _, ok := out["policy_hints"].([]interface{}); !ok {
+	if _, ok := out["policy_hints"].([]any); !ok {
 		t.Fatalf("expected policy_hints in workflow JSON, got %v", out["policy_hints"])
 	}
-	if _, ok := out["artifact"].(map[string]interface{}); !ok {
+	if _, ok := out["artifact"].(map[string]any); !ok {
 		t.Fatalf("expected artifact in workflow JSON, got %v", out["artifact"])
 	}
-	if _, ok := out["remediation"].(map[string]interface{}); !ok {
+	if _, ok := out["remediation"].(map[string]any); !ok {
 		t.Fatalf("expected remediation in workflow JSON, got %v", out["remediation"])
 	}
 }

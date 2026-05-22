@@ -28,7 +28,7 @@ func newReportCommand() *cobra.Command {
 		),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return app.NewService().Report(firstNonEmpty(storePath, os.Getenv(storeEnv)), jsonOut, cmd.OutOrStdout())
+			return app.NewService().Report(cmd.Context(), firstNonEmpty(storePath, os.Getenv(storeEnv)), jsonOut, cmd.OutOrStdout())
 		},
 	}
 

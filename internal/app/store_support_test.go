@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -22,7 +23,7 @@ func TestAnalyzeJSONIncludesStoreHistoryFields(t *testing.T) {
 	}
 
 	var first bytes.Buffer
-	if err := NewService().Analyze(bytes.NewBufferString(log), "stdin", opts, &first); err != nil {
+	if err := NewService().Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &first); err != nil {
 		t.Fatalf("Analyze first: %v", err)
 	}
 	var firstPayload map[string]any
@@ -50,7 +51,7 @@ func TestAnalyzeJSONIncludesStoreHistoryFields(t *testing.T) {
 	}
 
 	var second bytes.Buffer
-	if err := NewService().Analyze(bytes.NewBufferString(log), "stdin", opts, &second); err != nil {
+	if err := NewService().Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &second); err != nil {
 		t.Fatalf("Analyze second: %v", err)
 	}
 	var secondPayload map[string]any
@@ -80,7 +81,7 @@ func TestAnalyzeGracefullyDegradesWhenStoreIsCorrupt(t *testing.T) {
 		PlaybookDir:   repoPlaybookDir(),
 	}
 	var out bytes.Buffer
-	if err := NewService().Analyze(bytes.NewBufferString(log), "stdin", opts, &out); err != nil {
+	if err := NewService().Analyze(context.Background(), bytes.NewBufferString(log), "stdin", opts, &out); err != nil {
 		t.Fatalf("Analyze with corrupt store should degrade gracefully, got %v", err)
 	}
 	if out.Len() == 0 {
@@ -89,7 +90,7 @@ func TestAnalyzeGracefullyDegradesWhenStoreIsCorrupt(t *testing.T) {
 }
 
 func TestPrepareAnalysisWithStoreNilInputReturnsNil(t *testing.T) {
-	got, err := prepareAnalysisWithStore(nil, "", "log", "test", AnalyzeOptions{Store: "off"}, false)
+	got, err := prepareAnalysisWithStore(context.Background(), nil, "", "log", "test", AnalyzeOptions{Store: "off"}, false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

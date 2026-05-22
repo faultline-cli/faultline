@@ -49,7 +49,7 @@ func newWorkflowCommand() *cobra.Command {
 				return fmt.Errorf("--mode must be %q or %q", "local", "agent")
 			}
 			resolvedStore := resolveStoreSetting(history, noHistory, noStore, storePath)
-			return app.NewService().Workflow(input.Reader, input.Source, app.AnalyzeOptions{
+			return app.NewService().Workflow(cmd.Context(), input.Reader, input.Source, app.AnalyzeOptions{
 				OutputOptions: app.OutputOptions{
 					Top: 1,
 				},

@@ -16,10 +16,6 @@ type playbookCatalog interface {
 	Explain(id string) (model.Playbook, error)
 }
 
-type repoEnricher interface {
-	Enrich(result model.Result) *model.RepoContext
-}
-
 type repoSnapshotLoader interface {
 	Load(repoPath string, changeSet detectors.ChangeSet) *repoSnapshot
 }

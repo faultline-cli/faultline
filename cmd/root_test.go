@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -188,7 +189,7 @@ func TestAnalyzeFileJSON(t *testing.T) {
 		t.Fatalf("json output should not contain ANSI sequences, got %q", out.String())
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
@@ -271,15 +272,15 @@ func TestAnalyzeJSONIncludesPackProvenance(t *testing.T) {
 		t.Fatalf("execute analyze --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
-	prov, ok := payload["pack_provenance"].([]interface{})
+	prov, ok := payload["pack_provenance"].([]any)
 	if !ok || len(prov) == 0 {
 		t.Fatalf("expected non-empty pack_provenance in JSON, got %v", payload["pack_provenance"])
 	}
-	first := prov[0].(map[string]interface{})
+	first := prov[0].(map[string]any)
 	if first["name"] == "" || first["name"] == nil {
 		t.Errorf("expected pack name in provenance entry, got %v", first)
 	}
@@ -312,15 +313,15 @@ func TestAnalyzeStdinJSON(t *testing.T) {
 		t.Fatalf("execute analyze stdin: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
-	results, ok := payload["results"].([]interface{})
+	results, ok := payload["results"].([]any)
 	if !ok || len(results) == 0 {
 		t.Fatalf("expected results in JSON, got %v", payload)
 	}
-	r := results[0].(map[string]interface{})
+	r := results[0].(map[string]any)
 	if r["failure_id"] != "go-sum-missing" {
 		t.Fatalf("expected go-sum-missing, got %v", r["failure_id"])
 	}
@@ -465,7 +466,7 @@ func TestAnalyzeFormatJSON(t *testing.T) {
 		t.Fatalf("execute analyze --format json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
@@ -490,15 +491,15 @@ func TestAnalyzeBayesJSONIncludesRankingAndDelta(t *testing.T) {
 		t.Fatalf("execute analyze --bayes --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
-	results, ok := payload["results"].([]interface{})
+	results, ok := payload["results"].([]any)
 	if !ok || len(results) == 0 {
 		t.Fatalf("expected results, got %v", payload["results"])
 	}
-	first := results[0].(map[string]interface{})
+	first := results[0].(map[string]any)
 	if first["ranking"] == nil {
 		t.Fatalf("expected ranking payload, got %v", first)
 	}
@@ -542,11 +543,11 @@ func TestAnalyzeWithGitContextJSON(t *testing.T) {
 		t.Fatalf("execute analyze --git --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
-	repoCtx, ok := payload["repo_context"].(map[string]interface{})
+	repoCtx, ok := payload["repo_context"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected repo_context in JSON payload, got %v", payload["repo_context"])
 	}
@@ -603,7 +604,7 @@ func TestReplayCommandMarkdown(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -626,7 +627,7 @@ func TestReplayCommandJSONSelect(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 2, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 2, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -640,11 +641,11 @@ func TestReplayCommandJSONSelect(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute replay --select: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal replay JSON: %v", err)
 	}
-	results, ok := payload["results"].([]interface{})
+	results, ok := payload["results"].([]any)
 	if !ok || len(results) != 1 {
 		t.Fatalf("expected one replay-selected result, got %v", payload["results"])
 	}
@@ -654,7 +655,7 @@ func TestReplayCommandFixView(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -677,7 +678,7 @@ func TestReplayCommandRejectsTraceView(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	svc := app.NewService()
 	var artifact bytes.Buffer
-	if err := svc.Analyze(strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 		t.Fatalf("build analysis artifact: %v", err)
 	}
 	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
@@ -702,7 +703,7 @@ func TestCompareCommandMarkdown(t *testing.T) {
 
 	makeArtifact := func(log string) string {
 		var artifact bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 			t.Fatalf("build analysis artifact: %v", err)
 		}
 		return writeTempAnalysisArtifact(t, artifact.String())
@@ -731,7 +732,7 @@ func TestCompareCommandJSON(t *testing.T) {
 
 	makeArtifact := func(log string) string {
 		var artifact bytes.Buffer
-		if err := svc.Analyze(strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
+		if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
 			t.Fatalf("build analysis artifact: %v", err)
 		}
 		return writeTempAnalysisArtifact(t, artifact.String())
@@ -749,7 +750,7 @@ func TestCompareCommandJSON(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute compare --json: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal compare JSON: %v", err)
 	}
@@ -1018,7 +1019,7 @@ func TestWorkflowCommandAgentJSON(t *testing.T) {
 		t.Fatalf("execute workflow --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v", err)
 	}
@@ -1049,7 +1050,7 @@ func TestWorkflowCommandBayesJSONIncludesHints(t *testing.T) {
 		t.Fatalf("execute workflow --bayes --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal workflow JSON: %v", err)
 	}
@@ -1091,7 +1092,7 @@ func TestGuardCommandJSONNoFindings(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("execute guard --json on clean repo: %v", err)
 	}
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal guard json: %v", err)
 	}
@@ -1195,7 +1196,7 @@ func TestTraceCommandJSON(t *testing.T) {
 		t.Fatalf("trace json output should not contain ANSI sequences, got %q", out.String())
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal trace JSON: %v", err)
 	}
@@ -1205,7 +1206,7 @@ func TestTraceCommandJSON(t *testing.T) {
 	if payload["matched"] != true {
 		t.Fatalf("expected matched=true, got %v", payload["matched"])
 	}
-	rules, ok := payload["rules"].([]interface{})
+	rules, ok := payload["rules"].([]any)
 	if !ok || len(rules) == 0 {
 		t.Fatalf("expected non-empty rules array, got %v", payload["rules"])
 	}
@@ -1430,15 +1431,15 @@ func TestHistoryCommandJSON(t *testing.T) {
 		t.Fatalf("execute history --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal history JSON: %v", err)
 	}
-	signatures, ok := payload["signatures"].([]interface{})
+	signatures, ok := payload["signatures"].([]any)
 	if !ok || len(signatures) == 0 {
 		t.Fatalf("expected signatures in history payload, got %v", payload["signatures"])
 	}
-	playbooks, ok := payload["playbooks"].([]interface{})
+	playbooks, ok := payload["playbooks"].([]any)
 	if !ok || len(playbooks) == 0 {
 		t.Fatalf("expected playbooks in history payload, got %v", payload["playbooks"])
 	}
@@ -1561,12 +1562,12 @@ func TestSignaturesAndHistorySignatureCommands(t *testing.T) {
 		t.Fatalf("execute analyze: %v", err)
 	}
 
-	var analysisPayload map[string]interface{}
+	var analysisPayload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(analyzeOut.String())), &analysisPayload); err != nil {
 		t.Fatalf("unmarshal analyze JSON: %v", err)
 	}
-	results := analysisPayload["results"].([]interface{})
-	signatureHash := results[0].(map[string]interface{})["signature_hash"].(string)
+	results := analysisPayload["results"].([]any)
+	signatureHash := results[0].(map[string]any)["signature_hash"].(string)
 
 	signaturesCmd := newRootCommand()
 	signaturesCmd.SetArgs([]string{"signatures", "--json", "--store", storePath})
@@ -1589,15 +1590,15 @@ func TestSignaturesAndHistorySignatureCommands(t *testing.T) {
 		t.Fatalf("execute history --signature: %v", err)
 	}
 
-	var historyPayload map[string]interface{}
+	var historyPayload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(historyOut.String())), &historyPayload); err != nil {
 		t.Fatalf("unmarshal history detail JSON: %v", err)
 	}
-	signature, ok := historyPayload["signature"].(map[string]interface{})
+	signature, ok := historyPayload["signature"].(map[string]any)
 	if !ok || signature["signature_hash"] != signatureHash {
 		t.Fatalf("expected signature detail payload, got %v", historyPayload["signature"])
 	}
-	findings, ok := historyPayload["findings"].([]interface{})
+	findings, ok := historyPayload["findings"].([]any)
 	if !ok || len(findings) != 1 {
 		t.Fatalf("expected one recent finding, got %v", historyPayload["findings"])
 	}
@@ -1631,11 +1632,11 @@ func TestVerifyDeterminismCommandJSON(t *testing.T) {
 		t.Fatalf("execute verify-determinism --json: %v", err)
 	}
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal determinism JSON: %v", err)
 	}
-	determinism, ok := payload["determinism"].(map[string]interface{})
+	determinism, ok := payload["determinism"].(map[string]any)
 	if !ok {
 		t.Fatalf("expected determinism object, got %v", payload["determinism"])
 	}
@@ -1717,7 +1718,7 @@ func TestFailOnSilentJSONContainsFaultlineStatus(t *testing.T) {
 
 	_ = cmd.Execute() // may return ErrNoMatch; that's OK
 
-	var payload map[string]interface{}
+	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
 		t.Fatalf("unmarshal JSON: %v (output: %q)", err, out.String())
 	}
@@ -1730,7 +1731,7 @@ func TestFailOnSilentJSONContainsFaultlineStatus(t *testing.T) {
 	}
 
 	// findings array should be present
-	findings, ok := payload["findings"].([]interface{})
+	findings, ok := payload["findings"].([]any)
 	if !ok || len(findings) == 0 {
 		t.Errorf("expected non-empty findings array, got %v", payload["findings"])
 	}

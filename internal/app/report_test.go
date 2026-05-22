@@ -184,7 +184,7 @@ func TestReportEmptyStoreText(t *testing.T) {
 	storePath := openTestStore(t)
 
 	var buf bytes.Buffer
-	if err := svc.Report(storePath, false, &buf); err != nil {
+	if err := svc.Report(context.Background(), storePath, false, &buf); err != nil {
 		t.Fatalf("Report: %v", err)
 	}
 	if !strings.Contains(buf.String(), "No stored failures yet.") {
@@ -197,10 +197,10 @@ func TestReportEmptyStoreJSON(t *testing.T) {
 	storePath := openTestStore(t)
 
 	var buf bytes.Buffer
-	if err := svc.Report(storePath, true, &buf); err != nil {
+	if err := svc.Report(context.Background(), storePath, true, &buf); err != nil {
 		t.Fatalf("Report JSON: %v", err)
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		t.Fatalf("invalid JSON output: %v\noutput: %s", err, buf.String())
 	}
@@ -258,7 +258,7 @@ func TestReportWithDataText(t *testing.T) {
 
 	svc := Service{}
 	var buf bytes.Buffer
-	if err := svc.Report(storePath, false, &buf); err != nil {
+	if err := svc.Report(context.Background(), storePath, false, &buf); err != nil {
 		t.Fatalf("Report: %v", err)
 	}
 	got := buf.String()
@@ -294,14 +294,14 @@ func TestReportWithDataJSON(t *testing.T) {
 
 	svc := Service{}
 	var buf bytes.Buffer
-	if err := svc.Report(storePath, true, &buf); err != nil {
+	if err := svc.Report(context.Background(), storePath, true, &buf); err != nil {
 		t.Fatalf("Report JSON: %v", err)
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		t.Fatalf("invalid JSON: %v\noutput: %s", err, buf.String())
 	}
-	failures, ok := result["failures"].([]interface{})
+	failures, ok := result["failures"].([]any)
 	if !ok || len(failures) == 0 {
 		t.Fatalf("expected non-empty failures array in JSON, got: %s", buf.String())
 	}

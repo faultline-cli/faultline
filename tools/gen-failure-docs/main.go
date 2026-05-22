@@ -21,43 +21,22 @@ import (
 	"strings"
 	"text/template"
 
+	"faultline/internal/model"
+
 	"gopkg.in/yaml.v3"
 )
 
 // ---------------------------------------------------------------------------
-// Minimal playbook schema – only the fields used for doc generation.
+// Doc-generation playbook type – embeds the canonical model.Playbook and
+// adds two derived fields used only during doc generation.
 // ---------------------------------------------------------------------------
 
-type Playbook struct {
-	ID           string       `yaml:"id"`
-	Title        string       `yaml:"title"`
-	Category     string       `yaml:"category"`
-	Severity     string       `yaml:"severity"`
-	Tags         []string     `yaml:"tags"`
-	StageHints   []string     `yaml:"stage_hints"`
-	Domain       string       `yaml:"domain"`
-	Class        string       `yaml:"class"`
-	Summary      string       `yaml:"summary"`
-	Diagnosis    string       `yaml:"diagnosis"`
-	Fix          string       `yaml:"fix"`
-	Validation   string       `yaml:"validation"`
-	WhyItMatters string       `yaml:"why_it_matters"`
-	Match        MatchSpec    `yaml:"match"`
-	Workflow     WorkflowSpec `yaml:"workflow"`
-	// Derived – set after loading.
+// docPlaybook wraps model.Playbook with the two derived fields that are
+// specific to the doc-generation tool and have no place in the core model.
+type docPlaybook struct {
+	model.Playbook
 	SourceRel string // relative path from repo root, e.g. playbooks/bundled/log/build/npm-ci-lockfile.yaml
 	CatDir    string // normalized category for use as a directory slug, e.g. silent-failure
-}
-
-type MatchSpec struct {
-	Any []string `yaml:"any"`
-	All []string `yaml:"all"`
-}
-
-type WorkflowSpec struct {
-	LikelyFiles []string `yaml:"likely_files"`
-	LocalRepro  []string `yaml:"local_repro"`
-	Verify      []string `yaml:"verify"`
 }
 
 // ---------------------------------------------------------------------------
@@ -196,7 +175,7 @@ var catalogTmpl = template.Must(template.New("catalog").Funcs(tmplFuncs).Parse(c
 var llmsTxt = template.Must(template.New("llms-txt").Funcs(tmplFuncs).Parse(llmsTxtTemplateText))
 
 // searchPhrases generates 3–6 natural search phrases from the playbook fields.
-func searchPhrases(p Playbook) []string {
+func searchPhrases(p docPlaybook) []string {
 	phrases := make([]string, 0, 6)
 
 	// 1. Exact title as-is.
@@ -371,8 +350,8 @@ func normCatDir(category string) string {
 // Loading
 // ---------------------------------------------------------------------------
 
-func loadPlaybooks(srcDir string) ([]Playbook, error) {
-	var playbooks []Playbook
+func loadPlaybooks(srcDir string) ([]docPlaybook, error) {
+	var playbooks []docPlaybook
 
 	err := filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -387,7 +366,7 @@ func loadPlaybooks(srcDir string) ([]Playbook, error) {
 			return fmt.Errorf("read %s: %w", path, readErr)
 		}
 
-		var pb Playbook
+		var pb model.Playbook
 		if decodeErr := yaml.Unmarshal(data, &pb); decodeErr != nil {
 			return fmt.Errorf("parse %s: %w", path, decodeErr)
 		}
@@ -402,10 +381,11 @@ func loadPlaybooks(srcDir string) ([]Playbook, error) {
 		if relErr != nil {
 			rel = path
 		}
-		pb.SourceRel = filepath.ToSlash(rel)
-		pb.CatDir = normCatDir(pb.Category)
-
-		playbooks = append(playbooks, pb)
+		playbooks = append(playbooks, docPlaybook{
+			Playbook:  pb,
+			SourceRel: filepath.ToSlash(rel),
+			CatDir:    normCatDir(pb.Category),
+		})
 		return nil
 	})
 	if err != nil {
@@ -424,9 +404,9 @@ type generatedFile struct {
 	Content []byte
 }
 
-func generateAll(playbooks []Playbook) ([]generatedFile, error) {
+func generateAll(playbooks []docPlaybook) ([]generatedFile, error) {
 	// Sort deterministically: category then id.
-	sorted := make([]Playbook, len(playbooks))
+	sorted := make([]docPlaybook, len(playbooks))
 	copy(sorted, playbooks)
 	sort.Slice(sorted, func(i, j int) bool {
 		if sorted[i].CatDir != sorted[j].CatDir {
@@ -477,7 +457,7 @@ func generateAll(playbooks []Playbook) ([]generatedFile, error) {
 
 type catalogGroup struct {
 	Name      string
-	Playbooks []Playbook
+	Playbooks []docPlaybook
 }
 
 type catalogData struct {
@@ -486,8 +466,8 @@ type catalogData struct {
 	Groups        []catalogGroup
 }
 
-func renderCatalog(sorted []Playbook) ([]byte, error) {
-	groupMap := make(map[string][]Playbook)
+func renderCatalog(sorted []docPlaybook) ([]byte, error) {
+	groupMap := make(map[string][]docPlaybook)
 	for _, pb := range sorted {
 		groupMap[pb.CatDir] = append(groupMap[pb.CatDir], pb)
 	}
@@ -519,8 +499,8 @@ func renderCatalog(sorted []Playbook) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func renderLLMsTxt(sorted []Playbook) ([]byte, error) {
-	groupMap := make(map[string][]Playbook)
+func renderLLMsTxt(sorted []docPlaybook) ([]byte, error) {
+	groupMap := make(map[string][]docPlaybook)
 	for _, pb := range sorted {
 		groupMap[pb.CatDir] = append(groupMap[pb.CatDir], pb)
 	}

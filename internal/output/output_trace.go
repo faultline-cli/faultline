@@ -117,7 +117,7 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 	payload := struct {
 		Source      string                  `json:"source,omitempty"`
 		Fingerprint string                  `json:"fingerprint,omitempty"`
-		Context     interface{}             `json:"context,omitempty"`
+		Context     any                     `json:"context,omitempty"`
 		Playbook    string                  `json:"playbook_id"`
 		Title       string                  `json:"title"`
 		Matched     bool                    `json:"matched"`
@@ -125,12 +125,12 @@ func FormatTraceJSON(report tracereport.Report, showEvidence, showScoring, showR
 		Score       float64                 `json:"score,omitempty"`
 		Confidence  float64                 `json:"confidence,omitempty"`
 		Detector    string                  `json:"detector,omitempty"`
-		Signature   interface{}             `json:"signature,omitempty"`
-		History     interface{}             `json:"history,omitempty"`
+		Signature   any                     `json:"signature,omitempty"`
+		History     any                     `json:"history,omitempty"`
 		Rules       []tracereport.Rule      `json:"rules"`
 		Why         []string                `json:"why,omitempty"`
-		Scoring     interface{}             `json:"scoring,omitempty"`
-		Ranking     interface{}             `json:"ranking,omitempty"`
+		Scoring     any                     `json:"scoring,omitempty"`
+		Ranking     any                     `json:"ranking,omitempty"`
 		Competing   []tracereport.Candidate `json:"competing,omitempty"`
 	}{
 		Source:      report.Source,
@@ -371,15 +371,15 @@ func renderTraceCompetingMarkdown(candidates []tracereport.Candidate) string {
 	return strings.Join(lines, "\n")
 }
 
-func traceSignatureJSON(sig *signature.ResultSignature) interface{} {
+func traceSignatureJSON(sig *signature.ResultSignature) any {
 	if sig == nil {
 		return nil
 	}
 	return struct {
-		Hash       string      `json:"hash"`
-		Version    string      `json:"version"`
-		Payload    interface{} `json:"payload"`
-		Normalized string      `json:"normalized"`
+		Hash       string `json:"hash"`
+		Version    string `json:"version"`
+		Payload    any    `json:"payload"`
+		Normalized string `json:"normalized"`
 	}{
 		Hash:       sig.Hash,
 		Version:    sig.Version,
@@ -388,7 +388,7 @@ func traceSignatureJSON(sig *signature.ResultSignature) interface{} {
 	}
 }
 
-func traceHistoryJSON(report tracereport.Report) interface{} {
+func traceHistoryJSON(report tracereport.Report) any {
 	if report.OccurrenceCount == 0 && !report.SeenBefore && report.FirstSeenAt == "" && report.LastSeenAt == "" {
 		return nil
 	}

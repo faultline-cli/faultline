@@ -18,6 +18,11 @@ type sanitizeRule struct {
 	replacement string
 }
 
+// EmailAddressPattern matches RFC-5321-style email addresses. It is exported
+// so other packages (e.g. eval-corpus normalizers) can apply the same
+// conservative pattern without duplicating the compiled regex.
+var EmailAddressPattern = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
+
 // sanitizeRules is the deterministic, ordered set of masking rules applied by
 // ApplySanitizeRules. Rules are conservative: they target high-confidence
 // credential and identity patterns only to avoid over-redaction.
@@ -67,7 +72,7 @@ var sanitizeRules = []sanitizeRule{
 	// Email addresses.
 	{
 		name:        "email",
-		pattern:     regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`),
+		pattern:     EmailAddressPattern,
 		replacement: "<redacted-email>",
 	},
 }

@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -67,7 +68,7 @@ func TestBatchAllMatchedTextOutput(t *testing.T) {
 	f2 := writeTempLogFile(t, batchDockerAuthLog)
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1, f2}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{f1, f2}, batchOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Batch all-matched: expected nil, got %v", err)
 	}
@@ -91,7 +92,7 @@ func TestBatchAllMatchedJSONOutput(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1}, opts, &buf)
 	if err != nil {
 		t.Fatalf("Batch JSON all-matched: expected nil, got %v", err)
 	}
@@ -125,11 +126,11 @@ func TestBatchFormatJSONFlag(t *testing.T) {
 	opts.Format = output.FormatJSON
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1}, opts, &buf)
 	if err != nil {
 		t.Fatalf("Batch FormatJSON: expected nil, got %v", err)
 	}
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &result); err != nil {
 		t.Fatalf("unmarshal FormatJSON batch output: %v", err)
 	}
@@ -146,7 +147,7 @@ func TestBatchPartialMatchReturnsErrBatchUnmatched(t *testing.T) {
 	f2 := writeTempLogFile(t, batchUnmatchedLog)
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1, f2}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{f1, f2}, batchOpts(), &buf)
 	if !errors.Is(err, ErrBatchUnmatched) {
 		t.Fatalf("expected ErrBatchUnmatched, got %v", err)
 	}
@@ -174,7 +175,7 @@ func TestBatchAllUnmatchedTextOutput(t *testing.T) {
 	f1 := writeTempLogFile(t, batchUnmatchedLog)
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{f1}, batchOpts(), &buf)
 	if !errors.Is(err, ErrBatchUnmatched) {
 		t.Fatalf("expected ErrBatchUnmatched for all-unmatched, got %v", err)
 	}
@@ -196,7 +197,7 @@ func TestBatchAllUnmatchedJSONOutput(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1}, opts, &buf)
 	if !errors.Is(err, ErrBatchUnmatched) {
 		t.Fatalf("expected ErrBatchUnmatched for JSON all-unmatched, got %v", err)
 	}
@@ -218,7 +219,7 @@ func TestBatchMissingFileReturnsError(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{"/nonexistent/path/batch_test_file.log"}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{"/nonexistent/path/batch_test_file.log"}, batchOpts(), &buf)
 	if err == nil {
 		t.Fatal("expected error for missing file, got nil")
 	}
@@ -235,7 +236,7 @@ func TestBatchMultipleDistinctPatterns(t *testing.T) {
 	f2 := writeTempLogFile(t, batchGitAuthLog)
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1, f2}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{f1, f2}, batchOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Batch two patterns: expected nil, got %v", err)
 	}
@@ -260,7 +261,7 @@ func TestBatchSourceListTruncatedAboveThree(t *testing.T) {
 	}
 	var buf bytes.Buffer
 
-	err := svc.Batch(files, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), files, batchOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Batch 4 files same pattern: expected nil, got %v", err)
 	}
@@ -279,7 +280,7 @@ func TestBatchEmptySourcesReturnsNil(t *testing.T) {
 	svc := NewService()
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{}, batchOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Batch empty sources: expected nil, got %v", err)
 	}
@@ -296,7 +297,7 @@ func TestBatchSinglePatternSingularWording(t *testing.T) {
 	f1 := writeTempLogFile(t, batchDockerAuthLog)
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, batchOpts(), &buf)
+	err := svc.Batch(context.Background(), []string{f1}, batchOpts(), &buf)
 	if err != nil {
 		t.Fatalf("Batch single file single pattern: expected nil, got %v", err)
 	}
@@ -317,7 +318,7 @@ func TestBatchJSONIncludesEntries(t *testing.T) {
 	opts.JSON = true
 	var buf bytes.Buffer
 
-	_ = svc.Batch([]string{f1, f2}, opts, &buf)
+	_ = svc.Batch(context.Background(), []string{f1, f2}, opts, &buf)
 
 	var result model.BatchResult
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &result); err != nil {
@@ -347,7 +348,7 @@ func TestBatchMarkdownFormatAllMatched(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1, f2}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1, f2}, opts, &buf)
 	if err != nil {
 		t.Fatalf("Batch markdown all-matched: expected nil, got %v", err)
 	}
@@ -374,7 +375,7 @@ func TestBatchMarkdownFormatPartialMatch(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1, f2}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1, f2}, opts, &buf)
 	if !errors.Is(err, ErrBatchUnmatched) {
 		t.Fatalf("expected ErrBatchUnmatched, got %v", err)
 	}
@@ -394,7 +395,7 @@ func TestBatchMarkdownFormatAllUnmatched(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Batch([]string{f1}, opts, &buf)
+	err := svc.Batch(context.Background(), []string{f1}, opts, &buf)
 	if !errors.Is(err, ErrBatchUnmatched) {
 		t.Fatalf("expected ErrBatchUnmatched, got %v", err)
 	}
@@ -414,7 +415,7 @@ func TestBatchMarkdownSourceListTruncatedAboveThree(t *testing.T) {
 	opts.Format = output.FormatMarkdown
 	var buf bytes.Buffer
 
-	err := svc.Batch(files, opts, &buf)
+	err := svc.Batch(context.Background(), files, opts, &buf)
 	if err != nil {
 		t.Fatalf("Batch markdown 4 files: expected nil, got %v", err)
 	}

@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"faultline/internal/model"
 )
 
 func TestRelPlaybookLinkFromCategoryPage(t *testing.T) {
@@ -326,12 +328,14 @@ func TestDedupeEmpty(t *testing.T) {
 // ── searchPhrases ─────────────────────────────────────────────────────────────
 
 func TestSearchPhrasesContainsTitleAndID(t *testing.T) {
-	pb := Playbook{
-		ID:       "docker-auth",
-		Title:    "Docker Auth Failure",
-		Category: "auth",
-		Tags:     []string{"docker"},
-		Match:    MatchSpec{Any: []string{"pull access denied"}},
+	pb := docPlaybook{
+		Playbook: model.Playbook{
+			ID:       "docker-auth",
+			Title:    "Docker Auth Failure",
+			Category: "auth",
+			Tags:     []string{"docker"},
+			Match:    model.MatchSpec{Any: []string{"pull access denied"}},
+		},
 	}
 	phrases := searchPhrases(pb)
 	// Must include the title.
@@ -357,12 +361,14 @@ func TestSearchPhrasesContainsTitleAndID(t *testing.T) {
 }
 
 func TestSearchPhrasesCapAtSix(t *testing.T) {
-	pb := Playbook{
-		ID:       "test-id",
-		Title:    "Test Title",
-		Category: "ci",
-		Tags:     []string{"github-actions", "ci"},
-		Match:    MatchSpec{Any: []string{"error msg"}},
+	pb := docPlaybook{
+		Playbook: model.Playbook{
+			ID:       "test-id",
+			Title:    "Test Title",
+			Category: "ci",
+			Tags:     []string{"github-actions", "ci"},
+			Match:    model.MatchSpec{Any: []string{"error msg"}},
+		},
 	}
 	phrases := searchPhrases(pb)
 	if len(phrases) > 6 {
@@ -371,11 +377,13 @@ func TestSearchPhrasesCapAtSix(t *testing.T) {
 }
 
 func TestSearchPhrasesNoDuplicates(t *testing.T) {
-	pb := Playbook{
-		ID:    "test-id",
-		Title: "Test Title",
-		Tags:  []string{"docker"},
-		Match: MatchSpec{Any: []string{"error"}},
+	pb := docPlaybook{
+		Playbook: model.Playbook{
+			ID:    "test-id",
+			Title: "Test Title",
+			Tags:  []string{"docker"},
+			Match: model.MatchSpec{Any: []string{"error"}},
+		},
 	}
 	phrases := searchPhrases(pb)
 	seen := map[string]bool{}
@@ -389,7 +397,7 @@ func TestSearchPhrasesNoDuplicates(t *testing.T) {
 }
 
 func TestSearchPhrasesEmptyPlaybook(t *testing.T) {
-	pb := Playbook{}
+	pb := docPlaybook{}
 	phrases := searchPhrases(pb)
 	// Should not panic; may return empty or minimal list.
 	if phrases == nil {
@@ -474,27 +482,31 @@ func TestLoadPlaybooksNonexistentDirErrors(t *testing.T) {
 
 // ── generateAll ───────────────────────────────────────────────────────────────
 
-func minimalPlaybooks() []Playbook {
-	return []Playbook{
+func minimalPlaybooks() []docPlaybook {
+	return []docPlaybook{
 		{
-			ID:        "docker-auth",
-			Title:     "Docker Auth Failure",
-			Category:  "auth",
-			CatDir:    "auth",
-			Severity:  "high",
-			Summary:   "Image pull failed.",
+			Playbook: model.Playbook{
+				ID:       "docker-auth",
+				Title:    "Docker Auth Failure",
+				Category: "auth",
+				Severity: "high",
+				Summary:  "Image pull failed.",
+				Match:    model.MatchSpec{Any: []string{"pull access denied"}},
+			},
 			SourceRel: "playbooks/bundled/log/auth/docker-auth.yaml",
-			Match:     MatchSpec{Any: []string{"pull access denied"}},
+			CatDir:    "auth",
 		},
 		{
-			ID:        "missing-exec",
-			Title:     "Missing Executable",
-			Category:  "runtime",
-			CatDir:    "runtime",
-			Severity:  "medium",
-			Summary:   "Command not found.",
+			Playbook: model.Playbook{
+				ID:       "missing-exec",
+				Title:    "Missing Executable",
+				Category: "runtime",
+				Severity: "medium",
+				Summary:  "Command not found.",
+				Match:    model.MatchSpec{Any: []string{"executable file not found"}},
+			},
 			SourceRel: "playbooks/bundled/log/runtime/missing-exec.yaml",
-			Match:     MatchSpec{Any: []string{"executable file not found"}},
+			CatDir:    "runtime",
 		},
 	}
 }
@@ -553,9 +565,17 @@ func TestGenerateAllPageContentContainsTitle(t *testing.T) {
 }
 
 func TestGenerateAllSkipsPlaybooksWithEmptyCatDir(t *testing.T) {
-	playbooks := []Playbook{
-		{ID: "no-cat", Title: "No Category", CatDir: "", SourceRel: "playbooks/no-cat.yaml"},
-		{ID: "valid", Title: "Valid", CatDir: "build", SourceRel: "playbooks/valid.yaml", Match: MatchSpec{Any: []string{"error"}}},
+	playbooks := []docPlaybook{
+		{
+			Playbook:  model.Playbook{ID: "no-cat", Title: "No Category"},
+			SourceRel: "playbooks/no-cat.yaml",
+			CatDir:    "",
+		},
+		{
+			Playbook:  model.Playbook{ID: "valid", Title: "Valid", Match: model.MatchSpec{Any: []string{"error"}}},
+			SourceRel: "playbooks/valid.yaml",
+			CatDir:    "build",
+		},
 	}
 	files, err := generateAll(playbooks)
 	if err != nil {
