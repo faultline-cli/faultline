@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml/badge.svg)](https://github.com/faultline-cli/faultline/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/faultline-cli/faultline)](https://github.com/faultline-cli/faultline/releases)
-[![Coverage](https://img.shields.io/badge/coverage-87.8%25-brightgreen)](docs/fixture-corpus.md)
+[![Coverage](https://img.shields.io/badge/coverage-87.6%25-brightgreen)](docs/fixture-corpus.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-182-blue)](docs/failures/catalog/README.md)
 

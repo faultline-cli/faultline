@@ -105,11 +105,3 @@ func TestCloneAnalysisNilReturnsNil(t *testing.T) {
 		t.Errorf("expected nil for nil input, got %v", got)
 	}
 }
-
-func TestBuildMetricsWithExplicitHistoryPathCoversExplicitBranch(t *testing.T) {
-	// A non-existent path: LoadHistoryFile returns nil,nil for missing files,
-	// so err == nil and the WithExplicitHistory call is executed.
-	a := minimalAnalysis()
-	got := buildMetricsFromHistory(a, nil, "/nonexistent/history.jsonl", false)
-	_ = got
-}

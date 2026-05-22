@@ -24,8 +24,6 @@ type workflowJSON struct {
 	Verify        []string               `json:"verify,omitempty"`
 	RankingHints  []string               `json:"ranking_hints,omitempty"`
 	DeltaHints    []string               `json:"delta_hints,omitempty"`
-	MetricsHints  []string               `json:"metrics_hints,omitempty"`
-	PolicyHints   []string               `json:"policy_hints,omitempty"`
 	Steps         []string               `json:"steps"`
 	AgentPrompt   string                 `json:"agent_prompt,omitempty"`
 	Artifact      *model.FailureArtifact `json:"artifact,omitempty"`
@@ -92,18 +90,6 @@ func FormatWorkflowText(plan workflow.Plan) string {
 			fmt.Fprintf(&b, "  - %s\n", item)
 		}
 	}
-	if len(plan.MetricsHints) > 0 {
-		fmt.Fprintln(&b, "Metrics:")
-		for _, item := range plan.MetricsHints {
-			fmt.Fprintf(&b, "  - %s\n", item)
-		}
-	}
-	if len(plan.PolicyHints) > 0 {
-		fmt.Fprintln(&b, "Policy:")
-		for _, item := range plan.PolicyHints {
-			fmt.Fprintf(&b, "  - %s\n", item)
-		}
-	}
 	if plan.Remediation != nil {
 		if len(plan.Remediation.Commands) > 0 {
 			fmt.Fprintln(&b, "Remediation commands:")
@@ -155,8 +141,6 @@ func FormatWorkflowJSON(plan workflow.Plan) (string, error) {
 		Verify:       plan.Verify,
 		RankingHints: plan.RankingHints,
 		DeltaHints:   plan.DeltaHints,
-		MetricsHints: plan.MetricsHints,
-		PolicyHints:  plan.PolicyHints,
 		Steps:        plan.Steps,
 		AgentPrompt:  plan.AgentPrompt,
 		Artifact:     plan.Artifact,

@@ -1,7 +1,4 @@
-// Package authoring provides deterministic utilities for scaffolding new
-// playbooks from sanitized build-log input. It is maintainer-only machinery;
-// nothing here ships in the default user narrative.
-package authoring
+package engine
 
 import (
 	"sort"
@@ -27,14 +24,14 @@ var noisePrefixes = []string{
 	"step ", "steps ", "task ", "note:", "info:", "debug:",
 }
 
-// ExtractCandidatePatterns extracts up to max candidate match phrases from raw
+// extractCandidatePatterns extracts up to max candidate match phrases from raw
 // log text. Lines are scored by diagnostic weight. Results are returned in
 // descending score order with alphabetical tie-breaking so the output is fully
 // deterministic for the same input.
 //
 // Callers should sanitize the log before calling this function to ensure no
 // secrets appear in the returned patterns.
-func ExtractCandidatePatterns(log string, max int) []string {
+func extractCandidatePatterns(log string, max int) []string {
 	if max <= 0 {
 		max = 5
 	}

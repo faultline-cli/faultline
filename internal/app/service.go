@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"faultline/internal/artifact"
-	"faultline/internal/authoring"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
 	"faultline/internal/model"
@@ -567,26 +566,4 @@ func resolvePathForContainment(candidateAbs string) (string, error) {
 		}
 		ancestor = next
 	}
-}
-
-// FixturesScaffold generates a candidate playbook YAML scaffold from a
-// sanitized log. logText is the raw log content; sanitization is applied
-// automatically before pattern extraction. The scaffold is written to w (and
-// optionally to opts.PackDir when set).
-//
-// FixturesScaffold is maintainer-only; it is wired under the hidden
-// fixtures command and is not part of the default user narrative.
-func (Service) FixturesScaffold(logText string, opts authoring.ScaffoldOptions, w io.Writer) error {
-	sanitized, _ := fixtures.ApplySanitizeRules(logText)
-	result, err := authoring.ScaffoldPlaybook(sanitized, opts)
-	if err != nil {
-		return err
-	}
-	if result.OutputPath != "" {
-		if _, err := fmt.Fprintf(w, "wrote scaffold: %s\n\n", result.OutputPath); err != nil {
-			return err
-		}
-	}
-	_, err = fmt.Fprint(w, result.YAML)
-	return err
 }

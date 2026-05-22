@@ -31,8 +31,6 @@ type analysisJSON struct {
 	Delta                 *model.Delta                 `json:"delta,omitempty"`
 	Differential          *model.DifferentialDiagnosis `json:"differential,omitempty"`
 	PackProvenance        []model.PackProvenance       `json:"pack_provenance,omitempty"`
-	Metrics               *model.Metrics               `json:"metrics,omitempty"`
-	Policy                *model.Policy                `json:"policy,omitempty"`
 	CandidateClusters     []model.CandidateCluster     `json:"candidate_clusters,omitempty"`
 	DominantSignals       []string                     `json:"dominant_signals,omitempty"`
 	SuggestedPlaybookSeed *model.SuggestedPlaybookSeed `json:"suggested_playbook_seed,omitempty"`
@@ -138,8 +136,6 @@ func ParseAnalysisJSON(data []byte) (*model.Analysis, error) {
 		Delta:                 payload.Delta,
 		Differential:          payload.Differential,
 		PackProvenances:       payload.PackProvenance,
-		Metrics:               payload.Metrics,
-		Policy:                payload.Policy,
 		Status:                payload.Status,
 		CandidateClusters:     payload.CandidateClusters,
 		DominantSignals:       payload.DominantSignals,
@@ -234,8 +230,6 @@ func stableHashAnalysis(a *model.Analysis) *model.Analysis {
 			clone.Artifact.Remediation = &remediation
 		}
 	}
-	clone.Metrics = nil
-	clone.Policy = nil
 	for i := range clone.Results {
 		result := clone.Results[i]
 		result.SeenCount = 0
@@ -281,8 +275,6 @@ func analysisPayload(a *model.Analysis, top int) analysisJSON {
 	payload.Delta = a.Delta
 	payload.Differential = a.Differential
 	payload.PackProvenance = a.PackProvenances
-	payload.Metrics = a.Metrics
-	payload.Policy = a.Policy
 	payload.CandidateClusters = a.CandidateClusters
 	payload.DominantSignals = a.DominantSignals
 	payload.SuggestedPlaybookSeed = a.SuggestedPlaybookSeed

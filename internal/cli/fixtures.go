@@ -1,16 +1,17 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"faultline/internal/app"
-	"faultline/internal/authoring"
 	"faultline/internal/fixtures"
+	"faultline/internal/playbooks"
 )
 
 func newFixturesCommand() *cobra.Command {
@@ -25,7 +26,8 @@ func newFixturesCommand() *cobra.Command {
 	cmd.AddCommand(newFixturesStatsCommand())
 	cmd.AddCommand(newFixturesSanitizeCommand())
 	cmd.AddCommand(newFixturesCompareModesCommand())
-	cmd.AddCommand(newFixturesScaffoldCommand())
+	cmd.AddCommand(newFixturesPatternsCommand())
+	cmd.AddCommand(newFixturesPackCheckCommand())
 	// Hide children explicitly so they are suppressed in tab-completion and any
 	// programmatic traversal of cmd.Commands(), not just top-level help.
 	// (The parent is already Hidden: true, but children remain visible to
@@ -260,117 +262,101 @@ func newFixturesCompareModesCommand() *cobra.Command {
 	return cmd
 }
 
-func newFixturesScaffoldCommand() *cobra.Command {
+func newFixturesPatternsCommand() *cobra.Command {
 	var (
-		root        string
-		logFile     string
-		fromFixture string
-		category    string
-		id          string
-		packDir     string
-		maxMatch    int
+		baselinePath   string
+		updateBaseline bool
+		verbose        bool
 	)
 	cmd := &cobra.Command{
-		Use:   "scaffold [logfile]",
-		Short: "Generate a candidate playbook YAML scaffold from a sanitized log",
+		Use:   "patterns",
+		Short: "Verify bundled playbook pattern conflicts against the checked-in baseline",
 		Long: strings.Join([]string{
-			"scaffold extracts candidate match patterns from a build log and emits a",
-			"playbook YAML scaffold with all required fields pre-populated. Fields marked",
-			"TODO require human review before the scaffold can be committed.",
+			"patterns compares the current bundled-playbook pattern-conflict report against a",
+			"checked-in baseline file. It exits non-zero when the report has drifted.",
 			"",
-			"Sanitization is applied automatically so secrets are not written into the",
-			"scaffold output. Always inspect the result before committing.",
-			"",
-			"Use --log to read from a file, --from-fixture to load a staging fixture's",
-			"raw_log field by ID, or pipe the log via stdin.",
+			"Use --update-baseline to rewrite the baseline after an intentional change.",
 		}, "\n"),
 		Example: strings.Join([]string{
-			"  faultline fixtures scaffold --log build.log --category auth",
-			"  cat build.log | faultline fixtures scaffold --category network",
-			"  faultline fixtures scaffold --log build.log --id auth-my-new-rule --pack-dir packs/my-pack",
-			"  faultline fixtures scaffold --from-fixture staging-abc123 --category build",
+			"  faultline fixtures patterns",
+			"  faultline fixtures patterns --verbose",
+			"  faultline fixtures patterns --update-baseline",
 		}, "\n"),
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logText, err := readScaffoldLog(root, logFile, fromFixture, args, cmd.InOrStdin())
+			pbs, err := playbooks.NewCatalog("").Load()
 			if err != nil {
 				return err
 			}
-			return app.NewService().FixturesScaffold(logText, authoring.ScaffoldOptions{
-				Category: category,
-				ID:       id,
-				PackDir:  packDir,
-				MaxMatch: maxMatch,
-			}, cmd.OutOrStdout())
+			conflicts := playbooks.FindPatternConflicts(pbs)
+			report := []byte(playbooks.FormatPatternConflicts(conflicts))
+			if verbose {
+				fmt.Fprint(cmd.OutOrStdout(), string(report))
+			}
+			if updateBaseline {
+				if err := os.MkdirAll(filepath.Dir(baselinePath), 0o755); err != nil {
+					return err
+				}
+				if err := os.WriteFile(baselinePath, report, 0o644); err != nil {
+					return err
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "updated playbook review baseline: %s\n", baselinePath)
+				return nil
+			}
+			baseline, err := os.ReadFile(baselinePath)
+			if err != nil {
+				return fmt.Errorf("read playbook review baseline: %w", err)
+			}
+			if !bytes.Equal(report, baseline) {
+				fmt.Fprintf(cmd.ErrOrStderr(), "playbook pattern conflicts drifted from %s\n", baselinePath)
+				fmt.Fprintln(cmd.ErrOrStderr(), "Run `make review-update` after reviewing intentional conflict changes.")
+				if !verbose {
+					fmt.Fprintln(cmd.ErrOrStderr(), "Use `make review-verbose` to print the full report.")
+				}
+				return fmt.Errorf("pattern conflict drift detected")
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "playbook review passed (%d classified conflict patterns)\n", len(conflicts))
+			return nil
 		},
 	}
-	cmd.Flags().StringVar(&root, "root", ".", "repository root (used when loading staging fixtures by ID)")
-	cmd.Flags().StringVar(&logFile, "log", "", "read log from this file path instead of stdin")
-	cmd.Flags().StringVar(&fromFixture, "from-fixture", "", "load the raw_log from a staging fixture by ID")
-	cmd.Flags().StringVar(&category, "category", "", "playbook category hint: auth|build|ci|deploy|network|runtime|test")
-	cmd.Flags().StringVar(&id, "id", "", "override the auto-derived playbook ID")
-	cmd.Flags().StringVar(&packDir, "pack-dir", "", "write the scaffold YAML to this pack directory")
-	cmd.Flags().IntVar(&maxMatch, "max-match", 5, "maximum number of match.any patterns to extract")
+	cmd.Flags().StringVar(&baselinePath, "baseline", "playbooks/bundled/pattern-conflicts.baseline.txt", "checked-in pattern conflict baseline")
+	cmd.Flags().BoolVar(&updateBaseline, "update-baseline", false, "rewrite the pattern conflict baseline")
+	cmd.Flags().BoolVar(&verbose, "verbose", false, "print the full conflict report")
 	return cmd
 }
 
-// readScaffoldLog returns the log text for the scaffold command.
-// Priority: --from-fixture → --log → positional arg → stdin.
-func readScaffoldLog(root, logFile, fromFixture string, args []string, stdin io.Reader) (string, error) {
-	sources := 0
-	if strings.TrimSpace(fromFixture) != "" {
-		sources++
-	}
-	if strings.TrimSpace(logFile) != "" {
-		sources++
-	}
-	if len(args) > 0 {
-		sources++
-	}
-	if sources > 1 {
-		return "", fmt.Errorf("choose exactly one log source: --from-fixture, --log, positional logfile, or stdin")
-	}
-	if fromFixture != "" {
-		return loadStagingFixtureLog(root, fromFixture)
-	}
-	if logFile != "" {
-		raw, err := os.ReadFile(logFile)
-		if err != nil {
-			return "", fmt.Errorf("read log file %q: %w", logFile, err)
-		}
-		return string(raw), nil
-	}
-	if len(args) > 0 {
-		raw, err := os.ReadFile(args[0])
-		if err != nil {
-			return "", fmt.Errorf("read log file %q: %w", args[0], err)
-		}
-		return string(raw), nil
-	}
-	raw, err := io.ReadAll(stdin)
-	if err != nil {
-		return "", fmt.Errorf("read stdin: %w", err)
-	}
-	return string(raw), nil
-}
-
-// loadStagingFixtureLog reads the raw_log (or log) field from a staging fixture by ID.
-func loadStagingFixtureLog(root, fixtureID string) (string, error) {
-	layout, err := fixtures.ResolveLayout(root)
-	if err != nil {
-		return "", fmt.Errorf("resolve layout: %w", err)
-	}
-	staged, err := fixtures.Load(layout, fixtures.ClassStaging)
-	if err != nil {
-		return "", fmt.Errorf("load staging fixtures: %w", err)
-	}
-	for _, f := range staged {
-		if f.ID == fixtureID {
-			if f.RawLog != "" {
-				return f.RawLog, nil
+func newFixturesPackCheckCommand() *cobra.Command {
+	var (
+		packs  []string
+		review bool
+	)
+	cmd := &cobra.Command{
+		Use:   "pack-check",
+		Short: "Validate and optionally review an extra playbook pack composed with the bundled catalog",
+		Example: strings.Join([]string{
+			"  faultline fixtures pack-check --pack ./playbooks/company-pack",
+			"  faultline fixtures pack-check --pack ./playbooks/company-pack --review",
+		}, "\n"),
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(packs) == 0 {
+				return fmt.Errorf("at least one --pack path is required")
 			}
-			return f.NormalizedLog, nil
-		}
+			catalog := playbooks.NewCatalogWithOptions(playbooks.CatalogOptions{ExtraPackDirs: packs})
+			pbs, err := catalog.Load()
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "loaded %d playbooks across composed packs\n", len(pbs))
+			if review {
+				conflicts := playbooks.FindPatternConflicts(pbs)
+				fmt.Fprintf(cmd.OutOrStdout(), "found %d pattern conflicts across composed packs\n", len(conflicts))
+				fmt.Fprint(cmd.OutOrStdout(), playbooks.FormatPatternConflicts(conflicts))
+			}
+			return nil
+		},
 	}
-	return "", fmt.Errorf("staging fixture %q not found", fixtureID)
+	cmd.Flags().StringArrayVar(&packs, "pack", nil, "external playbook pack directory to compose with the bundled catalog; repeatable")
+	cmd.Flags().BoolVar(&review, "review", false, "print deterministic overlap review for the composed catalog")
+	return cmd
 }

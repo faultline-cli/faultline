@@ -10,7 +10,7 @@ WITH_DOCKER ?= 0
 EXTRA_PACK_DIR ?=
 EXTRA_PACK_LINK ?= playbooks/packs/extra-local
 
-.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist eval-build eval-run eval docs-generate docs-check stats-check
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist docs-generate docs-check stats-check
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -24,8 +24,6 @@ help:
 		"  bench           Run bundled playbook load and analysis benchmarks" \
 		"  review          Verify bundled playbook pattern conflicts against the baseline" \
 		"  review-verbose  Print the full bundled playbook pattern conflict report" \
-		"  eval-build      Build the faultline-eval corpus evaluation tool" \
-		"  eval-run        Ingest, run, report, and gap-analyse the Travis Torrent dataset" \
 		"  release-check   Run release-grade validation: tests, fixtures, Bayes, docs, review, archive build, and smoke" \
 		"  smoke-release   Verify a built release archive can run end to end" \
 		"  release-snapshot  Build release tarballs into $(RELEASE_OUTPUT)" \
@@ -84,13 +82,13 @@ stats-check:
 	printf 'stats-check: playbook count %s matches README.md and llms.txt\n' "$$actual"
 
 review:
-	$(GO) run ./cmd/playbook-review
+	$(GO) run ./cmd fixtures patterns
 
 review-verbose:
-	$(GO) run ./cmd/playbook-review --verbose
+	$(GO) run ./cmd fixtures patterns --verbose
 
 review-update:
-	$(GO) run ./cmd/playbook-review --update-baseline
+	$(GO) run ./cmd fixtures patterns --update-baseline
 
 extra-pack-path:
 	@EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh
@@ -102,11 +100,11 @@ extra-pack-link:
 
 extra-pack-check:
 	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
-	$(GO) run ./cmd/pack-compose-check --pack "$$resolved"
+	$(GO) run ./cmd fixtures pack-check --pack "$$resolved"
 
 extra-pack-review:
 	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
-	$(GO) run ./cmd/pack-compose-check --pack "$$resolved" --review
+	$(GO) run ./cmd fixtures pack-check --pack "$$resolved" --review
 
 smoke-release:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) sh ./scripts/smoke-release.sh
@@ -128,48 +126,6 @@ release-check: test fixture-check bayes-check review docs-check cli-smoke releas
 
 release-verify:
 	VERSION=$(VERSION) WITH_DOCKER=$(WITH_DOCKER) sh ./tools/release-verify.sh
-
-eval: eval-run
-
-eval-build:
-	@mkdir -p bin
-	$(GO) build -o bin/faultline-eval ./tools/eval-corpus
-
-eval-run: eval-build
-	@mkdir -p eval-work
-	@printf "%s\n" "Filtering Travis Torrent dataset to failed builds..."
-	head -1 fixtures/datasets/final-2017-01-25.csv > eval-work/failed.csv
-	awk -F',' 'NR>1 && $$65 ~ /failed/ && $$60 !~ /^("")?$$/ { print }' \
-		fixtures/datasets/final-2017-01-25.csv >> eval-work/failed.csv
-	@printf "Filtered rows: %s\n" "$$(wc -l < eval-work/failed.csv)"
-	@printf "%s\n" "Ingesting corpus..."
-	bin/faultline-eval ingest \
-		--config fixtures/datasets/travis-torrent-2017.yaml \
-		--input  eval-work/failed.csv \
-		--out    eval-work/corpus.jsonl
-	@printf "Corpus fixtures: %s\n" "$$(wc -l < eval-work/corpus.jsonl)"
-	@printf "%s\n" "Computing manifest..."
-	bin/faultline-eval manifest \
-		--corpus    eval-work/corpus.jsonl \
-		--out       eval-work/corpus.manifest.json \
-		--corpus-id travis-torrent-2017
-	@printf "%s\n" "Running evaluation..."
-	bin/faultline-eval run \
-		--corpus  eval-work/corpus.jsonl \
-		--out     eval-work/results.jsonl \
-		--workers 8
-	@printf "%s\n" "Coverage report:"
-	bin/faultline-eval report --results eval-work/results.jsonl
-	bin/faultline-eval report --results eval-work/results.jsonl --markdown \
-		> eval-work/coverage.md
-	@printf "%s\n" "Generating gap analysis..."
-	bin/faultline-eval gaps \
-		--results     eval-work/results.jsonl \
-		--fixtures    eval-work/corpus.jsonl \
-		--out         eval-work/gaps \
-		--max-samples 5
-	@printf "%s\n" "Gap summary:"
-	@cat eval-work/gaps/cluster-summary.md
 
 clean-dist:
 	rm -rf dist

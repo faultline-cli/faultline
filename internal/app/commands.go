@@ -93,9 +93,6 @@ type AnalyzeOptions struct {
 	PlaybookPackDirs []string
 	// BayesEnabled enables deterministic Bayesian-inspired reranking.
 	BayesEnabled bool
-	// MetricsHistoryFile is an optional path to a JSONL file of MetricsHistoryEntry
-	// records used to compute FPC and PHI. When empty, only TSS is computed.
-	MetricsHistoryFile string
 	// Store configures the local forensic store path or mode (auto|off|/path/to/store.db).
 	Store string
 	// History includes stored recurrence fields in analysis output. Persistence

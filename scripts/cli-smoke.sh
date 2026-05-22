@@ -85,18 +85,6 @@ cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false >"$TMP_DIR/workflow.agent.json"
 compare_file "$TMP_DIR/workflow.agent.json" "$ROOT_DIR/examples/missing-executable.workflow.agent.json"
 
-cat >"$TMP_DIR/metrics-history.jsonl" <<'EOF'
-{"matched":true,"failure_id":"missing-executable"}
-{"matched":true,"failure_id":"missing-executable"}
-{"matched":true,"failure_id":"missing-executable"}
-{"matched":true,"failure_id":"missing-executable"}
-{"matched":false}
-EOF
-cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --json --mode agent --no-history --git=false --metrics-history "$TMP_DIR/metrics-history.jsonl" >"$TMP_DIR/workflow.metrics.agent.json"
-grep -F '"metrics_hints":' "$TMP_DIR/workflow.metrics.agent.json" >/dev/null
-grep -F '"policy_hints":' "$TMP_DIR/workflow.metrics.agent.json" >/dev/null
-
 STORE_PATH="$TMP_DIR/faultline-store.db"
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --store "$STORE_PATH" --git=false >/dev/null
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze "$ROOT_DIR/examples/missing-executable.log" --store "$STORE_PATH" --git=false >/dev/null

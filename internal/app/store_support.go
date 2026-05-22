@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"faultline/internal/artifact"
-	"faultline/internal/metrics"
 	"faultline/internal/model"
 	"faultline/internal/output"
-	"faultline/internal/policy"
 	"faultline/internal/store"
 )
 
@@ -49,7 +47,6 @@ func prepareAnalysisWithStore(ctx context.Context, a *model.Analysis, rawInput s
 	historyEnabled := info.Mode != store.ModeOff && !info.Degraded
 	historyOutput := shouldIncludeHistoryOutput(opts)
 	snapshots := captureHistorySnapshots(ctx, st, prepared)
-	previousFailures, _ := st.RecentTopFailures(ctx, 500)
 
 	withoutHistory := applySignatureSnapshots(prepared, snapshots)
 	withoutCurrent := applyHistorySnapshots(prepared, snapshots, now, false)
@@ -57,19 +54,7 @@ func prepareAnalysisWithStore(ctx context.Context, a *model.Analysis, rawInput s
 	withoutHistory = artifact.Sync(withoutHistory)
 	withoutCurrent = artifact.Sync(withoutCurrent)
 	withCurrent = artifact.Sync(withCurrent)
-
-	if historyOutput {
-		withoutCurrent.Metrics = buildMetricsFromHistory(withoutCurrent, previousFailures, opts.MetricsHistoryFile, false)
-		if withoutCurrent.Metrics != nil && len(withoutCurrent.Results) > 0 {
-			withoutCurrent.Policy = policy.Compute(withoutCurrent.Metrics, withoutCurrent.Results[0].Playbook.Severity)
-		}
-	}
-
 	if persist && historyEnabled && len(withCurrent.Results) > 0 {
-		withCurrent.Metrics = buildMetricsFromHistory(withCurrent, previousFailures, opts.MetricsHistoryFile, true)
-		if withCurrent.Metrics != nil {
-			withCurrent.Policy = policy.Compute(withCurrent.Metrics, withCurrent.Results[0].Playbook.Severity)
-		}
 		if hash, err := output.HashAnalysisOutput(withCurrent); err == nil {
 			withCurrent.OutputHash = hash
 		}
@@ -165,36 +150,11 @@ func shouldIncludeHistoryOutput(opts AnalyzeOptions) bool {
 	if opts.History {
 		return true
 	}
-	if strings.TrimSpace(opts.MetricsHistoryFile) != "" {
-		return true
-	}
 	value := strings.TrimSpace(opts.Store)
 	if value == "" || strings.EqualFold(value, string(store.ModeAuto)) || strings.EqualFold(value, string(store.ModeOff)) {
 		return false
 	}
 	return true
-}
-
-func buildMetricsFromHistory(a *model.Analysis, previousFailures []string, explicitHistoryPath string, includeCurrent bool) *model.Metrics {
-	if a == nil || len(a.Results) == 0 {
-		return nil
-	}
-	failures := append([]string(nil), previousFailures...)
-	if includeCurrent {
-		failures = append([]string{a.Results[0].Playbook.ID}, failures...)
-	}
-	localEntries := make([]metrics.LocalEntry, 0, len(failures))
-	for _, failureID := range failures {
-		localEntries = append(localEntries, metrics.LocalEntry{FailureID: failureID})
-	}
-	m := metrics.FromLocalHistory(a.Results[0].Playbook.ID, localEntries)
-	if explicitHistoryPath != "" {
-		explicit, err := metrics.LoadHistoryFile(explicitHistoryPath)
-		if err == nil {
-			m = metrics.WithExplicitHistory(m, explicit)
-		}
-	}
-	return m
 }
 
 func cloneAnalysis(a *model.Analysis) *model.Analysis {

@@ -6,13 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"faultline/internal/authoring"
 	"faultline/internal/model"
 )
 
 func buildUnknownDiagnosis(lines []model.Line, ctx model.Context) ([]model.CandidateCluster, []string, *model.SuggestedPlaybookSeed) {
 	raw := joinOriginalLines(lines)
-	candidates := authoring.ExtractCandidatePatterns(raw, 8)
+	candidates := extractCandidatePatterns(raw, 8)
 	if len(candidates) == 0 {
 		return nil, nil, nil
 	}

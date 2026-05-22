@@ -182,21 +182,6 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 			PlaybookCount: 7,
 		},
 	}
-	tss := 0.75
-	fpc := 0.60
-	phi := 0.58
-	a.Metrics = &model.Metrics{
-		TSS:             &tss,
-		FPC:             &fpc,
-		PHI:             &phi,
-		HistoryCount:    8,
-		DriftComponents: []string{"recurring auth failures"},
-	}
-	a.Policy = &model.Policy{
-		Recommendation: "quarantine",
-		Reason:         "trace stability is degrading",
-		Basis:          []string{"tss", "phi"},
-	}
 	a.Results[0].SignatureHash = "sig123"
 	a.Results[0].SeenBefore = true
 	a.Results[0].OccurrenceCount = 3
@@ -253,12 +238,6 @@ func TestParseAnalysisJSONRoundTrip(t *testing.T) {
 	}
 	if parsed.PackProvenances[0].SourceURL != "https://example.com/premium.git" {
 		t.Fatalf("expected pack source_url to survive round trip, got %#v", parsed.PackProvenances[0])
-	}
-	if parsed.Metrics == nil || parsed.Metrics.TSS == nil || *parsed.Metrics.TSS != tss {
-		t.Fatalf("expected metrics to survive round trip, got %#v", parsed.Metrics)
-	}
-	if parsed.Policy == nil || parsed.Policy.Recommendation != "quarantine" {
-		t.Fatalf("expected policy to survive round trip, got %#v", parsed.Policy)
 	}
 	if parsed.Results[0].SignatureHash != "sig123" || parsed.Results[0].OccurrenceCount != 3 {
 		t.Fatalf("expected history fields to survive round trip, got %#v", parsed.Results[0])
@@ -669,22 +648,16 @@ func TestFormatWorkflowText(t *testing.T) {
 			Stage:       "build",
 			CommandHint: "docker build -f Dockerfile .",
 		},
-		Evidence:   []string{"failed to read Dockerfile"},
-		Files:      []string{"Dockerfile", ".dockerignore"},
-		LocalRepro: []string{"docker build -f Dockerfile ."},
-		Verify:     []string{"docker build -f Dockerfile ."},
-		MetricsHints: []string{
-			"TSS 0.40 (5 runs)",
-		},
-		PolicyHints: []string{
-			"policy: quarantine",
-		},
+		Evidence:    []string{"failed to read Dockerfile"},
+		Files:       []string{"Dockerfile", ".dockerignore"},
+		LocalRepro:  []string{"docker build -f Dockerfile ."},
+		Verify:      []string{"docker build -f Dockerfile ."},
 		Steps:       []string{"Verify the exact `docker build` command."},
 		AgentPrompt: "You are helping resolve a deterministic CI failure.",
 	}
 
 	text := FormatWorkflowText(plan)
-	for _, want := range []string{"WORKFLOW", "docker-build-context", "Local repro:", "Verify:", "Metrics:", "Policy:", "Next steps:", "Agent prompt:"} {
+	for _, want := range []string{"WORKFLOW", "docker-build-context", "Local repro:", "Verify:", "Next steps:", "Agent prompt:"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("expected %q in workflow text, got:\n%s", want, text)
 		}
@@ -981,8 +954,6 @@ func TestFormatWorkflowJSON(t *testing.T) {
 		Status:        model.ArtifactStatusMatched,
 		FailureID:     "snapshot-mismatch",
 		Title:         "Snapshot or golden-file mismatch",
-		MetricsHints:  []string{"TSS 0.40 (5 runs)"},
-		PolicyHints:   []string{"policy: observe"},
 		Verify:        []string{"go test ./..."},
 		Steps:         []string{"Inspect the diff."},
 		Artifact: &model.FailureArtifact{
@@ -1013,12 +984,6 @@ func TestFormatWorkflowJSON(t *testing.T) {
 	}
 	if out["status"] != "matched" {
 		t.Fatalf("expected status in workflow JSON, got %v", out["status"])
-	}
-	if _, ok := out["metrics_hints"].([]any); !ok {
-		t.Fatalf("expected metrics_hints in workflow JSON, got %v", out["metrics_hints"])
-	}
-	if _, ok := out["policy_hints"].([]any); !ok {
-		t.Fatalf("expected policy_hints in workflow JSON, got %v", out["policy_hints"])
 	}
 	if _, ok := out["artifact"].(map[string]any); !ok {
 		t.Fatalf("expected artifact in workflow JSON, got %v", out["artifact"])
@@ -1195,20 +1160,6 @@ func TestStableHashAnalysisStripsHistoryFields(t *testing.T) {
 	}
 	if got.Results[0].LastSeenAt != "" {
 		t.Errorf("LastSeenAt not zeroed: %q", got.Results[0].LastSeenAt)
-	}
-}
-
-func TestStableHashAnalysisStripsMetricsAndPolicy(t *testing.T) {
-	a := makeAnalysis("docker-auth", "Docker auth", "auth", 0.9, nil)
-	a.Metrics = &model.Metrics{HistoryCount: 10}
-	a.Policy = &model.Policy{Recommendation: "observe"}
-
-	got := stableHashAnalysis(a)
-	if got.Metrics != nil {
-		t.Errorf("Metrics not stripped: %+v", got.Metrics)
-	}
-	if got.Policy != nil {
-		t.Errorf("Policy not stripped: %+v", got.Policy)
 	}
 }
 

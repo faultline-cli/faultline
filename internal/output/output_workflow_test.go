@@ -142,24 +142,6 @@ func TestFormatWorkflowTextDeltaHints(t *testing.T) {
 	}
 }
 
-func TestFormatWorkflowTextMetricsHints(t *testing.T) {
-	plan := makePlan("docker-auth", []string{"step"})
-	plan.MetricsHints = []string{"seen 3 times this week"}
-	out := FormatWorkflowText(plan)
-	if !strings.Contains(out, "Metrics:") {
-		t.Errorf("expected 'Metrics:' section, got:\n%s", out)
-	}
-}
-
-func TestFormatWorkflowTextPolicyHints(t *testing.T) {
-	plan := makePlan("docker-auth", []string{"step"})
-	plan.PolicyHints = []string{"no cache allowed"}
-	out := FormatWorkflowText(plan)
-	if !strings.Contains(out, "Policy:") {
-		t.Errorf("expected 'Policy:' section, got:\n%s", out)
-	}
-}
-
 func TestFormatWorkflowTextRemediation(t *testing.T) {
 	plan := makePlan("docker-auth", []string{"step"})
 	plan.Remediation = &model.RemediationPlan{
