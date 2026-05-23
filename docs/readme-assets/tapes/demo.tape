@@ -18,7 +18,7 @@ Enter
 Wait+Screen /faultline workflow/
 Sleep 1800ms
 Screenshot docs/readme-assets/demo.png
-Sleep 1600ms
+Sleep 4000ms
 
 # Step 2 — get the fix steps
 Type "clear"
@@ -29,7 +29,7 @@ Enter
 Wait+Screen /Fix Steps/
 Sleep 1800ms
 Screenshot docs/readme-assets/demo-fix.png
-Sleep 1600ms
+Sleep 4000ms
 
 # Step 3 — classify an entire failing pipeline in one pass
 Type "clear"
@@ -40,4 +40,4 @@ Enter
 Wait+Screen /4 distinct/
 Sleep 2000ms
 Screenshot docs/readme-assets/demo-batch.png
-Sleep 2800ms
+Sleep 5000ms
