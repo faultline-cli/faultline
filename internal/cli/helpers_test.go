@@ -26,32 +26,6 @@ func TestFirstNonEmpty(t *testing.T) {
 	}
 }
 
-func TestFirstInt64(t *testing.T) {
-	cases := []struct {
-		name      string
-		flagValue int64
-		envVar    string
-		want      int64
-	}{
-		{"flag value returned when non-zero", 42, "", 42},
-		{"flag value wins over env var", 20, "10", 20},
-		{"zero flag falls back to env var", 0, "99", 99},
-		{"parses env var string", 0, "123", 123},
-		{"blank env var returns 0", 0, "  ", 0},
-		{"zero env var string skipped", 0, "0", 0},
-		{"all zero returns 0", 0, "", 0},
-		{"invalid env var falls through to 0", 0, "abc", 0},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := firstInt64(tc.flagValue, tc.envVar)
-			if got != tc.want {
-				t.Errorf("firstInt64(%d, %q) = %d, want %d", tc.flagValue, tc.envVar, got, tc.want)
-			}
-		})
-	}
-}
-
 // ── resolveAnalyzeStoreSetting ────────────────────────────────────────────────
 
 func TestResolveAnalyzeStoreSetting(t *testing.T) {

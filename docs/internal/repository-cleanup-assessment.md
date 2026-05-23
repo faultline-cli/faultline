@@ -43,10 +43,6 @@ No Go package is currently dead: `go list ./...` resolves every package, and the
 companion surfaces are wired through CLI or tests. The least valuable modules
 are therefore maintenance-risk candidates rather than deletion candidates:
 
-- `internal/engine/delta`: explicit experimental provider API path; high
-  complexity and network behavior, but gated by environment variables.
-- `internal/authoring`: useful maintainer scaffold support, but hidden and not a
-  release-path dependency for normal users.
 - `internal/metrics` and `internal/policy`: advisory outputs with limited
   current user-facing value until recurrence and Team-layer decisions mature.
 - `tools/eval-corpus`: valuable for catalog strategy, but large and separate
@@ -89,6 +85,5 @@ are therefore maintenance-risk candidates rather than deletion candidates:
    playbook families.
 3. Re-evaluate the large external corpus after the playbook removal pass and
    update `docs/fixture-corpus.md` only with clearly scoped claims.
-4. Keep `internal/engine/delta`, `internal/metrics`, `internal/policy`, and
-   `internal/authoring` hidden or companion-only until they have a stronger
-   release-grade story.
+4. Keep any future metrics, policy, or provider-enrichment work hidden or
+   companion-only until it has a stronger release-grade story.

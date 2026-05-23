@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"os"
@@ -69,16 +68,6 @@ func runAnalyzeJSONCommand(t *testing.T, logPath string, args ...string) (string
 	return raw, payload
 }
 
-func writeTempAnalysisArtifact(t *testing.T, content string) string {
-	t.Helper()
-	dir := t.TempDir()
-	path := filepath.Join(dir, "analysis.json")
-	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
-		t.Fatalf("write temp analysis artifact: %v", err)
-	}
-	return path
-}
-
 func writeTempRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -105,33 +94,6 @@ func writeTempRepo(t *testing.T) string {
 		"GIT_AUTHOR_DATE=" + commitDate,
 		"GIT_COMMITTER_DATE=" + commitDate,
 	}, "commit", "--quiet", "-m", "hotfix: adjust healthcheck config")
-	return dir
-}
-
-func writeTempGuardRepo(t *testing.T) string {
-	t.Helper()
-	dir := t.TempDir()
-	runGit(t, dir, nil, "init")
-	runGit(t, dir, nil, "config", "user.name", "Faultline Test")
-	runGit(t, dir, nil, "config", "user.email", "faultline@example.com")
-
-	handlerPath := filepath.Join(dir, "api", "handler.go")
-	if err := os.MkdirAll(filepath.Dir(handlerPath), 0o755); err != nil {
-		t.Fatalf("mkdir handler dir: %v", err)
-	}
-	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string { return \"ok\" }\n"), 0o644); err != nil {
-		t.Fatalf("write handler file: %v", err)
-	}
-	runGit(t, dir, nil, "add", ".")
-	commitDate := recentGitDate(2)
-	runGit(t, dir, []string{
-		"GIT_AUTHOR_DATE=" + commitDate,
-		"GIT_COMMITTER_DATE=" + commitDate,
-	}, "commit", "--quiet", "-m", "baseline: add handler")
-
-	if err := os.WriteFile(handlerPath, []byte("package api\n\nfunc UserHandler() string {\n\tpanic(\"boom\")\n}\n"), 0o644); err != nil {
-		t.Fatalf("rewrite handler file: %v", err)
-	}
 	return dir
 }
 
@@ -386,7 +348,7 @@ func TestAnalyzeEvidenceView(t *testing.T) {
 	}
 }
 
-func TestAnalyzeTraceViewPointsToTraceCommand(t *testing.T) {
+func TestAnalyzeTraceViewRemoved(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
 	logPath := writeTempLog(t, "exec /__e/node20/bin/node: no such file or directory\n")
 
@@ -401,8 +363,8 @@ func TestAnalyzeTraceViewPointsToTraceCommand(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected analyze --view trace to be rejected")
 	}
-	if !strings.Contains(err.Error(), "faultline trace") {
-		t.Fatalf("expected guidance to use faultline trace, got %v", err)
+	if !strings.Contains(err.Error(), "--view trace was removed from analyze") {
+		t.Fatalf("expected removed trace view guidance, got %v", err)
 	}
 }
 
@@ -600,103 +562,6 @@ func TestFixCommandMarkdownFormat(t *testing.T) {
 	}
 }
 
-func TestReplayCommandMarkdown(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-		t.Fatalf("build analysis artifact: %v", err)
-	}
-	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"replay", "--format", "markdown", "--mode", "detailed", artifactPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute replay: %v", err)
-	}
-	if !strings.Contains(out.String(), "# Docker registry authentication failure") {
-		t.Fatalf("expected replay markdown heading, got %q", out.String())
-	}
-}
-
-func TestReplayCommandJSONSelect(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 2, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-		t.Fatalf("build analysis artifact: %v", err)
-	}
-	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"replay", "--json", "--select", "2", artifactPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute replay --select: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal replay JSON: %v", err)
-	}
-	results, ok := payload["results"].([]any)
-	if !ok || len(results) != 1 {
-		t.Fatalf("expected one replay-selected result, got %v", payload["results"])
-	}
-}
-
-func TestReplayCommandFixView(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-		t.Fatalf("build analysis artifact: %v", err)
-	}
-	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"replay", "--view", "fix", artifactPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute replay --view fix: %v", err)
-	}
-	if !strings.Contains(out.String(), "Fix Steps") {
-		t.Fatalf("expected fix view output, got %q", out.String())
-	}
-}
-
-func TestReplayCommandRejectsTraceView(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	svc := app.NewService()
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader("pull access denied\nError response from daemon: authentication required\n"), "stdin", app.AnalyzeOptions{OutputOptions: app.OutputOptions{Top: 1, Mode: "quick", Format: "json", JSON: true}, Store: "off", PlaybookDir: playbookDir}, &artifact); err != nil {
-		t.Fatalf("build analysis artifact: %v", err)
-	}
-	artifactPath := writeTempAnalysisArtifact(t, artifact.String())
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"replay", "--view", "trace", artifactPath})
-	cmd.SetOut(new(bytes.Buffer))
-	cmd.SetErr(new(bytes.Buffer))
-
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected replay trace view error")
-	}
-	if !strings.Contains(err.Error(), "replay trace is not supported") {
-		t.Fatalf("unexpected replay trace view error: %v", err)
-	}
-}
-
 // ── list ─────────────────────────────────────────────────────────────────────
 
 func TestListCommand(t *testing.T) {
@@ -775,88 +640,6 @@ func TestListCategoryFlag(t *testing.T) {
 	}
 	if strings.Contains(got, "oom-killed") {
 		t.Fatalf("oom-killed should not appear in auth category, got %q", got)
-	}
-}
-
-func TestPacksInstallAndAutoLoad(t *testing.T) {
-	home := t.TempDir()
-	extra := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(extra, ".git"), 0o755); err != nil {
-		t.Fatalf("mkdir .git: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(extra, ".git", "config"), []byte("[core]\nrepositoryformatversion = 0\n"), 0o600); err != nil {
-		t.Fatalf("write .git config: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(extra, "extra.yaml"), []byte("id: extra-installed\n"+
-		"title: Installed Pack\n"+
-		"category: auth\n"+
-		"severity: high\n"+
-		"summary: |\n"+
-		"  Installed pack summary.\n"+
-		"diagnosis: |\n"+
-		"  ## Diagnosis\n\n"+
-		"  Installed pack diagnosis.\n"+
-		"fix: |\n"+
-		"  ## Fix steps\n\n"+
-		"  1. Installed pack fix.\n"+
-		"validation: |\n"+
-		"  ## Validation\n\n"+
-		"  - Installed pack validation.\n"+
-		"match:\n"+
-		"  any:\n"+
-		"    - \"extra marker\"\n"), 0o600); err != nil {
-		t.Fatalf("write extra pack: %v", err)
-	}
-
-	install := newRootCommand()
-	install.SetArgs([]string{"packs", "install", extra})
-	installOut := &bytes.Buffer{}
-	install.SetOut(installOut)
-	install.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", repoPlaybookDir(t))
-	t.Setenv("HOME", home)
-
-	if err := install.Execute(); err != nil {
-		t.Fatalf("execute packs install: %v", err)
-	}
-	if !strings.Contains(installOut.String(), "Installed pack") {
-		t.Fatalf("expected install confirmation, got %q", installOut.String())
-	}
-	if _, err := os.Stat(filepath.Join(home, ".faultline", "packs", filepath.Base(extra), ".git")); !os.IsNotExist(err) {
-		t.Fatalf("expected installed pack to skip .git metadata, got err=%v", err)
-	}
-
-	list := newRootCommand()
-	list.SetArgs([]string{"list"})
-	listOut := &bytes.Buffer{}
-	list.SetOut(listOut)
-	list.SetErr(new(bytes.Buffer))
-
-	if err := list.Execute(); err != nil {
-		t.Fatalf("execute list after pack install: %v", err)
-	}
-	if !strings.Contains(listOut.String(), "extra-installed") {
-		t.Fatalf("expected installed playbook in list output, got %q", listOut.String())
-	}
-	if !strings.Contains(listOut.String(), filepath.Base(extra)) {
-		t.Fatalf("expected installed pack name in list output, got %q", listOut.String())
-	}
-
-	packs := newRootCommand()
-	packs.SetArgs([]string{"packs", "list"})
-	packsOut := &bytes.Buffer{}
-	packs.SetOut(packsOut)
-	packs.SetErr(new(bytes.Buffer))
-
-	if err := packs.Execute(); err != nil {
-		t.Fatalf("execute packs list: %v", err)
-	}
-	if !strings.Contains(packsOut.String(), filepath.Base(extra)) {
-		t.Fatalf("expected installed pack in packs list, got %q", packsOut.String())
-	}
-	// VERSION and PINNED REF columns should be present in the header.
-	if !strings.Contains(packsOut.String(), "VERSION") || !strings.Contains(packsOut.String(), "PINNED REF") {
-		t.Fatalf("expected VERSION and PINNED REF columns in packs list, got %q", packsOut.String())
 	}
 }
 
@@ -997,250 +780,7 @@ func TestWorkflowCommandBayesJSONIncludesHints(t *testing.T) {
 	}
 }
 
-func TestGuardCommandQuietOnCleanRepo(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	repoDir := writeTempRepo(t)
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"guard", repoDir})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute guard on clean repo: %v", err)
-	}
-	if out.Len() != 0 {
-		t.Fatalf("expected quiet guard output on clean repo, got %q", out.String())
-	}
-}
-
-func TestGuardCommandJSONNoFindings(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	repoDir := writeTempRepo(t)
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"guard", "--json", repoDir})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute guard --json on clean repo: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal guard json: %v", err)
-	}
-	if payload["matched"] != false {
-		t.Fatalf("expected matched=false, got %v", payload["matched"])
-	}
-}
-
-func TestGuardCommandReturnsNonZeroOnFindings(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	repoDir := writeTempGuardRepo(t)
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"guard", repoDir})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	err := cmd.Execute()
-	if err == nil {
-		t.Fatal("expected guard findings error")
-	}
-	if err != app.ErrGuardFindings {
-		t.Fatalf("expected ErrGuardFindings, got %v", err)
-	}
-	if !strings.Contains(out.String(), "panic-in-http-handler") {
-		t.Fatalf("expected guard finding in output, got %q", out.String())
-	}
-}
-
-// ── trace ────────────────────────────────────────────────────────────────────
-
-func TestTraceCommandText(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"trace", "--no-history", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute trace: %v", err)
-	}
-	got := out.String()
-	if !strings.Contains(got, "TRACE") {
-		t.Fatalf("expected TRACE header in output, got %q", got)
-	}
-	if !strings.Contains(got, "docker-auth") {
-		t.Fatalf("expected docker-auth playbook in trace output, got %q", got)
-	}
-	if !strings.Contains(got, "Rule Evaluation") {
-		t.Fatalf("expected Rule Evaluation section in trace output, got %q", got)
-	}
-}
-
-func TestTraceCommandMarkdownFormat(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"trace", "--format", "markdown", "--no-history", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute trace --format markdown: %v", err)
-	}
-	got := out.String()
-	if !strings.Contains(got, "# Faultline Trace") {
-		t.Fatalf("expected markdown trace heading, got %q", got)
-	}
-	if !strings.Contains(got, "## Rule Evaluation") {
-		t.Fatalf("expected markdown rule evaluation section, got %q", got)
-	}
-	if !strings.Contains(got, "docker-auth") {
-		t.Fatalf("expected docker-auth in markdown trace output, got %q", got)
-	}
-}
-
-func TestTraceCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"trace", "--json", "--no-history", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute trace --json: %v", err)
-	}
-	if strings.Contains(out.String(), "\x1b[") {
-		t.Fatalf("trace json output should not contain ANSI sequences, got %q", out.String())
-	}
-
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal trace JSON: %v", err)
-	}
-	if payload["playbook_id"] != "docker-auth" {
-		t.Fatalf("expected playbook_id=docker-auth, got %v", payload["playbook_id"])
-	}
-	if payload["matched"] != true {
-		t.Fatalf("expected matched=true, got %v", payload["matched"])
-	}
-	rules, ok := payload["rules"].([]any)
-	if !ok || len(rules) == 0 {
-		t.Fatalf("expected non-empty rules array, got %v", payload["rules"])
-	}
-}
-
-func TestTraceCommandPlaybookFlag(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	// Use a log that triggers go-sum-missing, not docker-auth.
-	logPath := writeTempLog(t, "missing go.sum entry for module providing package\n")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"trace", "--playbook", "docker-auth", "--no-history", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute trace --playbook docker-auth: %v", err)
-	}
-	got := out.String()
-	if !strings.Contains(got, "docker-auth") {
-		t.Fatalf("expected docker-auth in trace output from --playbook flag, got %q", got)
-	}
-	if !strings.Contains(got, "not matched") {
-		t.Fatalf("expected not matched status for unmatched playbook, got %q", got)
-	}
-}
-
-func TestTraceCommandSelectRank(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	// Use a log that triggers multiple ranked matches.
-	logPath := writeTempLog(t,
-		"pull access denied\nauthentication required\ncould not read username for 'https://github.com': terminal prompts disabled\n",
-	)
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"trace", "--select", "2", "--no-history", logPath})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute trace --select 2: %v", err)
-	}
-	got := out.String()
-	if !strings.Contains(got, "TRACE") {
-		t.Fatalf("expected TRACE header for rank-2 result, got %q", got)
-	}
-}
-
 // ── misc ─────────────────────────────────────────────────────────────────────
-
-func TestHistoryCommandJSON(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	runAnalyze := func() {
-		cmd := newRootCommand()
-		cmd.SetArgs([]string{"analyze", "--json", "--store", storePath, logPath})
-		out := &bytes.Buffer{}
-		cmd.SetOut(out)
-		cmd.SetErr(new(bytes.Buffer))
-		t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-		if err := cmd.Execute(); err != nil {
-			t.Fatalf("execute analyze for history setup: %v", err)
-		}
-	}
-	runAnalyze()
-	runAnalyze()
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"history", "--json", "--store", storePath, "--limit", "5"})
-	out := &bytes.Buffer{}
-	cmd.SetOut(out)
-	cmd.SetErr(new(bytes.Buffer))
-
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("execute history --json: %v", err)
-	}
-
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out.String())), &payload); err != nil {
-		t.Fatalf("unmarshal history JSON: %v", err)
-	}
-	signatures, ok := payload["signatures"].([]any)
-	if !ok || len(signatures) == 0 {
-		t.Fatalf("expected signatures in history payload, got %v", payload["signatures"])
-	}
-	playbooks, ok := payload["playbooks"].([]any)
-	if !ok || len(playbooks) == 0 {
-		t.Fatalf("expected playbooks in history payload, got %v", payload["playbooks"])
-	}
-}
 
 func TestReportCommandAggregatesDefaultAnalyzeRuns(t *testing.T) {
 	playbookDir := repoPlaybookDir(t)
@@ -1341,51 +881,6 @@ func TestReportCommandJSON(t *testing.T) {
 	}
 	if payload.Failures[0].LastSeenAt == "" || payload.Failures[0].ExampleEvidence == "" {
 		t.Fatalf("expected timestamp and example evidence, got %#v", payload.Failures[0])
-	}
-}
-
-func TestHistorySignatureCommand(t *testing.T) {
-	playbookDir := repoPlaybookDir(t)
-	storePath := filepath.Join(t.TempDir(), "faultline.db")
-	logPath := writeTempLog(t, "pull access denied\nError response from daemon: authentication required\n")
-
-	analyze := newRootCommand()
-	analyze.SetArgs([]string{"analyze", "--json", "--store", storePath, logPath})
-	analyzeOut := &bytes.Buffer{}
-	analyze.SetOut(analyzeOut)
-	analyze.SetErr(new(bytes.Buffer))
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-	if err := analyze.Execute(); err != nil {
-		t.Fatalf("execute analyze: %v", err)
-	}
-
-	var analysisPayload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(analyzeOut.String())), &analysisPayload); err != nil {
-		t.Fatalf("unmarshal analyze JSON: %v", err)
-	}
-	results := analysisPayload["results"].([]any)
-	signatureHash := results[0].(map[string]any)["signature_hash"].(string)
-
-	historyCmd := newRootCommand()
-	historyCmd.SetArgs([]string{"history", "--json", "--store", storePath, "--signature", signatureHash})
-	historyOut := &bytes.Buffer{}
-	historyCmd.SetOut(historyOut)
-	historyCmd.SetErr(new(bytes.Buffer))
-	if err := historyCmd.Execute(); err != nil {
-		t.Fatalf("execute history --signature: %v", err)
-	}
-
-	var historyPayload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(historyOut.String())), &historyPayload); err != nil {
-		t.Fatalf("unmarshal history detail JSON: %v", err)
-	}
-	signature, ok := historyPayload["signature"].(map[string]any)
-	if !ok || signature["signature_hash"] != signatureHash {
-		t.Fatalf("expected signature detail payload, got %v", historyPayload["signature"])
-	}
-	findings, ok := historyPayload["findings"].([]any)
-	if !ok || len(findings) != 1 {
-		t.Fatalf("expected one recent finding, got %v", historyPayload["findings"])
 	}
 }
 

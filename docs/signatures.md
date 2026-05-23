@@ -37,7 +37,7 @@ The gaps were mostly around role clarity and implementation boundaries:
 - the signature input used only top-level evidence strings and ignored existing
   structured trigger attributes such as `signal_id`, `file`, and `scope_name`
 - normalization coverage was useful but under-documented and only lightly tested
-- trace output did not surface the canonical payload used for hashing
+- internal trace payloads did not surface the canonical payload used for hashing
 
 Risky refactor areas were:
 
@@ -46,8 +46,8 @@ Risky refactor areas were:
   signature material
 - `internal/output/output_json.go`, where public automation-facing fields must
   remain stable
-- `internal/trace` and `internal/output/output_trace.go`, where inspectability
-  can improve without making default `analyze` noisy
+- `internal/trace` and `internal/output/output_trace.go`, where internal
+  inspectability can improve without making default `analyze` noisy
 
 ## Field Roles
 
@@ -181,8 +181,9 @@ payload stays human-readable and stable.
 ## Layer Integration
 
 - CLI layer:
-  `analyze` remains quiet by default; the advanced `trace` surface now exposes
-  the signature hash and canonical payload for inspection.
+  `analyze` remains quiet by default; stable JSON exposes `signature_hash` when
+  local history is enabled, while canonical payload inspection remains an
+  internal diagnostic concern.
 - App layer:
   signature computation still happens before persistence and result rendering so
   recurrence fields are available to store and output layers.
@@ -196,8 +197,8 @@ payload stays human-readable and stable.
 - Playbooks layer:
   playbook prose does not contribute to signatures.
 - Output layer:
-  `signature_hash` remains in stable analysis JSON; trace output now shows the
-  canonical payload used to compute it.
+  `signature_hash` remains in stable analysis JSON; internal trace formatting
+  can show the canonical payload used to compute it.
 - Store layer:
   recurrence still keys off `signature_hash`; `normalized_signature` now stores
   the canonical versioned payload.
@@ -230,12 +231,12 @@ The signature suite covers:
 - fixture-driven variant matrices across CI-style path, timestamp, and runner
   noise
 - store-backed end-to-end recurrence checks that run noisy variants through
-  `analyze`, persistence, `history`, and `verify-determinism`
+  `analyze`, persistence, and report-style store reads
 - distinctness checks for meaningfully different causes that still map to the
   same playbook family
 - distinctness for unrelated failures
 - fixture-driven end-to-end checks using real CI logs
-- trace output assertions for signature inspectability
+- internal trace output assertions for signature inspectability
 
 The dedicated noisy-variant matrix now covers cases such as:
 
@@ -268,5 +269,5 @@ The dedicated noisy-variant matrix now covers cases such as:
 - richer structured trigger fields for detectors that can expose package names,
   test identifiers, or executable identities safely
 - store queries that aggregate recurrence by signature version
-- optional explicit debugging surfaces beyond `trace` if operators want
-  signature-only inspection without the full rule trace
+- optional explicit debugging surfaces if operators need signature-only
+  inspection beyond stable analysis JSON

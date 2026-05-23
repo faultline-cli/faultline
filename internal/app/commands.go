@@ -31,16 +31,6 @@ type OutputOptions struct {
 	ShowEvidence bool
 	// ShowScoring includes scoring detail when supported by the selected view.
 	ShowScoring bool
-	// ShowRejected includes competing candidates and rejection context in trace output.
-	ShowRejected bool
-}
-
-// TraceOptions controls deterministic playbook tracing.
-type TraceOptions struct {
-	// TraceEnabled renders a deterministic playbook trace instead of the normal report.
-	TraceEnabled bool
-	// TracePlaybook renders a deterministic trace for the named playbook.
-	TracePlaybook string
 }
 
 // ProviderOptions configures git context enrichment.
@@ -53,40 +43,12 @@ type ProviderOptions struct {
 	RepoPath string
 }
 
-// DeltaOptions configures provider-backed failure delta resolution.
-type DeltaOptions struct {
-	// DeltaProvider enables provider-backed failure delta resolution.
-	DeltaProvider string
-	// GitHubRepository identifies the GitHub repository for provider-backed delta resolution.
-	GitHubRepository string
-	// GitHubBranch identifies the GitHub branch for provider-backed delta resolution.
-	GitHubBranch string
-	// GitHubRunID identifies the current GitHub Actions run for provider-backed delta resolution.
-	GitHubRunID int64
-	// GitHubToken authenticates provider-backed GitHub Actions delta resolution.
-	GitHubToken string
-	// GitLabProject identifies the GitLab project for provider-backed delta resolution.
-	GitLabProject string
-	// GitLabBranch identifies the GitLab ref for provider-backed delta resolution.
-	GitLabBranch string
-	// GitLabPipelineID identifies the current GitLab pipeline for provider-backed delta resolution.
-	GitLabPipelineID int64
-	// GitLabJobID identifies the current GitLab job for provider-backed delta resolution.
-	GitLabJobID int64
-	// GitLabToken authenticates provider-backed GitLab CI delta resolution.
-	GitLabToken string
-	// GitLabAPIBaseURL overrides the GitLab API v4 base URL for provider-backed delta resolution.
-	GitLabAPIBaseURL string
-}
-
 // AnalyzeOptions collects all flags that influence the analyze and fix commands.
-// It composes focused sub-structs for output presentation, tracing, git context
-// enrichment, and provider-backed delta resolution.
+// It composes focused sub-structs for output presentation and git context
+// enrichment.
 type AnalyzeOptions struct {
 	OutputOptions
-	TraceOptions
 	ProviderOptions
-	DeltaOptions
 	// PlaybookDir overrides the default playbook directory.
 	PlaybookDir string
 	// PlaybookPackDirs adds extra pack roots on top of the bundled catalog.
@@ -133,7 +95,7 @@ func writeAnalysis(a *model.Analysis, opts AnalyzeOptions, w io.Writer) error {
 	}
 
 	mode := opts.Mode
-	if mode != output.ModeDetailed && (opts.ShowEvidence || opts.ShowScoring || opts.ShowRejected) {
+	if mode != output.ModeDetailed && (opts.ShowEvidence || opts.ShowScoring) {
 		mode = output.ModeDetailed
 	}
 

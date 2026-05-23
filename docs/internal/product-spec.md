@@ -13,7 +13,7 @@ Run it against a failing build log and it returns:
 - the most likely failure class
 - evidence pulled directly from the log
 - checked-in diagnosis and fix guidance
-- a structured failure artifact that can be replayed, compared, and handed off
+- a structured failure artifact that can be stored, re-rendered, and handed off
 - stable text, markdown, JSON, and workflow artifacts for humans and automation
 
 The product stays deliberately narrow:
@@ -43,7 +43,8 @@ The release boundary is intentionally small:
 1. Run `faultline analyze <logfile>` on a failing CI log, or `faultline batch <file> [file ...]` when a workflow produced several logs.
 2. Review the evidence-backed top diagnosis.
 3. Run `faultline workflow <logfile>` when you want a deterministic follow-up artifact.
-4. Use `faultline list`, `faultline explain <id>`, or `faultline fix <logfile>` to inspect the catalog or narrow to remediation.
+4. Run `faultline inspect <path>` when the failure is better detected from repository source than log text.
+5. Use `faultline list`, `faultline explain <id>`, or `faultline fix <logfile>` to inspect the catalog or narrow to remediation.
 
 That boundary is documented in [`docs/release-boundary.md`](../release-boundary.md) and should remain the default narrative in user-facing docs.
 
@@ -54,6 +55,7 @@ That boundary is documented in [`docs/release-boundary.md`](../release-boundary.
 ```text
 faultline analyze [file]
 faultline batch <file> [file ...]
+faultline inspect <path>
 faultline workflow [file]
 faultline list
 faultline explain <id>
@@ -63,18 +65,12 @@ faultline fix [file]
 ### Supported companion surfaces
 
 ```text
-faultline trace [file]
-faultline replay <analysis.json>
-faultline compare <left-analysis.json> <right-analysis.json>
-faultline inspect [path]
-faultline guard [path]
-faultline packs install <dir>
-faultline packs list
+faultline report
 ```
 
 ### Hidden maintainer workflows
 
-The repository also includes hidden `faultline fixtures ...` workflows and a hidden scaffold helper for corpus curation and playbook authoring. These are supported for maintainers, but they are not part of the first-run product story.
+The repository also includes hidden `faultline fixtures ...` workflows for corpus curation. These are supported for maintainers, but they are not part of the first-run product story.
 
 ## Core Behaviors
 
@@ -88,7 +84,8 @@ Current user-facing characteristics:
 - markdown output is available for CI summaries and docs snapshots
 - JSON output is stable and automation-friendly
 - focused views are supported through `--view summary|evidence|fix|raw`
-- ranked drill-down is supported through `--top`, `--select`, and the dedicated `faultline trace` command
+- ranked drill-down is supported through `--top`, `--select`, `--show-evidence`,
+  and `--show-scoring`
 - recent local repository context is included by default, with `--git=false`
   available for narrow deterministic snapshot cases
 - `--bayes` can rerank already-matched candidates additively
@@ -122,22 +119,18 @@ The catalog is authored in YAML, stored in version control, and loaded determini
 
 `faultline fix` prints the remediation guidance for the top diagnosis without the rest of the analysis view.
 
-### 6. Companion inspection surfaces
+### 6. Source inspection
 
-These remain important, but they are not the first-run story:
-
-- `trace` for rule-by-rule evaluation
-- `replay` for deterministic re-rendering of saved analysis artifacts
-- `compare` for deterministic diffing of two saved analysis artifacts
-- `inspect` for source-detector findings in a repository tree
-- `guard` for quiet high-confidence prevention findings on changed files
-- `packs` for optional playbook-pack composition
+`faultline inspect <path>` scans repository source with deterministic source
+detectors and reports evidence-backed source findings. It is a core command,
+but it should stay framed as source inspection rather than a general static
+analysis platform.
 
 ## Artifact Contracts
 
 ### Analysis JSON
 
-`faultline analyze --json` and `faultline inspect --json` emit a stable additive analysis object.
+`faultline analyze --json` emits a stable additive analysis object.
 
 At a high level, the current object includes:
 
@@ -198,7 +191,8 @@ Faultline playbooks separate deterministic matching from operator-facing guidanc
 - structured fields drive matching, scoring, workflow derivation, and detector behavior
 - markdown-capable fields such as `summary`, `diagnosis`, `fix`, and `validation` carry the human guidance
 
-The current repository supports both `log` and `source` detectors. `inspect` and `guard` are the main public source-detector surfaces.
+The current repository supports both `log` and `source` detectors. `inspect`
+is the public source-detector surface.
 
 ## Distribution And Packaging
 

@@ -89,7 +89,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
   - Add a test that confirms the client respects the configured timeout by
     pointing it at a handler that delays its response.
 scoring:
@@ -106,8 +106,8 @@ workflow:
   likely_files:
     - "**/*.go"
   local_repro:
-    - faultline inspect .
+    - make test
     - "rg -n 'http.Get\\|http.Post\\|http.DefaultClient' ."
   verify:
-    - faultline guard .
+    - make test
     - go vet ./...

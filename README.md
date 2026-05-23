@@ -98,6 +98,7 @@ This makes Faultline useful before investigation starts: route the obvious failu
 faultline analyze build.log
 cat build.log | faultline analyze --json
 faultline batch build-1.log build-2.log --json
+faultline inspect .
 faultline fix build.log
 faultline workflow build.log --json --mode agent
 faultline list
@@ -106,15 +107,15 @@ faultline explain missing-executable
 
 - `analyze`: classify a failing log and show evidence, diagnosis, and next action.
 - `batch`: classify several logs and group the results by failure pattern.
+- `inspect`: scan the local source tree with deterministic source detectors.
 - `fix`: print the remediation steps for the top diagnosis.
 - `workflow`: generate deterministic follow-through output for automation or handoff.
 - `list`: browse known failure classes.
 - `explain`: inspect one failure class before trusting or changing it.
 
-Companion surfaces such as `inspect`, `guard`, `trace`, `replay`, `report`,
-`history`, and `packs` exist, but they are not the first-run story. `report`
-and `history` read only the local forensic store created by prior local runs;
-cross-repo recurrence and coordination belong to the Team layer.
+`report` exists as a bounded local companion for the forensic store created by
+prior local runs; cross-repo recurrence and coordination belong to the Team
+layer.
 
 ## What to Trust
 
@@ -189,12 +190,10 @@ local runs, or CI runs that persist the store between jobs, use:
 
 ```bash
 faultline report
-faultline history
 faultline analyze build.log --history
 ```
 
 - `report` groups stored local runs by failure class so repeated breakages are easier to see.
-- `history` shows recurring signatures and quality summaries from the local store.
 - `--history` adds explicit local recurrence context to the current analysis output.
 
 This local memory is deliberately single-repo. Cross-repo aggregation, ownership-aware recurrence, and team coordination belong to the Team layer documented in [docs/release-boundary.md](docs/release-boundary.md).
@@ -209,7 +208,7 @@ For teams with flaky CI, uneven documentation, or too much tribal knowledge, use
 2. Use `failure_id` as the stable label in tickets, incident notes, and postmortems.
 3. Paste markdown or JSON output into the handoff so the evidence and fix path travel together.
 4. Run `faultline workflow build.log --json --mode agent` when a human or agent needs likely files, reproduction steps, verification steps, and remediation context.
-5. Use `faultline report` and `faultline history` to pick the repeated classes worth standardizing.
+5. Use `faultline report` to pick the repeated classes worth standardizing.
 6. When a missed or weak diagnosis keeps recurring, submit a sanitized failure or add a playbook so the next engineer gets the documented path first.
 
 The team questions stay simple:
@@ -355,7 +354,7 @@ Faultline applies scored evidence rules against the full log, not a single line 
 Faultline stays quiet rather than guessing. If you see a recurring unmatched failure, open a [missed failure issue](https://github.com/faultline-cli/faultline/issues/new?template=missed_failure.md) with a sanitized log excerpt. The playbook authoring guide is in [docs/playbooks.md](docs/playbooks.md).
 
 **Can I add custom failure patterns for my team?**
-Yes, via packs. A pack is a directory of YAML playbooks that Faultline loads alongside the bundled set. See `faultline packs` and [docs/release-boundary.md](docs/release-boundary.md) for the layering model.
+Yes. Pass one or more local pack directories with `--playbook-pack` when you need deterministic local catalog composition. Persistent installed-pack management is intentionally outside the default product surface.
 
 **How do I integrate it in a GitHub Actions workflow?**
 Use the [`faultline-cli/action`](https://github.com/faultline-cli/action) wrapper on a failure-only step, or install the binary directly. Full contract in [docs/github-action-contract.md](docs/github-action-contract.md).

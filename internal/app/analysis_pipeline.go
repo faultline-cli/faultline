@@ -70,16 +70,5 @@ func logEngineOptions(opts AnalyzeOptions) engine.Options {
 		GitSince:          opts.GitSince,
 		RepoPath:          opts.RepoPath,
 		BayesEnabled:      opts.BayesEnabled,
-		DeltaProvider:     opts.DeltaProvider,
-		GitHubRepository:  opts.GitHubRepository,
-		GitHubBranch:      opts.GitHubBranch,
-		GitHubRunID:       opts.GitHubRunID,
-		GitHubToken:       opts.GitHubToken,
-		GitLabProject:     opts.GitLabProject,
-		GitLabBranch:      opts.GitLabBranch,
-		GitLabPipelineID:  opts.GitLabPipelineID,
-		GitLabJobID:       opts.GitLabJobID,
-		GitLabToken:       opts.GitLabToken,
-		GitLabAPIBaseURL:  opts.GitLabAPIBaseURL,
 	}
 }

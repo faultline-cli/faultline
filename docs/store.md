@@ -49,17 +49,13 @@ Local history enrichment in `analyze` output remains explicit opt-in through:
   reliability metrics are needed
 
 `--no-history` and `--no-store` remain hidden compatibility switches and force
-the no-op store. Explicit history commands (`report`, `history`, `signatures`,
-and `verify-determinism`) still open the default store path when no `--store`
-is supplied, because reading local history is their whole job.
+the no-op store. The explicit `report` companion command still opens the
+default store path when no `--store` is supplied, because reading local history
+is its whole job.
 
-Single-repo companion surfaces can read from the same local store:
+The single-repo companion surface can read from the same local store:
 
-- `faultline history`
 - `faultline report`
-- `faultline history --signature <hash>`
-- `faultline signatures`
-- `faultline verify-determinism <logfile>`
 
 ## What Is Stored
 
@@ -78,7 +74,7 @@ Stored data is intentionally minimal:
 - `signature_hash`
 - normalized signature material
 - `input_hash` and `output_hash`
-- first-class `artifact_json` snapshots for replay, compare, and deterministic
+- first-class `artifact_json` snapshots for deterministic
   remediation handoff
 - first-seen and last-seen times
 - small evidence excerpts, retained as the first matched evidence line
@@ -113,9 +109,8 @@ Normalization rules intentionally remove unstable noise before hashing:
 
 The hash is deterministic SHA-256 over the canonical JSON payload.
 
-The advanced `trace` surface exposes the computed signature and payload for
-inspection. See [Signature Hashing](./signatures.md) for the full design and
-normalization contract.
+See [Signature Hashing](./signatures.md) for the full design and normalization
+contract.
 
 This makes the key stable across common CI noise while keeping unrelated
 failures distinct enough for practical local recurrence tracking.
@@ -143,14 +138,14 @@ When the store is active, Faultline includes:
 - recurrence fields such as `seen_before`, `occurrence_count`,
   `first_seen_at`, and `last_seen_at`
 
-When enabled, the human-readable `analyze` and `trace` surfaces may also show
+When enabled, the human-readable `analyze` surface may also show
 a compact history summary when local history exists for the winning result.
 That enrichment is explicit and additive: it does not silently rerank the
 diagnosis.
 
 That history summary is intentionally concise:
 
-- a short `signature_hash` prefix so users can pivot into `faultline history --signature <hash>`
+- a short `signature_hash` prefix for local forensic comparison
 - a recurrence line such as `seen 3 times over 7d in local history`
 - explicit `first seen` and `last seen` timestamps
 
@@ -182,7 +177,7 @@ Interpret the fields narrowly:
 `occurrence_count` is not a hidden severity score, and it does not change the
 detector result by itself.
 
-## History Commands
+## Report Command
 
 `faultline report` shows the retention-oriented view from the local store:
 
@@ -191,23 +186,9 @@ detector result by itself.
 - last seen timestamp
 - latest example evidence line
 
-`faultline history` shows three additive views from the local store:
-
-- recurring signatures
-- playbook selection frequency, total match frequency, and recurring-run counts
-
-`faultline history --signature <hash>` focuses on one signature and shows:
-
-- recurrence metadata
-- recent stored findings for that signature
-
-`faultline signatures` is the narrowest surface: it just lists stored
-signatures with counts and timestamps so users can pivot into
-`faultline history --signature ...`.
-
-`faultline verify-determinism <logfile>` computes the same canonical
-`input_hash` used during analysis and reports whether stored runs of that input
-produced one stable `output_hash` or drifted across multiple outputs.
+Signature summaries, playbook frequency, and deterministic-output comparison
+remain internal store capabilities used by tests and maintainers. They are not
+separate shipped CLI commands.
 
 ## Maintainer Quality Feedback
 
@@ -254,4 +235,4 @@ shipped now:
 - retention policies
 - flaky/stability heuristics beyond recurrence groundwork
 - richer determinism verification across Faultline versions
-- deeper inspect/guard-specific persistence policy
+- deeper inspect-specific persistence policy

@@ -25,7 +25,7 @@ A critical CI command can fail without propagating a non-zero exit code. The wor
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Run the affected script with a forced failing command and confirm the process exits non-zero.
 
 ## Likely files to inspect

@@ -65,7 +65,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
   - Run the script with the configured shell and confirm it exits successfully.
 scoring:
   blast_radius_bonus: 1.0
@@ -81,8 +81,8 @@ workflow:
     - .gitlab-ci.yml
     - scripts/*.sh
   local_repro:
-    - faultline inspect .
+    - make test
     - "rg -n 'shell: sh|#!/bin/sh' .github/workflows scripts"
   verify:
-    - faultline guard .
+    - make test
     - "sh -n scripts/*.sh"

@@ -47,28 +47,6 @@ type Options struct {
 	RepoPath string
 	// BayesEnabled enables deterministic Bayesian-inspired reranking over matches.
 	BayesEnabled bool
-	// DeltaProvider enables provider-backed failure delta resolution.
-	DeltaProvider string
-	// GitHubRepository identifies the GitHub repository for delta resolution.
-	GitHubRepository string
-	// GitHubBranch identifies the branch for delta resolution.
-	GitHubBranch string
-	// GitHubRunID identifies the current GitHub Actions run.
-	GitHubRunID int64
-	// GitHubToken authenticates GitHub Actions delta API requests.
-	GitHubToken string
-	// GitLabProject identifies the GitLab project for delta resolution.
-	GitLabProject string
-	// GitLabBranch identifies the GitLab branch or ref for delta resolution.
-	GitLabBranch string
-	// GitLabPipelineID identifies the current GitLab pipeline.
-	GitLabPipelineID int64
-	// GitLabJobID identifies the current GitLab job.
-	GitLabJobID int64
-	// GitLabToken authenticates GitLab CI delta API requests.
-	GitLabToken string
-	// GitLabAPIBaseURL overrides the GitLab API v4 base URL.
-	GitLabAPIBaseURL string
 }
 
 // Engine orchestrates log analysis against loaded playbooks.
@@ -77,7 +55,6 @@ type Engine struct {
 	catalog         playbookCatalog
 	registry        detectorRegistry
 	repoSnapshots   repoSnapshotLoader
-	providerDelta   providerDeltaLoader
 	sourceFileStore sourceLoader
 	pbOnce          sync.Once
 	pbCached        []model.Playbook
@@ -100,7 +77,6 @@ func New(opts Options) *Engine {
 		sourceFileStore: defaultSourceLoader{},
 	}
 	engine.repoSnapshots = localRepoSnapshotLoader{engine: engine}
-	engine.providerDelta = providerDeltaResolver{opts: opts}
 	return engine
 }
 
@@ -137,14 +113,13 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	if len(lines) == 0 {
 		return nil, ErrNoInput
 	}
+	currentLog := rawLogFromLines(lines)
 
 	ctx := ExtractContext(lines)
-	currentLog := joinOriginalLines(lines)
 	logDetector, err := e.registry.MustLookup(detectors.KindLog)
 	if err != nil {
 		return nil, err
 	}
-	deltaState := e.providerDelta.Load(currentLog)
 	var snapshot *repoSnapshot
 	if e.opts.GitContextEnabled {
 		snapshot = e.loadDefaultRepoSnapshot()
@@ -177,7 +152,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 	}
 
 	var delta *model.Delta
-	repoState := mergeRepoStates(repoStateFromSnapshot(snapshot), deltaState)
+	repoState := repoStateFromSnapshot(snapshot)
 	if !e.opts.BayesEnabled {
 		delta = scoring.DiagnoseDelta(repoState)
 	} else {
@@ -186,7 +161,7 @@ func (e *Engine) AnalyzeReader(r io.Reader) (*model.Analysis, error) {
 			Lines:          lines,
 			Results:        results,
 			RepoState:      repoState,
-			DeltaRequested: e.deltaRequested(),
+			DeltaRequested: false,
 		})
 		if scoreErr != nil {
 			return nil, scoreErr
@@ -279,7 +254,7 @@ func (e *Engine) AnalyzeRepository(root string, changeSet detectors.ChangeSet) (
 			Results:        results,
 			RepoState:      repoState,
 			ChangeSet:      changeSet,
-			DeltaRequested: e.deltaRequested() || len(changeSet.ChangedFiles) > 0,
+			DeltaRequested: len(changeSet.ChangedFiles) > 0,
 		})
 		if scoreErr != nil {
 			return nil, scoreErr
@@ -531,17 +506,6 @@ func cloneDeltaEnvDiff(in map[string]model.DeltaEnvChange) map[string]model.Delt
 	return out
 }
 
-func (e *Engine) deltaRequested() bool {
-	return strings.TrimSpace(e.opts.DeltaProvider) != ""
-}
-
-func (e *Engine) loadProviderDelta(currentLog string) *scoring.RepoState {
-	if e.providerDelta == nil {
-		return providerDeltaResolver{opts: e.opts}.Load(currentLog)
-	}
-	return e.providerDelta.Load(currentLog)
-}
-
 func changedFilesFromChangeSet(changeSet detectors.ChangeSet) []string {
 	if len(changeSet.ChangedFiles) == 0 {
 		return nil
@@ -671,6 +635,14 @@ func readLines(r io.Reader) ([]model.Line, error) {
 		})
 	}
 	return lines, nil
+}
+
+func rawLogFromLines(lines []model.Line) string {
+	parts := make([]string, 0, len(lines))
+	for _, line := range lines {
+		parts = append(parts, line.Original)
+	}
+	return strings.Join(parts, "\n")
 }
 
 func loadSourceFiles(root string) ([]detectors.SourceFile, error) {

@@ -26,7 +26,7 @@ An async JavaScript or TypeScript function starts a promise-returning operation 
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .` against the repository.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Confirm the unawaited promise finding is resolved and the top source playbook still points at the intended file.
 
 ## Likely files to inspect

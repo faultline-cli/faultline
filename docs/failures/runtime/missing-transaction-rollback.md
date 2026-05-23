@@ -55,7 +55,7 @@ Without the deferred rollback:
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Test that an error on any path before `Commit` releases the connection
   cleanly without exhausting the pool.
 

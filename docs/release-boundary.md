@@ -58,14 +58,14 @@ Faultline ships a deliberately narrow default experience for the next release:
 
 - Diagnose a failing CI log with `faultline analyze`
 - Diagnose several local CI logs with `faultline batch`
+- Inspect a local source tree with `faultline inspect`
 - Turn the winning diagnosis into a deterministic handoff with `faultline workflow`
 - Inspect the bundled catalog with `faultline list` and `faultline explain`
 - Use `faultline fix` when only the top remediation steps are needed
 
 Everything else should either be a bounded companion surface with explicit verification or a hidden maintainer workflow.
-Local recurrence commands such as `report` and `history` remain companion
-surfaces: useful after stored local runs exist, but not part of the first-run
-diagnosis narrative.
+`report` remains a bounded companion surface: useful after stored local runs
+exist, but not part of the first-run diagnosis narrative.
 
 Team commands and Team-enriched modes are intentionally outside this default
 onboarding narrative.
@@ -77,7 +77,9 @@ onboarding narrative.
 - `analyze` text, markdown, and JSON output
 - `batch` text, markdown, and JSON output for local multi-log diagnosis
 - `workflow` local and agent output
+- `inspect` text and JSON output for deterministic source scanning
 - `list` and `explain`
+- `fix` as a narrow remediation view over the top diagnosis
 - bundled playbook catalog under `playbooks/bundled/`
 - checked-in minimal and real fixture corpora
 - deterministic release archives and Docker packaging
@@ -86,22 +88,19 @@ onboarding narrative.
 
 ### Complete Now
 
-- `fix` as a narrow remediation view over the top diagnosis
 - `report` as a local-only recurrence summary over stored `analyze` runs
-- `trace` as an advanced deterministic companion for rule-by-rule evaluation and rejection context
-- `replay` as a deterministic companion for re-rendering saved analysis artifacts
-- `history` as a single-repo forensic-memory companion
-- `inspect` and `guard` as advanced local-prevention companions
-- `packs install` and `packs list` for optional extra catalog composition
+- explicit `--playbook-pack` flags for deterministic local catalog composition
 - hidden `fixtures` commands for corpus curation and maintainer workflows
 
-These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis plus workflow handoff.
+These are supported, but they are not the first-run story. Docs and help text should keep the default emphasis on log diagnosis, source inspection, and workflow handoff.
 
 ### Gate Behind Flag
 
-- provider-backed GitHub Actions and GitLab CI delta via `--delta-provider github-actions|gitlab-ci`
+- provider-backed GitHub Actions and GitLab CI delta
 
-This path remains available only behind the hidden opt-in `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1` (preferred; legacy `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1` is still accepted). It is intentionally excluded from the default help surface and release narrative until it has release-grade coverage equivalent to the core CLI flow.
+This path is removed from the shipped `analyze` surface. It may return later as
+a Team enrichment or sync surface, but it should not live inside the local
+diagnosis path.
 
 ### Team-Gated Commands (Planned)
 
@@ -130,6 +129,8 @@ Core flags should not be license-gated when they only operate on local input.
 - broad "CI automation platform" framing
 - implying that provider-backed delta is part of the standard product path
 - treating repo inspection or pack management as the primary onboarding path
+- reviving hidden command surfaces without deterministic tests, shipped docs,
+  and a clear release-boundary entry
 
 These capabilities may exist, but they should not define the release boundary.
 
@@ -137,16 +138,15 @@ These capabilities may exist, but they should not define the release boundary.
 
 The current roadmap for v0.4 should extend this boundary rather than replace it:
 
-- keep the default narrative centered on `analyze`, `batch`, `workflow`, `list`,
-  `explain`, and `fix`
-- treat managed inheritance as a `packs`-driven capability with explicit sync
-  or update flows, not runtime network fetch during analysis
+- keep the default narrative centered on `analyze`, `batch`, `inspect`,
+  `workflow`, `list`, `explain`, and `fix`
+- treat managed inheritance as explicit local pack composition or a future Team
+  sync flow, not runtime network fetch during analysis
 - keep the authoring assistant hidden and maintainer-only until it has
   deterministic validation equivalent to the existing fixture workflows
 - add reliability metrics and quarantine recommendations first as additive JSON
   and workflow outputs, not as new first-run command surfaces
-- preserve the no-runtime-network expectation for `analyze`, `workflow`, and
-  `trace`
+- preserve the no-runtime-network expectation for `analyze` and `workflow`
 - keep history value explicit in output and companion commands
   rather than turning recurrence into hidden ranking behavior
 
@@ -178,7 +178,7 @@ The repository is release-ready only when all of these stay true:
 
 ## Bayes Promotion
 
-`--bayes` was promoted to the default in v0.4.5. The Bayesian-inspired reranking layer is now active by default on all analysis commands (`analyze`, `trace`, `workflow`, `inspect`). Pass `--bayes=false` to disable it and revert to the deterministic baseline scorer.
+`--bayes` was promoted to the default in v0.4.5. The Bayesian-inspired reranking layer is now active by default on the shipped analysis commands (`analyze`, `workflow`). Pass `--bayes=false` to disable it and revert to the deterministic baseline scorer.
 
 Promotion criteria satisfied before v0.4.5:
 

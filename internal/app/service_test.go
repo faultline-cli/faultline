@@ -131,126 +131,6 @@ func TestAnalyzeNoMatchReturnsNoError(t *testing.T) {
 	}
 }
 
-func TestAnalyzeTraceOutput(t *testing.T) {
-	svc := NewService()
-	log := "exec /__e/node20/bin/node: no such file or directory\n"
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	opts.ShowScoring = true
-	var buf bytes.Buffer
-
-	err := svc.Analyze(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Analyze trace: %v", err)
-	}
-	for _, want := range []string{"TRACE", "missing-executable", "Rule Evaluation", "Score"} {
-		if !strings.Contains(buf.String(), want) {
-			t.Fatalf("expected %q in trace output, got:\n%s", want, buf.String())
-		}
-	}
-}
-
-func TestAnalyzeTraceViewOutput(t *testing.T) {
-	svc := NewService()
-	log := "exec /__e/node20/bin/node: no such file or directory\n"
-	opts := baseOpts()
-	opts.View = output.ViewTrace
-	var buf bytes.Buffer
-
-	err := svc.Analyze(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Analyze trace view: %v", err)
-	}
-	for _, want := range []string{"TRACE", "missing-executable", "Rule Evaluation"} {
-		if !strings.Contains(buf.String(), want) {
-			t.Fatalf("expected %q in trace view output, got:\n%s", want, buf.String())
-		}
-	}
-}
-
-func TestTraceSpecificPlaybookWithoutWinningMatch(t *testing.T) {
-	svc := NewService()
-	log := "pull access denied\nError response from daemon: authentication required\n"
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	opts.TracePlaybook = "missing-executable"
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Trace specific playbook: %v", err)
-	}
-	for _, want := range []string{"TRACE  missing-executable", "Outcome: not matched", "Rule Evaluation"} {
-		if !strings.Contains(buf.String(), want) {
-			t.Fatalf("expected %q in specific trace output, got:\n%s", want, buf.String())
-		}
-	}
-}
-
-func TestTraceEmptyInputReturnsErrNoInput(t *testing.T) {
-	svc := NewService()
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader(""), "trace.log", opts, &buf)
-	if !errors.Is(err, engine.ErrNoInput) {
-		t.Fatalf("expected engine.ErrNoInput for empty input, got %v", err)
-	}
-}
-
-func TestTraceSelectOnNoMatchErrors(t *testing.T) {
-	svc := NewService()
-	// A log with no match plus Select=1 causes tracePlaybookID to return an error.
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	opts.Select = 1
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader("everything is perfectly fine\n"), "trace.log", opts, &buf)
-	if err == nil {
-		t.Fatal("expected error for Select=1 with no matching result")
-	}
-}
-
-func TestReplayRendersSavedAnalysis(t *testing.T) {
-	svc := NewService()
-	log := "pull access denied\nError response from daemon: authentication required\n"
-	artifactOpts := baseOpts()
-	artifactOpts.JSON = true
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
-		t.Fatalf("Analyze to artifact: %v", err)
-	}
-
-	replayOpts := baseOpts()
-	replayOpts.Format = output.FormatMarkdown
-	replayOpts.Mode = output.ModeDetailed
-	var replay bytes.Buffer
-	if err := svc.Replay(strings.NewReader(artifact.String()), replayOpts, &replay); err != nil {
-		t.Fatalf("Replay: %v", err)
-	}
-	if !strings.Contains(replay.String(), "# Docker registry authentication failure") {
-		t.Fatalf("expected replay markdown heading, got:\n%s", replay.String())
-	}
-}
-
-func TestReplayRejectsTraceForAnalysisArtifact(t *testing.T) {
-	svc := NewService()
-	artifact := `{"matched":true,"results":[{"rank":1,"failure_id":"docker-auth","title":"Docker auth","category":"auth","score":1,"confidence":1,"evidence":["authentication required"]}]}`
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	var buf bytes.Buffer
-
-	err := svc.Replay(strings.NewReader(artifact), opts, &buf)
-	if err == nil {
-		t.Fatal("expected replay trace error")
-	}
-	if !strings.Contains(err.Error(), "replay trace is not supported") {
-		t.Fatalf("unexpected replay trace error: %v", err)
-	}
-}
-
 func TestAnalyzeEvidenceView(t *testing.T) {
 	svc := NewService()
 	log := "pull access denied\nError response from daemon: authentication required\n"
@@ -265,27 +145,6 @@ func TestAnalyzeEvidenceView(t *testing.T) {
 		if !strings.Contains(buf.String(), want) {
 			t.Fatalf("expected %q in evidence view, got:\n%s", want, buf.String())
 		}
-	}
-}
-
-func TestReplayFixView(t *testing.T) {
-	svc := NewService()
-	log := "pull access denied\nError response from daemon: authentication required\n"
-	artifactOpts := baseOpts()
-	artifactOpts.JSON = true
-	var artifact bytes.Buffer
-	if err := svc.Analyze(context.Background(), strings.NewReader(log), "stdin", artifactOpts, &artifact); err != nil {
-		t.Fatalf("Analyze to artifact: %v", err)
-	}
-
-	replayOpts := baseOpts()
-	replayOpts.View = output.ViewFix
-	var replay bytes.Buffer
-	if err := svc.Replay(strings.NewReader(artifact.String()), replayOpts, &replay); err != nil {
-		t.Fatalf("Replay fix view: %v", err)
-	}
-	if !strings.Contains(replay.String(), "Fix Steps") {
-		t.Fatalf("expected fix-only replay output, got:\n%s", replay.String())
 	}
 }
 
@@ -605,7 +464,7 @@ match:
 
 func TestInspectUsesScopedWorktreeDiffForSubdirectory(t *testing.T) {
 	svc := NewService()
-	repoDir := writeServiceGuardRepo(t)
+	repoDir := writeServiceSourceFindingRepo(t)
 	opts := baseOpts()
 	opts.JSON = true
 	var buf bytes.Buffer
@@ -640,36 +499,6 @@ func TestInspectUsesScopedWorktreeDiffForSubdirectory(t *testing.T) {
 	files, ok := delta["files_changed"].([]any)
 	if !ok || len(files) != 1 || files[0] != "handler.go" {
 		t.Fatalf("expected subdir-scoped changed file, got %#v", delta["files_changed"])
-	}
-}
-
-func TestGuardQuietOnCleanRepo(t *testing.T) {
-	svc := NewService()
-	repoDir := writeServiceTempRepo(t)
-	opts := baseOpts()
-	var buf bytes.Buffer
-
-	err := svc.Guard(repoDir, opts, &buf)
-	if err != nil {
-		t.Fatalf("Guard clean repo: %v", err)
-	}
-	if buf.Len() != 0 {
-		t.Fatalf("expected quiet guard output, got %q", buf.String())
-	}
-}
-
-func TestGuardReturnsFindingsError(t *testing.T) {
-	svc := NewService()
-	repoDir := writeServiceGuardRepo(t)
-	opts := baseOpts()
-	var buf bytes.Buffer
-
-	err := svc.Guard(repoDir, opts, &buf)
-	if !errors.Is(err, ErrGuardFindings) {
-		t.Fatalf("expected ErrGuardFindings, got %v", err)
-	}
-	if !strings.Contains(buf.String(), "panic-in-http-handler") {
-		t.Fatalf("expected guard finding in output, got %q", buf.String())
 	}
 }
 
@@ -754,7 +583,7 @@ func writeServiceTempRepo(t *testing.T) string {
 	return dir
 }
 
-func writeServiceGuardRepo(t *testing.T) string {
+func writeServiceSourceFindingRepo(t *testing.T) string {
 	t.Helper()
 	dir := writeServiceTempRepo(t)
 	handlerPath := filepath.Join(dir, "api", "handler.go")
@@ -886,61 +715,6 @@ func TestFixJSONOutput(t *testing.T) {
 	var payload map[string]any
 	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
 		t.Fatalf("unmarshal fix JSON: %v", err)
-	}
-}
-
-// ── Trace (JSON and Markdown format variants) ─────────────────────────────────
-
-func TestTraceJSONOutput(t *testing.T) {
-	svc := NewService()
-	log := "exec /__e/node20/bin/node: no such file or directory\n"
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	opts.JSON = true
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Trace JSON: %v", err)
-	}
-	var payload map[string]any
-	if err := json.Unmarshal([]byte(strings.TrimSpace(buf.String())), &payload); err != nil {
-		t.Fatalf("unmarshal trace JSON: %v", err)
-	}
-}
-
-func TestTraceMarkdownOutput(t *testing.T) {
-	svc := NewService()
-	log := "exec /__e/node20/bin/node: no such file or directory\n"
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	opts.Format = output.FormatMarkdown
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Trace markdown: %v", err)
-	}
-	if !strings.HasPrefix(buf.String(), "#") {
-		t.Errorf("expected markdown heading in trace output, got:\n%s", buf.String()[:min(100, buf.Len())])
-	}
-}
-
-func TestTraceNoMatchWritesAnalysisOutput(t *testing.T) {
-	svc := NewService()
-	// A log that matches nothing ensures playbookID == "" inside Trace.
-	log := "everything is completely fine and normal\n"
-	opts := baseOpts()
-	opts.TraceEnabled = true
-	var buf bytes.Buffer
-
-	err := svc.Trace(context.Background(), strings.NewReader(log), "trace.log", opts, &buf)
-	if err != nil {
-		t.Fatalf("Trace no-match: %v", err)
-	}
-	// writeAnalysis should produce output even on no-match.
-	if buf.Len() == 0 {
-		t.Error("expected non-empty output even when no playbook matches")
 	}
 }
 
@@ -1184,33 +958,6 @@ func TestHistorySignatureTwoOccurrencesText(t *testing.T) {
 	}
 }
 
-// ── Replay error paths ───────────────────────────────────────────────────────
-
-func TestReplayInvalidJSONReturnsError(t *testing.T) {
-	svc := NewService()
-	var buf bytes.Buffer
-	err := svc.Replay(strings.NewReader("not valid json"), baseOpts(), &buf)
-	if err == nil {
-		t.Fatal("expected error for invalid JSON input")
-	}
-}
-
-func TestReplayViewTraceReturnsError(t *testing.T) {
-	svc := NewService()
-	artifact := `{"matched":true,"results":[{"rank":1,"failure_id":"docker-auth","title":"Docker auth","category":"auth","score":1,"confidence":1,"evidence":["authentication required"]}]}`
-	opts := baseOpts()
-	opts.View = output.ViewTrace
-	var buf bytes.Buffer
-
-	err := svc.Replay(strings.NewReader(artifact), opts, &buf)
-	if err == nil {
-		t.Fatal("expected error for ViewTrace replay")
-	}
-	if !strings.Contains(err.Error(), "replay trace is not supported") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
 // ── FixturesIngest ────────────────────────────────────────────────────────────
 
 func TestFixturesIngestEmptyURLsSucceeds(t *testing.T) {
@@ -1451,25 +1198,6 @@ func TestFixturesStatsJSONOutput(t *testing.T) {
 	}
 	if buf.Len() == 0 {
 		t.Error("expected non-empty stats output")
-	}
-}
-
-// ── Guard: non-git-repo falls back to quiet output ────────────────────────────
-
-func TestGuardNonGitRepoQuiet(t *testing.T) {
-	svc := NewService()
-	// A plain temp dir (no git init) → repo.NewScanner fails → writeGuardNoFindings
-	plainDir := t.TempDir()
-	opts := baseOpts()
-	var buf bytes.Buffer
-
-	err := svc.Guard(plainDir, opts, &buf)
-	if err != nil {
-		t.Fatalf("Guard non-git-repo: expected nil, got %v", err)
-	}
-	// writeGuardNoFindings should produce empty output (quiet mode)
-	if buf.Len() != 0 {
-		t.Fatalf("expected quiet output for non-git-repo guard, got %q", buf.String())
 	}
 }
 

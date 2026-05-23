@@ -62,9 +62,6 @@ Those commands correspond to these checked-in snapshots:
 
 - `examples/missing-executable.workflow.local.txt`
 - `examples/missing-executable.workflow.agent.json`
-- `examples/missing-executable.replay.expected.md`
-- `examples/missing-executable.trace.expected.md`
-- `examples/missing-vs-runtime.compare.expected.md`
 
 To refresh the checked-in example outputs after a renderer, workflow, or playbook change:
 
@@ -77,21 +74,12 @@ cat examples/missing-executable.log | ./bin/faultline workflow --no-history --gi
 cat examples/missing-executable.log | ./bin/faultline workflow --json --mode agent --no-history --git=false > examples/missing-executable.workflow.agent.json
 cat examples/missing-executable.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/missing.analysis.json
 cat examples/runtime-mismatch.log | ./bin/faultline analyze --json --no-history --git=false > /tmp/runtime.analysis.json
-./bin/faultline replay --format markdown --mode detailed /tmp/missing.analysis.json > examples/missing-executable.replay.expected.md
-cat examples/missing-executable.log | ./bin/faultline trace --format markdown --playbook missing-executable --no-history --git=false > examples/missing-executable.trace.expected.md
-./bin/faultline compare --format markdown /tmp/missing.analysis.json /tmp/runtime.analysis.json > examples/missing-vs-runtime.compare.expected.md
 ```
 
 For the full playbook behind a diagnosis:
 
 ```bash
 ./bin/faultline explain docker-auth
-```
-
-For a quiet high-confidence local prevention check in a repository:
-
-```bash
-./bin/faultline guard .
 ```
 
 ## Coverage snapshot

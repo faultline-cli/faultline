@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
@@ -12,34 +11,25 @@ import (
 
 func newAnalyzeCommand() *cobra.Command {
 	var (
-		jsonOut          bool
-		top              int
-		mode             string
-		format           string
-		view             string
-		playbookDir      string
-		playbookPacks    []string
-		history          bool
-		noHistory        bool
-		noStore          bool
-		storePath        string
-		gitContext       bool
-		gitSince         string
-		repoPath         string
-		bayes            bool
-		selectRank       int
-		showEvidence     bool
-		showScoring      bool
-		deltaProvider    string
-		githubRepo       string
-		githubBranch     string
-		githubRunID      int64
-		gitlabProject    string
-		gitlabBranch     string
-		gitlabPipelineID int64
-		gitlabJobID      int64
-		gitlabAPIBaseURL string
-		failOnSilent     bool
+		jsonOut       bool
+		top           int
+		mode          string
+		format        string
+		view          string
+		playbookDir   string
+		playbookPacks []string
+		history       bool
+		noHistory     bool
+		noStore       bool
+		storePath     string
+		gitContext    bool
+		gitSince      string
+		repoPath      string
+		bayes         bool
+		selectRank    int
+		showEvidence  bool
+		showScoring   bool
+		failOnSilent  bool
 	)
 
 	cmd := &cobra.Command{
@@ -69,9 +59,6 @@ func newAnalyzeCommand() *cobra.Command {
 				return err
 			}
 			if err := validateSelect(selectRank); err != nil {
-				return err
-			}
-			if err := validateExperimentalDeltaProvider(deltaProvider); err != nil {
 				return err
 			}
 			resolvedFormat, resolvedJSON, err := resolveOutputSelection(format, jsonOut)
@@ -105,19 +92,6 @@ func newAnalyzeCommand() *cobra.Command {
 					GitSince:          gitSince,
 					RepoPath:          repoPath,
 				},
-				DeltaOptions: app.DeltaOptions{
-					DeltaProvider:    deltaProvider,
-					GitHubRepository: firstNonEmpty(githubRepo, os.Getenv("GITHUB_REPOSITORY")),
-					GitHubBranch:     firstNonEmpty(githubBranch, os.Getenv("GITHUB_REF_NAME")),
-					GitHubRunID:      firstInt64(githubRunID, os.Getenv("GITHUB_RUN_ID")),
-					GitHubToken:      firstNonEmpty(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")),
-					GitLabProject:    firstNonEmpty(gitlabProject, os.Getenv("CI_PROJECT_ID"), os.Getenv("CI_PROJECT_PATH")),
-					GitLabBranch:     firstNonEmpty(gitlabBranch, os.Getenv("CI_COMMIT_REF_NAME")),
-					GitLabPipelineID: firstInt64(gitlabPipelineID, os.Getenv("CI_PIPELINE_ID")),
-					GitLabJobID:      firstInt64(gitlabJobID, os.Getenv("CI_JOB_ID")),
-					GitLabToken:      firstNonEmpty(os.Getenv("GITLAB_TOKEN"), os.Getenv("GITLAB_PRIVATE_TOKEN"), os.Getenv("CI_JOB_TOKEN")),
-					GitLabAPIBaseURL: firstNonEmpty(gitlabAPIBaseURL, os.Getenv("CI_API_V4_URL"), deriveGitLabAPIBaseURL(os.Getenv("CI_SERVER_URL"))),
-				},
 				PlaybookDir:      playbookDir,
 				PlaybookPackDirs: playbookPacks,
 				BayesEnabled:     bayes,
@@ -146,25 +120,7 @@ func newAnalyzeCommand() *cobra.Command {
 	cmd.Flags().IntVar(&selectRank, "select", 0, "render only the Nth ranked result (1-based)")
 	cmd.Flags().BoolVar(&showEvidence, "show-evidence", false, "include a raw evidence appendix when supported")
 	cmd.Flags().BoolVar(&showScoring, "show-scoring", false, "include scoring detail when supported")
-	cmd.Flags().StringVar(&deltaProvider, "delta-provider", "", "enable provider-backed failure delta resolution (currently: github-actions|gitlab-ci)")
-	cmd.Flags().StringVar(&githubRepo, "github-repo", "", "GitHub repository for --delta-provider github-actions (defaults to GITHUB_REPOSITORY)")
-	cmd.Flags().StringVar(&githubBranch, "github-branch", "", "GitHub branch for --delta-provider github-actions (defaults to GITHUB_REF_NAME)")
-	cmd.Flags().Int64Var(&githubRunID, "github-run-id", 0, "GitHub Actions run ID for --delta-provider github-actions (defaults to GITHUB_RUN_ID)")
-	cmd.Flags().StringVar(&gitlabProject, "gitlab-project", "", "GitLab project path or numeric project ID for --delta-provider gitlab-ci (defaults to CI_PROJECT_ID/CI_PROJECT_PATH)")
-	cmd.Flags().StringVar(&gitlabBranch, "gitlab-branch", "", "GitLab ref for --delta-provider gitlab-ci (defaults to CI_COMMIT_REF_NAME)")
-	cmd.Flags().Int64Var(&gitlabPipelineID, "gitlab-pipeline-id", 0, "GitLab pipeline ID for --delta-provider gitlab-ci (defaults to CI_PIPELINE_ID)")
-	cmd.Flags().Int64Var(&gitlabJobID, "gitlab-job-id", 0, "GitLab job ID for --delta-provider gitlab-ci (defaults to CI_JOB_ID)")
-	cmd.Flags().StringVar(&gitlabAPIBaseURL, "gitlab-api-base-url", "", "GitLab API v4 base URL for --delta-provider gitlab-ci (defaults to CI_API_V4_URL)")
 	cmd.Flags().BoolVar(&failOnSilent, "fail-on-silent", false, "exit non-zero when a silent failure is detected")
-	_ = cmd.Flags().MarkHidden("delta-provider")
-	_ = cmd.Flags().MarkHidden("github-repo")
-	_ = cmd.Flags().MarkHidden("github-branch")
-	_ = cmd.Flags().MarkHidden("github-run-id")
-	_ = cmd.Flags().MarkHidden("gitlab-project")
-	_ = cmd.Flags().MarkHidden("gitlab-branch")
-	_ = cmd.Flags().MarkHidden("gitlab-pipeline-id")
-	_ = cmd.Flags().MarkHidden("gitlab-job-id")
-	_ = cmd.Flags().MarkHidden("gitlab-api-base-url")
 	_ = cmd.Flags().MarkHidden("no-history")
 	_ = cmd.Flags().MarkHidden("no-store")
 	_ = cmd.Flags().MarkHidden("store")
@@ -177,7 +133,7 @@ func validateAnalyzeView(value string) (output.View, error) {
 		return "", fmt.Errorf("--view must be %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw)
 	}
 	if view == output.ViewTrace {
-		return "", fmt.Errorf("--view trace was removed from analyze; use `faultline trace` instead")
+		return "", fmt.Errorf("--view trace was removed from analyze; use --show-evidence or --show-scoring for diagnostics")
 	}
 	return view, nil
 }

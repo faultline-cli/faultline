@@ -6,28 +6,20 @@ explicit deterministic layers:
 - `internal/cli` owns Cobra command definitions, flags, stdin/file handling,
   the internal command-surface manifest, and handing structured options into
   the app layer.
-- `internal/app` owns command use-cases such as analyze, inspect, fix, list,
-  explain, workflow, guard, compare, replay, trace, and fixture-corpus operations.
+- `internal/app` owns command use-cases such as analyze, fix, list, explain,
+  workflow, inspect, report, batch, and maintainer fixture workflows.
   Command methods should stay thin: shared log-analysis orchestration lives in
   `internal/app/analysis_pipeline.go`, while source-analysis companion flows
   live in `internal/app/source_analysis.go`.
 - `internal/artifact` owns construction of the first-class `FailureArtifact`
-  used for replay, compare, storage, and remediation handoff.
+  used for storage, replay, and remediation handoff.
 - `internal/store` owns optional durable local forensic memory, deterministic
   signature hashing, SQLite persistence, and explicit schema migrations.
-- `internal/authoring` owns the hidden maintainer-only scaffold flow that turns
-  a sanitized log into a deterministic candidate playbook YAML.
-- `internal/compare` owns deterministic diffing of two saved analysis artifacts
-  into a structured `Report` (diagnosis change, evidence delta, repo-context
-  delta, and delta-signal changes).
 - `internal/engine` owns analysis orchestration and depends on explicit
   collaborators for playbook catalogs, detector lookup, source loading, and
   git enrichment. It does not own persistence.
 - `internal/workflow` owns deterministic workflow handoff generation for the
   top-level `faultline workflow` command.
-- `internal/engine/delta` owns explicit provider-backed failure delta
-  resolution and minimal cross-run extraction such as changed files and newly
-  failing tests.
 - `internal/fixtures` owns deterministic fixture corpora, public-source
   ingestion adapters, normalization, review metadata, promotion flow, and
   regression statistics.
@@ -35,24 +27,21 @@ explicit deterministic layers:
   It derives fixture evidence from corpus expectations, including positive
   matches, near-miss or disallowed-playbook assertions, and strict top-1
   requirements. The CLI should not infer coverage from fixture filenames alone.
-- `internal/metrics` owns deterministic reliability metric calculation from
-  explicit local history and optional supplied history artifacts.
 - `internal/detectors` owns the detector registry plus the distinct `log` and
   `source` detector implementations.
 - `internal/playbooks` owns catalog resolution, YAML loading, validation, and
   deterministic review helpers. Bundled overlap review is gated by a checked-in
   baseline so intentional shared patterns are explicit.
-- `internal/policy` owns the advisory recommendation layer derived from metrics.
 - `internal/scoring` owns the optional Bayesian-inspired evidence-fusion layer
   used for additive reranking explanations and delta diagnosis.
 - `internal/output` owns command-facing output selection plus JSON/workflow
-  serialization, focused views (`--view summary|evidence|fix|raw`), compare
-  formatting, and evidence-only views.
+  serialization, focused views (`--view summary|evidence|fix|raw`), and
+  evidence-only views.
 - `internal/renderer` owns terminal-aware human rendering, including quick
   (default) and detailed modes, plain fallback, markdown rendering, and
   restrained ANSI styling.
-- `internal/trace` owns per-playbook rule-by-rule trace payloads used by
-  `faultline trace`.
+- `internal/trace` owns rule-by-rule trace payloads used by internal
+  diagnostics and tests.
 
 ## Playbook boundary
 
@@ -70,13 +59,10 @@ external path.
 
 Additional packs can be composed on top of the bundled catalog through
 the `FAULTLINE_PLAYBOOK_PACKS` environment variable or repeatable
-`--playbook-pack` flags. Faultline also auto-loads any packs installed under
-`~/.faultline/packs/`, which is the persistent user-level install path for
-extra playbook packs. A full `--playbooks` override still resolves a single
+`--playbook-pack` flags. A full `--playbooks` override still resolves a single
 custom catalog root and does not combine with extra packs.
 
-Installed packs record a small manifest at install time so the analysis object
-can carry deterministic provenance:
+Packs can carry deterministic provenance in analysis JSON:
 
 - pack name
 - version
@@ -85,18 +71,12 @@ can carry deterministic provenance:
 - playbook count contributed by that pack
 
 This provenance is additive. It does not change matching; it makes the loaded
-catalog auditable in analysis JSON and `packs list`.
-
-For local validation against an external pack checkout, the repository can use
-the ignored symlink at `playbooks/packs/extra-local` or an explicit
-`EXTRA_PACK_DIR` value. The corresponding deterministic checks are
-`make extra-pack-check` and `make extra-pack-review`.
+catalog auditable in analysis JSON.
 
 Bundled catalog composition should stay generous for adoption: broad coverage for
-common CI failures across popular ecosystems, plus a minimal source-detector
-baseline so `inspect` is useful without an extra install. Extra packs can
-concentrate on provider-specific depth, advanced deployment or operations
-workflows, and deeper source or security rules.
+common CI failures across popular ecosystems. Extra packs can concentrate on
+provider-specific depth, advanced deployment or operations workflows, and deeper
+source or security rules.
 
 Playbooks can now also form a deterministic inheritance graph across the
 composed pack set through `extends: <playbook-id>`. The boundary stays narrow:
@@ -134,9 +114,9 @@ This is the intended scaling path for playbooks:
 That keeps the catalog composable without losing the deterministic one-rule,
 one-root-cause discipline.
 
-This same `~/.faultline/packs/` convention is used by the Docker image at
-`/home/faultline/.faultline/packs`, so a mounted user directory can enable the
-same installed pack set in both local and containerized runs.
+Pack composition is explicit per run. Mounted pack directories work in local
+and containerized runs by passing the same `--playbook-pack` path or
+`FAULTLINE_PLAYBOOK_PACKS` value.
 
 ## Fixture ingestion boundary
 
@@ -184,7 +164,7 @@ When enabled, the store records durable forensic memory such as:
 
 - top-diagnosis recurrence by `signature_hash`
 - run-level `input_hash` and `output_hash`
-- first-class `artifact_json` snapshots for replayable failure artifacts
+- first-class `artifact_json` snapshots for deterministic failure artifacts
 - ranked playbook matches for longitudinal review
 
 The store does not become a generic raw-log warehouse. When active, it stores
@@ -200,7 +180,7 @@ Faultline now has an explicit three-layer ranking model:
 2. `internal/scoring` may rerank those already-matched candidates when
    Bayesian reranking is active, and it only emits delta hints when repo-aware context
    is explicit
-3. output, workflow, and guard consume the final deterministic ordering
+3. output and workflow consume the final deterministic ordering
 
 That boundary matters:
 
@@ -209,9 +189,7 @@ That boundary matters:
 - same input and same repo snapshot still produce the same output
 - ranking and delta payloads are additive and explainable
 - changed files are suspicious context, not proof on their own
-- provider-backed delta remains opt-in and should stay narrow: compare the
-  current failing run against the last successful run on the same branch,
-  extract deterministic diffs, and feed them back into the same scoring model
+- provider-backed delta is outside the shipped local diagnosis path
 
 ## Rendering boundary
 
@@ -226,10 +204,9 @@ as `summary`, `diagnosis`, `fix`, and
 - `--view summary|evidence|fix|raw` selects a focused slice of the human-readable output
   without changing the underlying analysis; `summary` and `raw` map to quick and
   detailed rendering modes respectively; `evidence` and `fix` emit narrow single-purpose
-  slices of the top result. Rule-by-rule evaluation is exposed through the dedicated
-  `faultline trace` command.
-- replayed analysis artifacts support `summary|evidence|fix|raw`; trace replay requires a
-  saved trace artifact or rerunning `faultline trace` on the original log
+  slices of the top result.
+- Rule-by-rule evaluation and artifact re-rendering remain internal
+  diagnostics, not separate shipped command surfaces.
 - non-TTY and no-color environments fall back to plain output
 
 The stable analysis JSON schema is additive. Beyond the ranked results, it may
@@ -244,7 +221,8 @@ also include:
 - result-level `signature_hash` and recurrence fields
   when local history is enabled
 
-Saved analysis artifacts preserve those fields on replay and compare.
+Saved analysis artifacts preserve those fields for deterministic handoff and
+internal regression checks.
 
 Analysis JSON now also carries an additive first-class `artifact` object that
 collapses the winning diagnosis or structured unknown state into one stable
@@ -271,17 +249,6 @@ When present, JSON and text workflow output may also carry:
 Absent data remains absent. Faultline does not invent placeholder values for
 missing history or policy inputs.
 
-## Compare boundary
-
-`faultline compare` is a deterministic companion for diffing two saved analysis
-artifacts (produced by `faultline analyze --json` or `faultline replay --json`).
-It does not re-run analysis; it only compares the stored payloads.
-
-- diagnosis change is detected by comparing the top `failure_id` across both artifacts
-- evidence, repo context, and delta-signal fields are diffed as ordered string sets
-- output is stable and machine-readable with `--json`, or human-readable via terminal and markdown format
-- the compare report is intentionally narrow: it surfaces what changed, not why
-
 ## Architectural gates (pre-Team Phase 1)
 
 Two structural decisions must be made before Team Phase 1 features land. They
@@ -289,8 +256,8 @@ are recorded here so they remain visible and do not drift into undecided state.
 
 ### `internal/app` sub-package decomposition
 
-`internal/app` owns eleven use-cases today (analyze, inspect, fix, list, explain,
-workflow, guard, compare, replay, trace, fixture-corpus). As Team features arrive,
+`internal/app` owns the shipped core use-cases plus maintainer fixture workflows.
+As Team features arrive,
 new use-cases must not land in `internal/app` without first establishing a
 sub-package boundary. The pattern to follow:
 

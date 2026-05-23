@@ -17,8 +17,8 @@ Use `log` playbooks when the failure signature is visible in build output and
 should be diagnosable from a CI log alone.
 
 Use `source` playbooks when the risk is visible from repository structure or
-code paths before a CI log exists. In the shipped CLI, `inspect` and `guard`
-are the main source-detector surfaces.
+code paths before a CI log exists. In the shipped CLI, `inspect` is the core
+source-detector surface.
 
 ## Source playbook schema
 
@@ -67,19 +67,16 @@ The output keeps the full evidence split for explainability:
 - suppressions
 - context
 
-Source playbooks currently live under `playbooks/bundled/source/`. Use
-`faultline inspect .` to exercise the full source detector against a repository
-tree and `faultline guard .` when you only want quiet, high-confidence local
-prevention findings. When the inspected path lives inside a git worktree,
-`inspect` and `guard` also use the local diff when available so changed files
-and line-level edits can be scored as introduced or modified rather than only
-as legacy repository risk. Positive and mitigated repository fixtures for the
+Source playbooks currently live under `playbooks/bundled/source/` for the
+core `inspect` command. When the inspected path lives inside a git worktree,
+the source detector can use the local diff when available so changed files and
+line-level edits can be scored as introduced or modified rather than only as
+legacy repository risk. Positive and mitigated repository fixtures for the
 shipped source rules live under `internal/engine/testdata/source/` and are
 validated in `internal/engine/source_playbook_fixtures_test.go`.
 The repository scan skips dependency and generated-output trees such as `.git/`,
-`node_modules/`, `vendor/`, `.venv/`, `venv/`, and `dist/` so `inspect` and
-`guard` stay focused on the
-repository's own source rather than bundled tooling copies. It includes common
+`node_modules/`, `vendor/`, `.venv/`, `venv/`, and `dist/` so source diagnostics
+stay focused on the repository's own source rather than bundled tooling copies. It includes common
 source files, workflow YAML, shell scripts, and `Dockerfile`.
 
 Shipped source playbooks should also carry deterministic `workflow.likely_files`,

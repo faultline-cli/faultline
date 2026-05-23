@@ -23,9 +23,9 @@ func newInspectCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "inspect [path]",
-		Short: "Inspect a repository tree for source-level failure risks",
-		Args:  cobra.MaximumNArgs(1),
+		Use:    "inspect [path]",
+		Short:  "Inspect a repository tree for source-level failure risks",
+		Args:   cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := validateOutputMode(mode); err != nil {
 				return err

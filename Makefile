@@ -7,10 +7,7 @@ LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
 WITH_DOCKER ?= 0
-EXTRA_PACK_DIR ?=
-EXTRA_PACK_LINK ?= playbooks/packs/extra-local
-
-.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets extra-pack-path extra-pack-link extra-pack-check extra-pack-review smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist docs-generate docs-check stats-check
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist docs-generate docs-check stats-check
 
 help:
 	@printf "%s\n" "Targets:" \
@@ -90,22 +87,6 @@ review-verbose:
 review-update:
 	$(GO) run ./cmd fixtures patterns --update-baseline
 
-extra-pack-path:
-	@EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh
-
-extra-pack-link:
-	@mkdir -p "$$(dirname "$(EXTRA_PACK_LINK)")"
-	@ln -sfn ../../../faultline-extra-pack "$(EXTRA_PACK_LINK)"
-	@printf "%s\n" "linked $(EXTRA_PACK_LINK) -> ../../../faultline-extra-pack"
-
-extra-pack-check:
-	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
-	$(GO) run ./cmd fixtures pack-check --pack "$$resolved"
-
-extra-pack-review:
-	@resolved="$$(EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh)" && \
-	$(GO) run ./cmd fixtures pack-check --pack "$$resolved" --review
-
 smoke-release:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) sh ./scripts/smoke-release.sh
 
@@ -113,11 +94,6 @@ release-snapshot:
 	VERSION=$(VERSION) OUTPUT_DIR=$(RELEASE_OUTPUT) ./scripts/release-build.sh
 
 release-check: test fixture-check bayes-check review docs-check cli-smoke release-snapshot smoke-release
-	@if EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)" sh ./scripts/resolve-extra-pack.sh >/dev/null 2>&1; then \
-		$(MAKE) extra-pack-check EXTRA_PACK_DIR="$(EXTRA_PACK_DIR)"; \
-	else \
-		printf "%s\n" "skipping extra-pack-check (set EXTRA_PACK_DIR, run make extra-pack-link, or set an explicit extra pack path)"; \
-	fi
 	@if [ "$(WITH_DOCKER)" = "1" ]; then \
 		$(MAKE) docker-smoke IMAGE=$(IMAGE); \
 	else \

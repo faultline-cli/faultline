@@ -2,8 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"faultline/internal/output"
 )
@@ -21,14 +19,6 @@ func validateOutputMode(value string) error {
 		return fmt.Errorf("--mode must be %q or %q", output.ModeQuick, output.ModeDetailed)
 	}
 	return nil
-}
-
-func validateView(value string) (output.View, error) {
-	view, ok := output.ParseView(value)
-	if !ok {
-		return "", fmt.Errorf("--view must be %q, %q, %q, %q, or %q", output.ViewSummary, output.ViewEvidence, output.ViewFix, output.ViewRaw, output.ViewTrace)
-	}
-	return view, nil
 }
 
 func validateSelect(value int) error {
@@ -50,18 +40,4 @@ func resolveOutputSelection(formatValue string, jsonOut bool) (output.Format, bo
 		format = output.FormatJSON
 	}
 	return format, format == output.FormatJSON, nil
-}
-
-func validateExperimentalDeltaProvider(provider string) error {
-	provider = strings.TrimSpace(provider)
-	if provider == "" {
-		return nil
-	}
-	if strings.TrimSpace(os.Getenv(experimentalProviderDeltaEnv)) == "1" {
-		return nil
-	}
-	if strings.TrimSpace(os.Getenv(experimentalGitHubDeltaEnv)) == "1" {
-		return nil
-	}
-	return fmt.Errorf("--delta-provider is experimental; set %s=1 (preferred) or %s=1 (legacy) to enable it explicitly", experimentalProviderDeltaEnv, experimentalGitHubDeltaEnv)
 }

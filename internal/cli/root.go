@@ -6,8 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const experimentalProviderDeltaEnv = "FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA"
-const experimentalGitHubDeltaEnv = "FAULTLINE_EXPERIMENTAL_GITHUB_DELTA"
 const storeEnv = "FAULTLINE_STORE"
 
 // NewRootCommand builds the Faultline CLI command tree.
@@ -19,13 +17,13 @@ func NewRootCommand(version string) *cobra.Command {
 			"Faultline turns CI logs into deterministic diagnoses.",
 			"It returns evidence-backed explanations, concrete fixes, and stable output for automation.",
 			"",
-			"The core release flow is: analyze a failing log, inspect the top playbook,",
-			"and generate a deterministic follow-up workflow when you need handoff-ready output.",
+			"The core release flow is: analyze a failing log, inspect source when the risk is repository-visible, and generate deterministic follow-up output.",
 		}, "\n\n"),
 		Example: strings.Join([]string{
 			"  faultline analyze build.log",
 			"  cat build.log | faultline analyze --json",
 			"  faultline batch build-1.log build-2.log --json",
+			"  faultline inspect .",
 			"  faultline workflow build.log --json --mode agent",
 			"  faultline explain docker-auth",
 			"  faultline list --category auth",
@@ -41,12 +39,7 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newFixCommand())
 	cmd.AddCommand(newReportCommand())
-	cmd.AddCommand(newReplayCommand())
-	cmd.AddCommand(newTraceCommand())
 	cmd.AddCommand(newInspectCommand())
-	cmd.AddCommand(newGuardCommand())
-	cmd.AddCommand(newPacksCommand())
-	cmd.AddCommand(newHistoryCommand())
 	cmd.AddCommand(newFixturesCommand())
 	cmd.AddCommand(newBatchCommand())
 	return cmd

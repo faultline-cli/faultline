@@ -12,13 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"faultline/internal/artifact"
 	"faultline/internal/engine"
 	"faultline/internal/fixtures"
 	"faultline/internal/model"
 	"faultline/internal/output"
 	"faultline/internal/renderer"
-	tracereport "faultline/internal/trace"
 	"faultline/internal/workflow"
 )
 
@@ -50,13 +48,6 @@ func NewService() Service {
 
 // Analyze performs log analysis and writes formatted output to w.
 func (Service) Analyze(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	if opts.View == output.ViewTrace {
-		opts.TraceEnabled = true
-		opts.View = output.ViewDefault
-	}
-	if opts.TraceEnabled || opts.TracePlaybook != "" {
-		return Service{}.Trace(ctx, r, source, opts, w)
-	}
 	a, err := analyzeLog(ctx, r, source, opts, "analyze", true)
 	if errors.Is(err, engine.ErrNoInput) {
 		return err
@@ -71,67 +62,6 @@ func (Service) Analyze(ctx context.Context, r io.Reader, source string, opts Ana
 		return ErrSilentFailure
 	}
 	return nil
-}
-
-// Trace performs log analysis and renders a deterministic playbook trace.
-func (Service) Trace(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions, w io.Writer) error {
-	loaded, err := loadAnalysisInput(ctx, r, source, opts)
-	if errors.Is(err, engine.ErrNoInput) {
-		return err
-	}
-	if err != nil && !errors.Is(err, engine.ErrNoMatch) {
-		return err
-	}
-
-	playbookID, err := tracePlaybookID(loaded.Analysis, opts)
-	if err != nil {
-		return err
-	}
-	if playbookID == "" {
-		return writeAnalysis(loaded.Analysis, AnalyzeOptions{OutputOptions: OutputOptions{Top: 1, Mode: output.ModeQuick, Format: opts.Format, JSON: opts.JSON}}, w)
-	}
-
-	report, err := tracereport.Build(loaded.Analysis, loaded.Lines, loaded.Playbooks, playbookID, opts.ShowRejected)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case opts.JSON || opts.Format == output.FormatJSON:
-		data, err := output.FormatTraceJSON(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected)
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprint(w, data)
-		return err
-	case opts.Format == output.FormatMarkdown:
-		_, err := fmt.Fprint(w, output.FormatTraceMarkdown(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected))
-		return err
-	default:
-		_, err := fmt.Fprint(w, output.FormatTraceText(report, opts.ShowEvidence, opts.ShowScoring, opts.ShowRejected))
-		return err
-	}
-}
-
-// Replay re-renders a saved analysis artifact using the current deterministic
-// output surfaces. Replay currently supports the stable analysis JSON schema.
-func (Service) Replay(r io.Reader, opts AnalyzeOptions, w io.Writer) error {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return fmt.Errorf("read analysis artifact: %w", err)
-	}
-	a, err := output.ParseAnalysisJSON(data)
-	if err != nil {
-		return err
-	}
-	a = artifact.Sync(a)
-	if opts.View == output.ViewTrace {
-		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
-	}
-	if opts.TraceEnabled || opts.TracePlaybook != "" {
-		return fmt.Errorf("replay trace is not supported from analysis artifacts; replay a saved trace artifact or use `faultline trace` on the original log")
-	}
-	return writeAnalysis(a, opts, w)
 }
 
 // Fix performs log analysis and writes only the ranked fix steps to w.
@@ -207,25 +137,6 @@ func (Service) Workflow(ctx context.Context, r io.Reader, source string, opts An
 
 	_, err = fmt.Fprint(w, output.FormatWorkflowText(plan))
 	return err
-}
-
-func tracePlaybookID(a *model.Analysis, opts AnalyzeOptions) (string, error) {
-	if opts.TracePlaybook != "" {
-		return opts.TracePlaybook, nil
-	}
-	if opts.Select > 0 {
-		if a == nil || len(a.Results) == 0 {
-			return "", fmt.Errorf("--select requires at least one matched result")
-		}
-		if opts.Select > len(a.Results) {
-			return "", fmt.Errorf("--select %d is out of range; only %d result(s) available", opts.Select, len(a.Results))
-		}
-		return a.Results[opts.Select-1].Playbook.ID, nil
-	}
-	if a != nil && len(a.Results) > 0 {
-		return a.Results[0].Playbook.ID, nil
-	}
-	return "", nil
 }
 
 func (Service) FixturesIngest(ctx context.Context, root string, opts fixtures.IngestOptions, jsonOut bool, w io.Writer) error {

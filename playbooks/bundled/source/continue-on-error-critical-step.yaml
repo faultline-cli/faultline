@@ -83,7 +83,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
   - Re-run the workflow and confirm the critical step fails the job when its command fails.
 scoring:
   blast_radius_bonus: 1.2
@@ -97,8 +97,8 @@ workflow:
     - .github/workflows/*.yml
     - .github/workflows/*.yaml
   local_repro:
-    - faultline inspect .
+    - make test
     - rg -n continue-on-error .github/workflows
   verify:
-    - faultline guard .
+    - make test
     - git diff --check

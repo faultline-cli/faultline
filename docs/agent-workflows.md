@@ -6,7 +6,6 @@ The useful workflows in Faultline are grounded in the shipped CLI, fixture corpu
 
 - diagnose a known failure from a log with `faultline analyze` or `faultline workflow`
 - turn a public failure report into a staged fixture with `faultline fixtures ingest`
-- draft a maintainer-only candidate playbook from sanitized evidence with `faultline fixtures scaffold`
 - review staged evidence against the current catalog with `faultline fixtures review`
 - promote accepted evidence into the checked-in corpus with `faultline fixtures promote`
 - defend the catalog with `make review`, `make test`, and `faultline fixtures stats --class real --check-baseline`
@@ -89,7 +88,6 @@ Use this when we find a real public failure worth learning from.
 ```bash
 faultline fixtures ingest --adapter github-issue --url <public-url>
 faultline fixtures sanitize <staging-id>
-faultline fixtures scaffold --from-fixture <staging-id> --category <category>
 faultline fixtures review
 faultline fixtures promote <staging-id> --expected-playbook <id>
 ./bin/faultline fixtures stats --class real --check-baseline
@@ -133,26 +131,7 @@ Why this matters:
 - most catalog quality improvements should come from tightening an existing rule
 - new playbooks should be the exception, not the default
 
-### 5. Refine Repository-Local Source Findings
-
-Use this when `inspect` or `guard` surfaces a bundled source-detector finding in a repository tree.
-
-```bash
-faultline inspect .
-faultline guard .
-faultline explain <candidate-source-playbook>
-make review
-make test
-make build
-make cli-smoke
-```
-
-Why this matters:
-- source findings belong in the bundled `source` catalog, not the real log corpus
-- the source workflow should stay fixture-backed and deterministic
-- inspect and guard need the same repeatable refinement loop that ingestion uses for public log evidence
-
-### 6. Author Only After Justification
+### 5. Author Only After Justification
 
 Use this after `triage-unmatched-log` or `collect-coverage-evidence` has confirmed a gap warrants a new playbook.
 
@@ -169,7 +148,7 @@ Why this matters:
 - pattern authoring without fixture pairing is how false positives are introduced
 - `make review` is the only way to see whether a new pattern silently outcompetes an existing one
 
-### 7. Sprint From A Gap To A Validated Playbook
+### 6. Sprint From A Gap To A Validated Playbook
 
 Use this when the starting point is a failure type, coverage gap, or public failure URL and the goal is a committed playbook with real and synthetic fixtures in one session.
 
@@ -211,7 +190,7 @@ Why this matters:
 - the linting gate ensures no playbook ships without negative coverage and ontology fields
 - it prevents the common failure mode of authoring YAML before confirming the fixture behaves as expected
 
-### 8. Investigate A Failing Gate
+### 7. Investigate A Failing Gate
 
 Use this when `make fixture-check` exits non-zero after a repository change.
 
@@ -229,7 +208,7 @@ Why this matters:
 - isolating the regressed fixture before acting prevents cascading changes
 - every regression has exactly one correct outcome: fix forward, fix expectations, or revert
 
-### 9. Close The Loop
+### 8. Close The Loop
 
 Use this before considering a repository change complete.
 
@@ -249,7 +228,7 @@ make build
 Why this matters:
 - Faultline's trust boundary is checked-in evidence, not optimistic reasoning
 
-### 10. Prepare A Release Candidate
+### 9. Prepare A Release Candidate
 
 Use this when consolidating the repository for a tagged cut.
 
@@ -353,11 +332,11 @@ eval-corpus skill
 Trigger: `eval-work/gaps/cluster-summary.md` exists and has unresolved clusters.  
 Key distinction from the Sprint chain: starts from an eval corpus's labelled gap output rather than from a single failure type or URL.
 
-### Refine Repository-Local Source Findings (full chain)
+### Refine Repository-Local Source Findings
 
 ```
-faultline inspect . / faultline guard .
-  → source finding surfaced
+source detector fixture or faultline inspect
+  → source finding identified
 
   → source-playbook-refinement skill
       → compare against nearest bundled source playbook (faultline explain)
@@ -367,7 +346,7 @@ faultline inspect . / faultline guard .
       → [if real corpus affected] fixtures stats --check-baseline
 ```
 
-Trigger: `inspect` or `guard` surfaces a finding that belongs in a bundled source playbook rather than the real log corpus.  
+Trigger: `faultline inspect` surfaces a finding that belongs in a bundled source playbook rather than the real log corpus.  
 Key constraint: repository-local findings stay in `internal/engine/testdata/source/` — do not promote them into `fixtures/real/`.
 
 The next useful upgrades should stay small and repo-native.

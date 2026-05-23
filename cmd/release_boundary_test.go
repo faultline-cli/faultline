@@ -23,26 +23,6 @@ func TestAnalyzeHelpOmitsExperimentalDeltaFlags(t *testing.T) {
 	}
 }
 
-func TestAnalyzeExperimentalDeltaRequiresExplicitOptIn(t *testing.T) {
-	playbookDir, err := filepath.Abs("../playbooks/bundled")
-	if err != nil {
-		t.Fatalf("abs playbook dir: %v", err)
-	}
-	t.Setenv("FAULTLINE_PLAYBOOK_DIR", playbookDir)
-	t.Setenv("FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA", "")
-	t.Setenv("FAULTLINE_EXPERIMENTAL_GITHUB_DELTA", "")
-
-	cmd := newRootCommand()
-	cmd.SetArgs([]string{"analyze", "--delta-provider", "github-actions", "--no-history", "../examples/docker-auth.log"})
-	cmd.SetOut(new(bytes.Buffer))
-	cmd.SetErr(new(bytes.Buffer))
-
-	err = cmd.Execute()
-	if err == nil || !strings.Contains(err.Error(), "FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA") {
-		t.Fatalf("expected experimental opt-in error, got %v", err)
-	}
-}
-
 func TestExampleMarkdownSnapshots(t *testing.T) {
 	playbookDir, err := filepath.Abs("../playbooks/bundled")
 	if err != nil {

@@ -70,13 +70,6 @@ jq -e --argjson expected_count "$STARTER_PLAYBOOK_COUNT" \
 cat "$ROOT_DIR/examples/runtime-mismatch.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/runtime.analysis.json"
 
-run_compare "missing-executable.replay.expected.md" "$ROOT_DIR/examples/missing-executable.replay.expected.md" \
-	"$BINARY" replay --format markdown --mode detailed "$TMP_DIR/missing.analysis.json"
-
-cat "$ROOT_DIR/examples/missing-executable.log" | \
-	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" trace --format markdown --playbook missing-executable --no-history --git=false >"$TMP_DIR/missing.trace.md"
-compare_file "$TMP_DIR/missing.trace.md" "$ROOT_DIR/examples/missing-executable.trace.expected.md"
-
 cat "$ROOT_DIR/examples/missing-executable.log" | \
 	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" workflow --no-history --git=false >"$TMP_DIR/workflow.local.txt"
 compare_file "$TMP_DIR/workflow.local.txt" "$ROOT_DIR/examples/missing-executable.workflow.local.txt"
@@ -101,48 +94,8 @@ grep -F "docker-auth" "$TMP_DIR/list.txt" >/dev/null
 FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" fix "$ROOT_DIR/examples/docker-auth.log" --format markdown --no-history >"$TMP_DIR/fix.md"
 grep -F "## Fix" "$TMP_DIR/fix.md" >/dev/null
 
-SMOKE_REPO="$TMP_DIR/guard-repo"
-mkdir -p "$SMOKE_REPO/api"
-(
-	cd "$SMOKE_REPO"
-	git init -q
-	git config user.name "Faultline Smoke"
-	git config user.email "faultline@example.com"
-	cat >"api/handler.go" <<'EOF'
-package api
-
-func UserHandler() string { return "ok" }
-EOF
-	git add .
-	GIT_AUTHOR_DATE='2026-04-10 10:00:00 +0000' GIT_COMMITTER_DATE='2026-04-10 10:00:00 +0000' git commit --quiet -m "baseline: add handler"
-	cat >"api/handler.go" <<'EOF'
-package api
-
-func UserHandler() string {
-	panic("boom")
-}
-EOF
-)
-
-FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" inspect --format markdown "$SMOKE_REPO" >"$TMP_DIR/inspect.md"
-grep -F "panic-in-http-handler" "$TMP_DIR/inspect.md" >/dev/null
-
-if FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" guard "$SMOKE_REPO" >"$TMP_DIR/guard.txt"; then
-	printf '%s\n' "guard smoke expected findings with non-zero exit" >&2
-	exit 1
-fi
-grep -F "panic-in-http-handler" "$TMP_DIR/guard.txt" >/dev/null
-
-HOME="$TMP_DIR/home" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs list >"$TMP_DIR/packs.txt"
-grep -F "No installed playbook packs." "$TMP_DIR/packs.txt" >/dev/null
-
-PACK_HOME="$TMP_DIR/pack-home"
-HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" packs install "$ROOT_DIR/examples/packs/minimal" --name example-pack >"$TMP_DIR/packs-install.txt"
 printf '%s\n' "example cache prime missing" | \
-	HOME="$PACK_HOME" FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false >"$TMP_DIR/extra-pack.analysis.json"
+	FAULTLINE_PLAYBOOK_DIR="$PLAYBOOK_DIR" "$BINARY" analyze --json --no-history --git=false --playbook-pack "$ROOT_DIR/examples/packs/minimal" >"$TMP_DIR/extra-pack.analysis.json"
 grep -F '"failure_id":"example-cache-prime-missing"' "$TMP_DIR/extra-pack.analysis.json" >/dev/null
-jq -e --argjson expected_count "$STARTER_PLAYBOOK_COUNT" \
-	'.pack_provenance | length == 2 and .[0].name == "starter" and .[0].playbook_count == $expected_count and .[1].name == "example-pack" and .[1].version == "0.0.0+local"' \
-	"$TMP_DIR/extra-pack.analysis.json" >/dev/null
 
 printf '%s\n' "cli smoke passed"

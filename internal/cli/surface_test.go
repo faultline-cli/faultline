@@ -58,8 +58,19 @@ func TestVisibleCommandSurfaceStaysWithinReleaseBoundary(t *testing.T) {
 	}
 }
 
+func TestHiddenCommandSurfaceLimitedToFixtures(t *testing.T) {
+	for _, surface := range CommandSurfaces {
+		if !surface.Hidden {
+			continue
+		}
+		if surface.Category != SurfaceMaintainer || !strings.HasPrefix(surface.Path, "fixtures") {
+			t.Fatalf("hidden command %q must be a fixtures maintainer workflow", surface.Path)
+		}
+	}
+}
+
 func TestShipReadyCoreCommandSet(t *testing.T) {
-	want := []string{"analyze", "workflow", "list", "explain", "fix", "batch"}
+	want := []string{"analyze", "workflow", "list", "explain", "fix", "batch", "inspect"}
 	got := []string{}
 	for _, surface := range CommandSurfaces {
 		if surface.Category == SurfaceCore && surface.Maturity == MaturityShipReady {

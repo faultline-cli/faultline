@@ -162,7 +162,7 @@ Use the robustness report in [`docs/playbook-robustness.md`](./playbook-robustne
 to prioritize work by false-positive and false-negative risk across the
 resolved catalog, including any extra packs.
 
-1. Ingest evidence from bundled playbooks, clean fixtures, noisy corpus logs, missed detections, false positives, and repository inspection findings.
+1. Ingest evidence from bundled playbooks, clean fixtures, noisy corpus logs, missed detections, and false positives.
 2. Normalize each candidate into a root-cause record with likely category, distinctive signatures, confusable neighbors, and an actionable fix path.
 3. Cluster by underlying failure mechanism, not by wording. Reject vague or duplicate clusters before authoring anything.
 4. Prefer improving the strongest nearby playbook over adding a shallow variant. Add a new playbook only when the root cause is distinct and the signals are defensible.
@@ -174,12 +174,8 @@ explicit and deterministic:
 
 1. ingest or stage the candidate evidence
 2. sanitize the staging fixture
-3. optionally generate a draft with `faultline fixtures scaffold`
-4. review and hand-edit the YAML before committing anything
-5. run `make review` and the relevant regression checks
-
-`faultline fixtures scaffold` is hidden and maintainer-only on purpose. It is a
-drafting helper, not an authoritative authoring engine.
+3. draft and hand-edit the YAML before committing anything
+4. run `make review` and the relevant regression checks
 
 Review interpretation:
 
@@ -201,29 +197,25 @@ Faultline ships the default catalog from `playbooks/bundled/` and can compose te
 
 Use this boundary when deciding where a playbook belongs:
 
-- bundled: high-frequency failures across common stacks or CI systems, plus enough baseline source coverage for `inspect` to produce useful default results
+- bundled: high-frequency failures across common stacks or CI systems
 - extra pack: provider-specific workflows, advanced deployment and platform operations, security-heavy rules, and deeper source-detector coverage beyond the default baseline
 
-There are three supported ways to add extra packs:
+There are two supported ways to add extra packs in the shipped product surface:
 
-1. `faultline packs install <dir>` to copy a pack into `~/.faultline/packs/` for automatic loading on future runs
-2. repeat `--playbook-pack <dir>` for one-off or scripted composition
-3. set `FAULTLINE_PLAYBOOK_PACKS` for environment-driven composition
+1. repeat `--playbook-pack <dir>` for one-off or scripted composition
+2. set `FAULTLINE_PLAYBOOK_PACKS` for environment-driven composition
 
 Use `--playbooks <dir>` only for full catalog overrides such as testing a pack in isolation.
 
-For installed extra packs, prefer `faultline packs install` as the long-lived path. It survives binary upgrades, avoids repeated flags, and works with the Docker image when `~/.faultline` is mounted into `/home/faultline/.faultline`.
-
-Installed packs now carry deterministic provenance metadata recorded at install
-time in `faultline-pack.yaml`. When available, Faultline preserves:
+When available, Faultline preserves pack metadata in additive
+`pack_provenance` analysis JSON entries:
 
 - semantic version
-- install-time source URL or local source path
+- source URL or local source path
 - pinned git ref
 
-`faultline packs list` exposes that metadata through `VERSION` and
-`PINNED REF` columns, and analysis JSON includes additive `pack_provenance`
-entries so downstream automation can audit which catalog inputs were active.
+Downstream automation can audit which catalog inputs were active without
+requiring persistent installed-pack state.
 
 ## Playbook Inheritance
 
@@ -334,7 +326,7 @@ Deterministic composition rules:
 - composition resolves after playbook inheritance and before matching
 - cycles across named fragments or `playbook:` references are rejected
 - expanded patterns become part of the final playbook match set used by
-  `analyze`, `trace`, `workflow`, and `make review`
+  `analyze`, `inspect`, `workflow`, and `make review`
 
 Use named fragments when you want reusable sub-patterns shared across multiple
 rules. Use playbook inheritance when you want to extend a whole diagnosis and
@@ -350,30 +342,3 @@ It is intentionally outside `playbooks/bundled/` so it does not affect the defau
 ./bin/faultline list --playbook-pack examples/packs/minimal
 ./bin/faultline explain example-cache-prime-missing --playbook-pack examples/packs/minimal
 ```
-
-When you are ready to install a real pack persistently:
-
-```bash
-./bin/faultline packs install ./examples/packs/minimal --name example-pack
-./bin/faultline packs list
-```
-
-## Hidden Authoring Helper
-
-Maintainers can also draft a candidate playbook from a sanitized log:
-
-```bash
-faultline fixtures scaffold --log build.log --category build
-faultline fixtures scaffold --from-fixture <staging-id> --category auth
-faultline fixtures scaffold --log build.log --category ci --pack-dir ./packs/team-pack
-```
-
-This helper:
-
-- applies the same deterministic sanitizer pass before extracting patterns
-- generates a candidate `match.any` block and required markdown fields with
-  `TODO` markers
-- writes to `<pack-dir>/<id>.yaml` only when `--pack-dir` is provided
-
-The output still requires human review. Use it to accelerate drafting, not to
-skip the normal fixture, review, and regression gates.

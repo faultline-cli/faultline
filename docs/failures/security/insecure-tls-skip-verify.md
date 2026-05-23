@@ -53,7 +53,7 @@ development environment and then gets committed and promoted to production.
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Confirm the client connects successfully with certificate verification enabled.
 - Run `go vet ./...` or your linter to catch any remaining misconfigurations.
 

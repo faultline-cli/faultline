@@ -146,7 +146,7 @@ workflow:
     - http.go
     - server.go
   local_repro:
-    - faultline inspect .
+    - make test
     - rg -n panic .
   verify:
     - go test ./...

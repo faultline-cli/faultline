@@ -21,8 +21,8 @@ The architecture keeps these boundaries stable:
 - detector implementations stay explicit in `internal/detectors`
 - playbook loading and validation stay in `internal/playbooks`
 - ranking and evidence extraction stay in `internal/matcher`
-- deterministic compare/report diffing stays in `internal/compare`
-- deterministic trace rendering stays in `internal/trace`
+- local recurrence reporting stays in `internal/store` and `internal/app`
+- rule-by-rule trace payloads for internal diagnostics stay in `internal/trace`
 - rendering and serialization stay in `internal/output` and `internal/renderer`
 - repository enrichment stays in `internal/repo`
 - follow-up planning stays in `internal/workflow`

@@ -42,13 +42,6 @@ Explain a specific example:
 ./bin/faultline explain example-hypothesis-disambiguation --playbook-pack examples/packs/minimal
 ```
 
-Install it persistently if you want to test the installed-pack flow:
-
-```bash
-./bin/faultline packs install ./examples/packs/minimal --name example-pack
-./bin/faultline packs list
-```
-
 ## Learning Path
 
 1. Start with **example-cache-prime-missing.yaml** to understand basic playbook structure

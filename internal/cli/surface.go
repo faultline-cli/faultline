@@ -34,21 +34,14 @@ type CommandSurface struct {
 // CommandSurfaces lists the known CLI surfaces. Public help text should stay
 // centered on core commands even when supported companion commands are visible.
 var CommandSurfaces = []CommandSurface{
-	{Path: "analyze", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"delta-provider", "github-branch", "github-repo", "github-run-id", "gitlab-api-base-url", "gitlab-branch", "gitlab-job-id", "gitlab-pipeline-id", "gitlab-project", "no-history", "no-store", "store"}},
+	{Path: "analyze", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "workflow", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "list", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "explain", Category: SurfaceCore, Maturity: MaturityShipReady},
 	{Path: "fix", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "batch", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
+	{Path: "inspect", Category: SurfaceCore, Maturity: MaturityShipReady, HiddenFlags: []string{"no-history", "no-store", "store"}},
 	{Path: "report", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"store"}},
-	{Path: "trace", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"no-history", "no-store", "store"}},
-	{Path: "replay", Category: SurfaceCompanion, Maturity: MaturitySupported},
-	{Path: "inspect", Category: SurfaceCompanion, Maturity: MaturitySupported, HiddenFlags: []string{"no-history", "no-store", "store"}},
-	{Path: "guard", Category: SurfaceCompanion, Maturity: MaturitySupported},
-	{Path: "packs", Category: SurfaceCompanion, Maturity: MaturitySupported},
-	{Path: "packs install", Category: SurfaceCompanion, Maturity: MaturitySupported},
-	{Path: "packs list", Category: SurfaceCompanion, Maturity: MaturitySupported},
-	{Path: "history", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "fixtures", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures ingest", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures review", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},

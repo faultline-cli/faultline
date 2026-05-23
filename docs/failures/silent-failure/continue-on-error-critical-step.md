@@ -25,7 +25,7 @@ A critical CI step is allowed to fail. This can hide broken tests, failed builds
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Re-run the workflow and confirm the critical step fails the job when its command fails.
 
 ## Likely files to inspect

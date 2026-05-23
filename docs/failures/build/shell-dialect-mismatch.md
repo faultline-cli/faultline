@@ -25,7 +25,7 @@ The command is likely to run under POSIX `sh` while using syntax that requires B
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Run the script with the configured shell and confirm it exits successfully.
 
 ## Likely files to inspect

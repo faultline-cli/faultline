@@ -52,7 +52,7 @@ Common patterns:
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Run `go test -race ./...` to catch races introduced during cleanup.
 - Confirm that the background goroutine exits cleanly when the context is cancelled.
 

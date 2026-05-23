@@ -48,34 +48,6 @@ func TestValidateOutputMode(t *testing.T) {
 	}
 }
 
-func TestValidateView(t *testing.T) {
-	cases := []struct {
-		value   string
-		want    string
-		wantErr bool
-	}{
-		{"summary", "summary", false},
-		{"evidence", "evidence", false},
-		{"fix", "fix", false},
-		{"raw", "raw", false},
-		{"trace", "trace", false},
-		{"", "", false},
-		{"invalid", "", true},
-		{"SUMMARY", "summary", false},
-		{"  fix  ", "fix", false},
-	}
-	for _, tc := range cases {
-		got, err := validateView(tc.value)
-		if (err != nil) != tc.wantErr {
-			t.Errorf("validateView(%q): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
-			continue
-		}
-		if string(got) != tc.want {
-			t.Errorf("validateView(%q): got=%q want=%q", tc.value, got, tc.want)
-		}
-	}
-}
-
 func TestValidateSelect(t *testing.T) {
 	cases := []struct {
 		value   int
@@ -93,47 +65,6 @@ func TestValidateSelect(t *testing.T) {
 			t.Errorf("validateSelect(%d): got err=%v, wantErr=%v", tc.value, err, tc.wantErr)
 		}
 	}
-}
-
-func TestValidateExperimentalDeltaProvider(t *testing.T) {
-	t.Run("disabled by default", func(t *testing.T) {
-		t.Setenv(experimentalProviderDeltaEnv, "")
-		t.Setenv(experimentalGitHubDeltaEnv, "")
-		err := validateExperimentalDeltaProvider("github-actions")
-		if err == nil || !strings.Contains(err.Error(), experimentalProviderDeltaEnv) {
-			t.Fatalf("expected experimental env error, got %v", err)
-		}
-	})
-
-	t.Run("enabled explicitly via preferred env", func(t *testing.T) {
-		t.Setenv(experimentalProviderDeltaEnv, "1")
-		t.Setenv(experimentalGitHubDeltaEnv, "")
-		if err := validateExperimentalDeltaProvider("github-actions"); err != nil {
-			t.Fatalf("expected provider to be allowed, got %v", err)
-		}
-		if err := validateExperimentalDeltaProvider("gitlab-ci"); err != nil {
-			t.Fatalf("expected gitlab provider to be allowed, got %v", err)
-		}
-	})
-
-	t.Run("enabled explicitly via legacy env", func(t *testing.T) {
-		t.Setenv(experimentalProviderDeltaEnv, "")
-		t.Setenv(experimentalGitHubDeltaEnv, "1")
-		if err := validateExperimentalDeltaProvider("github-actions"); err != nil {
-			t.Fatalf("expected provider to be allowed, got %v", err)
-		}
-		if err := validateExperimentalDeltaProvider("gitlab-ci"); err != nil {
-			t.Fatalf("expected gitlab provider to be allowed, got %v", err)
-		}
-	})
-
-	t.Run("empty provider passes", func(t *testing.T) {
-		t.Setenv(experimentalProviderDeltaEnv, "")
-		t.Setenv(experimentalGitHubDeltaEnv, "")
-		if err := validateExperimentalDeltaProvider(""); err != nil {
-			t.Fatalf("expected empty provider to pass, got %v", err)
-		}
-	})
 }
 
 func TestValidateAnalyzeView(t *testing.T) {
@@ -169,28 +100,5 @@ func TestValidateAnalyzeView(t *testing.T) {
 		if tc.value == "trace" && err != nil && !strings.Contains(err.Error(), "trace") {
 			t.Errorf("validateAnalyzeView(trace): expected error mentioning 'trace', got: %v", err)
 		}
-	}
-}
-
-func TestDeriveGitLabAPIBaseURL(t *testing.T) {
-	cases := []struct {
-		name      string
-		serverURL string
-		want      string
-	}{
-		{"empty returns empty", "", ""},
-		{"whitespace-only returns empty", "  ", ""},
-		{"plain URL", "https://gitlab.example.com", "https://gitlab.example.com/api/v4"},
-		{"trailing slash stripped", "https://gitlab.example.com/", "https://gitlab.example.com/api/v4"},
-		{"multiple trailing slashes stripped", "https://gitlab.example.com///", "https://gitlab.example.com/api/v4"},
-		{"URL with path", "https://gitlab.example.com/prefix", "https://gitlab.example.com/prefix/api/v4"},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := deriveGitLabAPIBaseURL(tc.serverURL)
-			if got != tc.want {
-				t.Errorf("deriveGitLabAPIBaseURL(%q) = %q, want %q", tc.serverURL, got, tc.want)
-			}
-		})
 	}
 }

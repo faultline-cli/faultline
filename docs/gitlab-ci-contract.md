@@ -11,8 +11,6 @@ The recommended surfaces for a separate wrapper project or pipeline template are
 - human summary: `faultline analyze <logfile> --format markdown`
 - machine-readable diagnosis: `faultline analyze <logfile> --json`
 - deterministic next-step handoff: `faultline workflow <logfile> --json --mode agent`
-- experimental failure delta against the last successful pipeline on the same branch:
-  `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 faultline analyze <logfile> --json --delta-provider gitlab-ci`
 
 These contracts already exist in the CLI and should remain the integration boundary.
 
@@ -34,10 +32,9 @@ explicit context. Those fields should remain optional and omitted when absent.
 
 1. Capture the failing job log into a file in the pipeline workspace.
 2. Run `faultline analyze` to produce markdown and JSON artifacts, including ranking metadata.
-3. Optionally enable experimental provider-backed delta with `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 --delta-provider gitlab-ci` and pass `GITLAB_TOKEN` (or `CI_JOB_TOKEN`), `CI_PROJECT_ID` (or `CI_PROJECT_PATH`), `CI_COMMIT_REF_NAME`, `CI_PIPELINE_ID`, and `CI_JOB_ID`.
-4. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
-5. Publish markdown summaries and upload JSON outputs as job artifacts.
-6. Optionally gate follow-up automation with deterministic confidence and playbook thresholds in pipeline logic, not in core CLI logic.
+3. Run `faultline workflow --json --mode agent` to produce the deterministic follow-up artifact.
+4. Publish markdown summaries and upload JSON outputs as job artifacts.
+5. Optionally gate follow-up automation with deterministic confidence and playbook thresholds in pipeline logic, not in core CLI logic.
 
 ## Example Commands
 
@@ -46,13 +43,6 @@ Using a local binary:
 ```bash
 faultline analyze build.log --format markdown > faultline-summary.md
 faultline analyze build.log --json > faultline-analysis.json
-FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 \
-GITLAB_TOKEN="$GITLAB_TOKEN" \
-CI_PROJECT_ID="$CI_PROJECT_ID" \
-CI_COMMIT_REF_NAME="$CI_COMMIT_REF_NAME" \
-CI_PIPELINE_ID="$CI_PIPELINE_ID" \
-CI_JOB_ID="$CI_JOB_ID" \
-faultline analyze build.log --json --delta-provider gitlab-ci > faultline-analysis-delta.json
 faultline workflow build.log --json --mode agent > faultline-workflow.json
 ```
 
@@ -73,14 +63,12 @@ faultline_analyze:
   script:
     - faultline analyze build.log --format markdown > faultline-summary.md
     - faultline analyze build.log --json > faultline-analysis.json
-    - FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1 faultline analyze build.log --json --delta-provider gitlab-ci > faultline-analysis-delta.json
     - faultline workflow build.log --json --mode agent > faultline-workflow.json
   artifacts:
     when: always
     paths:
       - faultline-summary.md
       - faultline-analysis.json
-      - faultline-analysis-delta.json
       - faultline-workflow.json
 ```
 
@@ -90,4 +78,4 @@ faultline_analyze:
 - Additive JSON fields are acceptable; silent field removals or renames are not.
 - Bayesian reranking is enabled by default and must stay additive and explainable; it is a ranking aid, not a second matcher. Pass `--bayes=false` to disable.
 - Keep integration policy decisions in wrapper or pipeline repositories, not in core CLI logic.
-- Legacy `FAULTLINE_EXPERIMENTAL_GITHUB_DELTA=1` still enables provider delta, but new integrations should use `FAULTLINE_EXPERIMENTAL_PROVIDER_DELTA=1`.
+- Provider-backed delta is intentionally outside the shipped core CLI contract.

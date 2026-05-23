@@ -48,13 +48,11 @@ func TestNewRootCommandRegistersExpectedCommands(t *testing.T) {
 		"analyze":  false,
 		"batch":    false,
 		"inspect":  false,
-		"guard":    false,
 		"fix":      false,
 		"report":   false,
 		"list":     false,
 		"explain":  false,
 		"workflow": false,
-		"packs":    false,
 		"fixtures": false,
 	}
 	for _, child := range cmd.Commands() {

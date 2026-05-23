@@ -166,39 +166,6 @@ func TestAnalyzeRepositoryEmptyDirReturnsErrNoInput(t *testing.T) {
 	_ = a
 }
 
-// --- deltaRequested ---
-
-func TestDeltaRequestedFalseWhenEmpty(t *testing.T) {
-	e := &Engine{opts: Options{DeltaProvider: ""}}
-	if e.deltaRequested() {
-		t.Error("expected deltaRequested=false when DeltaProvider is empty")
-	}
-}
-
-func TestDeltaRequestedTrueWhenSet(t *testing.T) {
-	e := &Engine{opts: Options{DeltaProvider: "github-actions"}}
-	if !e.deltaRequested() {
-		t.Error("expected deltaRequested=true when DeltaProvider is set")
-	}
-}
-
-func TestDeltaRequestedFalseForWhitespace(t *testing.T) {
-	e := &Engine{opts: Options{DeltaProvider: "   "}}
-	if e.deltaRequested() {
-		t.Error("expected deltaRequested=false for whitespace-only provider")
-	}
-}
-
-// --- loadProviderDelta (indirectly via AnalyzeReader with no provider) ---
-
-func TestLoadProviderDeltaReturnsNilWhenNotRequested(t *testing.T) {
-	e := &Engine{opts: Options{}}
-	state := e.loadProviderDelta("some log content")
-	if state != nil {
-		t.Errorf("expected nil when delta not requested, got %#v", state)
-	}
-}
-
 // --- repoStateFromSnapshot ---
 
 func TestRepoStateFromSnapshotNil(t *testing.T) {

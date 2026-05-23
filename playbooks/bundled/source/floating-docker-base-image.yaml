@@ -57,7 +57,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
   - Build the Docker image from a clean cache and confirm it uses the pinned base image.
 scoring:
   blast_radius_bonus: 1.0
@@ -72,8 +72,8 @@ workflow:
     - docker/Dockerfile
     - .github/workflows/*.yml
   local_repro:
-    - faultline inspect .
+    - make test
     - rg -n latest Dockerfile
   verify:
-    - faultline guard .
+    - make test
     - docker build .

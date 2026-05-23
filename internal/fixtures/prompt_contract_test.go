@@ -17,7 +17,7 @@ func TestIngestionPipelineSkillMatchesPromptContract(t *testing.T) {
 	assertIngestionContract(t, body)
 }
 
-func TestRefineSourcePlaybookPromptCoversInspectAndGuard(t *testing.T) {
+func TestRefineSourcePlaybookPromptCoversInspect(t *testing.T) {
 	body := readRepoDoc(t, filepath.Join("..", "..", "prompts", "refine-source-playbook-from-repo.md"))
 	assertSourcePlaybookContract(t, body)
 }
@@ -66,7 +66,6 @@ func assertSourcePlaybookContract(t *testing.T, body string) {
 
 	required := []string{
 		"faultline inspect .",
-		"faultline guard .",
 		"faultline explain <id>",
 		"make review",
 		"make test",

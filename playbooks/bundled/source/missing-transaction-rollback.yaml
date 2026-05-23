@@ -94,7 +94,7 @@ fix: |-
 validation: |-
   ## Validation
 
-  - Re-run `faultline inspect .` or `faultline guard .`.
+  - Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
   - Test that an error on any path before `Commit` releases the connection
     cleanly without exhausting the pool.
 scoring:
@@ -110,8 +110,8 @@ workflow:
   likely_files:
     - "**/*.go"
   local_repro:
-    - faultline inspect .
+    - make test
     - "rg -n 'db.Begin|db.BeginTx' ."
   verify:
-    - faultline guard .
+    - make test
     - go vet ./...

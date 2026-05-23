@@ -25,7 +25,7 @@ The Docker base image is mutable. CI builds that rely on `:latest` can become no
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Build the Docker image from a clean cache and confirm it uses the pinned base image.
 
 ## Likely files to inspect

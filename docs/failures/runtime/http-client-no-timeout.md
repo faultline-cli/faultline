@@ -51,7 +51,7 @@ buildup, and cascading timeouts across all downstream callers.
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Add a test that confirms the client respects the configured timeout by
   pointing it at a handler that delays its response.
 

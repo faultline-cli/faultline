@@ -1,6 +1,6 @@
 # Implementation Status
 
-Faultline is currently implemented as a CLI-first deterministic product with both log-analysis and source-detector surfaces.
+Faultline is currently implemented as a CLI-first deterministic product centered on log analysis.
 
 ## Shipped Scope
 
@@ -10,29 +10,29 @@ Faultline is currently implemented as a CLI-first deterministic product with bot
 - bundled and extra-pack catalog loading in [`internal/playbooks/`](../../internal/playbooks)
 - deterministic matching and scoring in [`internal/matcher/`](../../internal/matcher) and [`internal/scoring/`](../../internal/scoring)
 - log and source detector implementations in [`internal/detectors/`](../../internal/detectors)
-- terminal, markdown, JSON, workflow, replay, compare, and trace rendering in [`internal/output/`](../../internal/output) and [`internal/renderer/`](../../internal/renderer)
+- terminal, markdown, JSON, and workflow rendering in [`internal/output/`](../../internal/output) and [`internal/renderer/`](../../internal/renderer)
 - local repository enrichment in [`internal/repo/`](../../internal/repo)
 - optional single-repo local history in [`internal/store/`](../../internal/store) and recurrence signatures in [`internal/signature/`](../../internal/signature)
-- additive workflow hints, metrics, and policy outputs in [`internal/workflow/`](../../internal/workflow), [`internal/metrics/`](../../internal/metrics), and [`internal/policy/`](../../internal/policy)
+- additive workflow hints in [`internal/workflow/`](../../internal/workflow)
 - fixture ingestion, sanitization, review, promotion, and stats in [`internal/fixtures/`](../../internal/fixtures)
-- hidden maintainer authoring scaffold support in [`internal/authoring/`](../../internal/authoring)
 
 ## Current Public Surface
 
 The repository currently ships these user-visible commands:
 
 - core path: `analyze`, `batch`, `workflow`, `list`, `explain`, `fix`
-- companion surfaces: `trace`, `replay`, `compare`, `inspect`, `guard`, `report`, `history`, `packs`
+- source inspection path: `inspect`
+- companion surface: `report`
+- hidden maintainer workflows: `fixtures`
 
 Important current behavior:
 
 - `analyze` supports `terminal`, `markdown`, and `json` output
 - `batch` analyzes multiple local CI logs independently and groups matches by failure pattern
+- `inspect` scans local source trees through deterministic source detectors
 - `workflow` supports `local` and `agent` modes and emits `workflow.v1` JSON
-- `inspect` and `guard` expose the source detector through repository-local checks
-- `replay` and `compare` operate on saved analysis artifacts without re-running matching
-- `report` and `history` read only the local forensic store and remain companion surfaces
-- `packs install` and `packs list` support optional extra catalog composition
+- `report` reads only the local forensic store and remains a bounded companion surface
+- explicit `--playbook-pack` flags support optional local catalog composition
 - hidden maintainer-only `fixtures` commands remain available for corpus curation
 
 ## Repository State
@@ -61,4 +61,4 @@ The repository is in the expected current state when these remain true:
 - The repository includes local single-repo history/store support, but the
   locked product boundary treats cross-repo correlation, aggregation,
   reporting, and recurring-failure coordination as Team-layer value.
-- Experimental or hidden paths such as provider-backed delta and authoring helpers remain outside the default onboarding story even though their implementation exists in the repository.
+- Hidden paths are limited to maintainer fixture curation and release gates.

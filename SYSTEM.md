@@ -15,8 +15,7 @@ Given a build log from a local run or CI job, Faultline should identify the most
 - Text output for humans.
 - JSON output for agents and automation.
 - Optional workflow output for local and agentic follow-up.
-- Optional quiet guard output for high-confidence local prevention checks.
-- First-class failure artifacts for storage, replay, compare, and remediation handoff.
+- First-class failure artifacts for storage, re-rendering, and remediation handoff.
 - Docker-first distribution for portable CI usage.
 
 ## Main Workflow
@@ -31,21 +30,18 @@ Given a build log from a local run or CI job, Faultline should identify the most
 ## Primary Commands
 
 - `faultline analyze <logfile>`
-- `faultline inspect <path>`
 - `cat build.log | faultline analyze`
 - `faultline analyze <logfile> --json`
 - `faultline analyze <logfile> --git`
 - `faultline analyze <logfile> --git --since 30d --repo .`
+- `faultline batch <logfile> [logfile ...]`
+- `faultline inspect <path>`
+- `faultline fix <logfile>`
 - `faultline report`
 - `faultline report --json`
 - `faultline list`
 - `faultline explain <failure-id>`
 - `faultline workflow <logfile>`
-- `faultline guard <path>`
-- `faultline fixtures ingest`
-- `faultline fixtures review`
-- `faultline fixtures promote`
-- `faultline fixtures stats`
 
 ## Architectural Boundaries
 
@@ -122,7 +118,7 @@ type Analysis struct {
     RepoContext *RepoContext     // Populated by default local repo enrichment unless disabled
     Delta       *Delta           // Populated when repo-aware scoring has explicit change or git context
     Differential *DifferentialDiagnosis
-    Artifact    *FailureArtifact // Stable unit for replay, compare, storage, and remediation handoff
+    Artifact    *FailureArtifact // Stable unit for storage, re-rendering, and remediation handoff
 }
 ```
 
@@ -168,7 +164,7 @@ type Ranking struct {
 - Deterministic detectors stay authoritative for matching.
 - Optional Bayesian-inspired reranking may assist ranking and delta diagnosis, but it must stay explainable, additive, and reproducible.
 - Local repo-aware enrichment is part of the default analysis loop; explicit flags may still disable it for narrow cases.
-- Provider-backed CI delta is experimental, requires explicit opt-in, and may call the provider API only when enabled.
+- Provider-backed CI delta belongs outside the shipped local diagnosis path.
 - Evidence must come directly from matched log lines.
 - JSON output must remain stable and automation-friendly.
 - Text output should stay concise and actionable.
@@ -184,7 +180,7 @@ type Ranking struct {
 - No free-core cross-repo correlation, reporting, or team aggregation product story.
 - No speculative rule engine abstractions.
 - No fuzzy or semantic matching.
-- No runtime network calls during analysis unless explicit provider-backed delta resolution is enabled.
+- No runtime network calls during analysis.
 
 ## Delivery Standard
 

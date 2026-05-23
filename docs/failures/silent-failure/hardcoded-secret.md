@@ -40,7 +40,7 @@ Common patterns:
 
 ## Validation
 
-- Re-run `faultline inspect .` or `faultline guard .`.
+- Run `faultline inspect .` from the repository root and confirm this source finding is absent or intentionally mitigated.
 - Confirm the finding is resolved and the secret is loaded from the environment.
 - Run `git log -p | grep -i api_key` to confirm the literal is not present in
   committed history.

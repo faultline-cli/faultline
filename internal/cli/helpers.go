@@ -2,7 +2,6 @@ package cli
 
 import (
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -14,26 +13,6 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
-}
-
-func firstInt64(flagValue int64, envVar string) int64 {
-	if flagValue != 0 {
-		return flagValue
-	}
-	if s := strings.TrimSpace(envVar); s != "" {
-		if parsed, err := strconv.ParseInt(s, 10, 64); err == nil && parsed != 0 {
-			return parsed
-		}
-	}
-	return 0
-}
-
-func deriveGitLabAPIBaseURL(serverURL string) string {
-	serverURL = strings.TrimSpace(serverURL)
-	if serverURL == "" {
-		return ""
-	}
-	return strings.TrimRight(serverURL, "/") + "/api/v4"
 }
 
 // resolveStoreSetting is used by fix and workflow, which default the store to

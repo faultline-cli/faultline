@@ -134,7 +134,7 @@ workflow:
     - repository.go
     - cmd/*.go
   local_repro:
-    - faultline inspect .
+    - make test
     - rg -n _= .
   verify:
     - go test ./...
