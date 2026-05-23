@@ -42,5 +42,6 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newInspectCommand())
 	cmd.AddCommand(newFixturesCommand())
 	cmd.AddCommand(newBatchCommand())
+	cmd.AddCommand(newAuthCommand())
 	return cmd
 }

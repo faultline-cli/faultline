@@ -240,7 +240,7 @@ curl -fsSL https://raw.githubusercontent.com/faultline-cli/faultline/main/instal
 **Pre-built binary:**
 
 ```bash
-VERSION=v0.4.9
+VERSION=v0.5.0
 curl -fL "https://github.com/faultline-cli/faultline/releases/download/${VERSION}/faultline_${VERSION}_linux_amd64.tar.gz" -o faultline.tar.gz
 tar -xzf faultline.tar.gz
 cd "faultline_${VERSION}_linux_amd64"
