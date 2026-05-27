@@ -3,6 +3,7 @@ package teams
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -179,5 +180,57 @@ func TestLoadCredentials_CorruptJSON(t *testing.T) {
 	_, err := LoadCredentials()
 	if err == nil {
 		t.Fatal("expected error for corrupt credentials file, got nil")
+	}
+}
+
+// TestConfigDir_WithoutXDGFallsBackToHome verifies that when XDG_CONFIG_HOME is
+// not set, configDir returns a path under the user's home directory.
+func TestConfigDir_WithoutXDGFallsBackToHome(t *testing.T) {
+	// Unset XDG_CONFIG_HOME so the fallback branch is taken.
+	t.Setenv("XDG_CONFIG_HOME", "")
+
+	path, err := CredentialsPath()
+	if err != nil {
+		t.Fatalf("CredentialsPath: %v", err)
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("UserHomeDir: %v", err)
+	}
+
+	wantDir := filepath.Join(home, ".config", "faultline")
+	if !strings.HasPrefix(path, wantDir) {
+		t.Errorf("CredentialsPath = %q, want prefix %q", path, wantDir)
+	}
+}
+
+// TestLoadCredentials_UnreadableFile verifies that a credentials file that
+// exists but cannot be read returns an error rather than nil, nil.
+func TestLoadCredentials_UnreadableFile(t *testing.T) {
+	if os.Getuid() == 0 {
+		t.Skip("cannot test unreadable file as root")
+	}
+
+	base := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", base)
+
+	dir := filepath.Join(base, "faultline")
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	path := filepath.Join(dir, "credentials")
+	if err := os.WriteFile(path, []byte(`{"token":"ft_x"}`), 0600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+	// Remove read permission.
+	if err := os.Chmod(path, 0000); err != nil {
+		t.Fatalf("Chmod: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(path, 0600) })
+
+	_, err := LoadCredentials()
+	if err == nil {
+		t.Fatal("expected error reading unreadable credentials file, got nil")
 	}
 }

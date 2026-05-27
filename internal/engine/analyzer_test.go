@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,6 +19,13 @@ func TestAnalyzeReaderEmptyInput(t *testing.T) {
 	_, err := e.AnalyzeReader(strings.NewReader(""))
 	if err != ErrNoInput {
 		t.Fatalf("expected ErrNoInput, got %v", err)
+	}
+}
+
+func TestReadLogInputRejectsOversizedInput(t *testing.T) {
+	_, err := readLogInput(strings.NewReader("abcdef"), 5)
+	if !errors.Is(err, ErrInputTooLarge) {
+		t.Fatalf("expected ErrInputTooLarge, got %v", err)
 	}
 }
 
@@ -164,6 +172,29 @@ func TestAnalyzeRepositoryWithCircularSymlink(t *testing.T) {
 	_, err := e.AnalyzeRepository(dir, detectors.ChangeSet{})
 	if err != nil && err != ErrNoMatch && err != ErrNoInput {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestAnalyzeRepositorySkipsSymlinkEscapingRoot(t *testing.T) {
+	e := New(Options{PlaybookDir: repoPlaybookDir(t)})
+	root := t.TempDir()
+	outside := filepath.Join(t.TempDir(), "leak.go")
+	if err := os.WriteFile(outside, []byte(`package main
+const APIKey = "sk_live_abcdef1234567890"
+`), 0o600); err != nil {
+		t.Fatalf("write outside source: %v", err)
+	}
+	linkPath := filepath.Join(root, "config.go")
+	if err := os.Symlink(outside, linkPath); err != nil {
+		t.Skipf("symlink not available: %v", err)
+	}
+
+	analysis, err := e.AnalyzeRepository(root, detectors.ChangeSet{})
+	if !errors.Is(err, ErrNoMatch) && !errors.Is(err, ErrNoInput) {
+		t.Fatalf("expected no source match for symlink escape, got %v", err)
+	}
+	if analysis != nil && len(analysis.Results) > 0 {
+		t.Fatalf("expected symlinked outside file to be ignored, got %v", resultIDs(analysis.Results))
 	}
 }
 

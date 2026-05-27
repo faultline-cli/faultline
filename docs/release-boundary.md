@@ -102,11 +102,11 @@ This path is removed from the shipped `analyze` surface. It may return later as
 a Team enrichment or sync surface, but it should not live inside the local
 diagnosis path.
 
-### Team-Gated Commands (Planned)
+### Team-Gated Commands
 
-These commands or modes require Team auth and backend state once shipped:
+These commands or modes require Team auth and backend state:
 
-- `faultline sync`
+- `faultline sync` (explicit push of local failure artifacts to Team state)
 - `faultline policy apply`
 - `faultline analyze <log> --report` (enriched mode)
 
@@ -118,7 +118,7 @@ Expected behavior pattern:
 Auth and upgrade model:
 
 - login remains optional until a Team surface is used
-- `faultline login` should feel like an upgrade path, not a prerequisite
+- `faultline auth login` should feel like an upgrade path, not a prerequisite
 - stored credentials should make later Team usage invisible after setup
 - team context, not user identity alone, is the unit of state and billing
 

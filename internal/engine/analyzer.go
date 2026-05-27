@@ -28,6 +28,8 @@ import (
 var (
 	// ErrNoInput is returned when the log reader contains no usable lines.
 	ErrNoInput = errors.New("no log input provided; pass a file path or pipe stdin")
+	// ErrInputTooLarge is returned when log input exceeds MaxLogInputBytes.
+	ErrInputTooLarge = errors.New("log input exceeds maximum size")
 	// ErrNoMatch is returned when the log was analysed but no playbook matched.
 	ErrNoMatch = errors.New("no known failure pattern matched")
 )
@@ -608,17 +610,36 @@ func (e *Engine) Playbooks() ([]model.Playbook, error) {
 	return e.loadPlaybooks()
 }
 
-// maxLogInputBytes caps the total bytes read from the log reader (100 MiB).
+// MaxLogInputBytes caps the total bytes read from the log reader (100 MiB).
 // This prevents OOM when very large files or streams (e.g. /dev/zero) are piped
 // into faultline without a size limit.
-const maxLogInputBytes = 100 * 1024 * 1024
+const MaxLogInputBytes = 100 * 1024 * 1024
+
+// MaxSourceFileBytes caps individual source files scanned by inspect.
+const MaxSourceFileBytes = 5 * 1024 * 1024
+
+// ReadLogInput reads log input with the same size bound used by AnalyzeReader.
+func ReadLogInput(r io.Reader) ([]byte, error) {
+	return readLogInput(r, MaxLogInputBytes)
+}
+
+func readLogInput(r io.Reader, limit int64) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(r, limit+1))
+	if err != nil {
+		return nil, fmt.Errorf("read log input: %w", err)
+	}
+	if int64(len(data)) > limit {
+		return nil, ErrInputTooLarge
+	}
+	return data, nil
+}
 
 // readLines reads all bytes from r and splits into normalised Line values.
 // Blank lines and lines that become empty after trimming are discarded.
 func readLines(r io.Reader) ([]model.Line, error) {
-	data, err := io.ReadAll(io.LimitReader(r, maxLogInputBytes))
+	data, err := ReadLogInput(r)
 	if err != nil {
-		return nil, fmt.Errorf("read log input: %w", err)
+		return nil, err
 	}
 
 	parts := strings.Split(CanonicalizeLog(string(data)), "\n")
@@ -647,7 +668,11 @@ func rawLogFromLines(lines []model.Line) string {
 
 func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 	var files []detectors.SourceFile
-	err := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+	rootEval, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return nil, fmt.Errorf("resolve repository root: %w", err)
+	}
+	err = filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -660,7 +685,24 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 		if !looksLikeSourceFile(path) {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		readPath := path
+		size := info.Size()
+		if info.Mode()&os.ModeSymlink != 0 {
+			target, err := filepath.EvalSymlinks(path)
+			if err != nil || !pathWithinRoot(rootEval, target) {
+				return nil
+			}
+			targetInfo, err := os.Stat(target)
+			if err != nil || targetInfo.IsDir() {
+				return nil
+			}
+			readPath = target
+			size = targetInfo.Size()
+		}
+		if size > MaxSourceFileBytes {
+			return nil
+		}
+		data, err := os.ReadFile(readPath)
 		if err != nil {
 			return err
 		}
@@ -684,6 +726,14 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 		return files[i].Path < files[j].Path
 	})
 	return files, nil
+}
+
+func pathWithinRoot(root, path string) bool {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(os.PathSeparator))
 }
 
 func shouldSkipSourceDir(name string) bool {

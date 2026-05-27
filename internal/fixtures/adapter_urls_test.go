@@ -198,4 +198,3 @@ func TestSiteFromStackExchangeHostKnownHosts(t *testing.T) {
 		}
 	}
 }
-

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 
 	"faultline/internal/engine"
@@ -22,9 +21,9 @@ func analyzeLog(ctx context.Context, r io.Reader, source string, opts AnalyzeOpt
 }
 
 func analyzeLogWithEngine(ctx context.Context, eng *engine.Engine, r io.Reader, source string, opts AnalyzeOptions, surface string, persist bool) (*model.Analysis, error) {
-	data, err := io.ReadAll(r)
+	data, err := engine.ReadLogInput(r)
 	if err != nil {
-		return nil, fmt.Errorf("read log input: %w", err)
+		return nil, err
 	}
 	a, err := eng.AnalyzeReader(bytes.NewReader(data))
 	if a != nil {
@@ -41,9 +40,9 @@ func analyzeLogWithEngine(ctx context.Context, eng *engine.Engine, r io.Reader, 
 }
 
 func loadAnalysisInput(ctx context.Context, r io.Reader, source string, opts AnalyzeOptions) (loadedAnalysisInput, error) {
-	data, err := io.ReadAll(r)
+	data, err := engine.ReadLogInput(r)
 	if err != nil {
-		return loadedAnalysisInput{}, fmt.Errorf("read log input: %w", err)
+		return loadedAnalysisInput{}, err
 	}
 	lines, err := engine.ReadLines(bytes.NewReader(data))
 	if err != nil {

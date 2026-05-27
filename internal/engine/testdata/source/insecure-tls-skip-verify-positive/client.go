@@ -1,5 +1,4 @@
 package insecuretlsskipverifypositive
-package client
 
 import (
 	"crypto/tls"

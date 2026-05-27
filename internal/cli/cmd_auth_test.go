@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"net/http"
@@ -344,4 +345,222 @@ func TestAuthTokenCommand_HasSetSubcommand(t *testing.T) {
 		}
 	}
 	t.Error("auth token command missing 'set' subcommand")
+}
+
+// ── auth login ────────────────────────────────────────────────────────────────
+
+// newLoginServer returns an httptest.Server that simulates the Better Auth
+// sign-in and token-creation endpoints. signInStatus and tokenStatus let
+// callers override the HTTP response codes.
+func newLoginServer(t *testing.T, signInStatus, tokenStatus int) *httptest.Server {
+	t.Helper()
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/api/auth/sign-in/email", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(signInStatus)
+		if signInStatus == http.StatusOK {
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"user": map[string]string{"id": "u1", "email": "user@example.com"},
+			})
+		}
+	})
+
+	mux.HandleFunc("/v1/auth/tokens", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(tokenStatus)
+		if tokenStatus == http.StatusCreated {
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"id": "t1", "name": "faultline-cli", "token": "ft_generated",
+			})
+		}
+	})
+
+	return httptest.NewServer(mux)
+}
+
+func TestAuthLoginCommand_Success_AllFlagsProvided(t *testing.T) {
+	useAuthTempDir(t)
+	srv := newLoginServer(t, http.StatusOK, http.StatusCreated)
+	defer srv.Close()
+
+	// Provide all inputs via flags so no prompt is needed — the only
+	// interactive read is the password, which goes through cmd.InOrStdin().
+	cmd := newAuthLoginCommand()
+	cmd.SetArgs([]string{
+		"--email", "user@example.com",
+		"--team", "my-team",
+		"--api-url", srv.URL,
+	})
+
+	var out bytes.Buffer
+	// stdin carries the password line.
+	cmd.SetIn(strings.NewReader("supersecret\n"))
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("auth login: %v", err)
+	}
+	if !strings.Contains(out.String(), "Logged in as") {
+		t.Errorf("expected 'Logged in as' in output, got: %q", out.String())
+	}
+	if !strings.Contains(out.String(), "my-team") {
+		t.Errorf("expected team name in output, got: %q", out.String())
+	}
+
+	// Credentials must be persisted.
+	creds, err := teams.LoadCredentials()
+	if err != nil {
+		t.Fatalf("LoadCredentials: %v", err)
+	}
+	if creds == nil {
+		t.Fatal("expected credentials after login, got nil")
+	}
+	if creds.Token != "ft_generated" {
+		t.Errorf("Token = %q, want %q", creds.Token, "ft_generated")
+	}
+	if creds.TeamSlug != "my-team" {
+		t.Errorf("TeamSlug = %q, want %q", creds.TeamSlug, "my-team")
+	}
+}
+
+func TestAuthLoginCommand_PromptsForEmailAndTeam(t *testing.T) {
+	useAuthTempDir(t)
+	srv := newLoginServer(t, http.StatusOK, http.StatusCreated)
+	defer srv.Close()
+
+	t.Setenv("FAULTLINE_API_URL", srv.URL)
+
+	cmd := newAuthLoginCommand()
+	// No --email or --team flags; they will be read from stdin.
+	// stdin layout: email\npassword\nteam-slug\n
+	cmd.SetIn(strings.NewReader("prompted@example.com\nsecretpassword\nprompted-team\n"))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("auth login (prompts): %v", err)
+	}
+
+	creds, _ := teams.LoadCredentials()
+	if creds == nil {
+		t.Fatal("expected credentials after login, got nil")
+	}
+	if creds.TeamSlug != "prompted-team" {
+		t.Errorf("TeamSlug = %q, want %q", creds.TeamSlug, "prompted-team")
+	}
+}
+
+func TestAuthLoginCommand_EmptyEmailAfterPrompt(t *testing.T) {
+	useAuthTempDir(t)
+
+	cmd := newAuthLoginCommand()
+	// email prompt returns empty line; team prompt returns empty too.
+	cmd.SetIn(strings.NewReader("\nsomepassword\n\n"))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for empty email and team slug, got nil")
+	}
+	if !strings.Contains(err.Error(), "required") {
+		t.Errorf("error should mention required fields; got: %v", err)
+	}
+}
+
+func TestAuthLoginCommand_PasswordEOF(t *testing.T) {
+	useAuthTempDir(t)
+
+	cmd := newAuthLoginCommand()
+	cmd.SetArgs([]string{"--email", "user@example.com", "--team", "t"})
+	// stdin is empty — the password read will hit EOF.
+	cmd.SetIn(strings.NewReader(""))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error on password EOF, got nil")
+	}
+	if !strings.Contains(err.Error(), "password") {
+		t.Errorf("error should mention password; got: %v", err)
+	}
+}
+
+func TestReadPasswordFallsBackForNonTerminalFile(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Pipe: %v", err)
+	}
+	defer r.Close()
+	if _, err := w.Write([]byte("pipe-secret\n")); err != nil {
+		t.Fatalf("write pipe: %v", err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatalf("close pipe writer: %v", err)
+	}
+
+	got, err := readPassword(r, bufio.NewScanner(r))
+	if err != nil {
+		t.Fatalf("readPassword: %v", err)
+	}
+	if string(got) != "pipe-secret" {
+		t.Fatalf("password = %q", got)
+	}
+}
+
+func TestAuthLoginCommand_LoginFailure(t *testing.T) {
+	useAuthTempDir(t)
+	srv := newLoginServer(t, http.StatusUnauthorized, http.StatusCreated)
+	defer srv.Close()
+
+	cmd := newAuthLoginCommand()
+	cmd.SetArgs([]string{"--email", "bad@example.com", "--team", "t", "--api-url", srv.URL})
+	cmd.SetIn(strings.NewReader("wrongpassword\n"))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for auth failure, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid email or password") {
+		t.Errorf("error = %v, want mention of invalid credentials", err)
+	}
+}
+
+func TestAuthLoginCommand_TokenSaveFailure(t *testing.T) {
+	// Make the config directory read-only so SaveCredentials fails.
+	base := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", base)
+
+	srv := newLoginServer(t, http.StatusOK, http.StatusCreated)
+	defer srv.Close()
+
+	// Create the config dir as read-only so the file write fails.
+	configDir := strings.Join([]string{base, "faultline"}, string(os.PathSeparator))
+	if err := os.MkdirAll(configDir, 0500); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+
+	cmd := newAuthLoginCommand()
+	cmd.SetArgs([]string{"--email", "u@example.com", "--team", "t", "--api-url", srv.URL})
+	cmd.SetIn(strings.NewReader("pw\n"))
+	var out bytes.Buffer
+	cmd.SetOut(&out)
+	cmd.SetErr(&out)
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected save-credentials error when config dir is read-only, got nil")
+	}
+	if !strings.Contains(err.Error(), "save credentials") {
+		t.Errorf("error = %v, want mention of save credentials", err)
+	}
 }

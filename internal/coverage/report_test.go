@@ -411,150 +411,150 @@ func TestFixtureLayoutForRootWithChildFixturesDir(t *testing.T) {
 // ── falsePositiveRisk ─────────────────────────────────────────────────────────
 
 func TestFalsePositiveRiskHighSharedPatterns(t *testing.T) {
-pb := model.Playbook{ID: "test"}
-if got := falsePositiveRisk(pb, 7); got != "high" {
-t.Errorf("expected high for 7 shared patterns, got %q", got)
-}
-if got := falsePositiveRisk(pb, 10); got != "high" {
-t.Errorf("expected high for 10 shared patterns, got %q", got)
-}
+	pb := model.Playbook{ID: "test"}
+	if got := falsePositiveRisk(pb, 7); got != "high" {
+		t.Errorf("expected high for 7 shared patterns, got %q", got)
+	}
+	if got := falsePositiveRisk(pb, 10); got != "high" {
+		t.Errorf("expected high for 10 shared patterns, got %q", got)
+	}
 }
 
 func TestFalsePositiveRiskMediumSharedPatterns(t *testing.T) {
-pb := model.Playbook{ID: "test"}
-if got := falsePositiveRisk(pb, 3); got != "medium" {
-t.Errorf("expected medium for 3 shared patterns, got %q", got)
-}
-if got := falsePositiveRisk(pb, 6); got != "medium" {
-t.Errorf("expected medium for 6 shared patterns, got %q", got)
-}
+	pb := model.Playbook{ID: "test"}
+	if got := falsePositiveRisk(pb, 3); got != "medium" {
+		t.Errorf("expected medium for 3 shared patterns, got %q", got)
+	}
+	if got := falsePositiveRisk(pb, 6); got != "medium" {
+		t.Errorf("expected medium for 6 shared patterns, got %q", got)
+	}
 }
 
 func TestFalsePositiveRiskMediumSilentFailureCategory(t *testing.T) {
-pb := model.Playbook{ID: "test", Category: "silent_failure"}
-if got := falsePositiveRisk(pb, 0); got != "medium" {
-t.Errorf("expected medium for silent_failure category, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Category: "silent_failure"}
+	if got := falsePositiveRisk(pb, 0); got != "medium" {
+		t.Errorf("expected medium for silent_failure category, got %q", got)
+	}
 }
 
 func TestFalsePositiveRiskLow(t *testing.T) {
-pb := model.Playbook{ID: "test", Category: "build"}
-if got := falsePositiveRisk(pb, 0); got != "low" {
-t.Errorf("expected low for 0 shared patterns (non-silent), got %q", got)
-}
-if got := falsePositiveRisk(pb, 2); got != "low" {
-t.Errorf("expected low for 2 shared patterns, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Category: "build"}
+	if got := falsePositiveRisk(pb, 0); got != "low" {
+		t.Errorf("expected low for 0 shared patterns (non-silent), got %q", got)
+	}
+	if got := falsePositiveRisk(pb, 2); got != "low" {
+		t.Errorf("expected low for 2 shared patterns, got %q", got)
+	}
 }
 
 // ── falseNegativeRisk ─────────────────────────────────────────────────────────
 
 func TestFalseNegativeRiskSourceDetector(t *testing.T) {
-pb := model.Playbook{ID: "test", Detector: "source"}
-if got := falseNegativeRisk(pb, 10); got != "medium" {
-t.Errorf("expected medium for source detector, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Detector: "source"}
+	if got := falseNegativeRisk(pb, 10); got != "medium" {
+		t.Errorf("expected medium for source detector, got %q", got)
+	}
 }
 
 func TestFalseNegativeRiskHighFewFixtures(t *testing.T) {
-pb := model.Playbook{ID: "test", Detector: "log"}
-if got := falseNegativeRisk(pb, 0); got != "high" {
-t.Errorf("expected high for 0 positive fixtures, got %q", got)
-}
-if got := falseNegativeRisk(pb, 1); got != "high" {
-t.Errorf("expected high for 1 positive fixture, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Detector: "log"}
+	if got := falseNegativeRisk(pb, 0); got != "high" {
+		t.Errorf("expected high for 0 positive fixtures, got %q", got)
+	}
+	if got := falseNegativeRisk(pb, 1); got != "high" {
+		t.Errorf("expected high for 1 positive fixture, got %q", got)
+	}
 }
 
 func TestFalseNegativeRiskMediumTwoFixtures(t *testing.T) {
-pb := model.Playbook{ID: "test", Detector: "log"}
-if got := falseNegativeRisk(pb, 2); got != "medium" {
-t.Errorf("expected medium for 2 positive fixtures, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Detector: "log"}
+	if got := falseNegativeRisk(pb, 2); got != "medium" {
+		t.Errorf("expected medium for 2 positive fixtures, got %q", got)
+	}
 }
 
 func TestFalseNegativeRiskLowManyFixtures(t *testing.T) {
-pb := model.Playbook{ID: "test", Detector: "log"}
-if got := falseNegativeRisk(pb, 3); got != "low" {
-t.Errorf("expected low for 3+ positive fixtures, got %q", got)
-}
-if got := falseNegativeRisk(pb, 10); got != "low" {
-t.Errorf("expected low for 10 positive fixtures, got %q", got)
-}
+	pb := model.Playbook{ID: "test", Detector: "log"}
+	if got := falseNegativeRisk(pb, 3); got != "low" {
+		t.Errorf("expected low for 3+ positive fixtures, got %q", got)
+	}
+	if got := falseNegativeRisk(pb, 10); got != "low" {
+		t.Errorf("expected low for 10 positive fixtures, got %q", got)
+	}
 }
 
 // ── robustnessScore ───────────────────────────────────────────────────────────
 
 func TestRobustnessScoreBaselineNoBonus(t *testing.T) {
-got := robustnessScore("low", "low", 0, 0, 0)
-// base=86, no penalty for low/low, no bonuses
-if got != 86 {
-t.Errorf("expected 86 for low/low with no bonus, got %d", got)
-}
+	got := robustnessScore("low", "low", 0, 0, 0)
+	// base=86, no penalty for low/low, no bonuses
+	if got != 86 {
+		t.Errorf("expected 86 for low/low with no bonus, got %d", got)
+	}
 }
 
 func TestRobustnessScoreHighFPPenalty(t *testing.T) {
-got := robustnessScore("high", "low", 0, 0, 0)
-// 86 - 16 = 70
-if got != 70 {
-t.Errorf("expected 70 for high FP risk, got %d", got)
-}
+	got := robustnessScore("high", "low", 0, 0, 0)
+	// 86 - 16 = 70
+	if got != 70 {
+		t.Errorf("expected 70 for high FP risk, got %d", got)
+	}
 }
 
 func TestRobustnessScoreMediumFNPenalty(t *testing.T) {
-got := robustnessScore("low", "medium", 0, 0, 0)
-// 86 - 8 = 78
-if got != 78 {
-t.Errorf("expected 78 for medium FN risk, got %d", got)
-}
+	got := robustnessScore("low", "medium", 0, 0, 0)
+	// 86 - 8 = 78
+	if got != 78 {
+		t.Errorf("expected 78 for medium FN risk, got %d", got)
+	}
 }
 
 func TestRobustnessScorePositiveFixturesBonus(t *testing.T) {
-got3 := robustnessScore("low", "low", 3, 0, 0)
-// 86 + 3 = 89
-if got3 != 89 {
-t.Errorf("expected 89 for 3 positive fixtures, got %d", got3)
-}
-got5 := robustnessScore("low", "low", 5, 0, 0)
-// 86 + 6 = 92
-if got5 != 92 {
-t.Errorf("expected 92 for 5 positive fixtures, got %d", got5)
-}
+	got3 := robustnessScore("low", "low", 3, 0, 0)
+	// 86 + 3 = 89
+	if got3 != 89 {
+		t.Errorf("expected 89 for 3 positive fixtures, got %d", got3)
+	}
+	got5 := robustnessScore("low", "low", 5, 0, 0)
+	// 86 + 6 = 92
+	if got5 != 92 {
+		t.Errorf("expected 92 for 5 positive fixtures, got %d", got5)
+	}
 }
 
 func TestRobustnessScoreNegativeAssertionBonus(t *testing.T) {
-got := robustnessScore("low", "low", 0, 3, 0)
-// 86 + 3 = 89
-if got != 89 {
-t.Errorf("expected 89 for 3 negative assertions, got %d", got)
-}
+	got := robustnessScore("low", "low", 0, 3, 0)
+	// 86 + 3 = 89
+	if got != 89 {
+		t.Errorf("expected 89 for 3 negative assertions, got %d", got)
+	}
 }
 
 func TestRobustnessScoreStrictTop1Bonus(t *testing.T) {
-got := robustnessScore("low", "low", 0, 0, 1)
-// 86 + 2 = 88
-if got != 88 {
-t.Errorf("expected 88 for strict top-1, got %d", got)
-}
+	got := robustnessScore("low", "low", 0, 0, 1)
+	// 86 + 2 = 88
+	if got != 88 {
+		t.Errorf("expected 88 for strict top-1, got %d", got)
+	}
 }
 
 func TestRobustnessScoreClampedAtMax(t *testing.T) {
-// All bonuses: 86 + 6 + 3 + 2 = 97 → clamped to 95
-got := robustnessScore("low", "low", 5, 3, 1)
-if got != 95 {
-t.Errorf("expected 95 (clamped max), got %d", got)
-}
+	// All bonuses: 86 + 6 + 3 + 2 = 97 → clamped to 95
+	got := robustnessScore("low", "low", 5, 3, 1)
+	if got != 95 {
+		t.Errorf("expected 95 (clamped max), got %d", got)
+	}
 }
 
 func TestRobustnessScoreClampedAtMin(t *testing.T) {
-// 86 - 16 - 16 = 54; min is 45
-got := robustnessScore("high", "high", 0, 0, 0)
-if got != 54 {
-t.Errorf("expected 54 for double high penalty, got %d", got)
-}
-// Force below min: theoretical
-got2 := robustnessScore("high", "high", 0, 0, 0)
-if got2 < 45 {
-t.Errorf("expected minimum 45, got %d", got2)
-}
+	// 86 - 16 - 16 = 54; min is 45
+	got := robustnessScore("high", "high", 0, 0, 0)
+	if got != 54 {
+		t.Errorf("expected 54 for double high penalty, got %d", got)
+	}
+	// Force below min: theoretical
+	got2 := robustnessScore("high", "high", 0, 0, 0)
+	if got2 < 45 {
+		t.Errorf("expected minimum 45, got %d", got2)
+	}
 }

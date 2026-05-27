@@ -247,7 +247,7 @@ func TestToModelTopologySignalsEmpty(t *testing.T) {
 
 func requireExtraPack(t *testing.T) string {
 	t.Helper()
-	
+
 	for _, path := range []string{
 		"../../playbooks/packs/extra-local",
 		"../../../faultline-extra-pack",
@@ -344,4 +344,3 @@ func TestSnapshotContextCommitLimit(t *testing.T) {
 		t.Errorf("expected at most 5 related commits, got %d", len(ctx.RelatedCommits))
 	}
 }
-

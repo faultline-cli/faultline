@@ -48,6 +48,7 @@ var CommandSurfaces = []CommandSurface{
 	{Path: "auth status", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "auth token", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "auth token set", Category: SurfaceCompanion, Maturity: MaturitySupported},
+	{Path: "sync", Category: SurfaceCompanion, Maturity: MaturitySupported},
 	{Path: "fixtures", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures ingest", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures review", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
