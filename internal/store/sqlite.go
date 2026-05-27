@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -122,7 +123,6 @@ WHERE id = ?
 		return fmt.Errorf("update analysis run: %w", err)
 	}
 
-	findingIDs := map[int]int64{}
 	for i, result := range analysis.Results {
 		signature := strings.TrimSpace(result.SignatureHash)
 		normalizedSignature := ""
@@ -133,7 +133,7 @@ WHERE id = ?
 		if merr != nil {
 			return fmt.Errorf("marshal finding evidence: %w", merr)
 		}
-		inserted, ierr := tx.ExecContext(ctx, `
+		_, err = tx.ExecContext(ctx, `
 INSERT INTO findings (
 	run_id, rank, failure_id, title, category, detector, score, confidence,
 	fingerprint, signature_hash, normalized_signature, evidence_excerpt_json, seen_at
@@ -153,14 +153,9 @@ INSERT INTO findings (
 			string(evidenceJSON),
 			completedAt.UTC().Format(time.RFC3339),
 		)
-		if ierr != nil {
-			return fmt.Errorf("insert finding: %w", ierr)
+		if err != nil {
+			return fmt.Errorf("insert finding: %w", err)
 		}
-		findingID, ierr := inserted.LastInsertId()
-		if ierr != nil {
-			return fmt.Errorf("resolve finding id: %w", ierr)
-		}
-		findingIDs[i] = findingID
 
 		_, err = tx.ExecContext(ctx, `
 INSERT INTO playbook_matches (
@@ -219,7 +214,7 @@ SELECT signature_hash, first_seen_at, last_seen_at, occurrence_count
 FROM signatures
 WHERE signature_hash = ?
 `, signatureHash).Scan(&history.SignatureHash, &history.FirstSeenAt, &history.LastSeenAt, &history.OccurrenceCount)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return SignatureHistory{}, nil
 	}
 	if err != nil {

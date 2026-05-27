@@ -293,6 +293,8 @@ func resolveLikelyFiles(root string, patterns []string) []string {
 		return nil
 	}
 	var repoFiles []string
+	// WalkDir error is intentionally ignored: file discovery is best-effort
+	// and partial results are still useful for workflow suggestions.
 	_ = filepath.WalkDir(root, func(fullPath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil

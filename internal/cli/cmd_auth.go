@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -11,6 +12,23 @@ import (
 
 	"faultline/internal/teams"
 )
+
+// readPassword reads a password from r without echoing characters.
+// When r is an *os.File backed by a terminal, it delegates to term.ReadPassword
+// so the TTY echo is suppressed. For any other reader (pipes, bytes.Buffer,
+// test buffers) it reads the next line from fallback, enabling unit testing.
+func readPassword(r io.Reader, fallback *bufio.Scanner) ([]byte, error) {
+	if f, ok := r.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		return term.ReadPassword(int(f.Fd()))
+	}
+	if !fallback.Scan() {
+		if err := fallback.Err(); err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("unexpected EOF reading password")
+	}
+	return fallback.Bytes(), nil
+}
 
 func newAuthCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -55,7 +73,8 @@ func newAuthLoginCommand() *cobra.Command {
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
-			scanner := bufio.NewScanner(os.Stdin)
+			in := cmd.InOrStdin()
+			scanner := bufio.NewScanner(in)
 
 			if email == "" {
 				fmt.Fprint(out, "Email: ")
@@ -66,11 +85,17 @@ func newAuthLoginCommand() *cobra.Command {
 			}
 
 			fmt.Fprint(out, "Password: ")
-			pwBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+			pwBytes, err := readPassword(in, scanner)
 			fmt.Fprintln(out)
 			if err != nil {
 				return fmt.Errorf("read password: %w", err)
 			}
+			// Zero password bytes when done to limit in-memory lifetime.
+			defer func() {
+				for i := range pwBytes {
+					pwBytes[i] = 0
+				}
+			}()
 			password := string(pwBytes)
 
 			if teamSlug == "" {
@@ -89,7 +114,7 @@ func newAuthLoginCommand() *cobra.Command {
 			client := teams.NewClient(resolvedURL)
 
 			fmt.Fprintln(out, "Authenticating…")
-			token, userEmail, err := client.Login(email, password, teamSlug, tokenName)
+			token, userEmail, err := client.Login(cmd.Context(), email, password, teamSlug, tokenName)
 			if err != nil {
 				return err
 			}
@@ -146,7 +171,7 @@ func newAuthStatusCommand() *cobra.Command {
 				return nil
 			}
 			client := teams.NewClient(creds.APIURL)
-			email, err := client.VerifyToken(creds.Token, creds.TeamSlug)
+			email, err := client.VerifyToken(cmd.Context(), creds.Token, creds.TeamSlug)
 			if err != nil {
 				fmt.Fprintf(out, "Token invalid or expired: %v\n", err)
 				fmt.Fprintln(out, "Run 'faultline auth login' to re-authenticate.")

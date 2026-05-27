@@ -23,7 +23,7 @@ func validateOutputMode(value string) error {
 
 func validateSelect(value int) error {
 	if value < 0 {
-		return fmt.Errorf("--select must be 1 or greater")
+		return fmt.Errorf("--select must be 0 or greater (0 disables selection)")
 	}
 	return nil
 }
