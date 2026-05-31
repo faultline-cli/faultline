@@ -16,30 +16,32 @@ type styles struct {
 	metaLabel  lipgloss.Style
 	severity   map[string]lipgloss.Style
 	confidence lipgloss.Style
+	evidence   lipgloss.Style
 }
 
 func newStyles() styles {
 	baseCard := lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#5B6470")).
+		BorderForeground(lipgloss.Color("#1E293B")).
 		Padding(0, 1)
 
 	return styles{
 		title: lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#F5F7FA")),
+			Foreground(lipgloss.Color("#E2E8F0")),
 		subtitle: lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("#D6D9DE")),
+			Foreground(lipgloss.Color("#93C5FD")),
 		muted: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#9AA4B2")),
+			Foreground(lipgloss.Color("#94A3B8")),
 		divider: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#697586")),
-		card:       baseCard,
-		callout:    baseCard.BorderForeground(lipgloss.Color("#7C8798")),
-		panel:      baseCard.Padding(0, 1),
-		metaLabel:  lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#AEB7C2")),
-		confidence: lipgloss.NewStyle().Foreground(lipgloss.Color("#8DD0A5")).Bold(true),
+			Foreground(lipgloss.Color("#64748B")),
+		card:    baseCard,
+		callout: baseCard.BorderForeground(lipgloss.Color("#334155")),
+		panel:   baseCard.Padding(0, 1),
+		metaLabel: lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#93C5FD")),
+		confidence: lipgloss.NewStyle().Foreground(lipgloss.Color("#FCD34D")).Bold(true),
+		evidence:   lipgloss.NewStyle().Foreground(lipgloss.Color("#FCA5A5")),
 		severity: map[string]lipgloss.Style{
 			"critical": pillStyle("#7F1D1D", "#FECACA"),
 			"high":     pillStyle("#7C2D12", "#FED7AA"),

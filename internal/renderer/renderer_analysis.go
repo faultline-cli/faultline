@@ -93,7 +93,7 @@ func (r Renderer) renderAnalyzeResult(a *model.Analysis, result model.Result, ra
 		parts = append(parts, r.renderDetailPanel("History", history, "repo"))
 	}
 	if detailed && len(result.Evidence) > 0 {
-		parts = append(parts, r.renderDetailPanel("Evidence", r.renderBulletLines(result.Evidence), "evidence"))
+		parts = append(parts, r.renderDetailPanel("Evidence", r.renderEvidenceBulletLines(result.Evidence), "evidence"))
 	}
 	if detailed {
 		if rank == 0 {
@@ -156,7 +156,7 @@ func (r Renderer) renderQuickEvidence(lines []string) string {
 		}
 		return strings.Join(out, "\n")
 	}
-	return r.renderBulletLines(lines)
+	return r.renderEvidenceBulletLines(lines)
 }
 
 func (r Renderer) renderQuickActions(result model.Result) string {
@@ -286,6 +286,27 @@ func (r Renderer) renderBulletLines(lines []string) string {
 		}
 		b.WriteString("- ")
 		b.WriteString(line)
+	}
+	return b.String()
+}
+
+// renderEvidenceBulletLines renders evidence lines with the website's .t-str
+// salmon colour for the text and .t-dim colour for the bullet dash.
+func (r Renderer) renderEvidenceBulletLines(lines []string) string {
+	if r.opts.Plain {
+		return r.renderBulletLines(lines)
+	}
+	var b strings.Builder
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteString("\n")
+		}
+		b.WriteString(r.styles.divider.Render("-") + " ")
+		b.WriteString(r.styles.evidence.Render(line))
 	}
 	return b.String()
 }
