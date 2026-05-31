@@ -589,8 +589,19 @@ func (e *Engine) List() ([]model.Playbook, error) {
 }
 
 // Explain returns the playbook identified by id, or an error if not found.
+// It reuses the cached playbook set from loadPlaybooks so the catalog is not
+// re-parsed on every call.
 func (e *Engine) Explain(id string) (model.Playbook, error) {
-	return e.catalog.Explain(id)
+	pbs, err := e.loadPlaybooks()
+	if err != nil {
+		return model.Playbook{}, err
+	}
+	for _, pb := range pbs {
+		if pb.ID == id {
+			return pb, nil
+		}
+	}
+	return model.Playbook{}, fmt.Errorf("unknown playbook %q", id)
 }
 
 // ReadLines reads log input into canonicalized line values used by the matcher.

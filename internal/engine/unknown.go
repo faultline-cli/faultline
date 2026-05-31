@@ -9,6 +9,16 @@ import (
 	"faultline/internal/model"
 )
 
+const (
+	// unknownClusterBaseConfidence is the starting confidence for the first
+	// candidate cluster when no playbook matches.
+	unknownClusterBaseConfidence = 0.45
+	// unknownClusterConfidenceDecay is subtracted per additional cluster rank.
+	unknownClusterConfidenceDecay = 0.08
+	// unknownClusterMinConfidence is the floor applied to all cluster confidence values.
+	unknownClusterMinConfidence = 0.20
+)
+
 func buildUnknownDiagnosis(lines []model.Line, ctx model.Context) ([]model.CandidateCluster, []string, *model.SuggestedPlaybookSeed) {
 	raw := joinOriginalLines(lines)
 	candidates := extractCandidatePatterns(raw, 8)
@@ -34,9 +44,9 @@ func buildUnknownDiagnosis(lines []model.Line, ctx model.Context) ([]model.Candi
 	for index, key := range keys {
 		signals := grouped[key]
 		summary := fmt.Sprintf("Unmatched %s signals remain clustered around one root cause.", key)
-		confidence := 0.45 - float64(index)*0.08
-		if confidence < 0.2 {
-			confidence = 0.2
+		confidence := unknownClusterBaseConfidence - float64(index)*unknownClusterConfidenceDecay
+		if confidence < unknownClusterMinConfidence {
+			confidence = unknownClusterMinConfidence
 		}
 		clusters = append(clusters, model.CandidateCluster{
 			Key:            key,

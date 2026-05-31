@@ -17,6 +17,11 @@ type Commit struct {
 	Files   []string // paths changed in this commit
 }
 
+// historyMaxCommits caps the number of git log entries fetched in a single
+// LoadHistory call. This prevents runaway memory use on repositories with very
+// deep history.
+const historyMaxCommits = 200
+
 // LoadHistory fetches commits from HEAD that are newer than the given duration
 // string (e.g. "30d", "7d"). Returns commits in reverse-chronological order.
 func LoadHistory(s *Scanner, since string) ([]Commit, error) {
@@ -29,7 +34,8 @@ func LoadHistory(s *Scanner, since string) ([]Commit, error) {
 	// The remaining lines in the block come from --name-only and are file paths.
 	// Fields: hash, unix timestamp, subject, author email.
 	formatArg := "--format=%x1f%H%x1e%at%x1e%s%x1e%ae"
-	logOut, err := s.Run("log", "--no-merges", "--name-only", sinceArg, formatArg)
+	logOut, err := s.Run("log", "--no-merges", "--name-only",
+		fmt.Sprintf("--max-count=%d", historyMaxCommits), sinceArg, formatArg)
 	if err != nil {
 		return nil, fmt.Errorf("git log: %w", err)
 	}

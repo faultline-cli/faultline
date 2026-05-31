@@ -5,11 +5,13 @@ package repo
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Scanner discovers a git repository and executes git commands within it.
@@ -43,11 +45,21 @@ func NewScanner(dir string) (*Scanner, error) {
 	return &Scanner{Root: root}, nil
 }
 
+// gitCommandTimeout caps how long a single git invocation may run.
+const gitCommandTimeout = 30 * time.Second
+
+// gitRootSearchDepth limits how many directory levels are walked upward when
+// searching for the git repository root.
+const gitRootSearchDepth = 50
+
 // Run executes a git command with the given arguments inside the repository
 // root and returns the combined stdout output. Non-zero exit codes produce an
-// error that includes the stderr text.
+// error that includes the stderr text. Each invocation is bounded by
+// gitCommandTimeout to prevent hangs on slow or unresponsive git operations.
 func (s *Scanner) Run(args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+	ctx, cancel := context.WithTimeout(context.Background(), gitCommandTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Dir = s.Root
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -60,17 +72,21 @@ func (s *Scanner) Run(args ...string) (string, error) {
 }
 
 // findGitRoot walks up from dir until it finds a directory that contains a
-// .git entry (file or directory). Returns an error if none is found.
+// .git entry (file or directory). Returns an error if none is found or if
+// the search exceeds gitRootSearchDepth directory levels.
 func findGitRoot(dir string) (string, error) {
-	for {
+	start := dir
+	for depth := 0; depth < gitRootSearchDepth; depth++ {
 		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
 			return dir, nil
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			return "", fmt.Errorf(
-				"no git repository found (searched from %s upward)", dir)
+				"no git repository found (searched from %s upward)", start)
 		}
 		dir = parent
 	}
+	return "", fmt.Errorf(
+		"no git repository found (searched from %s upward, max depth %d)", start, gitRootSearchDepth)
 }

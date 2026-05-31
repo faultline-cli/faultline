@@ -16,6 +16,10 @@ import (
 // memory and cause a denial-of-service.
 const maxErrorBodySize = 4096
 
+// maxSuccessBodySize caps how many bytes we read from successful server
+// responses. Legitimate API responses are far smaller than 1 MiB.
+const maxSuccessBodySize = 1 << 20 // 1 MiB
+
 // Client is a minimal HTTP client for the Faultline Teams API.
 type Client struct {
 	baseURL    string
@@ -94,7 +98,7 @@ func (c *Client) Login(ctx context.Context, email, password, teamSlug, tokenName
 	}
 
 	var signIn signInResponse
-	if err := json.NewDecoder(resp.Body).Decode(&signIn); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxSuccessBodySize)).Decode(&signIn); err != nil {
 		return "", "", fmt.Errorf("sign in: decode response: %w", err)
 	}
 	userEmail = signIn.User.Email
@@ -126,7 +130,7 @@ func (c *Client) Login(ctx context.Context, email, password, teamSlug, tokenName
 	}
 
 	var tokenData createTokenResponse
-	if err := json.NewDecoder(tokenResp.Body).Decode(&tokenData); err != nil {
+	if err := json.NewDecoder(io.LimitReader(tokenResp.Body, maxSuccessBodySize)).Decode(&tokenData); err != nil {
 		return "", "", fmt.Errorf("create token: decode response: %w", err)
 	}
 	return tokenData.Token, userEmail, nil
@@ -158,7 +162,7 @@ func (c *Client) VerifyToken(ctx context.Context, token, teamSlug string) (email
 	}
 
 	var me meResponse
-	if err := json.NewDecoder(resp.Body).Decode(&me); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxSuccessBodySize)).Decode(&me); err != nil {
 		return "", fmt.Errorf("verify token: decode response: %w", err)
 	}
 	return me.Data.Email, nil
@@ -207,7 +211,7 @@ func (c *Client) Sync(ctx context.Context, token, teamSlug string, req SyncReque
 	switch resp.StatusCode {
 	case http.StatusOK, http.StatusCreated:
 		var result SyncResponse
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		if err := json.NewDecoder(io.LimitReader(resp.Body, maxSuccessBodySize)).Decode(&result); err != nil {
 			return nil, fmt.Errorf("sync: decode response: %w", err)
 		}
 		return &result, nil

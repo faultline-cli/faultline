@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+// maxSuccessBodySize caps how many bytes we read from successful HTTP responses.
+// Legitimate fixture API responses are far smaller than 1 MiB.
+const maxSuccessBodySize = 1 << 20 // 1 MiB
+
 type jsonRequestOptions struct {
 	AcceptHeader        string
 	OptionalStatusCodes []int
@@ -46,7 +50,7 @@ func getJSON(ctx context.Context, client *http.Client, rawURL string, target any
 		}
 		return statusErr
 	}
-	return json.NewDecoder(resp.Body).Decode(target)
+	return json.NewDecoder(io.LimitReader(resp.Body, maxSuccessBodySize)).Decode(target)
 }
 
 func getJSONOptional(ctx context.Context, client *http.Client, rawURL string, target any, opts jsonRequestOptions) error {

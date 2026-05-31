@@ -98,10 +98,16 @@ func captureHistorySnapshots(ctx context.Context, st store.Store, a *model.Analy
 	for i, result := range a.Results {
 		sig := store.SignatureForResult(result)
 		snapshots[i].signature = sig
-		seenCount, _ := st.CountSeenFailure(ctx, result.Playbook.ID)
-		snapshots[i].seenCount = seenCount
-		history, _ := st.LookupSignatureHistory(ctx, sig.Hash)
-		snapshots[i].signatureHit = history
+		if seenCount, err := st.CountSeenFailure(ctx, result.Playbook.ID); err == nil {
+			snapshots[i].seenCount = seenCount
+		} else {
+			fmt.Fprintf(os.Stderr, "WARN: store.CountSeenFailure: %s\n", err)
+		}
+		if history, err := st.LookupSignatureHistory(ctx, sig.Hash); err == nil {
+			snapshots[i].signatureHit = history
+		} else {
+			fmt.Fprintf(os.Stderr, "WARN: store.LookupSignatureHistory: %s\n", err)
+		}
 	}
 	return snapshots
 }

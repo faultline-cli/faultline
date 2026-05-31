@@ -101,9 +101,11 @@ func (s *sqliteStore) CompleteRun(ctx context.Context, handle RunHandle, params 
 		fingerprint = strings.TrimSpace(analysis.Fingerprint)
 	}
 	if analysis.Artifact != nil {
-		if data, merr := json.Marshal(analysis.Artifact); merr == nil {
-			artifactJSON = string(data)
+		data, merr := json.Marshal(analysis.Artifact)
+		if merr != nil {
+			return fmt.Errorf("marshal analysis artifact: %w", merr)
 		}
+		artifactJSON = string(data)
 	}
 	_, err = tx.ExecContext(ctx, `
 UPDATE analysis_runs

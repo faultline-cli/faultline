@@ -135,7 +135,9 @@ func InstallPack(srcDir, name string, force bool) (InstalledPack, error) {
 		return InstalledPack{}, err
 	}
 	if _, err := LoadDir(dest); err != nil {
-		_ = os.RemoveAll(dest)
+		if removeErr := os.RemoveAll(dest); removeErr != nil {
+			fmt.Fprintf(os.Stderr, "WARN: cleanup of invalid pack %q failed: %s\n", packName, removeErr)
+		}
 		return InstalledPack{}, fmt.Errorf("validate installed pack %q: %w", packName, err)
 	}
 
@@ -164,7 +166,9 @@ func InstallPack(srcDir, name string, force bool) (InstalledPack, error) {
 		PinnedRef: pinnedRef,
 	}
 	// Best-effort: a manifest write failure should not prevent the pack from loading.
-	_ = WritePackMeta(dest, installMeta)
+	if writeErr := WritePackMeta(dest, installMeta); writeErr != nil {
+		fmt.Fprintf(os.Stderr, "WARN: pack %q installed but metadata could not be written: %s\n", packName, writeErr)
+	}
 
 	return InstalledPack{
 		Name:          packName,
