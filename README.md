@@ -6,6 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-182-blue)](docs/failures/catalog/README.md)
 
+**Website:** [faultline-cli.pages.dev](https://faultline-cli.pages.dev/)
+
 Faultline is a deterministic CLI for classifying CI build failures. Point it at a failing log and it returns the failure class, evidence lines copied from the log, and the fix path it can support; no AI, no external calls, no guessing. Same log in → same result out.
 
 <p align="center">

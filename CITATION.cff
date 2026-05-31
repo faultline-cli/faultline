@@ -11,7 +11,7 @@ authors:
   - name: "Faultline Contributors"
     website: "https://github.com/faultline-cli/faultline"
 repository-code: "https://github.com/faultline-cli/faultline"
-url: "https://github.com/faultline-cli/faultline"
+url: "https://faultline-cli.pages.dev/"
 license: MIT
 keywords:
   - CI

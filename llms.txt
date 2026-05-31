@@ -2,6 +2,8 @@
 
 > Deterministic CI failure diagnosis CLI. Analyzes build logs against 182 evidence-backed playbooks to identify and explain failures — no AI or LLM required.
 
+Website: https://faultline-cli.pages.dev/
+
 Faultline reads a CI log, scores it against bundled playbooks, and surfaces the most likely failure with diagnosis, fix steps, and validation. Primary commands: `faultline analyze`, `faultline workflow`, `faultline list`, `faultline explain`, `faultline fix`.
 
 Faultline is local-first: no network calls, no LLM, no external service dependency. The same log always produces the same output. Evidence is copied directly from the input log. It is silent when the failure is unknown rather than inventing a diagnosis.
