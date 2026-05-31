@@ -6,15 +6,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Playbooks](https://img.shields.io/badge/playbooks-182-blue)](docs/failures/catalog/README.md)
 
-Faultline is a deterministic CLI for classifying CI build failures. Point it at a failing log and it returns the failure class, evidence lines copied from the log, and the fix path it can support — no AI, no external calls, no guessing. Same log in → same result out.
+Faultline is a deterministic CLI for classifying CI build failures. Point it at a failing log and it returns the failure class, evidence lines copied from the log, and the fix path it can support; no AI, no external calls, no guessing. Same log in → same result out.
 
 <p align="center">
   <img src="docs/readme-assets/demo.gif" alt="faultline demo: analyze a failure, get the fix, classify a pipeline" width="880">
 </p>
 
-- **Local-first** — runs entirely on your machine or CI runner. No LLM, no network calls, no service dependency.
-- **Evidence-backed** — every diagnosis quotes the exact log lines that triggered the match, so humans and agents can verify it.
-- **Stable output** — text, markdown, JSON, and workflow artifacts for tickets, CI steps, agent handoff, and postmortems.
+- **Local-first** - runs entirely on your machine or CI runner. No LLM, no network calls, no service dependency.
+- **Evidence-backed** - every diagnosis quotes the exact log lines that triggered the match, so humans and agents can verify it.
+- **Stable output** - text, markdown, JSON, and workflow artifacts for tickets, CI steps, agent handoff, and postmortems.
 - **182 bundled playbooks** covering runtime failures, dependency issues, Docker auth, test runners, IaC, and more.
 - **89.4% match rate** across 30,094 real failed GitHub Actions logs.
 
@@ -32,7 +32,7 @@ Classify a failing log:
 faultline analyze build.log
 ```
 
-Try it without a log file — pipe in a single error line to see the full loop:
+Try it without a log file; pipe in a single error line to see the full loop:
 
 ```bash
 echo 'exec /__e/node20/bin/node: no such file or directory' | faultline analyze
@@ -77,7 +77,7 @@ Faultline is a known-pattern classifier, not an inference engine.
 - It classifies failures it recognizes from explicit, versioned playbooks.
 - It returns matched evidence from the log so the result can be checked.
 - It is silent when the failure is unknown or evidence is too weak.
-- AI, search, and debugging tools are still useful as the second step — after the log has been classified or left unmatched.
+- AI, search, and debugging tools are still useful as the second step; after the log has been classified or left unmatched.
 
 This makes Faultline useful before investigation starts: route the obvious failures, standardize known fixes, and avoid spending attention on classes the team already understands.
 
@@ -93,13 +93,13 @@ faultline list                                    # browse known failure classes
 faultline explain missing-executable              # inspect one failure class
 ```
 
-- `analyze` — classify a failing log and show evidence, diagnosis, and next action.
-- `fix` — print the remediation steps for the top diagnosis.
-- `workflow` — generate deterministic follow-through output for automation or handoff.
-- `batch` — classify several logs and group results by failure pattern.
-- `inspect` — scan the local source tree with deterministic source detectors.
-- `list` — browse known failure classes.
-- `explain` — inspect one failure class before trusting or changing it.
+- `analyze` - classify a failing log and show evidence, diagnosis, and next action.
+- `fix` - print the remediation steps for the top diagnosis.
+- `workflow` - generate deterministic follow-through output for automation or handoff.
+- `batch` - classify several logs and group results by failure pattern.
+- `inspect` - scan the local source tree with deterministic source detectors.
+- `list` - browse known failure classes.
+- `explain` - inspect one failure class before trusting or changing it.
 
 `report` exists as a bounded local companion for the forensic store created by prior local runs; cross-repo recurrence and coordination belong to the Team layer.
 
@@ -293,10 +293,10 @@ Use [docs/playbooks.md](docs/playbooks.md) for playbook authoring and [docs/fixt
 ## FAQ
 
 **Does Faultline send my logs anywhere?**
-No. Analysis runs entirely on your machine or inside your CI runner. No log data, telemetry, or output is transmitted to any external service. The only network activity is the optional `--git` flag, which reads your local `.git` directory — not the internet.
+No. Analysis runs entirely on your machine or inside your CI runner. No log data, telemetry, or output is transmitted to any external service. The only network activity is the optional `--git` flag, which reads your local `.git` directory - not the internet.
 
 **What CI providers does it support?**
-Any provider that produces a text log file: GitHub Actions, GitLab CI, CircleCI, Jenkins, Buildkite, Drone, Bitbucket Pipelines, and self-hosted runners. Faultline reads the log file — it has no provider-specific API dependency.
+Any provider that produces a text log file: GitHub Actions, GitLab CI, CircleCI, Jenkins, Buildkite, Drone, Bitbucket Pipelines, and self-hosted runners. Faultline reads the log file; it has no provider-specific API dependency.
 
 **Does it work with AI coding agents?**
 Yes. `--json` and `--mode agent` output are designed for agent handoff. The `workflow` command returns structured diagnosis, likely files, reproduction steps, and remediation context in a stable JSON shape that agents can consume directly.
