@@ -7,7 +7,7 @@ description: >
   tools, tests, or project infrastructure.
 ---
 
-# ProjectStyle
+# AgentStyle
 
 ## The Essence
 
