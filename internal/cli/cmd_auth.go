@@ -32,8 +32,9 @@ func readPassword(r io.Reader, fallback *bufio.Scanner) ([]byte, error) {
 
 func newAuthCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "auth",
-		Short: "Manage Faultline Teams authentication",
+		Use:    "auth",
+		Short:  "Manage Faultline Teams authentication",
+		Hidden: true,
 		Long: joinLines(
 			"Authenticate with Faultline Teams to enable sync and organizational features.",
 			"",
@@ -45,6 +46,7 @@ func newAuthCommand() *cobra.Command {
 	cmd.AddCommand(newAuthLogoutCommand())
 	cmd.AddCommand(newAuthStatusCommand())
 	cmd.AddCommand(newAuthTokenCommand())
+	hideCommandTree(cmd)
 	return cmd
 }
 

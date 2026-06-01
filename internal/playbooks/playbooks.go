@@ -6,6 +6,7 @@ package playbooks
 // by category.
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"os"
@@ -189,7 +190,7 @@ type raw struct {
 //  4. /playbooks/bundled or /playbooks (Docker container conventions)
 func DefaultDir() (string, error) {
 	if envDir := strings.TrimSpace(os.Getenv(envKey)); envDir != "" {
-		return validateDir(envDir)
+		return validatePlaybookDir(envDir)
 	}
 	var candidates []string
 	if cwd, err := os.Getwd(); err == nil {
@@ -210,7 +211,7 @@ func DefaultDir() (string, error) {
 			continue
 		}
 		seen[c] = struct{}{}
-		if dir, err := validateDir(c); err == nil {
+		if dir, err := validatePlaybookDir(c); err == nil {
 			return dir, nil
 		}
 	}
@@ -278,7 +279,7 @@ func loadFile(path string) (model.Playbook, error) {
 		return model.Playbook{}, fmt.Errorf("read playbook %s: %w", path, err)
 	}
 	var r raw
-	if err := yaml.Unmarshal(data, &r); err != nil {
+	if err := decodePlaybookYAML(data, &r); err != nil {
 		return model.Playbook{}, fmt.Errorf("parse playbook %s: %w", path, err)
 	}
 	if err := validate(r, path); err != nil {
@@ -742,6 +743,40 @@ func validateDir(dir string) (string, error) {
 		return "", fmt.Errorf("%s is not a directory", dir)
 	}
 	return dir, nil
+}
+
+func validatePlaybookDir(dir string) (string, error) {
+	dir, err := validateDir(dir)
+	if err != nil {
+		return "", err
+	}
+	found := false
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if found || d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && name != PackMetaFileName && name != "faultline-hooks.yaml" && name != MatchCatalogFileName {
+			found = true
+		}
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("walk playbook directory %s: %w", dir, err)
+	}
+	if !found {
+		return "", fmt.Errorf("no playbook files found in %s", dir)
+	}
+	return dir, nil
+}
+
+func decodePlaybookYAML(data []byte, target *raw) error {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	return decoder.Decode(target)
 }
 
 // upwardDirs returns a list of playbook directory candidates by walking upward

@@ -4,7 +4,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 
 ## Current Snapshot
 
-- Bundled playbooks: 177
+- Bundled playbooks: 182
 - Accepted real fixtures: 215
 - Top-1 baseline pass rate: 100% (215/215)
 - Top-3 baseline pass rate: 100% (215/215)
@@ -14,7 +14,7 @@ Faultline's trust boundary is the checked-in corpus, not a vague accuracy claim.
 - Fixture metadata validation: required for real and staging corpora
 - Corpus fingerprint drift: release-gated through `fixtures/real/baseline.json`
 - Test corpus files: 32 (release-gated through `corpus_test.go`)
-- Source-detector regression fixtures: 8 repository scenarios under `internal/engine/testdata/source/`
+- Source-detector regression fixtures: 33 repository scenarios under `internal/engine/testdata/source/`
 
 These numbers describe the checked-in regression corpus only. They are useful because they are deterministic, reviewable, and reproducible from the repository state. They are baseline-gate numbers, not a claim that every accepted real fixture currently lands as a strong top-1 match.
 
@@ -79,7 +79,7 @@ Append one row per release cut so corpus growth and match stability stay visible
 
 - The corpus mix is still GitHub-heavy: 104 GitHub fixtures (48%) out of 215 accepted real fixtures.
 - The current baseline shows 0 unmatched fixtures, 0 weak matches, and 0 false positives. All recent promotions are clean top-1 matches.
-- Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 8 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
+- Source-detector rules are now regression-gated separately from the real log corpus. That keeps the trust boundary honest, but it also means source-surface expansion should come with paired repository fixtures, not just more YAML. The shipped source surface now includes 33 repository regression scenarios, including negative fixtures for virtualenv and test-only noise boundaries.
 - Signature and recurrence behavior is also pressure-tested separately through
   the noisy variant corpus under `internal/signature/testdata/variants/` plus
   store-backed app tests. That keeps recurrence grouping and output

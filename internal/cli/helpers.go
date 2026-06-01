@@ -3,6 +3,8 @@ package cli
 import (
 	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 func firstNonEmpty(values ...string) string {
@@ -56,4 +58,11 @@ func resolveStoreHistoryOutput(history, noHistory, noStore bool, storePath strin
 // joinLines joins strings with newlines, used for Long/Example in command descriptions.
 func joinLines(lines ...string) string {
 	return strings.Join(lines, "\n")
+}
+
+func hideCommandTree(cmd *cobra.Command) {
+	for _, child := range cmd.Commands() {
+		child.Hidden = true
+		hideCommandTree(child)
+	}
 }

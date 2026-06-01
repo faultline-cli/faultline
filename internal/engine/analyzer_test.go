@@ -221,6 +221,30 @@ func TestAnalyzeRepositoryWithPermissionDeniedFile(t *testing.T) {
 	}
 }
 
+func TestLoadSourceFilesFailsWhenFileCountLimitExceeded(t *testing.T) {
+	dir := t.TempDir()
+	srcDir := filepath.Join(dir, "src")
+	if err := os.MkdirAll(srcDir, 0o755); err != nil {
+		t.Fatalf("mkdir source dir: %v", err)
+	}
+	for _, name := range []string{"one.go", "two.go", "three.go"} {
+		path := filepath.Join(srcDir, name)
+		if err := os.WriteFile(path, []byte("package main\n"), 0o644); err != nil {
+			t.Fatalf("write source file: %v", err)
+		}
+	}
+
+	_, err := loadSourceFilesWithLimits(dir, sourceScanLimits{
+		FileBytes:  MaxSourceFileBytes,
+		Files:      2,
+		TotalBytes: MaxSourceTotalBytes,
+		TotalLines: MaxSourceTotalLines,
+	})
+	if !errors.Is(err, ErrSourceScanTooLarge) {
+		t.Fatalf("expected ErrSourceScanTooLarge, got %v", err)
+	}
+}
+
 func TestCorrelateSnapshotWithNilResult(t *testing.T) {
 	snap := &repoSnapshot{
 		root: "/repo",

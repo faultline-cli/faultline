@@ -13,6 +13,11 @@ const LargeCommitFileThreshold = 10
 // maxTopAuthors is the maximum number of top-author entries retained in Signals.
 const maxTopAuthors = 5
 
+// maxCoChangeFilesPerCommit caps the quadratic co-change pair calculation.
+// Large blast-radius commits still contribute churn and large-commit signals,
+// but are skipped for pair generation once this limit is exceeded.
+const maxCoChangeFilesPerCommit = 200
+
 // Signals holds derived signals from commit history.
 type Signals struct {
 	// HotspotFiles are files edited most frequently, ranked by edit count.
@@ -115,11 +120,13 @@ func DeriveSignals(commits []Commit) Signals {
 			}
 		}
 
-		for i := 0; i < len(c.Files); i++ {
-			for j := i + 1; j < len(c.Files); j++ {
-				k := pairKey(c.Files[i], c.Files[j])
-				pairFiles[k] = [2]string{c.Files[i], c.Files[j]}
-				pairCounts[k]++
+		if len(c.Files) <= maxCoChangeFilesPerCommit {
+			for i := 0; i < len(c.Files); i++ {
+				for j := i + 1; j < len(c.Files); j++ {
+					k := pairKey(c.Files[i], c.Files[j])
+					pairFiles[k] = [2]string{c.Files[i], c.Files[j]}
+					pairCounts[k]++
+				}
 			}
 		}
 	}

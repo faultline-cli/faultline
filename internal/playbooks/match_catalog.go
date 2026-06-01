@@ -1,6 +1,7 @@
 package playbooks
 
 import (
+	"bytes"
 	"fmt"
 	"maps"
 	"os"
@@ -60,7 +61,9 @@ func loadMatchCatalog(root, packName string) (matchCatalog, error) {
 	}
 
 	var rawCatalog rawMatchCatalog
-	if err := yaml.Unmarshal(data, &rawCatalog); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&rawCatalog); err != nil {
 		return matchCatalog{}, fmt.Errorf("parse match catalog %s: %w", path, err)
 	}
 	if version := strings.TrimSpace(rawCatalog.SchemaVersion); version != "" && version != "matchers.v1" {

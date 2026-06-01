@@ -30,6 +30,9 @@ var (
 	ErrNoInput = errors.New("no log input provided; pass a file path or pipe stdin")
 	// ErrInputTooLarge is returned when log input exceeds MaxLogInputBytes.
 	ErrInputTooLarge = errors.New("log input exceeds maximum size")
+	// ErrSourceScanTooLarge is returned when repository source inspection exceeds
+	// one of the explicit source scan bounds.
+	ErrSourceScanTooLarge = errors.New("source scan exceeds maximum size")
 	// ErrNoMatch is returned when the log was analysed but no playbook matched.
 	ErrNoMatch = errors.New("no known failure pattern matched")
 )
@@ -629,6 +632,29 @@ const MaxLogInputBytes = 100 * 1024 * 1024
 // MaxSourceFileBytes caps individual source files scanned by inspect.
 const MaxSourceFileBytes = 5 * 1024 * 1024
 
+// MaxSourceFiles caps the number of source files loaded by inspect.
+const MaxSourceFiles = 5000
+
+// MaxSourceTotalBytes caps the total source bytes loaded by inspect.
+const MaxSourceTotalBytes = 50 * 1024 * 1024
+
+// MaxSourceTotalLines caps the total source lines loaded by inspect.
+const MaxSourceTotalLines = 250000
+
+type sourceScanLimits struct {
+	FileBytes  int64
+	Files      int
+	TotalBytes int64
+	TotalLines int
+}
+
+var defaultSourceScanLimits = sourceScanLimits{
+	FileBytes:  MaxSourceFileBytes,
+	Files:      MaxSourceFiles,
+	TotalBytes: MaxSourceTotalBytes,
+	TotalLines: MaxSourceTotalLines,
+}
+
 // ReadLogInput reads log input with the same size bound used by AnalyzeReader.
 func ReadLogInput(r io.Reader) ([]byte, error) {
 	return readLogInput(r, MaxLogInputBytes)
@@ -678,7 +704,13 @@ func rawLogFromLines(lines []model.Line) string {
 }
 
 func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
+	return loadSourceFilesWithLimits(root, defaultSourceScanLimits)
+}
+
+func loadSourceFilesWithLimits(root string, limits sourceScanLimits) ([]detectors.SourceFile, error) {
 	var files []detectors.SourceFile
+	var totalBytes int64
+	var totalLines int
 	rootEval, err := filepath.EvalSymlinks(root)
 	if err != nil {
 		return nil, fmt.Errorf("resolve repository root: %w", err)
@@ -710,8 +742,14 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 			readPath = target
 			size = targetInfo.Size()
 		}
-		if size > MaxSourceFileBytes {
+		if size > limits.FileBytes {
 			return nil
+		}
+		if limits.Files > 0 && len(files) >= limits.Files {
+			return fmt.Errorf("%w: source file count exceeds %d", ErrSourceScanTooLarge, limits.Files)
+		}
+		if limits.TotalBytes > 0 && totalBytes+size > limits.TotalBytes {
+			return fmt.Errorf("%w: source byte count exceeds %d", ErrSourceScanTooLarge, limits.TotalBytes)
 		}
 		data, err := os.ReadFile(readPath)
 		if err != nil {
@@ -723,10 +761,16 @@ func loadSourceFiles(root string) ([]detectors.SourceFile, error) {
 		}
 		content := strings.ReplaceAll(string(data), "\r\n", "\n")
 		content = strings.ReplaceAll(content, "\r", "\n")
+		lines := strings.Split(content, "\n")
+		if limits.TotalLines > 0 && totalLines+len(lines) > limits.TotalLines {
+			return fmt.Errorf("%w: source line count exceeds %d", ErrSourceScanTooLarge, limits.TotalLines)
+		}
+		totalBytes += size
+		totalLines += len(lines)
 		files = append(files, detectors.SourceFile{
 			Path:    filepath.ToSlash(rel),
 			Content: content,
-			Lines:   strings.Split(content, "\n"),
+			Lines:   lines,
 		})
 		return nil
 	})

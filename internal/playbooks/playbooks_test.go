@@ -109,18 +109,60 @@ func TestDefaultDirWithoutEnvVarFindsPlaybooksInTree(t *testing.T) {
 	}
 }
 
-func TestDefaultDirWithoutEnvVarReturnsErrorWhenNoPlaybooksExist(t *testing.T) {
-	// Set env var to empty so the env-var branch is skipped, but provide a
-	// non-existent path via env so the fallback search starts from a temp dir
-	// that has no playbooks tree.  We achieve isolation by setting the env var
-	// to a sentinel value that makes validateDir fail, then asserting the error.
+func TestDefaultDirEnvVarRequiresPlaybookFiles(t *testing.T) {
 	t.Setenv(envKey, t.TempDir()) // valid dir, but contains no .yaml files
 	_, err := DefaultDir()
-	// validateDir succeeds for any existing directory, so this succeeds.
-	// The test asserts the contract: a valid directory is returned when the env
-	// var points to an existing directory even if it's empty.
+	if err == nil {
+		t.Fatal("expected error for valid but empty env dir")
+	}
+	if !strings.Contains(err.Error(), "no playbook files") {
+		t.Fatalf("expected no playbook files error, got %v", err)
+	}
+}
+
+func TestDefaultDirSkipsLookalikePlaybookPackage(t *testing.T) {
+	root := t.TempDir()
+	lookalike := filepath.Join(root, "internal", "playbooks")
+	bundled := filepath.Join(root, "playbooks", "bundled")
+	if err := os.MkdirAll(lookalike, 0o755); err != nil {
+		t.Fatalf("mkdir lookalike: %v", err)
+	}
+	if err := os.MkdirAll(bundled, 0o755); err != nil {
+		t.Fatalf("mkdir bundled: %v", err)
+	}
+	writePlaybookFixture(t, bundled, "rule.yaml", `
+id: bundled-rule
+title: Bundled Rule
+category: test
+severity: low
+match:
+  any:
+    - "bundled rule"
+`)
+	wd := filepath.Join(root, "internal", "cli")
+	if err := os.MkdirAll(wd, 0o755); err != nil {
+		t.Fatalf("mkdir wd: %v", err)
+	}
+	oldWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("unexpected error for valid but empty env dir: %v", err)
+		t.Fatalf("get wd: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Fatalf("restore wd: %v", err)
+		}
+	})
+	if err := os.Chdir(wd); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Setenv(envKey, "")
+
+	got, err := DefaultDir()
+	if err != nil {
+		t.Fatalf("DefaultDir: %v", err)
+	}
+	if got != bundled {
+		t.Fatalf("DefaultDir = %q, want %q", got, bundled)
 	}
 }
 
@@ -345,6 +387,28 @@ hypothesis:
 	}
 	if !strings.Contains(err.Error(), "unknown signal") {
 		t.Fatalf("expected unknown signal error, got %v", err)
+	}
+}
+
+func TestLoadDirRejectsUnknownPlaybookField(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "sample.yaml", `
+id: sample
+title: Sample
+category: test
+severity: low
+summmary: typo should fail instead of being ignored
+match:
+  any:
+    - "sample error"
+`)
+
+	_, err := LoadDir(dir)
+	if err == nil {
+		t.Fatal("expected unknown playbook field to fail validation")
+	}
+	if !strings.Contains(err.Error(), "field summmary not found") {
+		t.Fatalf("expected unknown field error, got %v", err)
 	}
 }
 
@@ -797,6 +861,37 @@ named_matches:
 	}
 	if got.Match.Partial[0].Minimum != 2 || len(got.Match.Partial[0].Patterns) != 3 {
 		t.Fatalf("expected composed partial group, got %#v", got.Match.Partial[0])
+	}
+}
+
+func TestLoadPacksRejectsUnknownMatchCatalogField(t *testing.T) {
+	dir := t.TempDir()
+
+	writePlaybookFixture(t, dir, "rule.yaml", `
+id: runtime-node
+title: Node runtime mismatch
+category: runtime
+severity: medium
+match:
+  use:
+    - runtime-base
+`)
+	if err := os.WriteFile(filepath.Join(dir, MatchCatalogFileName), []byte(strings.TrimSpace(`
+schema_version: matchers.v1
+named_matches:
+  runtime-base:
+    anny:
+      - "runtime error"
+`)+"\n"), 0o600); err != nil {
+		t.Fatalf("write match catalog: %v", err)
+	}
+
+	_, err := LoadPacks([]Pack{{Name: "team", Root: dir}})
+	if err == nil {
+		t.Fatal("expected unknown match catalog field to fail validation")
+	}
+	if !strings.Contains(err.Error(), "field anny not found") {
+		t.Fatalf("expected unknown field error, got %v", err)
 	}
 }
 

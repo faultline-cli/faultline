@@ -33,5 +33,11 @@ jobs:
       - name: Check real fixture corpus baseline
         run: make fixture-check
 
+      - name: Check Bayes ranking gate
+        run: make bayes-check
+
+      - name: Check generated docs and published counts
+        run: make docs-check
+
       - name: Smoke test shipped CLI surface
         run: make cli-smoke

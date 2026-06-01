@@ -91,7 +91,16 @@ stats-check:
 			fi; \
 		done; \
 	done; \
-	printf 'stats-check: playbook count %s matches README.md and llms.txt\n' "$$actual"
+	if ! grep -F -- "- Bundled playbooks: $$actual" docs/fixture-corpus.md >/dev/null; then \
+		printf 'stats-check: docs/fixture-corpus.md does not contain current bundled playbook count %s\n' "$$actual" >&2; \
+		exit 1; \
+	fi; \
+	coverage=$$(sed -n 's/.*| Coverage | \*\*\([0-9.]*\)%\*\*.*/\1/p' docs/fixture-corpus.md | head -n 1); \
+	if [ -n "$$coverage" ] && ! grep -F "coverage-$$coverage%25" README.md >/dev/null; then \
+		printf 'stats-check: README.md coverage badge does not match docs/fixture-corpus.md coverage %s%%\n' "$$coverage" >&2; \
+		exit 1; \
+	fi; \
+	printf 'stats-check: playbook count %s and coverage badge match published docs\n' "$$actual"
 
 review:
 	$(GO) run ./cmd fixtures patterns

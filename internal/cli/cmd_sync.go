@@ -19,8 +19,9 @@ func newSyncCommand() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "sync [file]",
-		Short: "Push a failure artifact to Faultline Teams",
+		Use:    "sync [file]",
+		Short:  "Push a failure artifact to Faultline Teams",
+		Hidden: true,
 		Long: joinLines(
 			"Push the JSON output of 'faultline analyze --json' to Faultline Teams.",
 			"",

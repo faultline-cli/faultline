@@ -133,23 +133,14 @@ func (c Catalog) Explain(id string) (model.Playbook, error) {
 }
 
 func (c Catalog) resolvedExtraPackDirs() []string {
-	installed := discoverInstalledPackDirs()
 	if len(c.extraPacks) > 0 {
-		return cleanPackDirs(append(append([]string(nil), c.extraPacks...), installed...))
+		return cleanPackDirs(c.extraPacks)
 	}
 	raw := strings.TrimSpace(os.Getenv(packsEnvKey))
 	if raw == "" {
-		return cleanPackDirs(installed)
-	}
-	return cleanPackDirs(append(strings.Split(raw, string(os.PathListSeparator)), installed...))
-}
-
-func discoverInstalledPackDirs() []string {
-	roots, err := DiscoverInstalledPackRoots()
-	if err != nil {
 		return nil
 	}
-	return roots
+	return cleanPackDirs(strings.Split(raw, string(os.PathListSeparator)))
 }
 
 func cleanPackDirs(dirs []string) []string {

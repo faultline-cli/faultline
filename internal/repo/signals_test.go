@@ -143,6 +143,28 @@ func TestDeriveSignals_noLargeCommit(t *testing.T) {
 	}
 }
 
+func TestDeriveSignalsSkipsCoChangePairsForHugeCommits(t *testing.T) {
+	t.Parallel()
+
+	files := make([]string, maxCoChangeFilesPerCommit+1)
+	for i := range files {
+		files[i] = fmt.Sprintf("pkg/file%d.go", i)
+	}
+	sigs := DeriveSignals([]Commit{
+		{Hash: "big", Subject: "chore: generated update", Files: files},
+	})
+
+	if len(sigs.LargeCommits) != 1 {
+		t.Fatalf("expected large commit signal, got %d", len(sigs.LargeCommits))
+	}
+	if len(sigs.CoChangePairs) != 0 {
+		t.Fatalf("expected no co-change pairs for huge commit, got %d", len(sigs.CoChangePairs))
+	}
+	if len(sigs.HotspotFiles) != len(files) {
+		t.Fatalf("expected churn to still include all files, got %d want %d", len(sigs.HotspotFiles), len(files))
+	}
+}
+
 // --------------------------------------------------------------------------
 // DeriveSignals – config / CI file signals
 // --------------------------------------------------------------------------

@@ -100,7 +100,7 @@ match:
 	}
 }
 
-func TestCatalogIncludesInstalledPacks(t *testing.T) {
+func TestCatalogDoesNotAutoLoadInstalledPacks(t *testing.T) {
 	bundled := t.TempDir()
 	home := t.TempDir()
 	installedRoot := filepath.Join(home, ".faultline", installedPacksSubdir, "team-pack")
@@ -136,11 +136,14 @@ match:
 	if err != nil {
 		t.Fatalf("Packs: %v", err)
 	}
-	if len(packs) != 2 {
-		t.Fatalf("expected bundled and installed pack, got %#v", packs)
+	if len(packs) != 1 {
+		t.Fatalf("expected bundled pack only, got %#v", packs)
 	}
-	if packs[1].Name != "team-pack" || packs[1].Root != installedRoot {
-		t.Fatalf("unexpected installed pack: %#v", packs[1])
+	if packs[0].Name != BundledPackName || packs[0].Root != bundled {
+		t.Fatalf("unexpected bundled pack: %#v", packs[0])
+	}
+	if _, err := os.Stat(installedRoot); err != nil {
+		t.Fatalf("test setup should still have installed pack root: %v", err)
 	}
 }
 

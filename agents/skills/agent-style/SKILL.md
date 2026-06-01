@@ -1,5 +1,5 @@
 ---
-name: project-coding-style
+name: agent-style
 description: >
   Apply disciplined engineering principles to general software projects.
   Adapted from TigerBeetle's TigerStyle. Use whenever writing, reviewing,
