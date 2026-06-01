@@ -798,6 +798,46 @@ match:
 	}
 }
 
+func TestValidatePatternsRejectsInvalidRegex(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "broken.yaml", `
+id: broken-regex
+title: Broken Regex
+category: test
+severity: low
+match:
+  any:
+    - "re: (?invalid"
+`)
+	_, err := LoadDir(dir)
+	if err == nil {
+		t.Fatal("expected error for invalid regex pattern, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid regex") {
+		t.Errorf("error message should mention 'invalid regex'; got: %s", err.Error())
+	}
+}
+
+func TestValidatePatternsAcceptsValidRegex(t *testing.T) {
+	dir := t.TempDir()
+	writePlaybookFixture(t, dir, "valid.yaml", `
+id: valid-regex
+title: Valid Regex
+category: test
+severity: low
+match:
+  any:
+    - "re: error[0-9]+"
+`)
+	pbs, err := LoadDir(dir)
+	if err != nil {
+		t.Fatalf("expected valid regex to load without error, got: %v", err)
+	}
+	if len(pbs) != 1 || pbs[0].ID != "valid-regex" {
+		t.Errorf("expected valid-regex playbook, got %v", pbs)
+	}
+}
+
 func TestLoadPacksAppliesNamedMatchCatalogComposition(t *testing.T) {
 	dir := t.TempDir()
 

@@ -70,12 +70,28 @@ func (Service) Sync(ctx context.Context, r io.Reader, opts SyncOptions, w io.Wri
 	return err
 }
 
+// tokenMinLength is the minimum acceptable length for a Faultline API token
+// (the "ft_" prefix plus at least one character of content).
+const tokenMinLength = 5
+
+// validateToken checks that token has the correct prefix and is not obviously
+// truncated. It does not verify the token against the server.
+func validateToken(token string) error {
+	if !strings.HasPrefix(token, "ft_") {
+		return fmt.Errorf("invalid token: must start with 'ft_'")
+	}
+	if len(token) < tokenMinLength {
+		return fmt.Errorf("invalid token: too short (minimum %d characters)", tokenMinLength)
+	}
+	return nil
+}
+
 func resolveSyncCredentials() (syncCredentials, error) {
 	apiURL := firstNonEmptySync(os.Getenv("FAULTLINE_API_URL"), teams.DefaultAPIURL)
 	token := os.Getenv("FAULTLINE_TOKEN")
 	if token != "" {
-		if !strings.HasPrefix(token, "ft_") {
-			return syncCredentials{}, fmt.Errorf("invalid token: must start with 'ft_'")
+		if err := validateToken(token); err != nil {
+			return syncCredentials{}, err
 		}
 		return syncCredentials{Token: token, APIURL: apiURL}, nil
 	}
@@ -87,8 +103,8 @@ func resolveSyncCredentials() (syncCredentials, error) {
 	if creds == nil || creds.Token == "" {
 		return syncCredentials{}, fmt.Errorf("not authenticated; run 'faultline auth login' or set FAULTLINE_TOKEN")
 	}
-	if !strings.HasPrefix(creds.Token, "ft_") {
-		return syncCredentials{}, fmt.Errorf("invalid stored token: must start with 'ft_'")
+	if err := validateToken(creds.Token); err != nil {
+		return syncCredentials{}, fmt.Errorf("invalid stored token: %w", err)
 	}
 	if creds.APIURL != "" && os.Getenv("FAULTLINE_API_URL") == "" {
 		apiURL = creds.APIURL
@@ -115,7 +131,11 @@ func readSyncArtifactInput(r io.Reader) ([]byte, error) {
 		return nil, fmt.Errorf("read artifact: %w", err)
 	}
 	if len(data) > maxSyncArtifactBytes {
-		return nil, fmt.Errorf("artifact input exceeds maximum size")
+		return nil, fmt.Errorf(
+			"artifact input exceeds maximum size (%d MB); got at least %d bytes",
+			maxSyncArtifactBytes/(1024*1024),
+			len(data),
+		)
 	}
 	return data, nil
 }

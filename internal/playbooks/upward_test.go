@@ -1,6 +1,8 @@
 package playbooks
 
 import (
+	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -48,5 +50,21 @@ func TestUpwardDirsIncludesAllAncestors(t *testing.T) {
 	// (2 entries per level × at least 4 levels = at least 8)
 	if len(dirs) < 8 {
 		t.Errorf("expected at least 8 candidates for 4-level path, got %d: %v", len(dirs), dirs)
+	}
+}
+
+func TestUpwardDirsRespectDepthCap(t *testing.T) {
+	// Build a path that is deeper than upwardDirsDepthMax (30 levels).
+	path := "/"
+	for i := 0; i < 30; i++ {
+		path = filepath.Join(path, fmt.Sprintf("a%d", i))
+	}
+	dirs := upwardDirs(path)
+	// Each level contributes 2 entries. With a cap of upwardDirsDepthMax levels
+	// the result must be at most 2*upwardDirsDepthMax entries.
+	maxEntries := 2 * upwardDirsDepthMax
+	if len(dirs) > maxEntries {
+		t.Errorf("upwardDirs returned %d entries for 30-level path; expected <= %d (depth cap = %d)",
+			len(dirs), maxEntries, upwardDirsDepthMax)
 	}
 }

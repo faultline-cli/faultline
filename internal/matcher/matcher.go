@@ -11,6 +11,11 @@ import (
 	"faultline/internal/model"
 )
 
+// evidenceItemMax is the maximum number of unique evidence lines collected
+// per playbook match. Evidence beyond this limit adds no diagnostic value
+// and would bloat JSON output and the SQLite store.
+const evidenceItemMax = 20
+
 // regexPrefix is the pattern prefix that signals a RE2 regex rather than a plain substring.
 const regexPrefix = "re:"
 
@@ -99,6 +104,9 @@ func matchPlaybook(pb model.Playbook, idx lineIndex, ctx model.Context, weights 
 	seenEvidence := make(map[string]struct{})
 
 	addEvidence := func(line string) {
+		if len(evidence) >= evidenceItemMax {
+			return
+		}
 		if _, ok := seenEvidence[line]; !ok {
 			evidence = append(evidence, line)
 			seenEvidence[line] = struct{}{}

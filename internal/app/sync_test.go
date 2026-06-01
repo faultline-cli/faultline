@@ -126,3 +126,42 @@ func TestReadSyncArtifactInputRejectsOversizedInput(t *testing.T) {
 		t.Fatalf("expected maximum size error, got %v", err)
 	}
 }
+
+func TestReadSyncArtifactInputErrorIncludesSizes(t *testing.T) {
+	data := bytes.Repeat([]byte("x"), maxSyncArtifactBytes+1)
+	_, err := readSyncArtifactInput(bytes.NewReader(data))
+	if err == nil {
+		t.Fatal("expected error for oversized input, got nil")
+	}
+	msg := err.Error()
+	// Error must mention the limit in MB and the observed byte count.
+	if !strings.Contains(msg, "5") {
+		t.Errorf("error should mention the limit (5 MB); got: %s", msg)
+	}
+	if !strings.Contains(msg, "bytes") {
+		t.Errorf("error should mention 'bytes'; got: %s", msg)
+	}
+}
+
+func TestValidateTokenAcceptsValidToken(t *testing.T) {
+	if err := validateToken("ft_abc123"); err != nil {
+		t.Errorf("expected valid token to pass, got: %v", err)
+	}
+}
+
+func TestValidateTokenRejectsMissingPrefix(t *testing.T) {
+	err := validateToken("no_prefix")
+	if err == nil {
+		t.Fatal("expected error for token without ft_ prefix, got nil")
+	}
+}
+
+func TestValidateTokenRejectsTooShortToken(t *testing.T) {
+	err := validateToken("ft_")
+	if err == nil {
+		t.Fatal("expected error for prefix-only token, got nil")
+	}
+	if !strings.Contains(err.Error(), "too short") {
+		t.Errorf("error should mention 'too short'; got: %s", err.Error())
+	}
+}

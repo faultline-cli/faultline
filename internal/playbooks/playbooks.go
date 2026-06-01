@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -532,11 +533,28 @@ func validateSignalPatterns(patterns []string, section, path string) error {
 	return validatePatterns(patterns, section, path)
 }
 
+// regexPatternPrefix is the prefix that marks a RE2 regex pattern in a
+// playbook. Defined here to avoid importing the matcher package.
+const regexPatternPrefix = "re:"
+
 func validatePatterns(patterns []string, section, path string) error {
 	for i, pattern := range patterns {
 		norm := normalizePattern(pattern)
 		if norm == "" {
 			return fmt.Errorf("playbook %s: %s[%d] must not be empty", path, section, i)
+		}
+		if strings.HasPrefix(strings.TrimSpace(pattern), regexPatternPrefix) {
+			// Compile with the same transformation the matcher applies: lowercase
+			// the regex source so validation matches runtime behaviour.
+			src := strings.ToLower(strings.TrimSpace(
+				strings.TrimPrefix(strings.TrimSpace(pattern), regexPatternPrefix),
+			))
+			if _, err := regexp.Compile(src); err != nil {
+				return fmt.Errorf(
+					"playbook %s: %s[%d] contains invalid regex %q: %w",
+					path, section, i, pattern, err,
+				)
+			}
 		}
 	}
 	return nil
@@ -779,12 +797,18 @@ func decodePlaybookYAML(data []byte, target *raw) error {
 	return decoder.Decode(target)
 }
 
+// upwardDirsDepthMax is the maximum number of directory levels walked upward
+// when searching for a playbook directory. A generous cap covers any real
+// project layout while bounding the search to a predictable cost.
+const upwardDirsDepthMax = 20
+
 // upwardDirs returns a list of playbook directory candidates by walking upward
-// from dir toward the filesystem root. Bundled-pack locations are preferred,
-// with the legacy single-root layout kept as a fallback for compatibility.
+// from dir toward the filesystem root, up to upwardDirsDepthMax levels.
+// Bundled-pack locations are preferred, with the legacy single-root layout
+// kept as a fallback for compatibility.
 func upwardDirs(dir string) []string {
 	var result []string
-	for {
+	for depth := 0; depth < upwardDirsDepthMax; depth++ {
 		result = append(result, filepath.Join(dir, "playbooks", "bundled"))
 		result = append(result, filepath.Join(dir, "playbooks"))
 		parent := filepath.Dir(dir)

@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"fmt"
 	"testing"
 
 	"faultline/internal/model"
@@ -580,5 +581,26 @@ func TestAnyWeightsChildExtendsDontInfluenceParentWeight(t *testing.T) {
 	}
 	if w != 1.0 {
 		t.Errorf("expected parent pattern weight 1.0 (child excluded from IDF), got %f", w)
+	}
+}
+
+func TestMatchPlaybookEvidenceCapped(t *testing.T) {
+	pb := model.Playbook{
+		ID:    "evidence-cap-test",
+		Title: "Evidence Cap Test",
+		Match: model.MatchSpec{Any: []string{"error"}},
+	}
+	// Build 100 unique lines each containing "error".
+	lines := make([]model.Line, 100)
+	for i := range lines {
+		msg := fmt.Sprintf("error unique line %d", i)
+		lines[i] = model.Line{Original: msg, Normalized: msg}
+	}
+	results := Rank([]model.Playbook{pb}, lines, model.Context{})
+	if len(results) == 0 {
+		t.Fatal("expected at least one match result")
+	}
+	if n := len(results[0].Evidence); n > evidenceItemMax {
+		t.Errorf("evidence list has %d items; expected <= %d (evidenceItemMax)", n, evidenceItemMax)
 	}
 }
