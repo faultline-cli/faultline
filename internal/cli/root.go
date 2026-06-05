@@ -44,5 +44,6 @@ func NewRootCommand(version string) *cobra.Command {
 	cmd.AddCommand(newBatchCommand())
 	cmd.AddCommand(newAuthCommand())
 	cmd.AddCommand(newSyncCommand())
+	cmd.AddCommand(newCatalogueCommand())
 	return cmd
 }

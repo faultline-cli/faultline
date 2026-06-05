@@ -1,0 +1,163 @@
+name: catalogue-export
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "playbooks/**"
+      - "internal/catalogue/**"
+      - "internal/cli/cmd_catalogue.go"
+      - ".github/workflows/catalogue-export.yml"
+  pull_request:
+    paths:
+      - "playbooks/**"
+      - "internal/catalogue/**"
+      - "internal/cli/cmd_catalogue.go"
+      - ".github/workflows/catalogue-export.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    name: Generate failure catalogue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run catalogue tests
+        run: go test ./internal/catalogue/...
+
+      - name: Build CLI
+        run: make build
+
+      - name: Generate catalogue
+        run: |
+          ./bin/faultline catalogue export \
+            --src playbooks/bundled \
+            --out catalogue \
+            --repo "${{ github.repository }}" \
+            --commit "${{ github.sha }}" \
+            --version "$(git describe --tags --always 2>/dev/null || echo dev)"
+
+      - name: Validate generated catalogue
+        run: |
+          set -e
+          test -f catalogue/catalogue.json           || (echo "catalogue.json missing" >&2 && exit 1)
+          test -f catalogue/catalogue.manifest.json  || (echo "catalogue.manifest.json missing" >&2 && exit 1)
+          count=$(find catalogue/failures -name '*.md' -maxdepth 1 | wc -l | tr -d ' ')
+          if [ "$count" -eq 0 ]; then
+            echo "No failure Markdown files generated under catalogue/failures/" >&2
+            exit 1
+          fi
+          echo "Generated $count failure Markdown files"
+          cat catalogue/catalogue.manifest.json
+
+      - name: Archive catalogue
+        run: tar -czf catalogue.tar.gz catalogue/
+
+      - name: Upload catalogue artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-catalogue-${{ github.sha }}
+          path: catalogue.tar.gz
+          retention-days: 30
+
+  sync-to-teams:
+    name: Sync catalogue to Teams repo (PR)
+    needs: export
+    # Only run on pushes to main, not on PRs, and only when the secret is present.
+    if: >
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    # This job requires the FAULTLINE_BOT_TOKEN secret to be configured.
+    # If the secret is absent the job is skipped rather than failing.
+    steps:
+      - name: Check for bot token
+        id: token-check
+        run: |
+          if [ -z "${{ secrets.FAULTLINE_BOT_TOKEN }}" ]; then
+            echo "FAULTLINE_BOT_TOKEN is not set — skipping Teams sync"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out CLI repository
+        if: steps.token-check.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          path: cli
+
+      - name: Set up Go
+        if: steps.token-check.outputs.skip == 'false'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Build CLI
+        if: steps.token-check.outputs.skip == 'false'
+        run: make -C cli build
+
+      - name: Generate catalogue
+        if: steps.token-check.outputs.skip == 'false'
+        run: |
+          cli/bin/faultline catalogue export \
+            --src cli/playbooks/bundled \
+            --out cli/catalogue \
+            --repo "${{ github.repository }}" \
+            --commit "${{ github.sha }}" \
+            --version "$(git -C cli describe --tags --always 2>/dev/null || echo dev)"
+
+      - name: Check out Teams repository
+        if: steps.token-check.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: faultline/faultline-teams
+          token: ${{ secrets.FAULTLINE_BOT_TOKEN }}
+          path: teams
+
+      - name: Copy generated catalogue into Teams repo
+        if: steps.token-check.outputs.skip == 'false'
+        run: |
+          set -e
+          # Failure Markdown pages → docs-site/src/content/failures/
+          mkdir -p teams/docs-site/src/content/failures
+          cp cli/catalogue/failures/*.md teams/docs-site/src/content/failures/
+
+          # JSON index and manifest → docs-site/src/data/
+          mkdir -p teams/docs-site/src/data
+          cp cli/catalogue/catalogue.json          teams/docs-site/src/data/catalogue.json
+          cp cli/catalogue/catalogue.manifest.json teams/docs-site/src/data/catalogue.manifest.json
+
+      - name: Open pull request in Teams repo
+        if: steps.token-check.outputs.skip == 'false'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.FAULTLINE_BOT_TOKEN }}
+          path: teams
+          commit-message: "chore(catalogue): update generated failure catalogue from ${{ github.sha }}"
+          branch: "bot/catalogue-update-${{ github.sha }}"
+          delete-branch: true
+          title: "Update generated failure catalogue"
+          body: |
+            Automated update of the generated failure catalogue.
+
+            **Source commit:** ${{ github.repository }}@${{ github.sha }}
+
+            Generated by the [catalogue-export workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+
+            ---
+            *Do not edit the files under `docs-site/src/content/failures/` or `docs-site/src/data/catalogue*.json` directly — they are regenerated from the [faultline CLI playbooks](https://github.com/${{ github.repository }}/tree/main/playbooks/bundled).*
+          labels: "automated,catalogue"

@@ -7,7 +7,7 @@ LOG ?=
 VERSION ?= dev
 RELEASE_OUTPUT ?= dist/releases/$(VERSION)
 WITH_DOCKER ?= 0
-.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist docs-generate docs-check stats-check dev-start dev-stop dev-login dev-auth-status dev-sync
+.PHONY: help build run test fixture-check bayes-check bench review review-verbose review-update cli-smoke demo-assets smoke-release docker-build docker-analyze docker-smoke release-snapshot release-check release-verify clean-dist docs-generate docs-check stats-check catalogue-export catalogue-validate dev-start dev-stop dev-login dev-auth-status dev-sync
 
 # Local Teams dev — points at the adjacent faultline-teams repo.
 # Override DEV_API_URL to target a different host (e.g. a remote staging API).
@@ -40,6 +40,8 @@ help:
 		"  docs-generate   Generate failure catalog docs from bundled playbooks" \
 		"  docs-check      Verify generated failure catalog docs are up to date" \
 		"  stats-check     Verify hardcoded playbook counts in README and llms.txt match the actual bundled set" \
+		"  catalogue-export   Export the public failure catalogue to catalogue/" \
+		"  catalogue-validate  Generate and validate the catalogue output" \
 		"" \
 		"Local Teams dev (DEV_API_URL defaults to http://localhost:8787; override as needed):" \
 		"  dev-start       Start the faultline-teams API in the background (no-op if already running)" \
@@ -79,6 +81,17 @@ docs-generate:
 
 docs-check: stats-check
 	$(GO) run ./tools/gen-failure-docs --src playbooks/bundled --dst docs/failures --check
+
+catalogue-export: build
+	$(BINARY) catalogue export --src playbooks/bundled --out catalogue --repo faultline
+
+catalogue-validate: catalogue-export
+	@echo "catalogue-validate: checking generated output..."
+	@test -f catalogue/catalogue.json           || (echo "catalogue.json missing" >&2 && exit 1)
+	@test -f catalogue/catalogue.manifest.json  || (echo "catalogue.manifest.json missing" >&2 && exit 1)
+	@find catalogue/failures -name '*.md' -maxdepth 1 | grep -q . \
+	  || (echo "no failure Markdown files under catalogue/failures/" >&2 && exit 1)
+	@echo "catalogue-validate: OK"
 
 stats-check:
 	@actual=$$(find playbooks/bundled -name '*.yaml' | wc -l | tr -d ' '); \

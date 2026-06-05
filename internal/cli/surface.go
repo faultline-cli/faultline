@@ -59,4 +59,6 @@ var CommandSurfaces = []CommandSurface{
 	{Path: "fixtures compare-modes", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures patterns", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 	{Path: "fixtures pack-check", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
+	{Path: "catalogue", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
+	{Path: "catalogue export", Category: SurfaceMaintainer, Maturity: MaturityHidden, Hidden: true},
 }

@@ -63,7 +63,7 @@ func TestHiddenCommandSurfaceLimitedToFixtures(t *testing.T) {
 		if !surface.Hidden {
 			continue
 		}
-		isMaintainerFixture := surface.Category == SurfaceMaintainer && strings.HasPrefix(surface.Path, "fixtures")
+		isMaintainerFixture := surface.Category == SurfaceMaintainer && (strings.HasPrefix(surface.Path, "fixtures") || strings.HasPrefix(surface.Path, "catalogue"))
 		isTeamCompanion := surface.Category == SurfaceCompanion && (strings.HasPrefix(surface.Path, "auth") || surface.Path == "sync")
 		if !isMaintainerFixture && !isTeamCompanion {
 			t.Fatalf("hidden command %q must be a fixtures maintainer workflow or Team companion surface", surface.Path)
