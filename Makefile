@@ -89,7 +89,7 @@ catalogue-validate: catalogue-export
 	@echo "catalogue-validate: checking generated output..."
 	@test -f catalogue/catalogue.json           || (echo "catalogue.json missing" >&2 && exit 1)
 	@test -f catalogue/catalogue.manifest.json  || (echo "catalogue.manifest.json missing" >&2 && exit 1)
-	@find catalogue/failures -name '*.md' -maxdepth 1 | grep -q . \
+	@find catalogue/failures -maxdepth 1 -name '*.md' | grep -q . \
 	  || (echo "no failure Markdown files under catalogue/failures/" >&2 && exit 1)
 	@echo "catalogue-validate: OK"
 

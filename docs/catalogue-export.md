@@ -69,6 +69,10 @@ A JSON array of all entries, sorted by category then slug.  Each entry contains:
 }
 ```
 
+The `generated_at` value is deterministic. The exporter uses
+`SOURCE_DATE_EPOCH` when set, otherwise the Git commit time for
+`source_commit`, otherwise the Unix epoch when commit metadata is unavailable.
+
 ## Generating locally
 
 ### Make target (recommended)
@@ -119,7 +123,7 @@ playbook files or catalogue generator code change.  It:
 ### Syncing into the Teams repository
 
 The `sync-to-teams` job (in the same workflow) opens a pull request into the
-`faultline/faultline-teams` repository when the `FAULTLINE_BOT_TOKEN` secret is
+`faultline-cli/teams` repository when the `FAULTLINE_BOT_TOKEN` secret is
 configured.  The PR copies:
 
 - `catalogue/failures/*.md` → `docs-site/src/content/failures/`

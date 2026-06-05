@@ -339,6 +339,32 @@ func TestRenderManifestJSONValid(t *testing.T) {
 	}
 }
 
+func TestBuildManifestUsesSourceDateEpoch(t *testing.T) {
+	t.Setenv("SOURCE_DATE_EPOCH", "1735689600")
+	m := BuildManifest(ExportOptions{
+		SourceRepo:       "org/faultline",
+		SourceCommit:     "abc123",
+		GeneratorVersion: "dev",
+	}, 42)
+	if m.GeneratedAt != "2025-01-01T00:00:00Z" {
+		t.Fatalf("GeneratedAt = %q, want 2025-01-01T00:00:00Z", m.GeneratedAt)
+	}
+}
+
+func TestBuildManifestFallbackIsDeterministic(t *testing.T) {
+	t.Setenv("SOURCE_DATE_EPOCH", "")
+	t.Setenv("PATH", "")
+
+	m1 := BuildManifest(ExportOptions{SourceCommit: "not-a-real-commit"}, 1)
+	m2 := BuildManifest(ExportOptions{SourceCommit: "not-a-real-commit"}, 1)
+	if m1.GeneratedAt != m2.GeneratedAt {
+		t.Fatalf("GeneratedAt not deterministic: %q != %q", m1.GeneratedAt, m2.GeneratedAt)
+	}
+	if m1.GeneratedAt != "1970-01-01T00:00:00Z" {
+		t.Fatalf("GeneratedAt = %q, want Unix epoch fallback", m1.GeneratedAt)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // ValidateEntry / ValidateEntries
 // ---------------------------------------------------------------------------
@@ -435,6 +461,28 @@ func TestDescriptionFromSummaryPeriodInToken(t *testing.T) {
 	}
 }
 
+func TestDescriptionFromSummaryWordWrappedSentence(t *testing.T) {
+	// Playbook summaries use YAML block scalars that word-wrap long lines with
+	// literal newlines.  The extracted description must be a single-line string
+	// with spaces in place of any embedded newlines.
+	input := "A CI build fails because it mixes Alpine Linux (musl libc) and\nDebian/Ubuntu (glibc) artifacts. More details follow."
+	want := "A CI build fails because it mixes Alpine Linux (musl libc) and Debian/Ubuntu (glibc) artifacts."
+	got := descriptionFromSummary(input)
+	if got != want {
+		t.Errorf("descriptionFromSummary() = %q, want %q", got, want)
+	}
+}
+
+func TestDescriptionFromSummaryWordWrappedEndOfString(t *testing.T) {
+	// Sentence boundary at end of string with embedded newline.
+	input := "The build failed because of a missing\ndependency."
+	want := "The build failed because of a missing dependency."
+	got := descriptionFromSummary(input)
+	if got != want {
+		t.Errorf("descriptionFromSummary() = %q, want %q", got, want)
+	}
+}
+
 // ---------------------------------------------------------------------------
 // topSignals
 // ---------------------------------------------------------------------------
@@ -460,5 +508,15 @@ func TestTopSignalsSkipsEmpty(t *testing.T) {
 	got := topSignals(signals, 8)
 	if len(got) != 3 {
 		t.Errorf("topSignals() = %v, expected empty strings skipped", got)
+	}
+}
+
+func TestTopSignalsEscapesControlCharacters(t *testing.T) {
+	got := topSignals([]string{"re:\bconcurrent access\b"}, 8)
+	if len(got) != 1 {
+		t.Fatalf("topSignals() = %v, want one signal", got)
+	}
+	if got[0] != `re:\bconcurrent access\b` {
+		t.Fatalf("topSignals()[0] = %q, want printable word-boundary escapes", got[0])
 	}
 }

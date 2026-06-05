@@ -44,8 +44,8 @@ func newCatalogueExportCommand() *cobra.Command {
 			"  <out>/catalogue.json             — full failure index",
 			"  <out>/catalogue.manifest.json    — provenance and generation metadata",
 			"",
-			"The output is deterministic: repeated runs with the same playbook set produce",
-			"identical files (except for the generated_at timestamp in the manifest).",
+			"The output is deterministic: repeated runs with the same playbook set",
+			"and source commit produce identical files.",
 		),
 		Example: joinLines(
 			"  faultline catalogue export --out ./catalogue",

@@ -53,7 +53,7 @@ jobs:
           set -e
           test -f catalogue/catalogue.json           || (echo "catalogue.json missing" >&2 && exit 1)
           test -f catalogue/catalogue.manifest.json  || (echo "catalogue.manifest.json missing" >&2 && exit 1)
-          count=$(find catalogue/failures -name '*.md' -maxdepth 1 | wc -l | tr -d ' ')
+          count=$(find catalogue/failures -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')
           if [ "$count" -eq 0 ]; then
             echo "No failure Markdown files generated under catalogue/failures/" >&2
             exit 1
@@ -124,7 +124,7 @@ jobs:
         if: steps.token-check.outputs.skip == 'false'
         uses: actions/checkout@v4
         with:
-          repository: faultline/faultline-teams
+          repository: faultline-cli/teams
           token: ${{ secrets.FAULTLINE_BOT_TOKEN }}
           path: teams
 
@@ -133,11 +133,14 @@ jobs:
         run: |
           set -e
           # Failure Markdown pages → docs-site/src/content/failures/
+          rm -rf teams/docs-site/src/content/failures
           mkdir -p teams/docs-site/src/content/failures
           cp cli/catalogue/failures/*.md teams/docs-site/src/content/failures/
 
           # JSON index and manifest → docs-site/src/data/
           mkdir -p teams/docs-site/src/data
+          rm -f teams/docs-site/src/data/catalogue.json
+          rm -f teams/docs-site/src/data/catalogue.manifest.json
           cp cli/catalogue/catalogue.json          teams/docs-site/src/data/catalogue.json
           cp cli/catalogue/catalogue.manifest.json teams/docs-site/src/data/catalogue.manifest.json
 

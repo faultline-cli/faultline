@@ -15,9 +15,11 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -78,7 +80,7 @@ func SlugFromID(id string) string {
 // that are in the recognised ecosystem set, deduplicated and sorted.
 func EcosystemsFromTags(tags []string) []string {
 	seen := make(map[string]struct{}, len(tags))
-	var out []string
+	out := []string{}
 	for _, t := range tags {
 		key := strings.ToLower(strings.TrimSpace(t))
 		if !knownEcosystems[key] {
@@ -148,6 +150,11 @@ type ExportOptions struct {
 
 	// GeneratorVersion is the CLI version string, stamped into the manifest.
 	GeneratorVersion string
+
+	// GeneratedAt is the timestamp stamped into the manifest. When empty, the
+	// exporter derives a deterministic timestamp from SOURCE_DATE_EPOCH, then
+	// the source commit time, then the Unix epoch.
+	GeneratedAt string
 }
 
 // Export generates the full catalogue export into opts.OutDir.
@@ -293,12 +300,14 @@ func descriptionFromSummary(summary string) string {
 		after := i + 1
 		// Sentence ends at the very end of the string.
 		if after >= len(s) {
-			return strings.TrimSpace(s[:after])
+			// Collapse any embedded newlines from word-wrapped YAML source.
+			return strings.Join(strings.Fields(s[:after]), " ")
 		}
 		// Sentence ends when followed by whitespace or closing punctuation.
 		next := rune(s[after])
 		if next == ' ' || next == '\t' || next == '\n' || next == '"' || next == ')' || next == ']' {
-			candidate := strings.TrimSpace(s[:after])
+			// Collapse any embedded newlines from word-wrapped YAML source.
+			candidate := strings.Join(strings.Fields(s[:after]), " ")
 			if len(candidate) <= 200 {
 				return candidate
 			}
@@ -319,12 +328,41 @@ func topSignals(signals []string, n int) []string {
 		if len(out) >= n {
 			break
 		}
-		s = strings.TrimSpace(s)
+		s = escapeControlChars(strings.TrimSpace(s))
 		if s != "" {
 			out = append(out, s)
 		}
 	}
 	return out
+}
+
+func escapeControlChars(s string) string {
+	var buf strings.Builder
+	for _, r := range s {
+		switch r {
+		case '\a':
+			buf.WriteString(`\a`)
+		case '\b':
+			buf.WriteString(`\b`)
+		case '\f':
+			buf.WriteString(`\f`)
+		case '\n':
+			buf.WriteString(`\n`)
+		case '\r':
+			buf.WriteString(`\r`)
+		case '\t':
+			buf.WriteString(`\t`)
+		case '\v':
+			buf.WriteString(`\v`)
+		default:
+			if r < 0x20 || r == 0x7f {
+				fmt.Fprintf(&buf, `\u%04x`, r)
+				continue
+			}
+			buf.WriteRune(r)
+		}
+	}
+	return buf.String()
 }
 
 func min(a, b int) int {
@@ -383,7 +421,7 @@ func generateAll(pbs []sourcePlaybook, opts ExportOptions) ([]catalogueFile, err
 	manifest := Manifest{
 		SourceRepo:       opts.SourceRepo,
 		SourceCommit:     opts.SourceCommit,
-		GeneratedAt:      time.Now().UTC().Format(time.RFC3339),
+		GeneratedAt:      generatedAt(opts),
 		FailureCount:     len(entries),
 		GeneratorVersion: opts.GeneratorVersion,
 	}
@@ -431,12 +469,14 @@ func RenderFrontmatter(e Entry) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// yamlQuote wraps a string in double quotes, escaping backslashes and
-// double-quote characters so the result is valid YAML scalar syntax.
+// yamlQuote returns a JSON-escaped string literal, which is valid YAML inside
+// frontmatter and covers control characters as well as quotes and backslashes.
 func yamlQuote(s string) string {
-	s = strings.ReplaceAll(s, `\`, `\\`)
-	s = strings.ReplaceAll(s, `"`, `\"`)
-	return `"` + s + `"`
+	quoted, err := json.Marshal(s)
+	if err != nil {
+		return `""`
+	}
+	return string(quoted)
 }
 
 func renderFailureMarkdown(pb sourcePlaybook, e Entry) ([]byte, error) {
@@ -554,10 +594,31 @@ func BuildManifest(opts ExportOptions, failureCount int) Manifest {
 	return Manifest{
 		SourceRepo:       opts.SourceRepo,
 		SourceCommit:     opts.SourceCommit,
-		GeneratedAt:      time.Now().UTC().Format(time.RFC3339),
+		GeneratedAt:      generatedAt(opts),
 		FailureCount:     failureCount,
 		GeneratorVersion: opts.GeneratorVersion,
 	}
+}
+
+func generatedAt(opts ExportOptions) string {
+	if opts.GeneratedAt != "" {
+		return opts.GeneratedAt
+	}
+	if epoch := strings.TrimSpace(os.Getenv("SOURCE_DATE_EPOCH")); epoch != "" {
+		if seconds, err := strconv.ParseInt(epoch, 10, 64); err == nil {
+			return time.Unix(seconds, 0).UTC().Format(time.RFC3339)
+		}
+	}
+	if opts.SourceCommit != "" {
+		if out, err := exec.Command("git", "show", "-s", "--format=%cI", opts.SourceCommit).Output(); err == nil {
+			if ts := strings.TrimSpace(string(out)); ts != "" {
+				if parsed, parseErr := time.Parse(time.RFC3339, ts); parseErr == nil {
+					return parsed.UTC().Format(time.RFC3339)
+				}
+			}
+		}
+	}
+	return time.Unix(0, 0).UTC().Format(time.RFC3339)
 }
 
 func renderManifestJSON(m Manifest) ([]byte, error) {
